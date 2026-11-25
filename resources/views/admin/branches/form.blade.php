@@ -3,7 +3,7 @@
 @section('heading', $branch->exists ? 'Edit branch · '.$branch->name : 'New branch')
 @section('content')
 <form method="POST" action="{{ $branch->exists ? route('admin.branches.update', $branch) : route('admin.branches.store') }}"
-      class="max-w-2xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      class="max-w-3xl space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     @csrf
     @if ($branch->exists) @method('PUT') @endif
 
@@ -43,6 +43,21 @@
     <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
         <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $branch->exists ? $branch->is_active : true)) class="rounded text-emerald-700"> Branch is open
     </label>
+
+    <section class="rounded-xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900">Payment methods available at this branch</h2>
+        <p class="mt-1 text-xs text-slate-500">Students will only see the methods selected here. Cash and office collection are reserved for staff-side recording.</p>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            @foreach ($paymentMethods as $key => $label)
+                <label class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+                    <input type="checkbox" name="payment_methods[]" value="{{ $key }}"
+                        @checked(in_array($key, old('payment_methods', $branch->payment_methods ?? []), true))
+                        class="rounded border-slate-300 text-emerald-700">
+                    {{ $label }}
+                </label>
+            @endforeach
+        </div>
+    </section>
 
     <div class="flex gap-2">
         <button class="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white">Save branch</button>

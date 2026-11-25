@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\OrderService;
@@ -16,7 +17,11 @@ class CheckoutController extends Controller
         if ($totals['count'] === 0) {
             return redirect()->route('cart.index')->with('info', 'Your cart is empty.');
         }
-        return view('cart.checkout', $totals);
+
+        $assignedBranch = $totals['count'] ? auth()->user()->branch : null;
+        $branches = Branch::active()->orderBy('name')->get();
+
+        return view('cart.checkout', $totals + compact('branches', 'assignedBranch'));
     }
 
     public function store(Request $request)
@@ -30,7 +35,13 @@ class CheckoutController extends Controller
             'email' => 'required|email|max:150',
             'address' => 'nullable|string|max:255',
             'note' => 'nullable|string|max:255',
+            'branch_id' => 'required|integer|exists:branches,id',
         ]);
+
+        $branch = Branch::active()->findOrFail($data['branch_id']);
+        if (auth()->user()->branch_id && auth()->user()->branch_id !== $branch->id) {
+            throw ValidationException::withMessages(['branch_id' => 'Please select your assigned branch.']);
+        }
 
         $order = Order::create($data + [
             'user_id' => $request->user()->id,
@@ -74,25 +85,43 @@ class CheckoutController extends Controller
     {
         abort_unless($order->user_id === auth()->id() || auth()->user()->isAdmin(), 403);
 
+        $branch = $order->branch;
+        $enabledMethods = $branch?->enabledStudentPaymentMethods() ?? [];
+
         return view('cart.success', [
             'order' => $order->load('items', 'payments'),
+            'branch' => $branch,
+            'enabledMethods' => $enabledMethods,
             'paymentNumbers' => [
-                'bkash' => \App\Models\Setting::get('bkash_number', '01700000000'),
-                'nagad' => \App\Models\Setting::get('nagad_number', '01700000000'),
+                'bkash' => \App\Models\Setting::get('bkash_number', ''),
+                'nagad' => \App\Models\Setting::get('nagad_number', ''),
             ],
         ]);
     }
 
-    /** Student submits a manual mobile-banking payment for verification. */
+    /** Student submits a manual payment for branch-approved verification. */
     public function pay(Request $request, Order $order)
     {
         abort_unless($order->user_id === auth()->id(), 403);
+        abort_unless($order->status === 'pending', 403, 'This order is not awaiting payment.');
+
+        $branch = $order->branch;
+        abort_unless($branch && $branch->is_active, 403, 'The selected branch is no longer accepting payments.');
+
+        $enabledMethods = $branch->enabledStudentPaymentMethods();
+        if ($enabledMethods === []) {
+            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
+        }
 
         $data = $request->validate([
-            'gateway' => 'required|in:bkash,nagad,rocket,bank',
+            'gateway' => ['required', 'string', 'in:'.implode(',', $enabledMethods)],
             'sender_number' => 'required|string|max:30',
             'transaction_id' => 'required|string|max:60',
         ]);
+
+        if (Payment::where('transaction_id', $data['transaction_id'])->whereNotNull('transaction_id')->exists()) {
+            throw ValidationException::withMessages(['transaction_id' => 'This transaction ID has already been submitted.']);
+        }
 
         Payment::create($data + [
             'order_id' => $order->id,
@@ -100,6 +129,6 @@ class CheckoutController extends Controller
             'status' => 'pending',
         ]);
 
-        return back()->with('success', 'Payment submitted. We will verify it within a few minutes.');
+        return back()->with('success', 'Payment submitted for verification. Your access will be enabled after approval.');
     }
 }

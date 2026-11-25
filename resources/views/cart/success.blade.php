@@ -23,33 +23,44 @@
         <div class="mt-3 flex justify-between text-base font-extrabold">
             <span>Total</span><span>৳{{ number_format($order->total, 2) }}</span>
         </div>
+        <p class="mt-2 text-xs text-slate-500">Branch: {{ $branch?->name ?? 'Not assigned' }}</p>
 
         @if ($order->status === 'paid')
             <div class="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Payment confirmed — your courses are now unlocked.</div>
             <a href="{{ route('student.courses') }}" class="mt-4 inline-block rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white">Go to my courses</a>
         @else
-            <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-                <p class="font-bold">Complete your payment</p>
-                <p class="mt-1">Send <b>৳{{ number_format($order->total, 2) }}</b> to:</p>
-                <ul class="mt-2 space-y-1">
-                    <li>bKash (Personal): <b>{{ $paymentNumbers['bkash'] }}</b></li>
-                    <li>Nagad (Personal): <b>{{ $paymentNumbers['nagad'] }}</b></li>
-                </ul>
-                <p class="mt-2">Then submit your transaction details below.</p>
-            </div>
+            @if (count($enabledMethods))
+                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+                    <p class="font-bold">Complete your payment</p>
+                    <p class="mt-1">Select one of the payment methods enabled by your branch ({{ $branch->name }}).</p>
+                    @if (in_array('bkash', $enabledMethods, true) && $paymentNumbers['bkash'])
+                        <p class="mt-2">bKash number: <b>{{ $paymentNumbers['bkash'] }}</b></p>
+                    @endif
+                    @if (in_array('nagad', $enabledMethods, true) && $paymentNumbers['nagad'])
+                        <p class="mt-1">Nagad number: <b>{{ $paymentNumbers['nagad'] }}</b></p>
+                    @endif
+                    <p class="mt-2">Submit the transaction details. Your payment remains pending until staff verifies it.</p>
+                </div>
 
-            <form method="POST" action="{{ route('checkout.pay', $order->order_no) }}" class="mt-4 grid gap-3 rounded-xl border border-slate-200 p-5 sm:grid-cols-3">
-                @csrf
-                <select name="gateway" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <option value="bkash">bKash</option>
-                    <option value="nagad">Nagad</option>
-                    <option value="rocket">Rocket</option>
-                    <option value="bank">Bank transfer</option>
-                </select>
-                <input name="sender_number" placeholder="Sender number" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <input name="transaction_id" placeholder="Transaction ID" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white sm:col-span-3">Submit payment</button>
-            </form>
+                <form method="POST" action="{{ route('checkout.pay', $order->order_no) }}" class="mt-4 grid gap-3 rounded-xl border border-slate-200 p-5">
+                    @csrf
+                    <label class="text-sm font-semibold text-slate-700">Payment method</label>
+                    <select name="gateway" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                        @foreach ($enabledMethods as $method)
+                            <option value="{{ $method }}">{{ \App\Models\Branch::PAYMENT_METHODS[$method] ?? strtoupper($method) }}</option>
+                        @endforeach
+                    </select>
+                    <label class="text-sm font-semibold text-slate-700">Sender number / Account name</label>
+                    <input name="sender_number" placeholder="Sender number or account name" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <label class="text-sm font-semibold text-slate-700">Transaction ID / Deposit reference</label>
+                    <input name="transaction_id" placeholder="Transaction ID or bank reference" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <button class="rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white">Submit for verification</button>
+                </form>
+            @else
+                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+                    No online payment method is currently enabled for this branch. Please contact the branch office for cash or office payment.
+                </div>
+            @endif
 
             @if ($order->payments->count())
                 <div class="mt-4 space-y-2">
