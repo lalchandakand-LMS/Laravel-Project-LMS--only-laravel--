@@ -155,6 +155,7 @@ class RecycleBinController extends Controller
             'courses' => [
                 ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
                 ['exams', 'course_id'], ['reviews', 'course_id'], ['announcements', 'course_id'],
+                ['certificates', 'course_id'],
                 ['live_classes', 'course_id'],
             ],
             'sections' => [['lessons', 'section_id']],
@@ -168,9 +169,14 @@ class RecycleBinController extends Controller
         };
 
         foreach ($checks as [$table, $column]) {
-            if (\Illuminate\Support\Facades\Schema::hasTable($table)
-                && DB::table($table)->where($column, $id)->exists()) {
-                return true;
+            if (\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                $query = DB::table($table)->where($column, $id);
+                if ($table === 'order_items') {
+                    $query->where('item_type', $type === 'ebooks' ? 'ebook' : 'course');
+                }
+                if ($query->exists()) {
+                    return true;
+                }
             }
         }
 
