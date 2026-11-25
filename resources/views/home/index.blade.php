@@ -244,7 +244,7 @@
 
 {{-- TEACHER PROFILES --}}
 @if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
-<section class="bg-slate-50 py-16">
+<section id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Meet our teachers</h2><p class="mt-1 text-slate-500">Learn with experienced instructors and practical guidance.</p></div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -264,7 +264,7 @@
 
 {{-- VERIFIED BOARD RESULTS / ACHIEVEMENTS --}}
 @if (($homepageSettings['homepage_show_board_results'] ?? '1') === '1' && !empty($homepageSettings['homepage_board_results_body']))
-<section class="bg-emerald-950 py-16 text-white">
+<section id="board-results" class="bg-emerald-950 py-16 text-white">
     <div class="mx-auto max-w-5xl px-4 text-center">
         <span class="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">Student achievements {{ $homepageSettings['homepage_board_results_year'] ?? '' }}</span>
         <h2 class="mt-3 text-3xl font-extrabold">{{ $homepageSettings['homepage_board_results_title'] ?? 'Our students’ achievements' }}</h2>
