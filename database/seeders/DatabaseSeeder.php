@@ -188,7 +188,7 @@ class DatabaseSeeder extends Seeder
                         'title' => $lessonTitle,
                         'type' => 'text',
                         'video_url' => null,
-                        'content' => "In this lesson we cover **{$lessonTitle}** step by step.\n\n1. Concept explanation\n2. Worked examples\n3. Practice problems with solutions\n\nDownload the attached note for practice.",
+                        'content' => "In this lesson, you will practise **{$lessonTitle}** with clear examples and guided activities.\n\nLearning steps:\n1. Understand the key idea and useful language.\n2. Read the examples and notice how the language is used.\n3. Practise by creating your own sentences.\n4. Review your work and correct common mistakes.\n\nPractice task: write five original sentences using today’s lesson.",
                         'duration_minutes' => rand(12, 55),
                         'position' => $lessonPosition++,
                         'is_free_preview' => $lessonPosition <= 3,
