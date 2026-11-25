@@ -5,7 +5,7 @@
 @include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
-@if (\App\Models\Setting::get('dashboard_widget_children', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_guardian_children', '1') === '1')
 <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
     @forelse ($summary as $row)
         @php $child = $row['child']; @endphp
@@ -50,7 +50,7 @@
 </div>@endif
 
 
-@if (\App\Models\Setting::get('dashboard_widget_orders', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_guardian_orders', '1') === '1')
 <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
     <h2 class="border-b border-slate-100 px-5 py-4 font-bold text-slate-800">Recent purchases</h2>
     <table class="w-full min-w-[620px] text-sm">
