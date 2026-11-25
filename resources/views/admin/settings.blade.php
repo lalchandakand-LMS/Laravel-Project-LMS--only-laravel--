@@ -176,6 +176,25 @@
         <label class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="developer_show" value="1" @checked(($settings['developer_show'] ?? '0') === '1')> Show developer credit strip on website</label>
     </section>
 
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2" data-settings-group="loading">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div><h3 class="font-bold text-slate-900">Brand page loading system</h3><p class="mt-1 text-sm text-slate-500">Show a branded loading screen while public pages are loading. This does not block admin dashboard pages.</p></div>
+            <label class="inline-flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="brand_loader_enabled" value="1" @checked(($settings['brand_loader_enabled'] ?? '0') === '1')> Enable loading screen</label>
+        </div>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Loading message</label><input name="brand_loader_message" value="{{ old('brand_loader_message', $settings['brand_loader_message'] ?? 'Preparing your learning experience...') }}" maxlength="120" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Loader style</label><select name="brand_loader_style" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"><option value="ring" @selected(($settings['brand_loader_style'] ?? 'ring') === 'ring')>Rotating ring</option><option value="dots" @selected(($settings['brand_loader_style'] ?? '') === 'dots')>Animated dots</option><option value="pulse" @selected(($settings['brand_loader_style'] ?? '') === 'pulse')>Brand pulse</option></select></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Minimum display time (ms)</label><input type="number" min="0" max="2000" step="100" name="brand_loader_min_time" value="{{ old('brand_loader_min_time', $settings['brand_loader_min_time'] ?? '250') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+        </div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-3">
+            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#047857'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+            @endforeach
+        </div>
+        <p class="mt-3 text-xs text-slate-500">The current website logo and site name are used automatically. Respects reduced-motion accessibility preferences and includes a failsafe timeout.</p>
+    </section>
+
     <div class="lg:col-span-2"><button class="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Save all settings</button></div>
 </form>
 
@@ -186,7 +205,7 @@
     if (!form) return;
     const sections = Array.from(form.querySelectorAll(':scope > section'));
     const tabs = [
-        ['general','General & Branding'],['dashboard','Dashboard'],['homepage','Homepage'],['design','Design & Footer'],['menu','Menu Settings'],['slider','Slider Settings']
+        ['general','General & Branding'],['dashboard','Dashboard'],['homepage','Homepage'],['design','Design & Footer'],['loading','Brand Loading'],['menu','Menu Settings'],['slider','Slider Settings']
     ];
     const nav = document.createElement('div');
     nav.className = 'mb-6 flex flex-wrap gap-2 lg:col-span-2';

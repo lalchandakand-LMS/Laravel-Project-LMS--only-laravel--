@@ -23,6 +23,46 @@
     @include('partials.assets')
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
+@php($brandLoaderEnabled = \App\Models\Setting::get('brand_loader_enabled', '0') === '1')
+@if ($brandLoaderEnabled)
+<style>
+    #brand-page-loader{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:{{ \App\Models\Setting::get('brand_loader_bg','#ffffff') }};opacity:1;visibility:visible;transition:opacity .25s ease,visibility .25s ease}
+    #brand-page-loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+    #brand-page-loader .brand-loader-inner{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:24px}
+    #brand-page-loader .brand-loader-logo{width:76px;height:76px;object-fit:contain;border-radius:16px}
+    #brand-page-loader .brand-loader-name{font-weight:800;font-size:1.15rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
+    #brand-page-loader .brand-loader-message{font-size:.9rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
+    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color','#047857') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
+    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
+    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-pulse 1s ease-in-out infinite}
+    @keyframes brand-loader-spin{to{transform:rotate(360deg)}}
+    @keyframes brand-loader-dots{to{transform:scale(1.25);opacity:.55}}
+    @keyframes brand-loader-pulse{50%{transform:scale(.72);opacity:.55}}
+    @media(prefers-reduced-motion:reduce){#brand-page-loader .brand-spinner{animation:none}}
+</style>
+@endif
+
+@if ($brandLoaderEnabled)
+<div id="brand-page-loader" role="status" aria-live="polite" aria-label="Loading website" data-style="{{ \App\Models\Setting::get('brand_loader_style','ring') }}">
+    <div class="brand-loader-inner">
+        <img class="brand-loader-logo" src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="">
+        <div class="brand-loader-name">{{ $brandName }}</div>
+        <div class="brand-spinner" aria-hidden="true"></div>
+        <p class="brand-loader-message">{{ \App\Models\Setting::get('brand_loader_message','Preparing your learning experience...') }}</p>
+    </div>
+</div>
+<noscript><style>#brand-page-loader{display:none!important}</style></noscript>
+<script>
+(function(){
+    var loader=document.getElementById('brand-page-loader'); if(!loader)return;
+    var started=Date.now(), minimum={{ (int) \App\Models\Setting::get('brand_loader_min_time','250') }}, hidden=false;
+    function hide(){if(hidden)return;hidden=true;var wait=Math.max(0,minimum-(Date.now()-started));window.setTimeout(function(){loader.classList.add('is-hidden');window.setTimeout(function(){loader.remove()},350)},wait);}
+    if(document.readyState==='complete'){hide()}else{window.addEventListener('load',hide,{once:true});}
+    window.setTimeout(hide,8000);
+})();
+</script>
+@endif
+
 
 @include('partials.public-navigation')
 

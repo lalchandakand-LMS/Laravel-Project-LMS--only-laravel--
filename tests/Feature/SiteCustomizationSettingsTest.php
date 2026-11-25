@@ -41,12 +41,22 @@ class SiteCustomizationSettingsTest extends TestCase
             'developer_bg' => '#0f172a',
             'developer_text_color' => '#ffffff',
             'developer_show' => '1',
+            'brand_loader_enabled' => '1',
+            'brand_loader_message' => 'Loading Alom LMS',
+            'brand_loader_style' => 'dots',
+            'brand_loader_min_time' => '400',
+            'brand_loader_bg' => '#ffffff',
+            'brand_loader_color' => '#047857',
+            'brand_loader_text_color' => '#0f172a',
         ])->assertRedirect();
 
         $this->assertSame('Learning paths', Setting::get('homepage_learning_title'));
         $this->assertSame('Student stories', Setting::get('homepage_testimonial_title'));
         $this->assertSame('Example Studio', Setting::get('developer_name'));
         $this->assertSame('1', Setting::get('developer_show'));
+        $this->assertSame('1', Setting::get('brand_loader_enabled'));
+        $this->assertSame('dots', Setting::get('brand_loader_style'));
+        $this->assertSame('Loading Alom LMS', Setting::get('brand_loader_message'));
     }
 
     public function test_invalid_customization_color_is_rejected(): void
@@ -67,6 +77,7 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('General & Branding', false)
             ->assertSee('Menu Settings')
             ->assertSee('Slider Settings')
-            ->assertSee('Homepage, footer & developer design', false);
+            ->assertSee('Homepage, footer & developer design', false)
+            ->assertSee('Brand Loading');
     }
 }

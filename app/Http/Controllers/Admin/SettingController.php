@@ -29,6 +29,7 @@ class SettingController extends Controller
         'homepage_learning_bg', 'homepage_learning_text', 'homepage_testimonial_bg', 'homepage_testimonial_text',
         'homepage_stats_bg', 'homepage_stats_text', 'footer_bg', 'footer_text', 'footer_heading', 'footer_copyright',
         'developer_name', 'developer_url', 'developer_text', 'developer_bg', 'developer_text_color', 'developer_show',
+        'brand_loader_enabled', 'brand_loader_message', 'brand_loader_style', 'brand_loader_min_time', 'brand_loader_bg', 'brand_loader_color', 'brand_loader_text_color',
     ];
 
     public function index()
@@ -81,6 +82,13 @@ class SettingController extends Controller
             'developer_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'developer_text_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'developer_show' => ['sometimes', 'boolean'],
+            'brand_loader_enabled' => ['sometimes', 'boolean'],
+            'brand_loader_message' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'brand_loader_style' => ['sometimes', 'required', 'in:ring,dots,pulse'],
+            'brand_loader_min_time' => ['sometimes', 'required', 'integer', 'min:0', 'max:2000'],
+            'brand_loader_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brand_loader_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brand_loader_text_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
 
         foreach (self::KEYS as $key) {
@@ -94,7 +102,7 @@ class SettingController extends Controller
             'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
             'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
             'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-            'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'developer_show'] as $key) {
+            'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'developer_show', 'brand_loader_enabled'] as $key) {
             Setting::set($key, $request->boolean($key) ? '1' : '0');
         }
 
