@@ -88,12 +88,23 @@ class BranchPaymentAvailabilityTest extends TestCase
     public function test_duplicate_transaction_reference_is_rejected(): void
     {
         [$student, $branch, $order] = $this->studentWithBranch(['nagad']);
+        $otherOrder = Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 1500,
+            'discount' => 0,
+            'total' => 1500,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01700000000',
+            'email' => $student->email,
+        ]);
         Payment::create([
-            'order_id' => $order->id,
+            'order_id' => $otherOrder->id,
             'gateway' => 'nagad',
             'sender_number' => '01700000000',
             'transaction_id' => 'DUPLICATE-TRX',
-            'amount' => 1500,
+            'amount' => 100,
             'status' => 'pending',
         ]);
 
