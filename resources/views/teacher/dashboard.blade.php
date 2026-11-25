@@ -2,6 +2,7 @@
 @section('title', 'Teacher dashboard')
 @section('heading', 'Assalamu alaikum, '.auth()->user()->name)
 @section('content')
+@include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
