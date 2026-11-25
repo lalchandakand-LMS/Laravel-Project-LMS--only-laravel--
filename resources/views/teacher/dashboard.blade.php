@@ -61,7 +61,8 @@
 </div>
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2">
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    @if (\App\Models\Setting::get('dashboard_widget_teacher_courses', '1') === '1')
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Top courses</h2>
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($courses as $course)
@@ -77,8 +78,11 @@
             @endforelse
         </ul>
     </div>
+@endif
 
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+    @if (\App\Models\Setting::get('dashboard_widget_teacher_students', '1') === '1')
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Latest students</h2>
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($recent as $enrollment)
@@ -95,5 +99,7 @@
             @endforelse
         </ul>
     </div>
+@endif
+
 </div>
 @endsection
