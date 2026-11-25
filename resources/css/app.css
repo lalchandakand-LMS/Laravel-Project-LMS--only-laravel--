@@ -9,3 +9,27 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+
+/* Accessible, responsive homepage hero carousel */
+.hero-carousel { isolation: isolate; touch-action: pan-y; }
+.hero-slide {
+    position: relative;
+    min-height: 31rem;
+    opacity: 0;
+    transform: translateX(1.25rem);
+    transition: opacity .45s ease, transform .65s cubic-bezier(.2,.75,.25,1);
+}
+.hero-slide.is-active { opacity: 1; transform: translateX(0); }
+.hero-slide.hidden { display: none; }
+.hero-arrow { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; }
+.hero-arrow:focus-visible, .hero-dot:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.hero-dot { display: inline-block; background: rgb(255 255 255 / .58); }
+.hero-dot.is-active { width: 1.75rem; background: #10b981; }
+@media (max-width: 640px) {
+    .hero-slide { min-height: 0; }
+    .hero-arrow { width: 2.25rem; height: 2.25rem; padding: .5rem; background: rgb(15 23 42 / .82); color: white; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-slide { transition: none; transform: none; }
+}
