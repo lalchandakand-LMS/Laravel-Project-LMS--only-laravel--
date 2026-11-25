@@ -15,7 +15,7 @@
     @endif
 </div>
 
-@if (\App\Models\Setting::get('dashboard_widget_stats', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_student_stats', '1') === '1')
 <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     @foreach ([
         ['Enrolled courses', $stats['enrolled'], '📚'],
@@ -34,7 +34,8 @@
 
 <div class="mt-8 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
 @if (\App\Models\Setting::get('dashboard_widget_courses', '1') === '1')
-    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    @if (\App\Models\Setting::get('dashboard_widget_student_courses', '1') === '1')
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-900">Continue learning</h3>
             <a href="{{ route('student.courses') }}" class="text-sm font-semibold text-emerald-700 hover:underline">All courses →</a>
@@ -66,9 +67,11 @@
             @endforelse
         </div>
     </section>
+@endif
 
     <div class="space-y-6">
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        @if (\App\Models\Setting::get('dashboard_widget_student_exams', '1') === '1')
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="font-bold text-slate-900">Upcoming exams</h3>
             <ul class="mt-3 space-y-2 text-sm">
                 @forelse ($upcomingExams as $exam)
@@ -84,8 +87,10 @@
                 @endforelse
             </ul>
         </section>
+@endif
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        @if (\App\Models\Setting::get('dashboard_widget_student_activity', '1') === '1')
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="font-bold text-slate-900">Recent activity</h3>
             <ul class="mt-3 space-y-2 text-sm">
                 @forelse ($recentLessons as $progress)
@@ -99,6 +104,7 @@
                 @endforelse
             </ul>
         </section>
+@endif
 @endif
     </div>
 </div>
