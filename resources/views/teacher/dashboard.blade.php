@@ -3,6 +3,7 @@
 @section('heading', 'Assalamu alaikum, '.auth()->user()->name)
 @section('content')
 @include('partials.dashboard-banner')
+<div class="mb-5 flex flex-wrap gap-3"><a href="{{ route('teacher.attendance.index') }}" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Take / submit attendance</a></div>
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 @if (\App\Models\Setting::get('dashboard_widget_teacher_stats', '1') === '1')
