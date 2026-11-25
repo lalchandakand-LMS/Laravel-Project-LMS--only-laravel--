@@ -1,0 +1,168 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Announcement;
+use App\Models\Branch;
+use App\Models\Category;
+use App\Models\Coupon;
+use App\Models\Course;
+use App\Models\Ebook;
+use App\Models\Exam;
+use App\Models\Lesson;
+use App\Models\LiveClass;
+use App\Models\MenuItem;
+use App\Models\Question;
+use App\Models\Review;
+use App\Models\Section;
+use App\Models\Slider;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class RecycleBinController extends Controller
+{
+    /** Only explicitly supported soft-deletable models can be restored or purged here. */
+    private const MODELS = [
+        'users' => User::class,
+        'courses' => Course::class,
+        'categories' => Category::class,
+        'sections' => Section::class,
+        'lessons' => Lesson::class,
+        'exams' => Exam::class,
+        'questions' => Question::class,
+        'ebooks' => Ebook::class,
+        'live-classes' => LiveClass::class,
+        'announcements' => Announcement::class,
+        'reviews' => Review::class,
+        'sliders' => Slider::class,
+        'menu-items' => MenuItem::class,
+        'coupons' => Coupon::class,
+        'branches' => Branch::class,
+    ];
+
+    public function index(Request $request)
+    {
+        $type = $request->string('type')->toString();
+        abort_if($type !== '' && ! array_key_exists($type, self::MODELS), 404);
+
+        $items = collect();
+        $counts = [];
+        $actorIds = [];
+
+        foreach (self::MODELS as $key => $class) {
+            $query = $class::onlyTrashed()->latest('deleted_at');
+            $counts[$key] = (clone $query)->count();
+
+            if ($type !== '' && $type !== $key) {
+                continue;
+            }
+
+            foreach ($query->limit(200)->get() as $record) {
+                $items->push([
+                    'type' => $key,
+                    'label' => class_basename($class),
+                    'record' => $record,
+                    'deleted_at' => $record->deleted_at,
+                    'deleted_by' => $record->deleted_by,
+                ]);
+                if ($record->deleted_by) {
+                    $actorIds[] = $record->deleted_by;
+                }
+            }
+        }
+
+        $items = $items->sortByDesc(fn ($item) => $item['deleted_at'])->values();
+        $actors = DB::table('users')->whereIn('id', array_unique($actorIds))->pluck('name', 'id');
+
+        return view('admin.recycle-bin.index', [
+            'items' => $items,
+            'counts' => $counts,
+            'type' => $type,
+            'actors' => $actors,
+            'total' => array_sum($counts),
+        ]);
+    }
+
+    public function restore(string $type, int $id)
+    {
+        $class = $this->modelClass($type);
+        $record = $class::onlyTrashed()->findOrFail($id);
+        $record->restore();
+
+        return back()->with('success', class_basename($class).' restored successfully.');
+    }
+
+    public function bulkRestore(Request $request)
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:'.implode(',', array_keys(self::MODELS))],
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['required', 'integer', 'distinct'],
+        ]);
+
+        $class = $this->modelClass($data['type']);
+        $restored = $class::onlyTrashed()->whereIn('id', $data['ids'])->get();
+        foreach ($restored as $record) {
+            $record->restore();
+        }
+
+        return back()->with('success', $restored->count().' item(s) restored.');
+    }
+
+    public function destroy(string $type, int $id)
+    {
+        $class = $this->modelClass($type);
+        $record = $class::onlyTrashed()->findOrFail($id);
+
+        if ($this->hasProtectedRelations($type, $record->getKey())) {
+            return back()->with('error', 'Permanent deletion blocked: this record still has linked learning, account, or transaction data. Keep it in the Recycle Bin or remove dependent records first.');
+        }
+
+        $record->forceDelete();
+
+        return back()->with('success', class_basename($class).' permanently deleted.');
+    }
+
+    private function modelClass(string $type): string
+    {
+        abort_unless(array_key_exists($type, self::MODELS), 404);
+        return self::MODELS[$type];
+    }
+
+    /** Prevent FK cascades from erasing learning history, accounts, or financial records. */
+    private function hasProtectedRelations(string $type, int $id): bool
+    {
+        $checks = match ($type) {
+            'users' => [
+                ['orders', 'user_id'], ['enrollments', 'user_id'], ['lesson_progress', 'user_id'],
+                ['exam_attempts', 'user_id'], ['certificates', 'user_id'], ['ebook_purchases', 'user_id'],
+                ['reviews', 'user_id'], ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
+            ],
+            'courses' => [
+                ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
+                ['exams', 'course_id'], ['reviews', 'course_id'], ['announcements', 'course_id'],
+                ['live_classes', 'course_id'],
+            ],
+            'sections' => [['lessons', 'section_id']],
+            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id']],
+            'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
+            'questions' => [['options', 'question_id'], ['attempt_answers', 'question_id']],
+            'ebooks' => [['ebook_purchases', 'ebook_id']],
+            'branches' => [['users', 'branch_id']],
+            'menu-items' => [['menu_items', 'parent_id']],
+            default => [],
+        };
+
+        foreach ($checks as [$table, $column]) {
+            if (\Illuminate\Support\Facades\Schema::hasTable($table)
+                && DB::table($table)->where($column, $id)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
