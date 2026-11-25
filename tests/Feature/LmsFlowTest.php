@@ -7,6 +7,8 @@ use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Exam;
+use App\Models\LiveClass;
+use App\Models\Setting;
 use App\Models\Order;
 use App\Models\Question;
 use App\Models\User;
@@ -84,7 +86,7 @@ class LmsFlowTest extends TestCase
         ]);
         $course->update(['instructor_id' => $teacher->id]);
 
-        \\App\\Models\\LiveClass::create([
+        LiveClass::create([
             'course_id' => $course->id,
             'title' => 'Live speaking practice',
             'platform' => 'Google Meet',
@@ -102,8 +104,8 @@ class LmsFlowTest extends TestCase
             'starts_at' => now()->addDays(2),
             'is_published' => true,
         ]);
-        \\App\\Models\\Setting::set('homepage_board_results_body', 'Verified board result: 10 students achieved GPA 5.');
-        \\App\\Models\\Setting::set('homepage_board_results_year', '2026');
+        Setting::set('homepage_board_results_body', 'Verified board result: 10 students achieved GPA 5.');
+        Setting::set('homepage_board_results_year', '2026');
 
         $this->get('/')
             ->assertOk()
