@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Slider extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = [
         'badge', 'title', 'subtitle', 'image', 'button_text', 'button_url',
         'theme', 'sort_order', 'is_active',
