@@ -68,7 +68,6 @@
             <h2 class="font-bold text-slate-800">New students</h2>
             <a href="{{ route('branch.students') }}" class="text-sm font-bold text-emerald-700">All →</a>
         </div>
-@endif
 
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($recentStudents as $student)
