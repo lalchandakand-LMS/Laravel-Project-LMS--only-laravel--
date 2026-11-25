@@ -4,6 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @php($brandName = \\App\\Models\\Setting::get('site_name', "Alom's English Center"))
+    @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \\App\\Models\\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))))
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ $brandName }}">
+    <meta property="og:title" content="@yield('title', $brandName) — {{ $brandName }}">
+    <meta property="og:description" content="{{ $brandDescription }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ asset('images/aec-logo.svg') }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="@yield('title', $brandName) — {{ $brandName }}">
+    <meta name="twitter:description" content="{{ $brandDescription }}">
     <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     <meta name="description" content="@yield('meta_description', \App\Models\Setting::get('site_tagline', 'Online learning platform for SSC, HSC & Admission preparation.'))">
     @include('partials.assets')
