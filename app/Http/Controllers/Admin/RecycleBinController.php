@@ -18,8 +18,8 @@ use App\Models\Review;
 use App\Models\Section;
 use App\Models\Slider;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class RecycleBinController extends Controller
@@ -90,7 +90,12 @@ class RecycleBinController extends Controller
     {
         $class = $this->modelClass($type);
         $record = $class::onlyTrashed()->findOrFail($id);
-        $record->restore();
+        try {
+            $record->restore();
+        } catch (QueryException $exception) {
+            report($exception);
+            return back()->with('error', 'Restore blocked because a unique value is already in use. Resolve the duplicate record first.');
+        }
 
         return back()->with('success', class_basename($class).' restored successfully.');
     }
@@ -105,11 +110,17 @@ class RecycleBinController extends Controller
 
         $class = $this->modelClass($data['type']);
         $restored = $class::onlyTrashed()->whereIn('id', $data['ids'])->get();
+        $restoredCount = 0;
         foreach ($restored as $record) {
-            $record->restore();
+            try {
+                $record->restore();
+                $restoredCount++;
+            } catch (QueryException $exception) {
+                report($exception);
+            }
         }
 
-        return back()->with('success', $restored->count().' item(s) restored.');
+        return back()->with('success', $restoredCount.' item(s) restored. Any item with a conflicting unique value was skipped.');
     }
 
     public function destroy(string $type, int $id)
