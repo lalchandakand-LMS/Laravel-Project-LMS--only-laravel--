@@ -31,6 +31,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache
 
       - name: Run test suite
         run: php artisan test
