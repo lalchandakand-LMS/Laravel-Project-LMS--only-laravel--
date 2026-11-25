@@ -164,6 +164,9 @@ class OrderController extends Controller
         $branch = $order->branch;
         abort_unless($branch && $branch->is_active, 403, 'The order branch is inactive.');
         abort_unless(in_array($data['gateway'], $branch->payment_methods ?? [], true), 403, 'This offline method is not enabled for the order branch.');
+        if (! empty($data['reference']) && Payment::where('transaction_id', $data['reference'])->exists()) {
+            throw ValidationException::withMessages(['reference' => 'This receipt/reference number is already recorded.']);
+        }
 
         try {
             DB::transaction(function () use ($request, $order, $data) {
