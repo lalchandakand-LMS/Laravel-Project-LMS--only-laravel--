@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\Branch;
+use App\Models\Batch;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Course;
@@ -12,6 +13,7 @@ use App\Models\Ebook;
 use App\Models\Exam;
 use App\Models\Lesson;
 use App\Models\LiveClass;
+use App\Models\Level;
 use App\Models\MenuItem;
 use App\Models\Question;
 use App\Models\Review;
@@ -40,7 +42,9 @@ class RecycleBinController extends Controller
         'sliders' => Slider::class,
         'menu-items' => MenuItem::class,
         'coupons' => Coupon::class,
-        'branches' => Branch::class,\n        'batches' => Batch::class,\n        'levels' => Level::class,
+        'branches' => Branch::class,
+        'batches' => Batch::class,
+        'levels' => Level::class,\n        'batches' => Batch::class,\n        'levels' => Level::class,
     ];
 
     public function index(Request $request)
