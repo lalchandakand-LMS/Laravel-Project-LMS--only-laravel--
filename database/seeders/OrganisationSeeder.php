@@ -75,9 +75,9 @@ class OrganisationSeeder extends Seeder
         // Home page hero sliders
         $slides = [
             [
-                'badge' => 'Admission 2026 — online & offline batches open',
+                'badge' => 'English courses — online learning and guided practice',
                 'title' => "Learn English with confidence at Alom's English Center",
-                'subtitle' => "Class 9–10 (SSC), HSC and admission preparation with the country's best teachers. Video lessons, class notes, MCQ exams and lifetime access.",
+                'subtitle' => "Build speaking, grammar, vocabulary and writing skills with structured lessons, practice and teacher support.",
                 'image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80',
                 'button_text' => 'Explore courses',
                 'button_url' => '/courses',
