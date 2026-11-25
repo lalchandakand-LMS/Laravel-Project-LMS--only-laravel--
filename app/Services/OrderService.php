@@ -1,15 +1,15 @@
 <?php
 
-namespace App\\Services;
+namespace App\Services;
 
-use App\\Models\\Certificate;
-use App\\Models\\Course;
-use App\\Models\\Ebook;
-use App\\Models\\EbookPurchase;
-use App\\Models\\Enrollment;
-use App\\Models\\Order;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\ValidationException;
+use App\Models\Certificate;
+use App\Models\Course;
+use App\Models\Ebook;
+use App\Models\EbookPurchase;
+use App\Models\Enrollment;
+use App\Models\Order;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
@@ -84,7 +84,7 @@ class OrderService
             return null;
         }
 
-        $progress = $course->progressFor(\\App\\Models\\User::find($userId));
+        $progress = $course->progressFor(\App\Models\User::find($userId));
         if ($progress < 100) {
             return null;
         }
@@ -94,7 +94,7 @@ class OrderService
 
         return Certificate::firstOrCreate(
             ['user_id' => $userId, 'course_id' => $course->id],
-            ['code' => 'CERT-'.strtoupper(\\Illuminate\\Support\\Str::random(10)), 'issued_at' => now()]
+            ['code' => 'CERT-'.strtoupper(\Illuminate\Support\Str::random(10)), 'issued_at' => now()]
         );
     }
 }
