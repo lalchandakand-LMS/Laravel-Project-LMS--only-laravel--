@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Redwan's Method LMS - safe update script
+# Alom's English Center LMS - safe update script
 #
 # What it does, in order:
 #   1. makes a timestamped backup of the database + .env  (storage/backups/)
@@ -8,7 +8,7 @@
 #   3. installs composer dependencies (skippable)
 #   4. runs ONLY new migrations (php artisan migrate --force) - never a fresh wipe
 #   5. rebuilds config/route/view caches, fixes storage links & permissions
-#   6. brings the site back up (even if a step failed)
+#   6. brings the site back up only after every critical step succeeds; failures keep it in maintenance mode
 #
 # It NEVER runs migrate:fresh, db:wipe or db:seed, so existing
 # users / courses / orders / payments are preserved.
@@ -77,9 +77,9 @@ fi
 case "$DB_CONNECTION" in
   sqlite)
     DB_FILE="${DB_DATABASE:-database/database.sqlite}"
-    [ -f "$DB_FILE" ] || warn "no sqlite file at $DB_FILE (nothing to back up yet)"
+    [ -f "$DB_FILE" ] || die "SQLite database not found at $DB_FILE - refusing to update without a verified backup."
     if [ -f "$DB_FILE" ] && [ "$DRY_RUN" -eq 0 ]; then
-      cp -p "$DB_FILE" "$BACKUP_DIR/sqlite-$STAMP.sqlite"
+      cp -p "$DB_FILE" "$BACKUP_DIR/sqlite-$STAMP.sqlite" && [ -s "$BACKUP_DIR/sqlite-$STAMP.sqlite" ] || die "SQLite backup failed or is empty."
       ok "database -> $BACKUP_DIR/sqlite-$STAMP.sqlite"
     fi
     ;;
@@ -101,16 +101,30 @@ case "$DB_CONNECTION" in
     fi
     ;;
   pgsql)
-    command -v pg_dump >/dev/null 2>&1 || die "pg_dump not found - make a manual backup first."
-    [ "$DRY_RUN" -eq 0 ] && PGPASSWORD="$(ENV_VAL DB_PASSWORD)" pg_dump \
-      -h "$(ENV_VAL DB_HOST)" -p "$(ENV_VAL DB_PORT)" -U "$(ENV_VAL DB_USERNAME)" \
-      -f "$BACKUP_DIR/pgsql-$STAMP.sql" "$(ENV_VAL DB_DATABASE)" \
-      && ok "database -> $BACKUP_DIR/pgsql-$STAMP.sql"
+    command -v pg_dump >/dev/null 2>&1 || die "pg_dump not found - refusing to update without a verified database backup."
+    if [ "$DRY_RUN" -eq 0 ]; then
+      PGPASSWORD="$(ENV_VAL DB_PASSWORD)" pg_dump \
+        -h "$(ENV_VAL DB_HOST)" -p "$(ENV_VAL DB_PORT)" -U "$(ENV_VAL DB_USERNAME)" \
+        -f "$BACKUP_DIR/pgsql-$STAMP.sql" "$(ENV_VAL DB_DATABASE)" || die "PostgreSQL backup failed."
+      [ -s "$BACKUP_DIR/pgsql-$STAMP.sql" ] || die "PostgreSQL backup is empty."
+      ok "database -> $BACKUP_DIR/pgsql-$STAMP.sql"
+    fi
     ;;
-  *) warn "unknown DB_CONNECTION '$DB_CONNECTION' - back it up manually." ;;
+  *) die "Unsupported DB_CONNECTION '$DB_CONNECTION' - refusing an unsafe update." ;;
 esac
 
-# keep the 10 newest backups, drop the rest
+# Back up uploaded public files too (course media, avatars, ebook covers).
+if [ -d storage/app/public ] && find storage/app/public -type f -print -quit | grep -q .; then
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "    [dry-run] archive storage/app/public -> $BACKUP_DIR/uploads-$STAMP.tar.gz"
+  else
+    tar -czf "$BACKUP_DIR/uploads-$STAMP.tar.gz" -C storage/app public || die "Uploaded-file backup failed."
+    tar -tzf "$BACKUP_DIR/uploads-$STAMP.tar.gz" >/dev/null 2>&1 || die "Uploaded-file backup verification failed."
+    ok "uploads -> $BACKUP_DIR/uploads-$STAMP.tar.gz"
+  fi
+fi
+
+# keep the 10 newest backup artifacts, drop the rest
 if [ "$DRY_RUN" -eq 0 ]; then
   ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +11 | while read -r old; do
     rm -rf "${BACKUP_DIR:?}/$old"
@@ -118,16 +132,27 @@ if [ "$DRY_RUN" -eq 0 ]; then
 fi
 
 # ---------------------------------------------------- 2. maintenance mode
-cleanup_and_up() {
+UPDATE_SUCCESS=0
+MAINTENANCE_ENABLED=0
+cleanup_after_update() {
+  status=$?
   if [ "$DRY_RUN" -eq 0 ]; then
-    "$PHP_BIN" artisan up >/dev/null 2>&1 || true
+    if [ "$UPDATE_SUCCESS" -eq 1 ]; then
+      "$PHP_BIN" artisan up >/dev/null 2>&1 || warn "Could not disable maintenance mode automatically."
+    elif [ "$MAINTENANCE_ENABLED" -eq 1 ]; then
+      warn "Update did not finish safely. Site is intentionally left in maintenance mode; restore the verified backup and investigate before bringing it online."
+    fi
   fi
+  return "$status"
 }
-trap 'cleanup_and_up' EXIT INT TERM
+trap cleanup_after_update EXIT
+trap 'exit 130' INT TERM
 
 say "Putting the site into maintenance mode"
 if [ "$DRY_RUN" -eq 0 ]; then
-  "$PHP_BIN" artisan down --retry=60 >/dev/null 2>&1 && ok "maintenance mode on (retry 60s)" || warn "could not enable maintenance mode (continuing)"
+  "$PHP_BIN" artisan down --retry=60 >/dev/null 2>&1 || die "Could not enable maintenance mode - aborting update."
+  MAINTENANCE_ENABLED=1
+  ok "maintenance mode on (retry 60s)"
 else
   echo "    [dry-run] php artisan down"
 fi
@@ -176,11 +201,12 @@ else
 fi
 
 # ---------------------------------------------------------------- 6. finish
+UPDATE_SUCCESS=1
 say "Update finished"
 ok "database backup: $BACKUP_DIR/ ($STAMP)"
 ok "code, schema and caches are now on the new version"
 if [ "$DRY_RUN" -eq 1 ]; then
   warn "dry run - nothing was changed"
 else
-  echo "    Site is back online. Open it once in a browser to confirm, and check storage/logs/laravel.log."
+  echo "    Update steps succeeded. The exit handler will now bring the site back online."
 fi
