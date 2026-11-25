@@ -18,7 +18,8 @@ BACKUP_DIR="storage/backups"
 mkdir -p "$BACKUP_DIR"
 
 [ -f .env ] || { echo "no .env here - run from the Laravel project root"; exit 1; }
-cp -p .env "$BACKUP_DIR/env-$STAMP.bak"
+cp -p .env "$BACKUP_DIR/env-$STAMP.bak" || { echo ".env backup failed"; exit 1; }
+[ -s "$BACKUP_DIR/env-$STAMP.bak" ] || { echo ".env backup is empty"; exit 1; }
 echo ".env    -> $BACKUP_DIR/env-$STAMP.bak"
 
 ENV_VAL() { grep -E "^$1=" .env | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '\r'; }
