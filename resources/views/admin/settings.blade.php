@@ -49,7 +49,7 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-        <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="font-bold text-slate-900">Dashboard welcome banner</h3><p class="mt-1 text-xs text-slate-500">Customize the banner shown at the top of the admin dashboard.</p></div>
+        <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="font-bold text-slate-900">Dashboard welcome banner</h3><p class="mt-1 text-xs text-slate-500">Customize the shared welcome banner shown across admin, student, teacher, branch and guardian dashboards.</p></div>
         <label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="dashboard_banner_enabled" value="1" @checked(($settings['dashboard_banner_enabled'] ?? '1') === '1')> Show banner</label></div>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Banner heading</label><input name="dashboard_banner_title" value="{{ old('dashboard_banner_title', $settings['dashboard_banner_title'] ?? 'Welcome back!') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
@@ -76,6 +76,36 @@
             @foreach (['stats' => 'Statistics cards', 'chart' => 'Revenue chart', 'courses' => 'Top courses', 'orders' => 'Recent orders', 'enrollments' => 'New enrollments', 'reviews' => 'Pending reviews'] as $key => $label)
                 <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="dashboard_widget_{{ $key }}" value="1" @checked(($settings['dashboard_widget_'.$key] ?? '1') === '1')> {{ $label }}</label>
             @endforeach
+        </div>
+    </section>
+
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <h3 class="font-bold text-slate-900">Student, teacher, branch & guardian dashboard widgets</h3>
+        <p class="mt-1 text-xs text-slate-500">Choose which sections are visible on each portal. New settings are enabled by default.</p>
+        @php
+        $roleWidgets = [
+            'student' => ['stats' => 'Statistics', 'courses' => 'Course progress', 'exams' => 'Upcoming exams', 'activity' => 'Recent activity'],
+            'teacher' => ['stats' => 'Statistics', 'trend' => 'Enrolment trend', 'upcoming' => 'Upcoming live classes', 'courses' => 'Top courses', 'students' => 'Latest students'],
+            'branch' => ['stats' => 'Branch statistics', 'collection' => 'Collection chart', 'courses' => 'Top courses', 'students' => 'New students', 'orders' => 'Recent orders'],
+            'guardian' => ['children' => 'Children summary', 'orders' => 'Recent purchases'],
+        ];
+        @endphp
+        <div class="mt-4 grid gap-5 md:grid-cols-2">
+        @foreach ($roleWidgets as $role => $widgets)
+            <div class="rounded-xl border border-slate-200 p-4">
+                <h4 class="mb-3 font-bold capitalize text-slate-800">{{ $role }} dashboard</h4>
+                <div class="space-y-2">
+                @foreach ($widgets as $key => $label)
+                    @php($settingKey = 'dashboard_widget_'.$role.'_'.$key)
+                    <label class="flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" name="{{ $settingKey }}" value="1" @checked(($settings[$settingKey] ?? '1') === '1')>
+                        {{ $label }}
+                    </label>
+                @endforeach
+                </div>
+            </div>
+        @endforeach
         </div>
     </section>
 

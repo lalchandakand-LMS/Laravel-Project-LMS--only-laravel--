@@ -83,6 +83,7 @@
 
     <div class="flex min-w-0 flex-1 flex-col">
         <header class="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
+            <button type="button" id="mobile-nav-toggle" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 lg:hidden" aria-controls="mobile-portal-nav" aria-expanded="false">☰ <span class="sr-only">Open navigation</span></button>
             <h1 class="text-lg font-bold text-slate-900">@yield('heading', 'Dashboard')</h1>
             <div class="ml-auto flex items-center gap-3 text-sm">
                 @yield('actions')
@@ -91,12 +92,21 @@
                 <span class="hidden font-semibold text-slate-700 sm:block">{{ $user->name }}</span>
             </div>
         </header>
+        <nav id="mobile-portal-nav" class="hidden border-b border-slate-200 bg-white p-3 lg:hidden">
+            @foreach ($menu as [$routeName, $text, $icon])
+                <a href="{{ route($routeName) }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ $icon }} {{ $text }}</a>
+            @endforeach
+            <a href="{{ route('home') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700">🌐 View site</a>
+            <a href="{{ route('student.dashboard') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700">🎒 My learning</a>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-rose-600">🚪 Log out</button></form>
+        </nav>
         <main class="flex-1 p-4 sm:p-6">
             @include('partials.flash')
             @yield('content')
         </main>
     </div>
 </div>
+<script>(function(){const b=document.getElementById('mobile-nav-toggle'),n=document.getElementById('mobile-portal-nav');if(b&&n)b.addEventListener('click',()=>{const open=n.classList.toggle('hidden')===false;b.setAttribute('aria-expanded',String(open));});})();</script>
 <script>(function(){const s=document.getElementById('admin-theme');if(!s)return;const v=localStorage.getItem('aec-admin-theme')||'system';s.value=v;function apply(x){document.documentElement.dataset.theme=(x==='dark'||(x==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';}s.addEventListener('change',()=>{localStorage.setItem('aec-admin-theme',s.value);apply(s.value);});if(v==='system'&&matchMedia){matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>apply('system'));}})();</script>
 </body>
 </html>

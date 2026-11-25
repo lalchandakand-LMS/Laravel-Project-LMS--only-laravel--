@@ -2,8 +2,10 @@
 @section('title', 'Teacher dashboard')
 @section('heading', 'Assalamu alaikum, '.auth()->user()->name)
 @section('content')
+@include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
+@if (\App\Models\Setting::get('dashboard_widget_teacher_stats', '1') === '1')
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ([
         ['Courses', $stats['courses'], 'emerald'],
@@ -17,9 +19,11 @@
             <p class="mt-1 text-xs text-slate-500">{{ $label === 'Revenue' ? 'from your paid enrolments' : 'across your courses' }}</p>
         </div>
     @endforeach
-</div>
+</div>@endif
+
 
 <div class="mt-5 grid items-start gap-5 lg:grid-cols-3">
+@if (\App\Models\Setting::get('dashboard_widget_teacher_trend', '1') === '1')
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
         <div class="mb-4 flex items-center justify-between">
             <h2 class="font-bold text-slate-800">New enrolments (last 7 days)</h2>
@@ -35,8 +39,10 @@
                 </div>
             @endforeach
         </div>
-    </div>
+    </div>@endif
 
+
+@if (\App\Models\Setting::get('dashboard_widget_teacher_upcoming', '1') === '1')
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Upcoming live classes</h2>
         <ul class="space-y-3 text-sm">
@@ -50,11 +56,13 @@
             @endforelse
         </ul>
         <a href="{{ route('admin.live-classes.index') }}" class="mt-4 inline-block text-sm font-bold text-emerald-700">Manage live classes →</a>
-    </div>
+    </div>@endif
+
 </div>
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2">
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    @if (\App\Models\Setting::get('dashboard_widget_teacher_courses', '1') === '1')
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Top courses</h2>
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($courses as $course)
@@ -70,8 +78,11 @@
             @endforelse
         </ul>
     </div>
+@endif
 
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+    @if (\App\Models\Setting::get('dashboard_widget_teacher_students', '1') === '1')
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Latest students</h2>
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($recent as $enrollment)
@@ -88,5 +99,7 @@
             @endforelse
         </ul>
     </div>
+@endif
+
 </div>
 @endsection

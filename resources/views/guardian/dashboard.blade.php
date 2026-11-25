@@ -2,8 +2,10 @@
 @section('title', 'Guardian dashboard')
 @section('heading', 'Guardian dashboard')
 @section('content')
+@include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
+@if (\App\Models\Setting::get('dashboard_widget_guardian_children', '1') === '1')
 <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
     @forelse ($summary as $row)
         @php $child = $row['child']; @endphp
@@ -45,11 +47,13 @@
             No child is linked to your account yet. Please contact the branch office to link your child’s profile.
         </div>
     @endforelse
-</div>
+</div>@endif
 
-<div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+@if (\App\Models\Setting::get('dashboard_widget_guardian_orders', '1') === '1')
+<div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
     <h2 class="border-b border-slate-100 px-5 py-4 font-bold text-slate-800">Recent purchases</h2>
-    <table class="w-full text-sm">
+    <table class="w-full min-w-[620px] text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr><th class="px-5 py-3">Order</th><th class="px-5 py-3">Student</th><th class="px-5 py-3">Items</th><th class="px-5 py-3">Total</th><th class="px-5 py-3">Status</th></tr>
         </thead>
@@ -67,5 +71,6 @@
             @endforelse
         </tbody>
     </table>
-</div>
+</div>@endif
+
 @endsection
