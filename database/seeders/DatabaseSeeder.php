@@ -27,9 +27,9 @@ class DatabaseSeeder extends Seeder
     {
         /* ---------------- Users ---------------- */
         $admin = User::create([
-            'name' => 'Redwan Hushen', 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
+            'name' => 'Alom's English Center Admin', 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
             'role' => 'admin', 'phone' => '01700000001', 'designation' => 'Founder & Lead Instructor',
-            'bio' => 'Maths teacher, author and founder of Redwan\'s Method.',
+            'bio' => 'Administrator account for Alom's English Center.',
         ]);
 
         $instructors = collect([
@@ -54,18 +54,18 @@ class DatabaseSeeder extends Seeder
 
         /* ---------------- Settings ---------------- */
         foreach ([
-            'site_name' => "Redwan's Method",
+            'site_name' => "Alom's English Center",
             'site_tagline' => 'Quality education for everyone, everywhere.',
-            'site_email' => 'support@redwansmethod.test',
-            'site_phone' => '+880 1700-000000',
-            'site_address' => 'Dhanmondi, Dhaka 1205, Bangladesh',
-            'bkash_number' => '01711111111',
-            'nagad_number' => '01722222222',
+            'site_email' => 'support@alomsenglishcenter.com',
+            'site_phone' => '',
+            'site_address' => '',
+            'bkash_number' => '',
+            'nagad_number' => '',
             'currency' => '৳',
             'facebook' => 'https://facebook.com/',
             'youtube' => 'https://youtube.com/',
             'instagram' => 'https://instagram.com/',
-            'certificate_signature' => 'Redwan Hushen',
+            'certificate_signature' => 'Alom's English Center Admin',
             'about_text' => 'A comprehensive online learning platform with courses delivered by highly qualified educators.',
         ] as $key => $value) {
             Setting::set($key, $value);
@@ -158,7 +158,7 @@ class DatabaseSeeder extends Seeder
                 'subtitle' => $bp['subtitle'],
                 'category_id' => $categories[$bp['category']]->id,
                 'instructor_id' => $i % 2 === 0 ? $admin->id : $instructors[$i % $instructors->count()]->id,
-                'description' => $bp['subtitle']."\n\nThis course is designed by the Redwan's Method academic team. You get recorded lessons, lecture notes, chapter-wise MCQ exams and live doubt-solving classes. Lifetime access, no expiry.",
+                'description' => $bp['subtitle']."\n\nThis course is designed by the Alom's English Center academic team. You get recorded lessons, lecture notes, chapter-wise MCQ exams and live doubt-solving classes. Lifetime access, no expiry.",
                 'requirements' => "Basic understanding of the previous class syllabus.\nA notebook and a stable internet connection.",
                 'outcomes' => $bp['outcomes'],
                 'price' => $bp['price'],
@@ -239,7 +239,7 @@ class DatabaseSeeder extends Seeder
         ];
         foreach ($books as $b) {
             Ebook::create([
-                'title' => $b[0], 'description' => 'A carefully prepared resource by Redwan\'s Method academic team. Includes solved examples, shortcuts and practice questions.',
+                'title' => $b[0], 'description' => 'A carefully prepared resource by Alom\'s English Center academic team. Includes solved examples, shortcuts and practice questions.',
                 'price' => $b[1], 'pages' => $b[2], 'is_free' => $b[3], 'is_published' => true,
             ]);
         }
