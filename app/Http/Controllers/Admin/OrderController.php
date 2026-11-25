@@ -51,6 +51,10 @@ class OrderController extends Controller
     {
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled,refunded']);
 
+        if ($order->status === 'paid' && $data['status'] !== 'paid') {
+            return back()->with('error', 'A paid order cannot be downgraded. Use a recorded refund or adjustment workflow.');
+        }
+
         if ($data['status'] === 'paid' && $order->status !== 'paid') {
             try {
                 DB::transaction(function () use ($request, $order) {
