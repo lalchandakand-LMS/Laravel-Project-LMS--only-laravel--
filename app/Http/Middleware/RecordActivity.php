@@ -17,8 +17,7 @@ class RecordActivity
 
         if ($response->getStatusCode() < 400
             && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
-            && ! $request->is('up')
-            && ! $request->is('admin/system/backups/*')) {
+            && ! $request->is('up')) {
             try {
                 if (DB::getSchemaBuilder()->hasTable('activity_logs')) {
                     DB::table('activity_logs')->insert([
