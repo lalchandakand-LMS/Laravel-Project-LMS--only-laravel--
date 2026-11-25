@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Portal') — {{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</title>
+    <title>@yield('title', 'Portal') — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     @include('partials.assets')
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
