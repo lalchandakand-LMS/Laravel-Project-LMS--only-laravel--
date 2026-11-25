@@ -13,8 +13,7 @@ use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\Student;\nuse App\Models\MenuItem;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Student;\nuse Illuminate\Support\Facades\Route;
 
 /* ------------------------------------------------------------------
  |  PUBLIC
