@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class LiveClass extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = [
         'course_id', 'title', 'description', 'meeting_url', 'meeting_password',
         'recording_url', 'platform', 'starts_at', 'duration_minutes', 'is_published',
