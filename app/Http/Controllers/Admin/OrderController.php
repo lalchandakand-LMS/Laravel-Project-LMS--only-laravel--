@@ -52,22 +52,24 @@ class OrderController extends Controller
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled,refunded']);
 
         if ($data['status'] === 'paid' && $order->status !== 'paid') {
-            $due = $order->dueAmount();
-            if ($due > 0) {
-                Payment::create([
-                    'order_id' => $order->id,
-                    'gateway' => 'admin_manual',
-                    'transaction_id' => 'ADMIN-'.Str::upper(Str::random(12)),
-                    'sender_number' => 'Recorded by '.$request->user()->name,
-                    'amount' => $due,
-                    'status' => 'verified',
-                    'verified_by' => $request->user()->id,
-                    'verified_at' => now(),
-                ]);
-            }
-
             try {
-                OrderService::fulfill($order);
+                DB::transaction(function () use ($request, $order) {
+                    $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                    $due = $lockedOrder->dueAmount();
+                    if ($due > 0) {
+                        Payment::create([
+                            'order_id' => $lockedOrder->id,
+                            'gateway' => 'admin_manual',
+                            'transaction_id' => 'ADMIN-'.Str::upper(Str::random(12)),
+                            'sender_number' => 'Recorded by '.$request->user()->name,
+                            'amount' => $due,
+                            'status' => 'verified',
+                            'verified_by' => $request->user()->id,
+                            'verified_at' => now(),
+                        ]);
+                    }
+                    OrderService::fulfill($lockedOrder);
+                });
             } catch (ValidationException $exception) {
                 return back()->withErrors($exception->errors())
                     ->with('error', 'Course capacity has been reached. Order remains unpaid and requires manual review.');
