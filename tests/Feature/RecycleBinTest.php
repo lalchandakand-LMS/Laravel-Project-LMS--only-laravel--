@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Slider;
+use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -52,6 +54,31 @@ class RecycleBinTest extends TestCase
             'deleted_at' => null,
             'deleted_by' => null,
         ]);
+    }
+
+    public function test_permanent_delete_is_blocked_when_course_has_enrolment_history(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::where('email', 'student@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Protected course history', 'slug' => 'protected-course-history']);
+
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'price_paid' => 100,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.courses.destroy', $course))
+            ->assertRedirect();
+
+        $this->delete(route('admin.recycle-bin.destroy', ['type' => 'courses', 'id' => $course->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('courses', ['id' => $course->id]);
+        $this->assertDatabaseHas('enrollments', ['course_id' => $course->id, 'user_id' => $student->id]);
     }
 
     public function test_recycle_bin_rejects_unknown_model_types(): void
