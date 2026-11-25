@@ -147,6 +147,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('payments/{payment}/proof', [Admin\OrderController::class, 'paymentProof'])->name('payments.proof');
         Route::post('orders/{order:order_no}/offline-payment', [Admin\OrderController::class, 'recordOfflinePayment'])->name('orders.offline-payment');
         Route::post('orders/{order:order_no}/refunds', [Admin\OrderController::class, 'recordRefund'])->name('orders.refunds.store');
+        Route::get('payment-reports', [Admin\PaymentReportController::class, 'index'])->name('payment-reports.index');
+        Route::get('payment-reports/export', [Admin\PaymentReportController::class, 'export'])->name('payment-reports.export');
 
         Route::get('reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
         Route::post('reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
