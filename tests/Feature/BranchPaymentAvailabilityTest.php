@@ -100,6 +100,7 @@ class BranchPaymentAvailabilityTest extends TestCase
         $this->actingAs($student)
             ->post(route('checkout.pay', $order->order_no), [
                 'gateway' => 'nagad',
+                'amount' => 100,
                 'sender_number' => '01700000000',
                 'transaction_id' => 'DUPLICATE-TRX',
             ])
