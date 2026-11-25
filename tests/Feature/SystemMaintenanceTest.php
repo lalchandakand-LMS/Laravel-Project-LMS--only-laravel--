@@ -61,8 +61,9 @@ class SystemMaintenanceTest extends TestCase
 
         $student->delete();
 
-        $this->assertNotNull($student->fresh()->deleted_at);
-        $this->assertSame($admin->id, (int) $student->fresh()->deleted_by);
+        $deletedStudent = User::withTrashed()->findOrFail($student->id);
+        $this->assertNotNull($deletedStudent->deleted_at);
+        $this->assertSame($admin->id, (int) $deletedStudent->deleted_by);
         $this->assertTrue(User::onlyTrashed()->whereKey($student->id)->exists());
     }
 }
