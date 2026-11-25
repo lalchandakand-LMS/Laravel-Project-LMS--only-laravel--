@@ -6,20 +6,20 @@
 @endsection
 @section('content')
 @php
-    $brandPrimary = \\App\\Models\\Setting::get('dashboard_primary_color', '#059669');
-    $brandSecondary = \\App\\Models\\Setting::get('dashboard_secondary_color', '#0f172a');
-    $widgetOn = fn ($name) => \\App\\Models\\Setting::get('dashboard_widget_'.$name, '1') === '1';
-    $bannerEnabled = \\App\\Models\\Setting::get('dashboard_banner_enabled', '1') === '1';
-    $bannerImage = \\App\\Models\\Setting::get('dashboard_banner');
-    $bannerUrl = \\App\\Models\\Setting::get('dashboard_banner_button_url');
+    $brandPrimary = \App\Models\Setting::get('dashboard_primary_color', '#059669');
+    $brandSecondary = \App\Models\Setting::get('dashboard_secondary_color', '#0f172a');
+    $widgetOn = fn ($name) => \App\Models\Setting::get('dashboard_widget_'.$name, '1') === '1';
+    $bannerEnabled = \App\Models\Setting::get('dashboard_banner_enabled', '1') === '1';
+    $bannerImage = \App\Models\Setting::get('dashboard_banner');
+    $bannerUrl = \App\Models\Setting::get('dashboard_banner_button_url');
 @endphp
 @if ($bannerEnabled)
 <section class="relative mb-6 overflow-hidden rounded-3xl p-7 text-white shadow-lg sm:p-9" style="background: {{ $bannerImage ? 'linear-gradient(90deg, rgba(15,23,42,.92), rgba(15,23,42,.35)), url('.asset('storage/'.$bannerImage).') center/cover' : 'linear-gradient(115deg, '.$brandSecondary.', '.$brandPrimary.')' }}">
     <div class="relative z-10 max-w-2xl">
-        <p class="text-xs font-bold uppercase tracking-[.22em] text-white/70">{{ \\App\\Models\\Setting::get('site_name', "Alom's English Center") }}</p>
-        <h2 class="mt-3 text-2xl font-extrabold sm:text-3xl">{{ \\App\\Models\\Setting::get('dashboard_banner_title', 'Welcome back!') }}</h2>
-        <p class="mt-2 max-w-xl text-sm leading-6 text-white/80">{{ \\App\\Models\\Setting::get('dashboard_banner_subtitle', 'Here is what is happening at your academy today.') }}</p>
-        <a href="{{ $bannerUrl ?: route('admin.courses.index') }}" class="mt-5 inline-flex rounded-xl bg-white px-5 py-2.5 text-sm font-bold" style="color: {{ $brandSecondary }}">{{ \\App\\Models\\Setting::get('dashboard_banner_button_text', 'Manage courses') }}</a>
+        <p class="text-xs font-bold uppercase tracking-[.22em] text-white/70">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</p>
+        <h2 class="mt-3 text-2xl font-extrabold sm:text-3xl">{{ \App\Models\Setting::get('dashboard_banner_title', 'Welcome back!') }}</h2>
+        <p class="mt-2 max-w-xl text-sm leading-6 text-white/80">{{ \App\Models\Setting::get('dashboard_banner_subtitle', 'Here is what is happening at your academy today.') }}</p>
+        <a href="{{ $bannerUrl ?: route('admin.courses.index') }}" class="mt-5 inline-flex rounded-xl bg-white px-5 py-2.5 text-sm font-bold" style="color: {{ $brandSecondary }}">{{ \App\Models\Setting::get('dashboard_banner_button_text', 'Manage courses') }}</a>
     </div>
     <div class="pointer-events-none absolute -right-12 -top-20 h-72 w-72 rounded-full border-[35px] border-white/10"></div>
 </section>
