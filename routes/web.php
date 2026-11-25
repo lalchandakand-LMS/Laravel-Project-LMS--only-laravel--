@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Branch;
 use App\Http\Controllers\Guardian;
 use App\Http\Controllers\Teacher;
@@ -128,6 +129,9 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     // all organisation, account, finance, and site-wide management stay admin-only.
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');
+        Route::get('attendance/{session}', [AttendanceController::class, 'adminShow'])->name('attendance.show');
+        Route::post('attendance/{session}/review', [AttendanceController::class, 'review'])->name('attendance.review');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
         Route::resource('levels', Admin\LevelController::class)->except('show');
         Route::resource('batches', Admin\BatchController::class)->except('show');
@@ -227,6 +231,12 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
     Route::get('/students/{user}', [Teacher\DashboardController::class, 'student'])->name('students.show');
     Route::get('/earnings', [Teacher\DashboardController::class, 'earnings'])->name('earnings');
     Route::get('/live-classes', [Teacher\DashboardController::class, 'liveClasses'])->name('live-classes');
+    Route::get('/attendance', [AttendanceController::class, 'teacherIndex'])->name('attendance.index');
+    Route::get('/attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
+    Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    Route::get('/attendance/{session}', [AttendanceController::class, 'show'])->name('attendance.show');
+    Route::post('/attendance/{session}', [AttendanceController::class, 'save'])->name('attendance.save');
+    Route::post('/attendance/{session}/submit', [AttendanceController::class, 'submit'])->name('attendance.submit');
 });
 
 /* ------------------------------------------------------------------
