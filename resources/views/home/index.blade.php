@@ -1,4 +1,6 @@
 @extends('layouts.app')
+@section('title', 'English Courses, Spoken English & Grammar')
+@section('meta_description', 'Learn spoken English, grammar, vocabulary, writing and communication skills with guided courses at Alom\'s English Center.')
 @section('content')
 
 {{-- HERO SLIDER --}}
