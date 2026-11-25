@@ -33,12 +33,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $instructors = collect([
-            ['Nusrat Jahan', 'Physics', 'Senior Physics Instructor'],
-            ['Tanvir Ahmed', 'Chemistry', 'Chemistry & Admission Coach'],
-            ['Sadia Islam', 'Higher Math', 'HSC Higher Math Instructor'],
+            ['Nusrat Jahan', 'Spoken English', 'English Language Instructor'],
+            ['Tanvir Ahmed', 'Grammar & Writing', 'English Grammar Instructor'],
+            ['Sadia Islam', 'IELTS Preparation', 'IELTS Preparation Coach'],
         ])->map(fn ($row, $i) => User::create([
             'name' => $row[0], 'email' => 'teacher'.$i.'@lms.test', 'password' => Hash::make('password'),
-            'role' => 'instructor', 'designation' => $row[2], 'phone' => '0170000001'.$i,
+            'role' => 'instructor', 'designation' => $row[2], 'phone' => '',
             'bio' => $row[1].' instructor with 8+ years of teaching experience.',
         ]));
 
@@ -56,7 +56,7 @@ class DatabaseSeeder extends Seeder
         foreach ([
             'site_name' => "Alom's English Center",
             'site_tagline' => 'Build confidence in English through practical lessons and guided learning.',
-            'site_email' => 'support@alomsenglishcenter.com',
+            'site_email' => '',
             'site_phone' => '',
             'site_address' => '',
             'bkash_number' => '',
@@ -66,7 +66,7 @@ class DatabaseSeeder extends Seeder
             'youtube' => '',
             'instagram' => '',
             'certificate_signature' => "Alom's English Center Admin",
-            'about_text' => 'A comprehensive online learning platform with courses delivered by highly qualified educators.',
+            'about_text' => 'Alom’s English Center helps learners improve speaking, grammar, vocabulary, listening and writing through structured lessons and guided practice.',
         ] as $key => $value) {
             Setting::set($key, $value);
         }
@@ -234,10 +234,10 @@ class DatabaseSeeder extends Seeder
 
         /* ---------------- E-books ---------------- */
         $books = [
-            ['SSC Higher Math Solution Book', 350, 240, false],
-            ['HSC Physics Formula Sheet', 0, 24, true],
-            ['Admission Model Test Book (Engineering)', 500, 320, false],
-            ['English Grammar Cheat Sheet', 0, 18, true],
+            ['Everyday English Vocabulary Builder', 250, 80, false],
+            ['English Grammar Quick Reference', 0, 36, true],
+            ['IELTS Writing Practice Workbook', 400, 120, false],
+            ['Spoken English Conversation Practice', 0, 45, true],
         ];
         foreach ($books as $b) {
             Ebook::create([
@@ -296,11 +296,11 @@ class DatabaseSeeder extends Seeder
                     'user_id' => $student->id,
                     'rating' => rand(4, 5),
                     'comment' => collect([
-                        'ভাইয়ার ক্লাসগুলো amazing! প্রতিটা অধ্যায় এত সুন্দরভাবে বুঝিয়ে দিয়েছেন যে আর ভয় লাগে না।',
-                        'To be honest, this series is too much effective. Before I was weak in MCQ, now I get 27-29 out of 30.',
-                        'এত সুন্দর করে পড়ানোর জন্য ধন্যবাদ। CQ এবং MCQ দুটোই কভার করা হয়েছে।',
-                        'Best platform for SSC preparation. The notes and model tests are worth every taka.',
-                        'অসাধারণ! এত কম খরচে এত ভালো কোর্স আশা করিনি।',
+                        'Speaking practice helped me feel more confident when I use English in everyday situations.',
+                        'The grammar lessons are clear and the practice activities help me understand my mistakes.',
+                        'প্রতিটি ক্লাসে নতুন শব্দ ও বাক্য ব্যবহার করতে শিখছি।',
+                        'The writing lessons helped me organise my ideas and write more clearly.',
+                        'IELTS speaking practice is organised and gives me a clear way to improve.',
                     ])->random(),
                     'is_approved' => true,
                 ]);
