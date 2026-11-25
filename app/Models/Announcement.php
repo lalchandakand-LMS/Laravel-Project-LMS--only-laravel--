@@ -2,11 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Announcement extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = ['course_id','title','body','is_published'];
     protected $casts = ['is_published' => 'boolean'];
 
