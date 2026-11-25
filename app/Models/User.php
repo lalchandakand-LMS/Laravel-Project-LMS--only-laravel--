@@ -5,13 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Concerns\TracksDeletionActor;
 use Illuminate\Support\Str;
 use App\Models\Concerns\TracksDeletionActor;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, TracksDeletionActor;
 
     /** Every role the platform understands. */
     public const ROLES = [
