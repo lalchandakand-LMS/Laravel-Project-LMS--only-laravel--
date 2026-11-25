@@ -27,7 +27,12 @@ class CourseVideoResumeTest extends TestCase
         $lesson = $course->lessons()->firstOrFail();
 
         $course->update(['is_published' => true]);
-        $lesson->update(['is_published' => true, 'is_free_preview' => false]);
+        $lesson->update([
+            'is_published' => true,
+            'is_free_preview' => false,
+            'type' => 'video',
+            'video_url' => 'https://youtu.be/abcdefghijk',
+        ]);
         Enrollment::updateOrCreate(
             ['user_id' => $student->id, 'course_id' => $course->id],
             ['status' => 'active', 'enrolled_at' => now(), 'expires_at' => null]
