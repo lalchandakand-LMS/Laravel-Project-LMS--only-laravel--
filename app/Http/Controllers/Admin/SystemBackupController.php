@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -117,6 +118,12 @@ class SystemBackupController extends Controller
         DB::purge();
         DB::connection()->getPdo();
         DB::select('select 1');
+
+        foreach (['migrations', 'users', 'courses', 'orders'] as $table) {
+            if (! Schema::hasTable($table)) {
+                throw new \RuntimeException('Restored database is missing required LMS table: '.$table);
+            }
+        }
     }
 
     public function index()
