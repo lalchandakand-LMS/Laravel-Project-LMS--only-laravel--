@@ -32,7 +32,7 @@ class SystemBackupController extends Controller
         $process->setTimeout(600);
         $handle = fopen($target, 'wb');
         if ($handle === false) {
-            throw new \\RuntimeException('Could not create backup file.');
+            throw new \RuntimeException('Could not create backup file.');
         }
         try {
             $process->run(function ($type, $buffer) use ($handle) {
@@ -45,7 +45,7 @@ class SystemBackupController extends Controller
         }
         if (! $process->isSuccessful() || ! is_file($target) || filesize($target) === 0) {
             @unlink($target);
-            throw new \\RuntimeException('mysqldump failed or returned an empty backup.');
+            throw new \RuntimeException('mysqldump failed or returned an empty backup.');
         }
         chmod($target, 0600);
     }
@@ -80,20 +80,7 @@ class SystemBackupController extends Controller
                     throw new \RuntimeException('Could not copy SQLite database.');
                 }
             } elseif ($connection === 'mysql') {
-                $process = new Process([
-                    'mysqldump', '--single-transaction', '--quick', '--no-tablespaces',
-                    '--host='.config('database.connections.mysql.host'),
-                    '--port='.config('database.connections.mysql.port'),
-                    '--user='.config('database.connections.mysql.username'),
-                    config('database.connections.mysql.database'),
-                ], base_path(), ['MYSQL_PWD' => (string) config('database.connections.mysql.password')]);
-                $process->setTimeout(300);
-                $process->run();
-                if (! $process->isSuccessful() || trim($process->getOutput()) === '') {
-                    throw new \RuntimeException('mysqldump failed or returned an empty backup. Check hosting support for mysqldump.');
-                }
-                file_put_contents($target, $process->getOutput(), LOCK_EX);
-                chmod($target, 0600);
+                $this->dumpMysqlToFile($target);
             } else {
                 return back()->with('error', 'This database driver is not supported by the backup manager yet.');
             }
@@ -152,19 +139,7 @@ class SystemBackupController extends Controller
                     Artisan::call('up');
                 }
             } elseif ($connection === 'mysql') {
-                $backupProcess = new Process(['mysqldump', '--single-transaction', '--quick', '--no-tablespaces',
-                    '--host='.config('database.connections.mysql.host'),
-                    '--port='.config('database.connections.mysql.port'),
-                    '--user='.config('database.connections.mysql.username'),
-                    config('database.connections.mysql.database'),
-                ], base_path(), ['MYSQL_PWD' => (string) config('database.connections.mysql.password')]);
-                $backupProcess->setTimeout(300);
-                $backupProcess->run();
-                if (! $backupProcess->isSuccessful() || trim($backupProcess->getOutput()) === '') {
-                    throw new \RuntimeException('Pre-restore safety backup failed; restore was cancelled.');
-                }
-                file_put_contents($safetyPath, $backupProcess->getOutput(), LOCK_EX);
-                chmod($safetyPath, 0600);
+                $this->dumpMysqlToFile($safetyPath);
 
                 Artisan::call('down', ['--retry' => 60]);
                 try {
@@ -176,7 +151,7 @@ class SystemBackupController extends Controller
                     ], base_path(), ['MYSQL_PWD' => (string) config('database.connections.mysql.password')]);
                     $input = fopen($uploaded, 'rb');
                     if ($input === false) {
-                        throw new \\RuntimeException('Could not read uploaded SQL backup.');
+                        throw new \RuntimeException('Could not read uploaded SQL backup.');
                     }
                     $process->setInput($input);
                     $process->setTimeout(600);
