@@ -31,6 +31,9 @@ jobs:
           coverage: none
           tools: composer:v2
 
+      - name: Validate safe update scripts
+        run: bash -n update.sh backup.sh
+
       - name: Validate Composer configuration
         run: composer validate --no-check-publish
 
