@@ -108,7 +108,12 @@ class OrderController extends Controller
                         'verified_at' => now(),
                         'rejection_reason' => $data['rejection_reason'] ?? 'Payment could not be verified.',
                     ]);
-                    $order->update(['status' => $order->amountPaid() > 0 ? 'partially_paid' : 'pending']);
+                    $netPaid = $order->amountPaid();
+                    $order->update([
+                        'status' => $netPaid >= $order->total
+                            ? 'paid'
+                            : ($netPaid > 0 ? 'partially_paid' : 'pending'),
+                    ]);
                     return;
                 }
 
