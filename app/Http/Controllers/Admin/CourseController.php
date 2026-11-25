@@ -115,10 +115,20 @@ class CourseController extends Controller
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
         }
 
-        $data['outcomes'] = collect(preg_split('/\r\n|\r|\n/', (string) $request->input('outcomes')))
+        $data['outcomes'] = collect(preg_split('/\r
+|\r|
+/', (string) $request->input('outcomes')))
             ->map(fn ($l) => trim($l))->filter()->values()->all();
 
-        if (! empty($data['level_id'])) {\n            $managedLevel = Level::findOrFail($data['level_id']);\n            $label = strtolower($managedLevel->name);\n            $data['level'] = str_contains($label, 'advanced') ? 'advanced' : (str_contains($label, 'intermediate') ? 'intermediate' : 'beginner');\n        } else {\n            $data['level'] = $data['level'] ?? 'beginner';\n        }\n\n        $data['is_published'] = $request->boolean('is_published');
+        if (! empty($data['level_id'])) {
+            $managedLevel = Level::findOrFail($data['level_id']);
+            $label = strtolower($managedLevel->name);
+            $data['level'] = str_contains($label, 'advanced') ? 'advanced' : (str_contains($label, 'intermediate') ? 'intermediate' : 'beginner');
+        } else {
+            $data['level'] = $data['level'] ?? 'beginner';
+        }
+
+        $data['is_published'] = $request->boolean('is_published');
         $data['is_featured'] = $request->boolean('is_featured');
         $data['has_certificate'] = $request->boolean('has_certificate');
 
