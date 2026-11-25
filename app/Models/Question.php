@@ -2,11 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Question extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = ['exam_id','type','question','explanation','marks','position'];
     protected $casts = ['marks' => 'float'];
 
