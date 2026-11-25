@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\ComplaintAttachment;
 use App\Models\ComplaintReply;
+use App\Models\ComplaintEvent;
 use App\Notifications\ComplaintUpdateNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -36,6 +37,8 @@ class ComplaintController extends Controller
             'subject' => $data['subject'],
             'body' => $data['body'],
         ]);
+
+        ComplaintEvent::create(['complaint_id' => $complaint->id, 'created_by' => $request->user()->id, 'event_type' => 'submitted', 'description' => 'Complaint submitted.']);
 
         foreach ($request->file('attachments', []) as $file) {
             $path = $file->store('complaints/'.$complaint->id, 'local');
@@ -77,6 +80,7 @@ class ComplaintController extends Controller
             'body' => $data['body'],
         ]);
         $this->storeReplyFiles($request, $complaint, $reply);
+        ComplaintEvent::create(['complaint_id' => $complaint->id, 'created_by' => $request->user()->id, 'event_type' => 'reply', 'description' => 'A reply was added.']);
 
         $admins = \App\Models\User::where('role', 'admin')->where('is_active', true)->get();
         foreach ($admins as $admin) $admin->notify(new ComplaintUpdateNotification($complaint, 'The complainant added a reply.'));
