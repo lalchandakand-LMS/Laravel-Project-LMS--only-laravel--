@@ -24,7 +24,7 @@ class AttendanceController extends Controller
     public function teacherIndex(Request $request)
     {
         $user = $request->user();
-        $sessions = AttendanceSession::with(['batch', 'course', 'reviewer'])
+        $sessions = AttendanceSession::withCount('records')->with(['batch', 'course', 'reviewer'])
             ->when(! $user->isAdmin(), fn ($q) => $q->where('instructor_id', $user->id))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->latest('starts_at')->paginate(20)->withQueryString();
@@ -137,12 +137,44 @@ class AttendanceController extends Controller
 
     public function adminIndex(Request $request)
     {
-        $sessions = AttendanceSession::with(['batch', 'course', 'instructor', 'reviewer'])
+        $sessions = AttendanceSession::withCount('records')->with(['batch', 'course', 'instructor', 'reviewer'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
             ->latest('starts_at')->paginate(25)->withQueryString();
 
         return view('attendance.admin.index', compact('sessions'));
+    }
+
+    public function adminShow(AttendanceSession $session)
+    {
+        $session->load(['batch', 'course', 'instructor', 'reviewer', 'records.student']);
+        return view('attendance.admin.show', compact('session'));
+    }
+
+    public function studentReport(Request $request)
+    {
+        $student = $request->user();
+        $batchIds = Enrollment::where('user_id', $student->id)->where('status', 'active')->whereNotNull('batch_id')->pluck('batch_id');
+        $records = Attendance::with(['session.batch', 'session.course', 'session.instructor'])
+            ->where('student_id', $student->id)
+            ->whereHas('session', fn ($q) => $q->where('status', 'approved')->whereIn('batch_id', $batchIds))
+            ->latest()->paginate(25)->withQueryString();
+
+        return view('attendance.reports.index', ['records' => $records, 'reportTitle' => 'My attendance']);
+    }
+
+    public function guardianReport(Request $request, \\App\\Models\\User $child)
+    {
+        $guardian = $request->user();
+        abort_unless($guardian->isAdmin() || $guardian->children()->whereKey($child->id)->exists(), 403);
+        abort_unless($child->isStudent(), 404);
+        $batchIds = Enrollment::where('user_id', $child->id)->where('status', 'active')->whereNotNull('batch_id')->pluck('batch_id');
+        $records = Attendance::with(['session.batch', 'session.course', 'session.instructor'])
+            ->where('student_id', $child->id)
+            ->whereHas('session', fn ($q) => $q->where('status', 'approved')->whereIn('batch_id', $batchIds))
+            ->latest()->paginate(25)->withQueryString();
+
+        return view('attendance.reports.index', ['records' => $records, 'reportTitle' => $child->name.\' — attendance report\']);
     }
 
     public function review(Request $request, AttendanceSession $session)
