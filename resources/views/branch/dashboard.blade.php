@@ -2,6 +2,7 @@
 @section('title', 'Branch dashboard')
 @section('heading', $branch->name)
 @section('content')
+@include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <p class="-mt-2 mb-4 text-sm text-slate-600">
