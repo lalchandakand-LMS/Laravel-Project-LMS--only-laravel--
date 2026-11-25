@@ -7,7 +7,7 @@
     <p class="mt-4 text-lg text-slate-600">Alom's English Center helps learners build practical English skills through structured lessons, guided practice and supportive teaching. Our goal is to make quality English education accessible to learners at every level.</p>
 
     <div class="mt-10 grid gap-6 sm:grid-cols-3">
-        @foreach ([['🎯', 'Our mission', 'Help learners communicate clearly and confidently in English.'], ['👩‍🏫', 'Expert teachers', 'Learn through guided lessons, feedback and regular speaking practice.'], ['📈', 'Proven results', 'Track progress in grammar, vocabulary, listening, speaking and writing.'],] as [$icon, $title, $text])
+        @foreach ([['🎯', 'Our mission', 'Help learners communicate clearly and confidently in English.'], ['👩‍🏫', 'Supportive guidance', 'Learn through guided lessons, feedback and regular speaking practice.'], ['📈', 'Practice & progress', 'Track progress in grammar, vocabulary, listening, speaking and writing.'],] as [$icon, $title, $text])
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="text-3xl">{{ $icon }}</div>
                 <h3 class="mt-3 font-bold text-slate-900">{{ $title }}</h3>
