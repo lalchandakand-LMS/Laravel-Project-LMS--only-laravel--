@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Http\\Controllers\\Student;
+namespace App\Http\Controllers\Student;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Course;
-use App\\Models\\Lesson;
-use App\\Models\\LessonProgress;
-use App\\Services\\OrderService;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\Storage;
+use App\Http\Controllers\Controller;
+use App\Models\Course;
+use App\Models\Lesson;
+use App\Models\LessonProgress;
+use App\Services\OrderService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class LearnController extends Controller
 {
