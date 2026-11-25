@@ -2,6 +2,7 @@
 @section('title', 'Guardian dashboard')
 @section('heading', 'Guardian dashboard')
 @section('content')
+@include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -47,9 +48,9 @@
     @endforelse
 </div>
 
-<div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+<div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
     <h2 class="border-b border-slate-100 px-5 py-4 font-bold text-slate-800">Recent purchases</h2>
-    <table class="w-full text-sm">
+    <table class="w-full min-w-[620px] text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr><th class="px-5 py-3">Order</th><th class="px-5 py-3">Student</th><th class="px-5 py-3">Items</th><th class="px-5 py-3">Total</th><th class="px-5 py-3">Status</th></tr>
         </thead>
