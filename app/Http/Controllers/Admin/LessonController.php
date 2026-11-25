@@ -19,6 +19,7 @@ class LessonController extends Controller
         return view('admin.lessons.form', [
             'lesson' => new Lesson(['course_id' => $course->id, 'section_id' => $request->get('section_id'), 'type' => 'video']),
             'course' => $course,
+            'lessons' => $course->lessons()->orderBy('position')->get(),
         ]);
     }
 
@@ -27,6 +28,7 @@ class LessonController extends Controller
         $data = $this->validated($request);
         $this->authorizeCourse(Course::findOrFail($data['course_id']));
         $this->assertSectionBelongsToCourse($data);
+        $this->assertPrerequisiteBelongsToCourse($data);
         Lesson::create($data);
 
         return redirect()->route('admin.courses.edit', $data['course_id'])->with('success', 'Lesson added.');
@@ -38,6 +40,7 @@ class LessonController extends Controller
         return view('admin.lessons.form', [
             'lesson' => $lesson,
             'course' => $lesson->course->load('sections'),
+            'lessons' => $lesson->course->lessons()->whereKeyNot($lesson->id)->orderBy('position')->get(),
         ]);
     }
 
@@ -47,6 +50,7 @@ class LessonController extends Controller
         $data = $this->validated($request);
         $this->authorizeCourse(Course::findOrFail($data['course_id']));
         $this->assertSectionBelongsToCourse($data);
+        $this->assertPrerequisiteBelongsToCourse($data, $lesson);
         $lesson->update($data);
         return redirect()->route('admin.courses.edit', $lesson->course_id)->with('success', 'Lesson updated.');
     }
@@ -93,6 +97,31 @@ class LessonController extends Controller
         }
     }
 
+    private function assertPrerequisiteBelongsToCourse(array $data, ?Lesson $lesson = null): void
+    {
+        if (empty($data['prerequisite_lesson_id'])) {
+            return;
+        }
+
+        $prerequisite = Lesson::whereKey($data['prerequisite_lesson_id'])
+            ->where('course_id', $data['course_id'])->first();
+        abort_unless($prerequisite && (! $lesson || $prerequisite->id !== $lesson->id), 422,
+            'A prerequisite must be a different lesson in the same course.');
+
+        $cursor = $prerequisite;
+        $visited = [];
+        while ($cursor && $cursor->prerequisite_lesson_id) {
+            if ($lesson && (int) $cursor->prerequisite_lesson_id === (int) $lesson->id) {
+                abort(422, 'This prerequisite would create a circular lesson dependency.');
+            }
+            if (in_array($cursor->id, $visited, true)) {
+                abort(422, 'The prerequisite chain already contains a cycle.');
+            }
+            $visited[] = $cursor->id;
+            $cursor = Lesson::find($cursor->prerequisite_lesson_id);
+        }
+    }
+
     private function validated(Request $request): array
     {
         $data = $request->validate([
@@ -105,6 +134,8 @@ class LessonController extends Controller
             'duration_minutes' => 'nullable|integer|min:0',
             'position' => 'nullable|integer|min:0',
             'attachment' => 'nullable|file|max:20480',
+            'available_at' => 'nullable|date',
+            'prerequisite_lesson_id' => 'nullable|integer|exists:lessons,id',
         ]);
 
         if ($request->hasFile('attachment')) {
