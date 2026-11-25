@@ -93,9 +93,9 @@ cd /path/to/lms
 | 3 | `composer install --no-dev --optimize-autoloader` |
 | 4 | `php artisan migrate --force` — **only new migrations**, existing rows stay |
 | 5 | `optimize:clear` → `config:cache`, `route:cache`, `view:cache`, `storage:link`, `chmod` |
-| 6 | `php artisan up` — runs even if a step failed (trap on EXIT) |
+| 6 | `php artisan up` — runs only after all critical steps succeed; failures intentionally keep the site in maintenance mode |
 
-If step 4 or 3 fails it **stops and leaves the site intact**, telling you where
+If step 4 or 3 fails it **stops and keeps the site offline in maintenance mode**, telling you where
 the backup is. So the worst case is: restore the database and uploaded-file backups if needed, fix the error, then re-run only after verifying the restored state.
 
 ### The manual way (same guarantee)
@@ -138,7 +138,7 @@ composer install --no-dev --optimize-autoloader
 php artisan optimize:clear && php artisan up
 ```
 
-If a rollback is not enough, restore the dump made in step 1:
+If a rollback is not enough, restore the database dump and uploaded-file archive made in step 1:
 
 ```bash
 # SQLite
