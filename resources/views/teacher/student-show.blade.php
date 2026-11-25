@@ -17,7 +17,13 @@
                         <div class="mt-2 h-2 rounded-full bg-slate-100">
                             <div class="h-2 rounded-full bg-emerald-600" style="width: {{ $progress }}%"></div>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">Enrolled {{ $enrollment->created_at->format('d M Y') }} · status: {{ ucfirst($enrollment->status) }}</p>
+                        <p class="mt-1 text-xs text-slate-500">Enrolled {{ $enrollment->created_at->format('d M Y') }} · status: {{ ucfirst($enrollment->status) }} · {{ $enrollment->completed_lessons }} / {{ $enrollment->total_lessons }} lessons completed</p>
+                        @if ($enrollment->batch)
+                            <p class="mt-1 text-xs text-slate-500">Batch: {{ $enrollment->batch->name }} · {{ ucfirst($enrollment->batch->status) }}</p>
+                        @endif
+                        @if ($enrollment->expires_at)
+                            <p class="mt-1 text-xs {{ $enrollment->expires_at->isPast() ? 'font-bold text-rose-600' : 'text-slate-500' }}">Access {{ $enrollment->expires_at->isPast() ? 'expired' : 'expires' }} {{ $enrollment->expires_at->format('d M Y') }}</p>
+                        @endif
                     </div>
                 @empty
                     <p class="text-slate-500">No enrolments in your courses.</p>
