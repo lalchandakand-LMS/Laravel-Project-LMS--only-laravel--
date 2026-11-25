@@ -44,7 +44,8 @@
 
 
 @if (\App\Models\Setting::get('dashboard_widget_courses', '1') === '1')
-    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    @if (\App\Models\Setting::get('dashboard_widget_branch_courses', '1') === '1')
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Top courses</h2>
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($topCourses as $row)
@@ -56,7 +57,9 @@
                 <li class="py-3 text-slate-500">No enrolments in this branch yet.</li>
             @endforelse
         </ul>
-    </div>@endif
+    </div>
+@endif
+@endif
 
 </div>
 
