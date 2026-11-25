@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BranchController extends Controller
 {
@@ -27,8 +28,9 @@ class BranchController extends Controller
     public function create()
     {
         return view('admin.branches.form', [
-            'branch' => new Branch(['is_active' => true]),
+            'branch' => new Branch(['is_active' => true, 'payment_methods' => []]),
             'managers' => $this->managers(),
+            'paymentMethods' => Branch::PAYMENT_METHODS,
         ]);
     }
 
@@ -44,6 +46,7 @@ class BranchController extends Controller
         return view('admin.branches.form', [
             'branch' => $branch,
             'managers' => $this->managers(),
+            'paymentMethods' => Branch::PAYMENT_METHODS,
         ]);
     }
 
@@ -56,7 +59,6 @@ class BranchController extends Controller
 
     public function destroy(Branch $branch)
     {
-        // Keep staff/student branch assignments intact so the branch can be restored without data loss.
         $branch->delete();
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch moved to the Recycle Bin.');
@@ -78,14 +80,17 @@ class BranchController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:120',
-            'code' => 'required|string|max:20|alpha_dash|unique:branches,code'.($branch ? ','.$branch->id : ''),
+            'code' => ['required', 'string', 'max:20', 'alpha_dash', Rule::unique('branches', 'code')->ignore($branch?->id)],
             'address' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:120',
             'manager_id' => 'nullable|exists:users,id',
+            'payment_methods' => 'sometimes|array',
+            'payment_methods.*' => ['string', Rule::in(array_keys(Branch::PAYMENT_METHODS))],
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
+        $data['payment_methods'] = array_values(array_unique($data['payment_methods'] ?? []));
 
         return $data;
     }
