@@ -49,6 +49,30 @@ class LmsFlowTest extends TestCase
         $this->get('/verify/CERT-DEMO1234')->assertOk()->assertSee('verified');
     }
 
+    public function test_homepage_slider_renders_accessible_controls_and_active_slide(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post('/admin/sliders', [
+            'title' => 'Build your English confidence',
+            'subtitle' => 'Learn with expert guidance.',
+            'badge' => 'Admissions open',
+            'button_text' => 'Explore courses',
+            'button_url' => '/courses',
+            'theme' => 'emerald',
+            'sort_order' => 1,
+            'is_active' => 1,
+        ])->assertRedirect('/admin/sliders');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('aria-roledescription="carousel"', false)
+            ->assertSee('aria-label="Featured learning highlights"', false)
+            ->assertSee('data-hero-slide', false)
+            ->assertSee('data-hero-dot', false)
+            ->assertSee('Build your English confidence');
+    }
+
     public function test_registration_welcome_message_uses_application_brand(): void
     {
         $response = $this->post('/register', [
