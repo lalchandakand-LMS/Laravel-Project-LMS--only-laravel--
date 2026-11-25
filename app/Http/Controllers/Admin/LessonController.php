@@ -40,7 +40,7 @@ class LessonController extends Controller
         return view('admin.lessons.form', [
             'lesson' => $lesson,
             'course' => $lesson->course->load('sections'),
-            'lessons' => $lesson->course->lessons()->whereKeyNot($lesson->id)->orderBy('position')->get(),
+            'lessons' => $lesson->course->lessons()->where('id', '!=', $lesson->id)->orderBy('position')->get(),
         ]);
     }
 
