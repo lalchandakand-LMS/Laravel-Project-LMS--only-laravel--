@@ -78,17 +78,27 @@ class CategoryBatchLevelManagementTest extends TestCase
         $this->actingAs($admin)->put(route('admin.batches.update', $batch), [
             'name' => 'Evening Spoken English A', 'code' => 'SPOKEN-EVE-26',
             'course_id' => $course->id, 'level_id' => $level->id,
-            'instructor_id' => $teacher->id, 'status' => 'ongoing', 'capacity' => 35,
+            'instructor_id' => $teacher->id, 'status' => 'ongoing', 'capacity' => 1,
         ])->assertRedirect(route('admin.batches.index'));
 
-        $enrollment = Enrollment::where('user_id', $student->id)->where('course_id', $course->id)->first();
-        if (! $enrollment) {
-            $enrollment = Enrollment::create([
-                'user_id' => $student->id, 'course_id' => $course->id,
-                'status' => 'active', 'enrolled_at' => now(),
-            ]);
-        }
-        $enrollment->update(['batch_id' => $batch->id]);
+        $this->actingAs($admin)->get(route('admin.batches.show', $batch))->assertOk();
+        $this->actingAs($admin)->post(route('admin.batches.students.store', $batch), [
+            'student_id' => $student->id,
+        ])->assertRedirect();
+        $enrollment = Enrollment::where('user_id', $student->id)->where('course_id', $course->id)->firstOrFail();
+        $this->assertSame($batch->id, (int) $enrollment->batch_id);
+
+        $anotherStudent = User::where('role', 'student')->where('id', '!=', $student->id)->firstOrFail();
+        $this->actingAs($admin)->post(route('admin.batches.students.store', $batch), [
+            'student_id' => $anotherStudent->id,
+        ])->assertRedirect()->assertSessionHas('error');
+
+        $this->actingAs($admin)->delete(route('admin.batches.students.destroy', [$batch, $enrollment]))->assertRedirect();
+        $this->assertNull($enrollment->fresh()->batch_id);
+        $this->actingAs($admin)->post(route('admin.batches.students.store', $batch), [
+            'student_id' => $student->id,
+        ])->assertRedirect();
+        $enrollment->refresh();
 
         $this->actingAs($admin)->delete(route('admin.batches.destroy', $batch))->assertRedirect(route('admin.batches.index'));
         $this->assertNotNull(Batch::withTrashed()->findOrFail($batch->id)->deleted_at);
