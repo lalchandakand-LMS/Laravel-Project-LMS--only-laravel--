@@ -73,6 +73,56 @@ class LmsFlowTest extends TestCase
             ->assertSee('Build your English confidence');
     }
 
+    public function test_homepage_dynamic_sections_and_admin_controls_render(): void
+    {
+        $course = Course::firstOrFail();
+        $teacher = User::factory()->create([
+            'role' => 'instructor',
+            'is_active' => true,
+            'bio' => 'Experienced English language instructor.',
+            'designation' => 'Senior English Teacher',
+        ]);
+        $course->update(['instructor_id' => $teacher->id]);
+
+        \\App\\Models\\LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Live speaking practice',
+            'platform' => 'Google Meet',
+            'meeting_url' => 'https://meet.google.com/example',
+            'starts_at' => now()->addDay(),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        Exam::create([
+            'course_id' => $course->id,
+            'title' => 'English progress assessment',
+            'duration_minutes' => 30,
+            'total_marks' => 50,
+            'pass_marks' => 25,
+            'starts_at' => now()->addDays(2),
+            'is_published' => true,
+        ]);
+        \\App\\Models\\Setting::set('homepage_board_results_body', 'Verified board result: 10 students achieved GPA 5.');
+        \\App\\Models\\Setting::set('homepage_board_results_year', '2026');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Upcoming live classes')
+            ->assertSee('Live speaking practice')
+            ->assertSee('Exams & assessments')
+            ->assertSee('English progress assessment')
+            ->assertSee('Meet our teachers')
+            ->assertSee('Senior English Teacher')
+            ->assertSee('Verified board result: 10 students achieved GPA 5.')
+            ->assertSee('Join an online or classroom batch');
+
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $this->actingAs($admin)->get('/admin/settings')
+            ->assertOk()
+            ->assertSee('Homepage sections & content')
+            ->assertSee('homepage_show_live_classes');
+    }
+
     public function test_registration_welcome_message_uses_application_brand(): void
     {
         $response = $this->post('/register', [
