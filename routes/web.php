@@ -93,6 +93,7 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
     Route::get('/orders', [Student\DashboardController::class, 'orders'])->name('orders');
     Route::get('/ebooks', [Student\DashboardController::class, 'ebooks'])->name('ebooks');
     Route::get('/certificates', [Student\DashboardController::class, 'certificates'])->name('certificates');
+    Route::get('/attendance', [AttendanceController::class, 'studentReport'])->name('attendance');
     Route::get('/profile', [Student\DashboardController::class, 'profile'])->name('profile');
     Route::put('/profile', [Student\DashboardController::class, 'updateProfile'])->name('profile.update');
     Route::put('/password', [Student\DashboardController::class, 'updatePassword'])->name('password.update');
@@ -245,6 +246,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
 Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('guardian.')->group(function () {
     Route::get('/', [Guardian\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/children/{child}', [Guardian\DashboardController::class, 'child'])->name('child');
+    Route::get('/children/{child}/attendance', [AttendanceController::class, 'guardianReport'])->name('child.attendance');
 });
 
 /* ------------------------------------------------------------------
