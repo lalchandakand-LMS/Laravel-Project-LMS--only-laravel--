@@ -43,6 +43,24 @@ class LmsFlowTest extends TestCase
         $this->get('/verify/CERT-DEMO1234')->assertOk()->assertSee('verified');
     }
 
+    public function test_registration_welcome_message_uses_application_brand(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'New Demo Student',
+            'email' => 'new-student@example.test',
+            'phone' => '01700000000',
+            'password' => 'StrongPass123!',
+            'password_confirmation' => 'StrongPass123!',
+        ]);
+
+        $response->assertRedirect('/my');
+        $response->assertSessionHas('success', "Welcome to ".config('app.name')."!");
+        $this->assertDatabaseHas('users', [
+            'email' => 'new-student@example.test',
+            'role' => 'student',
+        ]);
+    }
+
     public function test_student_dashboard_and_player(): void
     {
         $user = $this->student();
