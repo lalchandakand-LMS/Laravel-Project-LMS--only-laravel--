@@ -25,7 +25,7 @@
                         @endif
                         <h1 class="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">{{ $slide->title }}</h1>
                         @if ($slide->subtitle)
-                            <p class="mt-4 max-w-xl text-lg {{ $sub }}">{{ $slide->subtitle }}</p>
+                            <p class="mt-4 max-w-xl text-lg text-slate-300">{{ $slide->subtitle }}</p>
                         @endif
                         <div class="mt-8 flex flex-wrap gap-3">
                             <a href="{{ $slide->button_url ?: route('courses.index') }}" class="rounded-xl px-6 py-3 font-bold shadow-lg transition hover:-translate-y-0.5 {{ $button }}">{{ $slide->button_text ?: 'Explore courses' }}</a>
@@ -41,7 +41,7 @@
                         </dl>
                     </div>
                     <div class="relative">
-                        <div class="rounded-3xl border {{ $slide->theme === 'light' ? 'border-slate-200 bg-white' : 'border-white/10 bg-white/5' }} p-3 shadow-2xl backdrop-blur">
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-2xl backdrop-blur">
                             <img src="{{ $slide->imageUrl() ?: asset('images/aec-logo.svg') }}"
                                  alt="{{ $slide->title }}" class="h-72 w-full rounded-2xl object-cover sm:h-96">
                         </div>
@@ -117,7 +117,7 @@
                 @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']]] as [$label, $value])
                     <div>
                         <dt class="text-xs uppercase tracking-wide text-slate-400">{{ $label }}</dt>
-                        <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</dd>
+                        <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}</dd>
                     </div>
                 @endforeach
             </dl>
@@ -127,7 +127,7 @@
                 <div class="grid h-72 place-items-center rounded-2xl bg-white/5 text-center sm:h-96"><div><span class="text-7xl">📚</span><p class="mt-4 text-2xl font-bold">Learn. Practise. Progress.</p><p class="mt-2 text-sm text-slate-300">Alom’s English Center</p></div></div>
             </div>
             <div class="absolute -bottom-6 -left-4 rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
-                <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}+</p>
+                <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}</p>
                 <p class="text-xs text-slate-300">video lessons</p>
             </div>
         </div>
