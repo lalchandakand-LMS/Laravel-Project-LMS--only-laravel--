@@ -33,6 +33,19 @@ class SystemMaintenanceTest extends TestCase
             ->assertSee('Restore database backup');
     }
 
+    public function test_non_admin_cannot_access_audit_or_backup_management(): void
+    {
+        $student = User::where('email', 'student@lms.test')->firstOrFail();
+
+        $this->actingAs($student)
+            ->get(route('admin.activity-logs.index'))
+            ->assertForbidden();
+
+        $this->actingAs($student)
+            ->get(route('admin.system.backups.index'))
+            ->assertForbidden();
+    }
+
     public function test_logout_action_is_written_to_activity_audit(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
