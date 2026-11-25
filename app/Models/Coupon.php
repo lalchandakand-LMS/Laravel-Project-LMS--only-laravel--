@@ -2,9 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Coupon extends Model
 {
+    use SoftDeletes;
     protected $fillable = ['code','type','value','min_amount','usage_limit','used_count','starts_at','expires_at','is_active'];
     protected $casts = ['starts_at' => 'datetime', 'expires_at' => 'datetime', 'is_active' => 'boolean'];
 
