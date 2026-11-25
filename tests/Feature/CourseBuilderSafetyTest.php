@@ -85,8 +85,8 @@ class CourseBuilderSafetyTest extends TestCase
             ->assertOk()
             ->assertJson(['ok' => true]);
 
-        $this->assertSame(1, (int) $second->fresh()->position);
-        $this->assertSame(2, (int) $first->fresh()->position);
+        $this->assertSame(array_search($second->id, $orderedSectionIds, true) + 1, (int) $second->fresh()->position);
+        $this->assertSame(array_search($first->id, $orderedSectionIds, true) + 1, (int) $first->fresh()->position);
 
         $lessonA = $first->lessons()->create(['course_id' => $course->id, 'title' => 'Lesson A']);
         $lessonB = $first->lessons()->create(['course_id' => $course->id, 'title' => 'Lesson B']);
