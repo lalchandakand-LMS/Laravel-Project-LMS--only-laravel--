@@ -168,7 +168,8 @@ class RecycleBinController extends Controller
             'users' => [
                 ['orders', 'user_id'], ['enrollments', 'user_id'], ['lesson_progress', 'user_id'],
                 ['exam_attempts', 'user_id'], ['certificates', 'user_id'], ['ebook_purchases', 'user_id'],
-                ['reviews', 'user_id'], ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
+                ['reviews', 'user_id'], ['courses', 'instructor_id'], ['branches', 'manager_id'],
+                ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
             ],
             'courses' => [
                 ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
