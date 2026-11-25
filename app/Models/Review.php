@@ -2,11 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Review extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = ['course_id','user_id','rating','comment','is_approved'];
     protected $casts = ['is_approved' => 'boolean'];
 
