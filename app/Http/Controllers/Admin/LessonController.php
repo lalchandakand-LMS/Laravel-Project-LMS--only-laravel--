@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Section;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
@@ -48,6 +49,27 @@ class LessonController extends Controller
         $this->assertSectionBelongsToCourse($data);
         $lesson->update($data);
         return redirect()->route('admin.courses.edit', $lesson->course_id)->with('success', 'Lesson updated.');
+    }
+
+    public function reorder(Request $request, Section $section)
+    {
+        $this->authorizeCourse($section->course);
+        $data = $request->validate([
+            'ordered_ids' => 'required|array|min:1',
+            'ordered_ids.*' => 'required|integer|distinct',
+        ]);
+
+        $currentIds = $section->lessons()->pluck('id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+        $orderedIds = collect($data['ordered_ids'])->map(fn ($id) => (int) $id)->sort()->values()->all();
+        abort_unless($currentIds === $orderedIds, 422, 'Lesson order does not match this section.');
+
+        DB::transaction(function () use ($data) {
+            foreach ($data['ordered_ids'] as $position => $id) {
+                Lesson::whereKey($id)->update(['position' => $position + 1]);
+            }
+        });
+
+        return response()->json(['ok' => true]);
     }
 
     public function destroy(Lesson $lesson)

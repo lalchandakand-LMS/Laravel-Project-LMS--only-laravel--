@@ -94,7 +94,7 @@ class CourseController extends Controller
             'requirements' => 'nullable|string',
             'outcomes' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0|lt:price',
             'level' => 'required|in:beginner,intermediate,advanced',
             'language' => 'required|string|max:30',
             'duration_minutes' => 'nullable|integer|min:0',
@@ -104,6 +104,8 @@ class CourseController extends Controller
             'promo_video' => 'nullable|string|max:255',
             'meta_title' => 'nullable|string|max:180',
             'meta_description' => 'nullable|string|max:300',
+        ], [
+            'discount_price.lt' => 'Discount price must be lower than the regular course price.',
         ]);
 
         if ($request->hasFile('thumbnail')) {

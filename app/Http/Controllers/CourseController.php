@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CourseController extends Controller
 {
@@ -77,12 +78,44 @@ class CourseController extends Controller
     /** Free enrollment (price = 0). */
     public function enrollFree(Request $request, Course $course)
     {
+        abort_unless($course->is_published, 404);
         abort_unless($course->final_price <= 0, 403);
 
-        Enrollment::firstOrCreate(
-            ['user_id' => $request->user()->id, 'course_id' => $course->id],
-            ['price_paid' => 0, 'status' => 'active', 'enrolled_at' => now()]
-        );
+        DB::transaction(function () use ($request, $course) {
+            $lockedCourse = Course::whereKey($course->id)->lockForUpdate()->firstOrFail();
+            $existing = Enrollment::where('user_id', $request->user()->id)
+                ->where('course_id', $lockedCourse->id)->first();
+
+            if ($existing && $existing->status === 'active'
+                && (! $existing->expires_at || $existing->expires_at->isFuture())) {
+                return;
+            }
+
+            $activeSeats = Enrollment::where('course_id', $lockedCourse->id)
+                ->where('status', 'active')
+                ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->count();
+
+            abort_if($lockedCourse->seat_limit && $activeSeats >= $lockedCourse->seat_limit, 409,
+                'This course has reached its enrollment capacity.');
+
+            if ($existing) {
+                $existing->update([
+                    'price_paid' => 0,
+                    'status' => 'active',
+                    'enrolled_at' => now(),
+                    'expires_at' => null,
+                ]);
+            } else {
+                Enrollment::create([
+                    'user_id' => $request->user()->id,
+                    'course_id' => $lockedCourse->id,
+                    'price_paid' => 0,
+                    'status' => 'active',
+                    'enrolled_at' => now(),
+                ]);
+            }
+        });
 
         return redirect()->route('student.learn', $course->slug)
             ->with('success', 'You are enrolled. Happy learning!');

@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
@@ -37,7 +38,7 @@ class CheckoutController extends Controller
             'subtotal' => $totals['subtotal'],
             'discount' => $totals['discount'],
             'total' => $totals['total'],
-            'status' => $totals['total'] <= 0 ? 'paid' : 'pending',
+            'status' => 'pending',
         ]);
 
         foreach ($totals['items'] as $item) {
@@ -54,8 +55,14 @@ class CheckoutController extends Controller
             $totals['coupon']->increment('used_count');
         }
 
-        if ($order->status === 'paid') {
-            OrderService::fulfill($order);
+        if ($order->total <= 0) {
+            try {
+                OrderService::fulfill($order);
+            } catch (ValidationException $exception) {
+                return redirect()->route('cart.index')
+                    ->withErrors($exception->errors())
+                    ->with('error', 'A course has reached its seat limit. Your order was not charged; please review your cart.');
+            }
         }
 
         session()->forget(['cart', 'coupon']);

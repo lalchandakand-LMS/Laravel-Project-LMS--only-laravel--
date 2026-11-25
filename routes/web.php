@@ -160,8 +160,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
 
     Route::get('courses/{course}/sections/create', [Admin\SectionController::class, 'create'])->name('courses.sections.create');
     Route::post('courses/{course}/sections', [Admin\SectionController::class, 'store'])->name('courses.sections.store');
+    Route::post('courses/{course}/sections/reorder', [Admin\SectionController::class, 'reorder'])->name('courses.sections.reorder');
     Route::get('sections/{section}/edit', [Admin\SectionController::class, 'edit'])->name('sections.edit');
     Route::put('sections/{section}', [Admin\SectionController::class, 'update'])->name('sections.update');
+    Route::post('sections/{section}/lessons/reorder', [Admin\LessonController::class, 'reorder'])->name('sections.lessons.reorder');
     Route::delete('sections/{section}', [Admin\SectionController::class, 'destroy'])->name('sections.destroy');
 
     Route::get('lessons/create', [Admin\LessonController::class, 'create'])->name('lessons.create');

@@ -51,10 +51,11 @@
                     <a href="{{ route('admin.courses.sections.create', $course) }}"
                        class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">+ Add section</a>
                 </div>
-                <div class="divide-y divide-slate-100">
+                <div class="divide-y divide-slate-100" data-sortable-list data-sort-url="{{ route('admin.courses.sections.reorder', $course) }}" aria-label="Course sections">
                     @forelse ($course->sections as $section)
-                        <div class="p-4">
+                        <div class="p-4" draggable="true" data-sort-item data-sort-id="{{ $section->id }}">
                             <div class="flex items-center gap-2">
+                                <span class="cursor-grab select-none text-slate-400" aria-hidden="true">⠿</span>
                                 <p class="font-semibold text-slate-800">{{ $section->position }}. {{ $section->title }}</p>
                                 <div class="ml-auto flex items-center gap-3 text-xs">
                                     <a href="{{ route('admin.lessons.create', ['course_id' => $course->id, 'section_id' => $section->id]) }}" class="font-bold text-emerald-700">+ Lesson</a>
@@ -64,9 +65,10 @@
                                     </form>
                                 </div>
                             </div>
-                            <ul class="mt-2 space-y-1 text-sm">
+                            <ul class="mt-2 space-y-1 text-sm" data-sortable-list data-sort-url="{{ route('admin.sections.lessons.reorder', $section) }}" aria-label="Lessons in {{ $section->title }}">
                                 @foreach ($section->lessons as $lesson)
-                                    <li class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                                    <li class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2" draggable="true" data-sort-item data-sort-id="{{ $lesson->id }}">
+                                        <span class="cursor-grab select-none text-slate-400" aria-hidden="true">⠿</span>
                                         <span class="text-slate-500">{{ $lesson->type === 'video' ? '▶' : ($lesson->type === 'pdf' ? '📄' : '📖') }}</span>
                                         <span class="flex-1 text-slate-700">{{ $lesson->title }}</span>
                                         @if ($lesson->is_free_preview)<span class="rounded bg-emerald-100 px-1.5 text-[10px] font-bold text-emerald-700">PREVIEW</span>@endif
@@ -215,4 +217,39 @@
         </section>
     </aside>
 </form>
+@if ($course->exists)
+<script>
+(() => {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    let dragged = null;
+    document.querySelectorAll('[data-sortable-list]').forEach((list) => {
+        list.addEventListener('dragstart', (event) => {
+            const item = event.target.closest('[data-sort-item]');
+            if (!item || !list.contains(item)) return;
+            dragged = item;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', item.dataset.sortId);
+            item.classList.add('opacity-40');
+        });
+        list.addEventListener('dragover', (event) => {
+            if (!dragged || dragged.parentElement !== list) return;
+            event.preventDefault();
+            const target = event.target.closest('[data-sort-item]');
+            if (!target || target === dragged || target.parentElement !== list) return;
+            const box = target.getBoundingClientRect();
+            list.insertBefore(dragged, event.clientY > box.top + box.height / 2 ? target.nextSibling : target);
+        });
+        list.addEventListener('dragend', () => {
+            if (!dragged || dragged.parentElement !== list) { dragged = null; return; }
+            dragged.classList.remove('opacity-40');
+            const ids = [...list.querySelectorAll(':scope > [data-sort-item]')].map(item => Number(item.dataset.sortId));
+            dragged = null;
+            fetch(list.dataset.sortUrl, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf || ''}, body:JSON.stringify({ordered_ids:ids})})
+                .then(response => { if (!response.ok) throw new Error('Save failed'); window.location.reload(); })
+                .catch(() => { alert('Could not save the new order. Reloading the saved curriculum.'); window.location.reload(); });
+        });
+    });
+})();
+</script>
+@endif
 @endsection
