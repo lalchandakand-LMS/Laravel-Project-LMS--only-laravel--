@@ -39,7 +39,7 @@ class ExamController extends Controller
         $this->authorizeExam($exam);
         return view('admin.exams.form', [
             'exam' => $exam,
-            'courses' => Course::orderBy('title')->get(),
+            'courses' => $this->courses(),
         ]);
     }
 
