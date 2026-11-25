@@ -6,6 +6,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Portal') — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     @include('partials.assets')
+    <script>(function(){var t=localStorage.getItem('aec-admin-theme')||'system';document.documentElement.dataset.theme=(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';})();</script>
+    <style>
+      html[data-theme="dark"] body{background:#0b1220!important;color:#e2e8f0!important}
+      html[data-theme="dark"] header,html[data-theme="dark"] main section,html[data-theme="dark"] main .bg-white{background-color:#111c2e!important;border-color:#263449!important;color:#e2e8f0}
+      html[data-theme="dark"] main h1,html[data-theme="dark"] main h2,html[data-theme="dark"] main h3,html[data-theme="dark"] main p,html[data-theme="dark"] main label{color:inherit}
+      html[data-theme="dark"] main input,html[data-theme="dark"] main textarea,html[data-theme="dark"] main select{background:#0b1220!important;color:#e2e8f0!important;border-color:#334155!important}
+      html[data-theme="dark"] main .text-slate-900,html[data-theme="dark"] main .text-slate-800,html[data-theme="dark"] main .text-slate-700,html[data-theme="dark"] main .text-slate-600{color:#e2e8f0!important}
+      html[data-theme="dark"] main .text-slate-500{color:#a8b5c7!important}
+      html[data-theme="dark"] main .border-slate-100,html[data-theme="dark"] main .border-slate-200{border-color:#263449!important}
+      html[data-theme="dark"] main .bg-slate-50,html[data-theme="dark"] main .bg-slate-100{background:#1e293b!important}
+      html[data-theme="dark"] main .divide-slate-100>*+*{border-color:#263449!important}
+    </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
 @php
@@ -74,6 +86,7 @@
             <h1 class="text-lg font-bold text-slate-900">@yield('heading', 'Dashboard')</h1>
             <div class="ml-auto flex items-center gap-3 text-sm">
                 @yield('actions')
+                <label for="admin-theme" class="sr-only">Color theme</label><select id="admin-theme" class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
                 <img src="{{ $user->avatarUrl() }}" class="h-8 w-8 rounded-full" alt="">
                 <span class="hidden font-semibold text-slate-700 sm:block">{{ $user->name }}</span>
             </div>
@@ -84,5 +97,6 @@
         </main>
     </div>
 </div>
+<script>(function(){const s=document.getElementById('admin-theme');if(!s)return;const v=localStorage.getItem('aec-admin-theme')||'system';s.value=v;function apply(x){document.documentElement.dataset.theme=(x==='dark'||(x==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';}s.addEventListener('change',()=>{localStorage.setItem('aec-admin-theme',s.value);apply(s.value);});if(v==='system'&&matchMedia){matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>apply('system'));}})();</script>
 </body>
 </html>
