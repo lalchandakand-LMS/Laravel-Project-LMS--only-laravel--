@@ -55,7 +55,7 @@
                 <li><a class="hover:text-emerald-700" href="{{ route('about') }}">About us</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('contact') }}">Contact</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('login') }}">Student login</a></li>
-                @foreach (\\App\\Models\\MenuItem::publicNavigation('footer', 'desktop') as $footerItem)
+                @foreach (\App\Models\MenuItem::publicNavigation('footer', 'desktop') as $footerItem)
                     <li><a class="hover:text-emerald-700" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
                 @endforeach
             </ul>
