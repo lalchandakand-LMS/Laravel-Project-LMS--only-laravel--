@@ -16,4 +16,5 @@ class Complaint extends Model
     public function replies() { return $this->hasMany(ComplaintReply::class)->where('is_internal', false)->orderBy('created_at'); }
     public function allReplies() { return $this->hasMany(ComplaintReply::class)->orderBy('created_at'); }
     public function attachments() { return $this->hasMany(ComplaintAttachment::class)->whereNull('reply_id'); }
+    public function events() { return $this->hasMany(ComplaintEvent::class)->with('actor')->orderBy('created_at'); }
 }
