@@ -34,6 +34,7 @@
                     <button type="submit" class="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800" @disabled(!$type)>Restore selected</button>
                     @if (!$type)<span class="text-xs text-slate-500">Choose a specific type to enable bulk restore.</span>@endif
                 </div>
+            </form>
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[760px] text-left text-sm">
                         <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><tr><th class="p-3">Select</th><th class="p-3">Record</th><th class="p-3">Type</th><th class="p-3">Deleted at</th><th class="p-3">Deleted by</th><th class="p-3 text-right">Actions</th></tr></thead>
@@ -58,7 +59,6 @@
                         </tbody>
                     </table>
                 </div>
-            </form>
         @else
             <div class="py-14 text-center"><div class="text-4xl">🗑️</div><h3 class="mt-3 font-bold text-slate-900">Recycle Bin is empty</h3><p class="mt-1 text-sm text-slate-500">Deleted records will appear here and can be restored.</p></div>
         @endif
