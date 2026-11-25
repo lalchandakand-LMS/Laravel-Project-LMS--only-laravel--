@@ -150,10 +150,19 @@
                 @endif
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="mb-1 block font-semibold text-slate-700">Level</label>
+                        <label class="mb-1 block font-semibold text-slate-700">Managed level</label>
+                        <select name="level_id" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                            <option value="">— Use legacy level —</option>
+                            @foreach ($levels as $managedLevel)
+                                <option value="{{ $managedLevel->id }}" @selected(old('level_id', $course->level_id) == $managedLevel->id)>{{ $managedLevel->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block font-semibold text-slate-700">Legacy level (fallback)</label>
                         <select name="level" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                            @foreach (['beginner', 'intermediate', 'advanced'] as $level)
-                                <option value="{{ $level }}" @selected(old('level', $course->level) === $level)>{{ ucfirst($level) }}</option>
+                            @foreach (['beginner', 'intermediate', 'advanced'] as $legacyLevel)
+                                <option value="{{ $legacyLevel }}" @selected(old('level', $course->level) === $legacyLevel)>{{ ucfirst($legacyLevel) }}</option>
                             @endforeach
                         </select>
                     </div>
