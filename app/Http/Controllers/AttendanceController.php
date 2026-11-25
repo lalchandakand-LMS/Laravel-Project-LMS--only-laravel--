@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Http\\Controllers;
+namespace App\Http\Controllers;
 
-use App\\Models\\Attendance;
-use App\\Models\\AttendanceSession;
-use App\\Models\\Batch;
-use App\\Models\\Enrollment;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\Rule;
+use App\Models\Attendance;
+use App\Models\AttendanceSession;
+use App\Models\Batch;
+use App\Models\Enrollment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AttendanceController extends Controller
 {
@@ -163,7 +163,7 @@ class AttendanceController extends Controller
         return view('attendance.reports.index', ['records' => $records, 'reportTitle' => 'My attendance']);
     }
 
-    public function guardianReport(Request $request, \\App\\Models\\User $child)
+    public function guardianReport(Request $request, \App\Models\User $child)
     {
         $guardian = $request->user();
         abort_unless($guardian->isAdmin() || $guardian->children()->whereKey($child->id)->exists(), 403);
