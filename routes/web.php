@@ -95,6 +95,7 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
 
     // Ebook download
     Route::get('/ebooks/{ebook:slug}/read', [EbookController::class, 'read'])->name('ebooks.read');
+    Route::get('/ebooks/{ebook:slug}/file', [EbookController::class, 'file'])->name('ebooks.file');
 });
 
 /* ------------------------------------------------------------------
