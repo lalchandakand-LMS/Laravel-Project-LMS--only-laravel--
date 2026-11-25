@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -117,6 +118,12 @@ class SystemBackupController extends Controller
         DB::purge();
         DB::connection()->getPdo();
         DB::select('select 1');
+
+        foreach (['migrations', 'users', 'courses', 'orders'] as $table) {
+            if (! Schema::hasTable($table)) {
+                throw new \RuntimeException('Restored database is missing required LMS table: '.$table);
+            }
+        }
     }
 
     public function index()
@@ -196,6 +203,16 @@ class SystemBackupController extends Controller
         $snapshotReady = false;
 
         try {
+            if (! in_array($connection, ['sqlite', 'mysql'], true)) {
+                return back()->with('error', 'This database driver is not supported by restore yet.');
+            }
+
+            if (Artisan::call('down', ['--retry' => 60]) !== 0) {
+                throw new \RuntimeException('Could not enable maintenance mode.');
+            }
+            $maintenance = true;
+
+            // Freeze application writes before taking the rollback snapshot.
             if ($connection === 'sqlite') {
                 $current = config('database.connections.sqlite.database');
                 if (! is_file($current)) {
@@ -206,17 +223,10 @@ class SystemBackupController extends Controller
                     throw new \RuntimeException('Could not create pre-restore SQLite safety backup.');
                 }
                 chmod($safetyPath, 0600);
-            } elseif ($connection === 'mysql') {
-                $this->dumpMysqlToFile($safetyPath);
             } else {
-                return back()->with('error', 'This database driver is not supported by restore yet.');
+                $this->dumpMysqlToFile($safetyPath);
             }
             $snapshotReady = true;
-
-            if (Artisan::call('down', ['--retry' => 60]) !== 0) {
-                throw new \RuntimeException('Could not enable maintenance mode.');
-            }
-            $maintenance = true;
 
             if ($connection === 'sqlite') {
                 $this->replaceSqliteDatabase($uploaded, $current);
@@ -253,6 +263,15 @@ class SystemBackupController extends Controller
                     report($rollbackException);
                     return back()->with('error', 'Restore and automatic rollback both failed. The site is intentionally left in maintenance mode. Safety backup: '.$safetyName.'. Contact hosting support before bringing it online.');
                 }
+            }
+
+            if ($maintenance && ! $snapshotReady) {
+                @unlink($safetyPath);
+                if (Artisan::call('up') === 0) {
+                    $maintenance = false;
+                    return back()->with('error', 'Restore stopped before a safety snapshot was complete. The live database was not changed and the site is back online.');
+                }
+                return back()->with('error', 'Restore stopped before changing data, but the site could not leave maintenance mode. Contact hosting support.');
             }
 
             if ($maintenance) {

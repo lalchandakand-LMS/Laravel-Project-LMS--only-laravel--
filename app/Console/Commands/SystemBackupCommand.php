@@ -27,9 +27,14 @@ class SystemBackupCommand extends Command
         try {
             if ($connection === 'sqlite') {
                 $source = config('database.connections.sqlite.database');
-                if (! is_file($source) || ! copy($source, $target)) {
+                if (! is_file($source)) {
+                    throw new \RuntimeException('SQLite database file could not be found.');
+                }
+                DB::connection('sqlite')->statement('PRAGMA wal_checkpoint(FULL)');
+                if (! copy($source, $target)) {
                     throw new \RuntimeException('SQLite database file could not be copied.');
                 }
+                chmod($target, 0600);
             } elseif ($connection === 'mysql') {
                 $process = new Process([
                     'mysqldump', '--single-transaction', '--quick', '--no-tablespaces',
