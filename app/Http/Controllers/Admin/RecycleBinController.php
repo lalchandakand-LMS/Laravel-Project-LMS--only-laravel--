@@ -97,6 +97,8 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Restore blocked because a unique value is already in use. Resolve the duplicate record first.');
         }
 
+        $this->afterRestore($record);
+
         return back()->with('success', class_basename($class).' restored successfully.');
     }
 
@@ -114,6 +116,7 @@ class RecycleBinController extends Controller
         foreach ($restored as $record) {
             try {
                 $record->restore();
+                $this->afterRestore($record);
                 $restoredCount++;
             } catch (QueryException $exception) {
                 report($exception);
@@ -140,6 +143,16 @@ class RecycleBinController extends Controller
         }
 
         return back()->with('success', class_basename($class).' permanently deleted.');
+    }
+
+    private function afterRestore($record): void
+    {
+        if ($record instanceof Question) {
+            $exam = Exam::withTrashed()->find($record->exam_id);
+            if ($exam) {
+                $exam->update(['total_marks' => Question::where('exam_id', $exam->id)->sum('marks')]);
+            }
+        }
     }
 
     private function modelClass(string $type): string
