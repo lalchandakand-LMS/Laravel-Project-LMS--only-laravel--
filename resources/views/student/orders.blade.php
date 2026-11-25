@@ -21,8 +21,11 @@
                     </li>
                 @endforeach
             </ul>
-            @if ($order->status === 'pending')
-                <a href="{{ route('checkout.success', $order->order_no) }}" class="mt-3 inline-block rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white">Complete payment</a>
+            @if (in_array($order->status, ['pending', 'partially_paid'], true))
+                <a href="{{ route('checkout.success', $order->order_no) }}" class="mt-3 inline-block rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white">View payment / pay balance</a>
+            @endif
+            @if ($order->amountPaid() > 0)
+                <a href="{{ route('orders.receipt', $order->order_no) }}" class="mt-3 ml-2 inline-block rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-emerald-700">Print receipt</a>
             @endif
         </div>
     @empty
