@@ -64,7 +64,7 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
             ->assertOk()
-            ->assertSee('General &amp; Branding', false)
+            ->assertSee('General & Branding', false)
             ->assertSee('Menu Settings')
             ->assertSee('Slider Settings')
             ->assertSee('Homepage, footer & developer design');
