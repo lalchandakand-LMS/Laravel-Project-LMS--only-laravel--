@@ -67,6 +67,7 @@
             <a href="{{ route('student.dashboard') }}" class="font-extrabold text-slate-900 lg:hidden">AEC</a>
             <h1 class="text-lg font-bold text-slate-900">@yield('heading', 'Dashboard')</h1>
             <div class="ml-auto flex items-center gap-3">
+                @include('partials.communication-badges')
                 <a href="{{ route('cart.index') }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm">🛒</a>
                 <div class="flex items-center gap-2">
                     <img src="{{ auth()->user()->avatarUrl() }}" class="h-8 w-8 rounded-full object-cover" alt="">

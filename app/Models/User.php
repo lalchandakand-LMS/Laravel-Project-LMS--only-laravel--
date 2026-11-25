@@ -72,6 +72,8 @@ class User extends Authenticatable
     public function courses()          { return $this->hasMany(Course::class, 'instructor_id'); }
     public function enrollments()      { return $this->hasMany(Enrollment::class); }
     public function orders()           { return $this->hasMany(Order::class); }
+    public function sentMessages()     { return $this->hasMany(Message::class, 'sender_id'); }
+    public function receivedMessages() { return $this->hasMany(Message::class, 'recipient_id'); }
     public function reviews()          { return $this->hasMany(Review::class); }
     public function certificates()     { return $this->hasMany(Certificate::class); }
     public function examAttempts()     { return $this->hasMany(ExamAttempt::class); }
