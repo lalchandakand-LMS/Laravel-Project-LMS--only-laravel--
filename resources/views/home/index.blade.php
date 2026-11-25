@@ -14,7 +14,7 @@
             @php
                 [$theme, $badge, $accent, $button] = $slide->palette();
             @endphp
-            <div class="hero-slide {{ $i === 0 ? '' : 'hidden' }} bg-gradient-to-br {{ $theme }}" data-slide="{{ $i }}" data-hero-slide aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
+            <div class="hero-slide {{ $i === 0 ? 'is-active' : 'hidden' }} bg-gradient-to-br {{ $theme }}" data-slide="{{ $i }}" data-hero-slide aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
                 <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
                 <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 lg:grid-cols-2 lg:py-20">
                     <div>
@@ -81,7 +81,7 @@
  function show(index){
   const next=(index+slides.length)%slides.length;if(next===active&&!slides[next].classList.contains('hidden')){restart();return;}
   const old=slides[active],incoming=slides[next];old.classList.remove('is-active');old.setAttribute('aria-hidden','true');
-  setTimeout(()=>old.classList.add('hidden'),reduced.matches?0:450);incoming.classList.remove('hidden');incoming.setAttribute('aria-hidden','false');
+  setTimeout(()=>{if(old!==slides[active])old.classList.add('hidden');},reduced.matches?0:450);incoming.classList.remove('hidden');incoming.setAttribute('aria-hidden','false');
   requestAnimationFrame(()=>requestAnimationFrame(()=>incoming.classList.add('is-active')));active=next;
   dots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===active);dot.setAttribute('aria-current',i===active?'true':'false');});restart();
  }
