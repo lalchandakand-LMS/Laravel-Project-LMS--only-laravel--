@@ -121,7 +121,7 @@ class LmsFlowTest extends TestCase
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $this->actingAs($admin)->get('/admin/settings')
             ->assertOk()
-            ->assertSee('Homepage sections & content')
+            ->assertSee('Homepage sections & content', false)
             ->assertSee('homepage_show_live_classes');
     }
 
