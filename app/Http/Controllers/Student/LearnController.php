@@ -115,10 +115,15 @@ class LearnController extends Controller
         $certificate = $hasActiveEnrollment
             ? OrderService::maybeIssueCertificate($user->id, $course)
             : null;
-        $next = $course->lessons()->where('is_published', true)
+        $nextQuery = $course->lessons()->where('is_published', true)
             ->whereNotIn('id', LessonProgress::where('user_id', $user->id)
-                ->whereNotNull('completed_at')->pluck('lesson_id'))
-            ->orderBy('position')->first();
+                ->whereNotNull('completed_at')->pluck('lesson_id'));
+
+        if (! $hasActiveEnrollment) {
+            $nextQuery->where('is_free_preview', true);
+        }
+
+        $next = $nextQuery->orderBy('position')->first();
 
         $redirect = $next
             ? redirect()->route('student.learn.lesson', [$course->slug, $next->id])
