@@ -70,6 +70,8 @@ class MenuSettingController extends Controller
             'show_mobile' => ['nullable', 'boolean'],
         ]);
 
+        $data['parent_id'] = $data['parent_id'] ?? null;
+
         if (str_starts_with($data['url'], '//') ||
             (! str_starts_with($data['url'], '/') && ! filter_var($data['url'], FILTER_VALIDATE_URL))) {
             abort(422, 'Use a site-relative path (starting with /) or a complete http/https URL.');
