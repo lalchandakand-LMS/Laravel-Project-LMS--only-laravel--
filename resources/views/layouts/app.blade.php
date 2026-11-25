@@ -13,7 +13,7 @@
 <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
         <a href="{{ route('home') }}" class="flex items-center gap-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 text-lg font-black text-white">R</span>
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 text-lg font-black text-white" >A</span>
             <span class="hidden text-lg font-extrabold tracking-tight text-slate-900 sm:block">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
@@ -98,7 +98,7 @@
     <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
             <div class="flex items-center gap-2">
-                <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white">R</span>
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white" >A</span>
                 <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
             </div>
             <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>
