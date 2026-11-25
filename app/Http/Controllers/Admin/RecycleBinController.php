@@ -40,7 +40,7 @@ class RecycleBinController extends Controller
         'sliders' => Slider::class,
         'menu-items' => MenuItem::class,
         'coupons' => Coupon::class,
-        'branches' => Branch::class,
+        'branches' => Branch::class,\n        'batches' => Batch::class,\n        'levels' => Level::class,
     ];
 
     public function index(Request $request)
