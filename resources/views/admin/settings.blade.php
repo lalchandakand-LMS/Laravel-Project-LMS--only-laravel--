@@ -109,6 +109,37 @@
         </div>
     </section>
 
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <h3 class="font-bold text-slate-900">Homepage sections & content</h3>
+        <p class="mt-1 text-xs text-slate-500">Control which public homepage sections appear. Live classes, exams and teachers are populated from your LMS records. Board-result content is shown only when you publish verified information here.</p>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (['live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
+                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? '1') === '1')> {{ $label }}</label>
+            @endforeach
+        </div>
+        <div class="mt-6 grid gap-4 md:grid-cols-2">
+            <div class="rounded-xl bg-slate-50 p-4 md:col-span-2">
+                <h4 class="font-bold text-slate-800">Board results / achievements (optional)</h4>
+                <p class="mt-1 text-xs text-slate-500">Enter only verified results. Leave the body empty to keep this section hidden.</p>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <input name="homepage_board_results_title" value="{{ old('homepage_board_results_title', $settings['homepage_board_results_title'] ?? 'Our students’ achievements') }}" placeholder="Section title" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input name="homepage_board_results_year" value="{{ old('homepage_board_results_year', $settings['homepage_board_results_year'] ?? '') }}" placeholder="Year / session" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input name="homepage_board_results_subtitle" value="{{ old('homepage_board_results_subtitle', $settings['homepage_board_results_subtitle'] ?? '') }}" placeholder="Short subtitle" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2">
+                    <textarea name="homepage_board_results_body" rows="4" placeholder="Verified board result details, achievements and statistics..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2">{{ old('homepage_board_results_body', $settings['homepage_board_results_body'] ?? '') }}</textarea>
+                </div>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-4 md:col-span-2">
+                <h4 class="font-bold text-slate-800">Admission call-to-action</h4>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <input name="homepage_admission_title" value="{{ old('homepage_admission_title', $settings['homepage_admission_title'] ?? 'Join an online or classroom batch') }}" placeholder="Heading" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input name="homepage_admission_button_text" value="{{ old('homepage_admission_button_text', $settings['homepage_admission_button_text'] ?? 'Apply for admission') }}" placeholder="Button text" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input name="homepage_admission_subtitle" value="{{ old('homepage_admission_subtitle', $settings['homepage_admission_subtitle'] ?? 'Choose a course and start learning with Alom’s English Center.') }}" placeholder="Description" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input name="homepage_admission_button_url" value="{{ old('homepage_admission_button_url', $settings['homepage_admission_button_url'] ?? '/courses') }}" placeholder="Button URL (e.g. /courses or /contact)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                </div>
+            </div>
+        </div>
+    </section>
+
     <div class="lg:col-span-2"><button class="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Save all settings</button></div>
 </form>
 @endsection

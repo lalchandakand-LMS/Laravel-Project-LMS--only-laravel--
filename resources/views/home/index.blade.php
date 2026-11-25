@@ -202,6 +202,78 @@
     </div>
 </section>
 
+{{-- UPCOMING LIVE CLASSES --}}
+@if (($homepageSettings['homepage_show_live_classes'] ?? '1') === '1' && $upcomingLiveClasses->isNotEmpty())
+<section class="bg-white py-16">
+    <div class="mx-auto max-w-7xl px-4">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Upcoming live classes</h2><p class="mt-1 text-slate-500">Join scheduled learning sessions with our instructors.</p></div>
+            <a href="{{ route('courses.index') }}" class="text-sm font-bold text-emerald-700">Explore courses →</a>
+        </div>
+        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ($upcomingLiveClasses as $class)
+                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <div class="flex items-center justify-between gap-2"><span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">{{ $class->platform }}</span><span class="text-xs font-semibold text-slate-500">{{ $class->starts_at->format('d M Y') }}</span></div>
+                    <h3 class="mt-4 text-lg font-bold text-slate-900">{{ $class->title }}</h3>
+                    <p class="mt-1 text-sm text-slate-500">{{ $class->course?->title }}</p>
+                    <p class="mt-3 text-sm text-slate-600">{{ $class->starts_at->format('h:i A') }} · {{ $class->duration_minutes }} minutes</p>
+                    <a href="{{ $class->course ? route('courses.show', $class->course->slug) : route('courses.index') }}" class="mt-4 inline-flex text-sm font-bold text-emerald-700">View course details →</a>
+                </article>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- UPCOMING EXAMS --}}
+@if (($homepageSettings['homepage_show_exams'] ?? '1') === '1' && $upcomingExams->isNotEmpty())
+<section class="mx-auto max-w-7xl px-4 py-16">
+    <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Exams & assessments</h2><p class="mt-1 text-slate-500">Prepare, practise and track your progress.</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach ($upcomingExams as $exam)
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <span class="text-xs font-bold uppercase tracking-wide text-emerald-700">{{ $exam->course?->title }}</span>
+                <h3 class="mt-2 font-bold text-slate-900">{{ $exam->title }}</h3>
+                <p class="mt-2 text-sm text-slate-600">{{ $exam->total_marks }} marks · {{ $exam->duration_minutes }} minutes</p>
+                <p class="mt-1 text-xs text-slate-500">{{ $exam->starts_at ? $exam->starts_at->format('d M Y, h:i A') : 'Schedule announced in student portal' }}</p>
+            </article>
+        @endforeach
+    </div>
+</section>
+@endif
+
+{{-- TEACHER PROFILES --}}
+@if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
+<section class="bg-slate-50 py-16">
+    <div class="mx-auto max-w-7xl px-4">
+        <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Meet our teachers</h2><p class="mt-1 text-slate-500">Learn with experienced instructors and practical guidance.</p></div>
+        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ($teachers as $teacher)
+                <article class="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+                    <img src="{{ $teacher->avatarUrl() }}" alt="{{ $teacher->name }}" class="mx-auto h-20 w-20 rounded-full object-cover ring-4 ring-emerald-50">
+                    <h3 class="mt-4 font-bold text-slate-900">{{ $teacher->name }}</h3>
+                    @if ($teacher->designation)<p class="mt-1 text-sm font-semibold text-emerald-700">{{ $teacher->designation }}</p>@endif
+                    @if ($teacher->bio)<p class="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">{{ $teacher->bio }}</p>@endif
+                    <p class="mt-3 text-xs text-slate-500">{{ $teacher->courses_count }} published learning courses</p>
+                </article>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- VERIFIED BOARD RESULTS / ACHIEVEMENTS --}}
+@if (($homepageSettings['homepage_show_board_results'] ?? '1') === '1' && !empty($homepageSettings['homepage_board_results_body']))
+<section class="bg-emerald-950 py-16 text-white">
+    <div class="mx-auto max-w-5xl px-4 text-center">
+        <span class="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">Student achievements {{ $homepageSettings['homepage_board_results_year'] ?? '' }}</span>
+        <h2 class="mt-3 text-3xl font-extrabold">{{ $homepageSettings['homepage_board_results_title'] ?? 'Our students’ achievements' }}</h2>
+        @if (!empty($homepageSettings['homepage_board_results_subtitle']))<p class="mt-2 text-emerald-100">{{ $homepageSettings['homepage_board_results_subtitle'] }}</p>@endif
+        <div class="mx-auto mt-6 max-w-3xl whitespace-pre-line text-base leading-8 text-emerald-50">{{ $homepageSettings['homepage_board_results_body'] }}</div>
+    </div>
+</section>
+@endif
+
 {{-- REVIEWS --}}
 @if ($reviews->count())
 <section class="bg-slate-100 py-16">
@@ -247,12 +319,16 @@
 </section>
 @endif
 
-{{-- CTA --}}
-<section class="mx-auto max-w-7xl px-4 pb-4">
-    <div class="rounded-3xl bg-slate-900 px-8 py-14 text-center text-white">
-        <h2 class="text-3xl font-extrabold">Ready to start learning?</h2>
-        <p class="mx-auto mt-3 max-w-xl text-slate-300">Join Alom's English Center and build the English skills you need for study, work and everyday life.</p>
-        <a href="{{ route('register') }}" class="mt-7 inline-block rounded-xl bg-emerald-500 px-7 py-3 font-bold text-slate-950 hover:bg-emerald-400">Get started for free</a>
+{{-- ONLINE / CLASSROOM ADMISSION --}}
+@if (($homepageSettings['homepage_show_admission'] ?? '1') === '1')
+<section class="mx-auto max-w-7xl px-4 pb-8 pt-4">
+    <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-14 text-center text-white sm:px-12">
+        <div class="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
+        <span class="relative inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">Admissions & enrolment</span>
+        <h2 class="relative mt-4 text-3xl font-extrabold">{{ $homepageSettings['homepage_admission_title'] ?? 'Join an online or classroom batch' }}</h2>
+        <p class="relative mx-auto mt-3 max-w-2xl text-slate-300">{{ $homepageSettings['homepage_admission_subtitle'] ?? 'Choose a course and start learning with Alom’s English Center.' }}</p>
+        <a href="{{ $homepageSettings['homepage_admission_button_url'] ?? '/courses' }}" class="relative mt-7 inline-block rounded-xl bg-emerald-500 px-7 py-3 font-bold text-slate-950 hover:bg-emerald-400">{{ $homepageSettings['homepage_admission_button_text'] ?? 'Apply for admission' }}</a>
     </div>
 </section>
+@endif
 @endsection
