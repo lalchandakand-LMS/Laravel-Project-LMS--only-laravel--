@@ -1,7 +1,6 @@
 # Alom's English Center — Custom LMS (Laravel 12)
 
-A complete, production-ready Learning Management System modelled on
-**redwansmethod.com**: courses, curriculum builder, video player, MCQ/CQ exams,
+A complete, production-ready Learning Management System built for Alom's English Center, with courses, curriculum builder, video player, MCQ/CQ exams,
 e-books, cart + bKash/Nagad checkout, certificates, reviews and a full admin panel.
 
 Built with **Laravel 12 + Blade + Tailwind CSS**. The compiled Vite bundle is
