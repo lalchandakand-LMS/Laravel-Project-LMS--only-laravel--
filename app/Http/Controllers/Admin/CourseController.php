@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Category;
-use App\\Models\\Course;
-use App\\Models\\User;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Str;
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
@@ -112,7 +112,7 @@ class CourseController extends Controller
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
         }
 
-        $data['outcomes'] = collect(preg_split('/\\r\\n|\\r|\\n/', (string) $request->input('outcomes')))
+        $data['outcomes'] = collect(preg_split('/\r\n|\r|\n/', (string) $request->input('outcomes')))
             ->map(fn ($l) => trim($l))->filter()->values()->all();
 
         $data['is_published'] = $request->boolean('is_published');
