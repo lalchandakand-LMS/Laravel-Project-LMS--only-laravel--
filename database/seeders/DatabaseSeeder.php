@@ -27,19 +27,19 @@ class DatabaseSeeder extends Seeder
     {
         /* ---------------- Users ---------------- */
         $admin = User::create([
-            'name' => 'Redwan Hushen', 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
-            'role' => 'admin', 'phone' => '01700000001', 'designation' => 'Founder & Lead Instructor',
-            'bio' => 'Maths teacher, author and founder of Redwan\'s Method.',
+            'name' => "Alom's English Center Admin", 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
+            'role' => 'admin', 'phone' => '', 'designation' => 'Administrator',
+            'bio' => "Administrator account for Alom's English Center.",
         ]);
 
         $instructors = collect([
-            ['Nusrat Jahan', 'Physics', 'Senior Physics Instructor'],
-            ['Tanvir Ahmed', 'Chemistry', 'Chemistry & Admission Coach'],
-            ['Sadia Islam', 'Higher Math', 'HSC Higher Math Instructor'],
+            ['Nusrat Jahan', 'Spoken English', 'English Language Instructor'],
+            ['Tanvir Ahmed', 'Grammar & Writing', 'English Grammar Instructor'],
+            ['Sadia Islam', 'IELTS Preparation', 'IELTS Preparation Coach'],
         ])->map(fn ($row, $i) => User::create([
             'name' => $row[0], 'email' => 'teacher'.$i.'@lms.test', 'password' => Hash::make('password'),
-            'role' => 'instructor', 'designation' => $row[2], 'phone' => '0170000001'.$i,
-            'bio' => $row[1].' instructor with 8+ years of teaching experience.',
+            'role' => 'instructor', 'designation' => $row[2], 'phone' => '',
+            'bio' => $row[1].' instructor at Alom’s English Center.',
         ]));
 
         $students = collect([
@@ -54,100 +54,111 @@ class DatabaseSeeder extends Seeder
 
         /* ---------------- Settings ---------------- */
         foreach ([
-            'site_name' => "Redwan's Method",
-            'site_tagline' => 'Quality education for everyone, everywhere.',
-            'site_email' => 'support@redwansmethod.test',
-            'site_phone' => '+880 1700-000000',
-            'site_address' => 'Dhanmondi, Dhaka 1205, Bangladesh',
-            'bkash_number' => '01711111111',
-            'nagad_number' => '01722222222',
+            'site_name' => "Alom's English Center",
+            'site_tagline' => 'Build confidence in English through practical lessons and guided learning.',
+            'site_email' => '',
+            'site_phone' => '',
+            'site_address' => '',
+            'bkash_number' => '',
+            'nagad_number' => '',
             'currency' => '৳',
-            'facebook' => 'https://facebook.com/',
-            'youtube' => 'https://youtube.com/',
-            'instagram' => 'https://instagram.com/',
-            'certificate_signature' => 'Redwan Hushen',
-            'about_text' => 'A comprehensive online learning platform with courses delivered by highly qualified educators.',
+            'facebook' => '',
+            'youtube' => '',
+            'instagram' => '',
+            'certificate_signature' => "Alom's English Center Admin",
+            'about_text' => 'Alom’s English Center helps learners improve speaking, grammar, vocabulary, listening and writing through structured lessons and guided practice.',
         ] as $key => $value) {
             Setting::set($key, $value);
         }
 
         /* ---------------- Categories ---------------- */
         $categories = collect([
-            ['Academic Courses', '📚', 'Comprehensive academic preparation for SSC & HSC students.'],
-            ['Admission Courses', '🎓', 'Specialized courses for university admission tests.'],
-            ['Mathematics', '➗', 'Advanced math concepts and problem solving.'],
-            ['Science & Physics', '🔬', 'Physics, chemistry and biology made simple.'],
-            ['Technology', '💻', 'Modern technology, programming and freelancing.'],
-            ['Skill Development', '🚀', 'Communication, English and career skills.'],
+            ['English Foundations', '📘', 'Build a strong foundation in everyday English, sentence structure and essential vocabulary.'],
+            ['Spoken English', '🗣️', 'Develop fluency, pronunciation, listening and real-life conversation skills.'],
+            ['Grammar & Writing', '✍️', 'Learn practical grammar, sentence construction, paragraphs, emails and essays.'],
+            ['IELTS Preparation', '🌍', 'Prepare for IELTS Listening, Reading, Writing and Speaking.'],
+            ['Kids English', '🧒', 'Fun, age-appropriate English vocabulary, phonics and simple conversations.'],
+            ['Professional English', '💼', 'Improve workplace communication, presentations, interviews and business writing.'],
         ])->map(fn ($row, $i) => Category::create([
             'name' => $row[0], 'icon' => $row[1], 'description' => $row[2],
             'position' => $i + 1, 'is_active' => true,
         ]));
 
-        /* ---------------- Courses ---------------- */
+        /* ---------------- English learning demo courses ---------------- */
         $courseBlueprints = [
             [
-                'title' => 'SSC Higher Math Complete Course (Class 9-10)',
-                'category' => 2, 'price' => 3500, 'discount' => 2500, 'featured' => true, 'level' => 'intermediate',
-                'subtitle' => 'Chapter-wise full syllabus with board question solve and MCQ exams.',
-                'outcomes' => ['Solve every board question of SSC Higher Math', 'Master trigonometry, geometry and calculus basics', 'Score 90+ with chapter-wise MCQ practice'],
+                'title' => 'Spoken English for Beginners',
+                'category' => 1, 'price' => 3000, 'discount' => 2500, 'featured' => true, 'level' => 'beginner',
+                'subtitle' => 'Start speaking English confidently with everyday words, useful sentences and guided conversation practice.',
+                'outcomes' => ['Introduce yourself and talk about daily routines', 'Ask and answer common questions naturally', 'Build confidence through guided speaking practice'],
                 'sections' => [
-                    'Chapter 1: Real Numbers' => ['Real numbers & surds', 'Exercise 1.1 solve', 'Board MCQ practice'],
-                    'Chapter 2: Sets & Functions' => ['Sets explained', 'Functions and graphs', 'Class test 01'],
-                    'Chapter 3: Algebraic Expressions' => ['Polynomials', 'Factorization tricks', 'Board question solve'],
+                    'Getting Started with English' => ['Greetings and introductions', 'Introducing yourself and your family', 'Talking about daily routines'],
+                    'Everyday Conversations' => ['Asking for information politely', 'Shopping, directions and common situations', 'Practice: a short self-introduction'],
+                    'Speaking with Confidence' => ['Making simple sentences quickly', 'Common speaking mistakes and corrections', 'Final speaking practice'],
                 ],
             ],
             [
-                'title' => 'Physics 1st Paper — HSC Full Course',
-                'category' => 3, 'price' => 4000, 'discount' => 2990, 'featured' => true, 'level' => 'advanced',
-                'subtitle' => 'Complete HSC Physics 1st paper with practical demonstrations.',
-                'outcomes' => ['Understand every chapter of HSC Physics 1st paper', 'Solve CQ and MCQ with confidence', 'Practice with real exam standard tests'],
+                'title' => 'English Grammar from Basic to Advanced',
+                'category' => 2, 'price' => 3500, 'discount' => 2990, 'featured' => true, 'level' => 'beginner',
+                'subtitle' => 'Understand parts of speech, tenses, sentence structure and practical grammar through clear examples.',
+                'outcomes' => ['Identify and use the parts of speech', 'Choose correct tense and verb forms', 'Write accurate sentences with fewer mistakes'],
                 'sections' => [
-                    'Physical World & Measurement' => ['Units & dimensions', 'Errors in measurement'],
-                    'Vectors' => ['Vector addition', 'Dot & cross product', 'Problem solve session'],
-                    'Dynamics' => ['Newton\'s laws', 'Momentum & collision', 'MCQ drill'],
+                    'Grammar Foundations' => ['Nouns, pronouns and articles', 'Verbs, adjectives and adverbs', 'Prepositions and conjunctions'],
+                    'Sentence Building' => ['Subject, verb and object', 'All essential English tenses', 'Questions, negatives and auxiliaries'],
+                    'Accuracy in English' => ['Subject-verb agreement', 'Common grammar errors', 'Grammar revision and practice'],
                 ],
             ],
             [
-                'title' => 'University Admission Crash Course (Engineering)',
-                'category' => 1, 'price' => 6000, 'discount' => 4500, 'featured' => true, 'level' => 'advanced',
-                'subtitle' => 'Intensive admission prep with 120+ model tests.',
-                'outcomes' => ['Complete BUET/CKRUET syllabus revision', '120+ model tests with solutions', 'Time management for MCQ exams'],
+                'title' => 'English Vocabulary & Pronunciation',
+                'category' => 0, 'price' => 1800, 'discount' => null, 'featured' => true, 'level' => 'beginner',
+                'subtitle' => 'Grow your usable vocabulary and practise clear, natural English pronunciation.',
+                'outcomes' => ['Learn and use high-frequency everyday vocabulary', 'Recognise syllables and basic word stress', 'Use new words in meaningful sentences'],
                 'sections' => [
-                    'Math for Admission' => ['Shortcut techniques', 'Higher math selected problems'],
-                    'Physics for Admission' => ['Selected problem solving', 'Concept clearing class'],
-                    'Model Tests' => ['Model test 01 with solution', 'Model test 02 with solution'],
+                    'Useful Everyday Vocabulary' => ['People, places and objects', 'Food, travel and daily activities', 'Word families and collocations'],
+                    'Clear Pronunciation' => ['English sounds and phonemic awareness', 'Syllables and word stress', 'Sentence stress and intonation'],
+                    'Using New Words' => ['Synonyms and antonyms in context', 'Phrasal verbs for daily communication', 'Vocabulary review and speaking task'],
                 ],
             ],
             [
-                'title' => 'SSC Chemistry Foundation (Free)',
-                'category' => 3, 'price' => 0, 'discount' => null, 'featured' => false, 'level' => 'beginner',
-                'subtitle' => 'Free foundation batch — start chemistry from zero.',
-                'outcomes' => ['Understand basic chemistry concepts', 'Prepare for SSC chemistry exam'],
+                'title' => 'IELTS Preparation: Four Skills',
+                'category' => 3, 'price' => 6000, 'discount' => 4990, 'featured' => true, 'level' => 'intermediate',
+                'subtitle' => 'A structured introduction to IELTS Listening, Reading, Writing and Speaking with timed practice.',
+                'outcomes' => ['Understand the IELTS test format and question types', 'Practise all four skills with a study plan', 'Review common task strategies and mistakes'],
                 'sections' => [
-                    'Introduction' => ['What is chemistry?', 'States of matter'],
-                    'Periodic Table' => ['Groups & periods', 'Trends in the periodic table'],
+                    'IELTS Listening & Reading' => ['Listening question types and note taking', 'Reading skimming and scanning', 'Timed listening and reading practice'],
+                    'IELTS Writing' => ['Academic Task 1 overview', 'Task 2 essay structure and coherence', 'Writing review checklist'],
+                    'IELTS Speaking' => ['Speaking Part 1: familiar topics', 'Speaking Part 2: long turn', 'Speaking Part 3: extending answers'],
                 ],
             ],
             [
-                'title' => 'English Grammar & Writing for HSC',
-                'category' => 5, 'price' => 1500, 'discount' => null, 'featured' => false, 'level' => 'beginner',
-                'subtitle' => 'Grammar rules, paragraph and composition writing made easy.',
-                'outcomes' => ['Master all grammar rules for HSC', 'Write error-free paragraphs & letters'],
+                'title' => 'English Writing: Paragraph, Email & Essay',
+                'category' => 2, 'price' => 2200, 'discount' => 1800, 'featured' => false, 'level' => 'intermediate',
+                'subtitle' => 'Learn to organise ideas and write clear paragraphs, formal emails and short essays.',
+                'outcomes' => ['Write a focused paragraph with a clear topic sentence', 'Structure formal and informal emails', 'Plan and write coherent short essays'],
                 'sections' => [
-                    'Grammar' => ['Right form of verbs', 'Narration change', 'Modifiers'],
-                    'Writing' => ['Paragraph writing', 'Completing story'],
+                    'Writing Foundations' => ['Sentence clarity and punctuation', 'Topic sentences and supporting details', 'Paragraph unity and coherence'],
+                    'Practical Writing' => ['Formal and informal email writing', 'Applications and short messages', 'Descriptive and opinion paragraphs'],
+                    'Essay Skills' => ['Planning and outlining an essay', 'Introduction, body and conclusion', 'Editing and proofreading'],
                 ],
             ],
             [
-                'title' => 'Web Development with Laravel (Beginner)',
-                'category' => 4, 'price' => 5000, 'discount' => 3500, 'featured' => false, 'level' => 'beginner',
-                'subtitle' => 'Build real products with PHP, Laravel and MySQL.',
-                'outcomes' => ['Build full-stack apps with Laravel', 'Understand MVC architecture', 'Deploy to shared hosting'],
+                'title' => 'English for Job Interviews & Workplace',
+                'category' => 5, 'price' => 2500, 'discount' => null, 'featured' => false, 'level' => 'intermediate',
+                'subtitle' => 'Practise professional introductions, interview answers, meetings and clear workplace communication.',
+                'outcomes' => ['Give a confident professional self-introduction', 'Answer common interview questions clearly', 'Write polite workplace emails and messages'],
                 'sections' => [
-                    'Getting Started' => ['PHP basics', 'Installing Laravel', 'Routing & controllers'],
-                    'Database' => ['Migrations & models', 'Eloquent relationships'],
-                    'Project' => ['Build an LMS', 'Deploy to production'],
+                    'Professional Communication' => ['Introducing yourself professionally', 'Polite requests and clear responses', 'Telephone and online meeting etiquette'],
+                    'Job Interview Practice' => ['Talking about skills and experience', 'Answering strengths and weaknesses questions', 'Mock interview preparation'],
+                    'Workplace Writing' => ['Professional email structure', 'Meeting notes and follow-up messages', 'Presentation language basics'],
+                ],
+            ],
+            [
+                'title' => 'Free English Starter Pack',
+                'category' => 0, 'price' => 0, 'discount' => null, 'featured' => false, 'level' => 'beginner',
+                'subtitle' => 'A free first step into English learning with greetings, simple sentences and essential vocabulary.',
+                'outcomes' => ['Use common greetings and polite expressions', 'Build simple everyday sentences', 'Learn essential words for daily communication'],
+                'sections' => [
+                    'Your First English Lessons' => ['Greetings and polite expressions', 'Common words and simple sentences', 'Introduce yourself in English'],
                 ],
             ],
         ];
@@ -158,13 +169,13 @@ class DatabaseSeeder extends Seeder
                 'subtitle' => $bp['subtitle'],
                 'category_id' => $categories[$bp['category']]->id,
                 'instructor_id' => $i % 2 === 0 ? $admin->id : $instructors[$i % $instructors->count()]->id,
-                'description' => $bp['subtitle']."\n\nThis course is designed by the Redwan's Method academic team. You get recorded lessons, lecture notes, chapter-wise MCQ exams and live doubt-solving classes. Lifetime access, no expiry.",
+                'description' => $bp['subtitle']."\n\nThis course is designed for practical English learning. Study the lesson notes, complete guided exercises, review your quiz results and join scheduled teacher-led practice sessions.",
                 'requirements' => "Basic understanding of the previous class syllabus.\nA notebook and a stable internet connection.",
                 'outcomes' => $bp['outcomes'],
                 'price' => $bp['price'],
                 'discount_price' => $bp['discount'],
                 'level' => $bp['level'],
-                'language' => 'Bangla',
+                'language' => 'Bangla & English',
                 'is_published' => true,
                 'is_featured' => $bp['featured'],
                 'has_certificate' => true,
@@ -184,9 +195,9 @@ class DatabaseSeeder extends Seeder
                         'course_id' => $course->id,
                         'section_id' => $section->id,
                         'title' => $lessonTitle,
-                        'type' => $j === count($lessons) - 1 && $j % 2 === 0 ? 'text' : 'video',
-                        'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-                        'content' => "In this lesson we cover **{$lessonTitle}** step by step.\n\n1. Concept explanation\n2. Worked examples\n3. Practice problems with solutions\n\nDownload the attached note for practice.",
+                        'type' => 'text',
+                        'video_url' => null,
+                        'content' => "In this lesson, you will practise **{$lessonTitle}** with clear examples and guided activities.\n\nLearning steps:\n1. Understand the key idea and useful language.\n2. Read the examples and notice how the language is used.\n3. Practise by creating your own sentences.\n4. Review your work and correct common mistakes.\n\nPractice task: write five original sentences using today’s lesson.",
                         'duration_minutes' => rand(12, 55),
                         'position' => $lessonPosition++,
                         'is_free_preview' => $lessonPosition <= 3,
@@ -216,15 +227,15 @@ class DatabaseSeeder extends Seeder
             Announcement::create([
                 'course_id' => $course->id,
                 'title' => 'Welcome to '.Str::words($course->title, 3, ''),
-                'body' => 'Class routine has been published. Live class every Friday at 8 PM. Complete the first chapter before the live session.',
+                'body' => 'Welcome to the course. Review the first lessons and complete the practice activities. Check your student dashboard for scheduled teacher-led sessions.',
                 'is_published' => true,
             ]);
 
             LiveClass::create([
                 'course_id' => $course->id,
                 'title' => 'Doubt solving: '.Str::limit($course->title, 38),
-                'meeting_url' => 'https://zoom.us/j/123456789',
-                'platform' => 'zoom',
+                'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
+                'platform' => 'jitsi',
                 'starts_at' => now()->addDays(2),
                 'duration_minutes' => 90,
             ]);
@@ -232,14 +243,14 @@ class DatabaseSeeder extends Seeder
 
         /* ---------------- E-books ---------------- */
         $books = [
-            ['SSC Higher Math Solution Book', 350, 240, false],
-            ['HSC Physics Formula Sheet', 0, 24, true],
-            ['Admission Model Test Book (Engineering)', 500, 320, false],
-            ['English Grammar Cheat Sheet', 0, 18, true],
+            ['Everyday English Vocabulary Builder', 250, 80, false],
+            ['English Grammar Quick Reference', 0, 36, true],
+            ['IELTS Writing Practice Workbook', 400, 120, false],
+            ['Spoken English Conversation Practice', 0, 45, true],
         ];
         foreach ($books as $b) {
             Ebook::create([
-                'title' => $b[0], 'description' => 'A carefully prepared resource by Redwan\'s Method academic team. Includes solved examples, shortcuts and practice questions.',
+                'title' => $b[0], 'description' => 'A carefully prepared resource by Alom\'s English Center academic team. Includes solved examples, shortcuts and practice questions.',
                 'price' => $b[1], 'pages' => $b[2], 'is_free' => $b[3], 'is_published' => true,
             ]);
         }
@@ -294,11 +305,11 @@ class DatabaseSeeder extends Seeder
                     'user_id' => $student->id,
                     'rating' => rand(4, 5),
                     'comment' => collect([
-                        'ভাইয়ার ক্লাসগুলো amazing! প্রতিটা অধ্যায় এত সুন্দরভাবে বুঝিয়ে দিয়েছেন যে আর ভয় লাগে না।',
-                        'To be honest, this series is too much effective. Before I was weak in MCQ, now I get 27-29 out of 30.',
-                        'এত সুন্দর করে পড়ানোর জন্য ধন্যবাদ। CQ এবং MCQ দুটোই কভার করা হয়েছে।',
-                        'Best platform for SSC preparation. The notes and model tests are worth every taka.',
-                        'অসাধারণ! এত কম খরচে এত ভালো কোর্স আশা করিনি।',
+                        'Speaking practice helped me feel more confident when I use English in everyday situations.',
+                        'The grammar lessons are clear and the practice activities help me understand my mistakes.',
+                        'প্রতিটি ক্লাসে নতুন শব্দ ও বাক্য ব্যবহার করতে শিখছি।',
+                        'The writing lessons helped me organise my ideas and write more clearly.',
+                        'IELTS speaking practice is organised and gives me a clear way to improve.',
                     ])->random(),
                     'is_approved' => true,
                 ]);
@@ -310,7 +321,7 @@ class DatabaseSeeder extends Seeder
             'course_id' => $allCourses->first()->id,
             'user_id' => $students->last()->id,
             'rating' => 5,
-            'comment' => 'Just finished chapter 2 — the explanation was superb!',
+            'comment' => 'The lesson examples are clear and the practice tasks are useful.',
             'is_approved' => false,
         ]);
 
@@ -322,7 +333,7 @@ class DatabaseSeeder extends Seeder
             'phone' => $students->first()->phone, 'email' => $students->first()->email,
         ]);
         $pending->items()->create([
-            'item_type' => 'course', 'item_id' => 2, 'title' => 'Physics 1st Paper — HSC Full Course',
+            'item_type' => 'course', 'item_id' => 2, 'title' => 'English Grammar from Basic to Advanced',
             'price' => 2990, 'qty' => 1,
         ]);
         $pending->payments()->create([
@@ -350,22 +361,14 @@ class DatabaseSeeder extends Seeder
     private function seedQuestions(Exam $exam): void
     {
         $bank = [
-            ['Which of the following is an irrational number?', ['√2', '0.25', '3/4', '0.333…'], 0,
-             '√2 cannot be written as a fraction p/q, so it is irrational.'],
-            ['If x + 1/x = 3, what is x² + 1/x²?', ['7', '9', '11', '6'], 0,
-             'x² + 1/x² = (x + 1/x)² − 2 = 9 − 2 = 7.'],
-            ['The SI unit of force is —', ['Newton', 'Joule', 'Watt', 'Pascal'], 0,
-             'Force is measured in Newton (N).'],
-            ['sin²θ + cos²θ = ?', ['1', '0', '2', 'tanθ'], 0,
-             'This is the fundamental trigonometric identity.'],
-            ['Which gas is most abundant in the atmosphere?', ['Nitrogen', 'Oxygen', 'Carbon dioxide', 'Argon'], 0,
-             'Nitrogen makes up about 78% of the atmosphere.'],
-            ['The derivative of sin x is —', ['cos x', '−cos x', 'sin x', '−sin x'], 0,
-             'd/dx(sin x) = cos x.'],
-            ['A body moving with uniform velocity has acceleration —', ['zero', 'constant', 'increasing', 'decreasing'], 0,
-             'Uniform velocity means no change in velocity, so acceleration is zero.'],
-            ['The value of log₁₀ 1000 is —', ['3', '2', '10', '100'], 0,
-             '10³ = 1000, so log₁₀1000 = 3.'],
+            ['Which greeting is most suitable at 9:00 a.m.?', ['Good morning', 'Good night', 'Good evening', 'Goodbye'], 0, 'Good morning is used in the morning.'],
+            ['She _____ to class every day.', ['goes', 'go', 'going', 'gone'], 0, 'With she, he or it in the present simple, the verb usually takes -s or -es.'],
+            ['Which sentence is grammatically correct?', ['He does not like coffee.', 'He do not likes coffee.', 'He not like coffee.', 'He does not likes coffee.'], 0, 'After does not, use the base form of the verb: like.'],
+            ['What is the closest meaning of “happy”?', ['Glad', 'Angry', 'Tired', 'Afraid'], 0, 'Glad is a synonym of happy.'],
+            ['What is the plural form of “child”?', ['Children', 'Childs', 'Childes', 'Childrens'], 0, 'Children is the irregular plural form of child.'],
+            ['Choose the correct article: “She ate _____ apple.”', ['an', 'a', 'the', 'no article'], 0, 'Use an before a vowel sound, as in apple.'],
+            ['Choose the correct preposition: “I am interested _____ learning English.”', ['in', 'on', 'at', 'for'], 0, 'The expression is interested in.'],
+            ['What is the past tense of “go”?', ['Went', 'Goed', 'Gone', 'Going'], 0, 'Went is the simple past form of go.'],
         ];
 
         shuffle($bank);
@@ -375,7 +378,7 @@ class DatabaseSeeder extends Seeder
                 'exam_id' => $exam->id,
                 'type' => 'mcq',
                 'question' => $row[0],
-                'explanation' => $row[2],
+                'explanation' => $row[3],
                 'marks' => 1,
                 'position' => $i + 1,
             ]);

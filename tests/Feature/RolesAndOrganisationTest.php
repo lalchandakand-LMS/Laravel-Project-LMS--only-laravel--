@@ -131,7 +131,7 @@ class RolesAndOrganisationTest extends TestCase
         $this->actingAs($admin)->get(route('admin.branches.index'))->assertOk();
         $this->actingAs($admin)->post(route('admin.branches.store'), [
             'name' => 'Sylhet Centre', 'code' => 'SYL-01', 'address' => 'Zindabazar, Sylhet',
-            'phone' => '01711111111', 'email' => 'sylhet@redwansmethod.test',
+            'phone' => '01711111111', 'email' => 'branch@example.test',
         ])->assertRedirect(route('admin.branches.index'));
         $this->assertDatabaseHas('branches', ['code' => 'SYL-01']);
         $branch = Branch::where('code', 'SYL-01')->firstOrFail();
@@ -161,14 +161,14 @@ class RolesAndOrganisationTest extends TestCase
         $this->actingAs($admin)->get(route('admin.live-classes.index'))->assertOk();
         $this->actingAs($admin)->post(route('admin.live-classes.store'), [
             'course_id' => $course->id, 'title' => 'Final revision class',
-            'platform' => 'jitsi', 'meeting_url' => 'https://meet.jit.si/redwans-final',
+            'platform' => 'jitsi', 'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
             'starts_at' => now()->addDay()->format('Y-m-d\TH:i'),
             'duration_minutes' => 90, 'is_published' => 1,
         ])->assertRedirect(route('admin.live-classes.index'));
         $live = LiveClass::where('title', 'Final revision class')->firstOrFail();
         $this->actingAs($admin)->put(route('admin.live-classes.update', $live), [
             'course_id' => $course->id, 'title' => 'Final revision class (moved)',
-            'platform' => 'jitsi', 'meeting_url' => 'https://meet.jit.si/redwans-final',
+            'platform' => 'jitsi', 'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
             'starts_at' => now()->addDays(2)->format('Y-m-d\TH:i'),
             'duration_minutes' => 90, 'is_published' => 1,
         ])->assertRedirect(route('admin.live-classes.index'));

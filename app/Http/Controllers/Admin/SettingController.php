@@ -21,6 +21,16 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        $request->validate([
+            'site_name' => ['sometimes', 'required', 'string', 'max:120'],
+            'site_tagline' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'site_email' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'facebook' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'youtube' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'instagram' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
         foreach (self::KEYS as $key) {
             if ($request->has($key)) {
                 Setting::set($key, $request->input($key));

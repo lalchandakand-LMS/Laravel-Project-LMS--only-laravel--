@@ -27,7 +27,7 @@
                 @foreach ($items as [$key, $label])
                     <div>
                         <label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label>
-                        <input name="{{ $key }}" value="{{ old($key, $settings[$key] ?? '') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                        <input name="{{ $key }}" type="{{ in_array($key, ['facebook', 'youtube', 'instagram']) ? 'url' : ($key === 'site_email' ? 'email' : 'text') }}" value="{{ old($key, $settings[$key] ?? '') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                     </div>
                 @endforeach
             </div>
@@ -45,7 +45,13 @@
                 <label class="mb-1 block text-sm font-semibold text-slate-700">Certificate signature name</label>
                 <input name="certificate_signature" value="{{ old('certificate_signature', $settings['certificate_signature'] ?? '') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                 <label class="mt-3 mb-1 block text-sm font-semibold text-slate-700">Logo</label>
-                <input type="file" name="logo" class="w-full text-xs">
+                @if (!empty($settings['logo']))
+                    <img src="{{ asset('storage/'.$settings['logo']) }}" alt="Current site logo" class="mb-2 h-16 w-16 rounded-lg border border-slate-200 object-contain">
+                @else
+                    <img src="{{ asset('images/aec-logo.svg') }}" alt="Alom's English Center logo" class="mb-2 h-16 w-16 rounded-lg border border-slate-200 object-contain">
+                @endif
+                <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
+                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 2 MB. Uploading a logo replaces the default AEC logo.</p>
             </div>
         </div>
     </section>

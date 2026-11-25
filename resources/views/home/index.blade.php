@@ -1,4 +1,6 @@
 @extends('layouts.app')
+@section('title', 'English Courses, Spoken English & Grammar')
+@section('meta_description', 'Learn spoken English, grammar, vocabulary, writing and communication skills with guided courses at Alom\'s English Center.')
 @section('content')
 
 {{-- HERO SLIDER --}}
@@ -51,7 +53,7 @@
                         </div>
                         <div class="absolute -bottom-6 -left-4 rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
                             <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}+</p>
-                            <p class="text-xs text-slate-300">video lessons</p>
+                            <p class="text-xs text-slate-300">learning activities</p>
                         </div>
                     </div>
                 </div>
@@ -105,14 +107,13 @@
     <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 lg:grid-cols-2">
         <div>
             <span class="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span> Online batches are ongoing — book your seat
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span> Build practical English skills at your own pace
             </span>
             <h1 class="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
-                Learn smarter with <span class="text-emerald-400">Redwan's Method</span>
+                Learn English with confidence at <span class="text-emerald-400">Alom's English Center</span>
             </h1>
             <p class="mt-4 max-w-xl text-lg text-slate-300">
-                Class 9–10 (SSC), HSC and admission preparation with the country's best teachers.
-                Video lessons, class notes, MCQ exams and lifetime access.
+                Improve your English with structured lessons, expert guidance, speaking practice and progress tracking.
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
                 <a href="{{ route('courses.index') }}" class="rounded-xl bg-emerald-500 px-6 py-3 font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400">Explore courses</a>
@@ -146,7 +147,7 @@
     <div class="flex items-end justify-between">
         <div>
             <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Choose your learning path</h2>
-            <p class="mt-1 text-slate-500">Diverse courses designed to help you excel in academics & admissions.</p>
+            <p class="mt-1 text-slate-500">Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.</p>
         </div>
         <a href="{{ route('courses.index') }}" class="hidden text-sm font-semibold text-emerald-700 hover:underline sm:block">See all courses →</a>
     </div>
@@ -254,7 +255,7 @@
 <section class="mx-auto max-w-7xl px-4 pb-4">
     <div class="rounded-3xl bg-slate-900 px-8 py-14 text-center text-white">
         <h2 class="text-3xl font-extrabold">Ready to start learning?</h2>
-        <p class="mx-auto mt-3 max-w-xl text-slate-300">Join thousands of students preparing for SSC, HSC and university admission with Redwan's Method.</p>
+        <p class="mx-auto mt-3 max-w-xl text-slate-300">Join Alom's English Center and build the English skills you need for study, work and everyday life.</p>
         <a href="{{ route('register') }}" class="mt-7 inline-block rounded-xl bg-emerald-500 px-7 py-3 font-bold text-slate-950 hover:bg-emerald-400">Get started for free</a>
     </div>
 </section>

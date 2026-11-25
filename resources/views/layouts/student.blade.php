@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') — {{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</title>
+    <title>@yield('title', 'Dashboard') — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     @include('partials.assets')
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
@@ -12,8 +12,8 @@
     {{-- SIDEBAR --}}
     <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white p-4 lg:flex">
         <a href="{{ route('home') }}" class="flex items-center gap-2 px-2 py-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white">R</span>
-            <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</span>
+            <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain">
+            <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
         @php
@@ -51,7 +51,7 @@
 
     <div class="flex min-w-0 flex-1 flex-col">
         <header class="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
-            <a href="{{ route('student.dashboard') }}" class="font-extrabold text-slate-900 lg:hidden">RM</a>
+            <a href="{{ route('student.dashboard') }}" class="font-extrabold text-slate-900 lg:hidden">AEC</a>
             <h1 class="text-lg font-bold text-slate-900">@yield('heading', 'Dashboard')</h1>
             <div class="ml-auto flex items-center gap-3">
                 <a href="{{ route('cart.index') }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm">🛒</a>

@@ -16,15 +16,15 @@ class OrganisationSeeder extends Seeder
         $password = Hash::make('password');
 
         $branches = [
-            ['name' => 'Dhanmondi Centre', 'code' => 'DHK-01', 'address' => 'House 42, Road 9/A, Dhanmondi, Dhaka 1209', 'phone' => '+880 1711-100001'],
-            ['name' => 'Uttara Centre', 'code' => 'DHK-02', 'address' => 'Sector 7, Uttara Model Town, Dhaka 1230', 'phone' => '+880 1711-100002'],
-            ['name' => 'Chattogram Centre', 'code' => 'CTG-01', 'address' => 'Nasirabad Road, Chattogram 4000', 'phone' => '+880 1711-100003'],
-            ['name' => 'Online (National)', 'code' => 'ONL-01', 'address' => 'Live classes for students all over Bangladesh', 'phone' => '+880 1711-100004'],
+            ['name' => 'Main Learning Center', 'code' => 'AEC-01', 'address' => '', 'phone' => ''],
+            ['name' => 'Online Learning Center', 'code' => 'AEC-02', 'address' => '', 'phone' => ''],
+            ['name' => 'Speaking Practice Center', 'code' => 'AEC-03', 'address' => '', 'phone' => ''],
+            ['name' => 'Remote Learning', 'code' => 'AEC-04', 'address' => '', 'phone' => ''],
         ];
 
         $models = collect($branches)->map(fn ($b) => Branch::firstOrCreate(
             ['code' => $b['code']],
-            $b + ['email' => strtolower($b['code']).'@redwansmethod.test', 'is_active' => true]
+            $b + ['email' => strtolower($b['code']).'@alomsenglishcenter.test', 'is_active' => true]
         ));
 
         // Branch managers
@@ -32,12 +32,12 @@ class OrganisationSeeder extends Seeder
             $manager = User::firstOrCreate(
                 ['email' => 'manager'.($i + 1).'@lms.test'],
                 [
-                    'name' => ['Dhanmondi Manager', 'Uttara Manager', 'Chattogram Manager'][$i],
+                    'name' => ['Main Center Manager', 'Online Center Manager', 'Speaking Practice Manager'][$i],
                     'password' => $password,
                     'role' => 'branch_manager',
                     'branch_id' => $branch->id,
                     'designation' => 'Branch Manager',
-                    'phone' => '+880 1811-20000'.($i + 1),
+                    'phone' => '',
                     'is_active' => true,
                 ]
             );
@@ -63,7 +63,7 @@ class OrganisationSeeder extends Seeder
                     'password' => $password,
                     'role' => 'guardian',
                     'branch_id' => $student->branch_id,
-                    'phone' => '+880 1911-30000'.($i + 1),
+                    'phone' => '',
                     'is_active' => true,
                 ]
             );
@@ -75,9 +75,9 @@ class OrganisationSeeder extends Seeder
         // Home page hero sliders
         $slides = [
             [
-                'badge' => 'Admission 2026 — online & offline batches open',
-                'title' => "Learn smarter with Redwan's Method",
-                'subtitle' => "Class 9–10 (SSC), HSC and admission preparation with the country's best teachers. Video lessons, class notes, MCQ exams and lifetime access.",
+                'badge' => 'English courses — online learning and guided practice',
+                'title' => "Learn English with confidence at Alom's English Center",
+                'subtitle' => "Build speaking, grammar, vocabulary and writing skills with structured lessons, practice and teacher support.",
                 'image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80',
                 'button_text' => 'Explore courses',
                 'button_url' => '/courses',
@@ -85,22 +85,22 @@ class OrganisationSeeder extends Seeder
                 'sort_order' => 1,
             ],
             [
-                'badge' => 'HSC 2026 crash course',
-                'title' => 'Finish the syllabus with exam-focused classes',
-                'subtitle' => 'Physics, Chemistry, Higher Math and Biology — chapter-wise MCQ + CQ practice with weekly live doubt-solving sessions.',
+                'badge' => 'English grammar and writing',
+                'title' => 'Build accurate English for study and work',
+                'subtitle' => 'Learn sentence structure, practical grammar, paragraph writing and clear communication with guided practice.',
                 'image' => 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80',
-                'button_text' => 'See HSC courses',
-                'button_url' => '/courses?category=hsc',
+                'button_text' => 'Explore grammar courses',
+                'button_url' => '/courses',
                 'theme' => 'light',
                 'sort_order' => 2,
             ],
             [
-                'badge' => 'University admission',
-                'title' => 'Engineering & medical admission preparation',
-                'subtitle' => 'Full admission syllabus, model tests and previous-year question analysis — study from home at your own pace.',
+                'badge' => 'IELTS and communication skills',
+                'title' => 'Prepare for confident English communication',
+                'subtitle' => 'Practise listening, reading, writing and speaking with structured lessons and a clear learning plan.',
                 'image' => 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1600&q=80',
-                'button_text' => 'Browse admission batch',
-                'button_url' => '/courses?category=admission',
+                'button_text' => 'Explore IELTS preparation',
+                'button_url' => '/courses',
                 'theme' => 'slate',
                 'sort_order' => 3,
             ],
@@ -116,7 +116,7 @@ class OrganisationSeeder extends Seeder
                 ['course_id' => $course->id, 'title' => 'Weekly doubt-solving session'],
                 [
                     'platform' => 'jitsi',
-                    'meeting_url' => 'https://meet.jit.si/redwans-method-demo',
+                    'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
                     'starts_at' => now()->addDays(2)->setTime(20, 0),
                     'duration_minutes' => 60,
                     'is_published' => true,
