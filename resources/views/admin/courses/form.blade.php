@@ -194,6 +194,11 @@
                     <input type="number" name="seat_limit" value="{{ old('seat_limit', $course->seat_limit) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
                 </div>
                 <div class="col-span-2">
+                    <label class="mb-1 block font-semibold text-slate-700">Student access duration (days)</label>
+                    <input type="number" name="access_duration_days" min="1" max="3650" value="{{ old('access_duration_days', $course->access_duration_days) }}" placeholder="Blank means lifetime access" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                    <p class="mt-1 text-xs text-slate-500">The countdown starts when the student's payment is fully verified and course access is activated.</p>
+                </div>
+                <div class="col-span-2">
                     <label class="mb-1 block font-semibold text-slate-700">Batch starts at</label>
                     <input type="datetime-local" name="starts_at" value="{{ old('starts_at', optional($course->starts_at)->format('Y-m-d\TH:i')) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
                 </div>
