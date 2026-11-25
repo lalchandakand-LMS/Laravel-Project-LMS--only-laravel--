@@ -45,7 +45,9 @@ class LmsFlowTest extends TestCase
             ->assertSee('Instructors')
             ->assertSee('Products')
             ->assertSee('Board Result')
-            ->assertSee('Profile');
+            ->assertSee('Profile')
+            ->assertSee('aria-controls="mobile-menu"', false)
+            ->assertSee('aria-label="Mobile navigation"', false);
         $this->get('/courses')->assertOk();
         $this->get('/courses/'.$course->slug)->assertOk()->assertSee($course->title);
         $this->get('/ebooks')->assertOk();
