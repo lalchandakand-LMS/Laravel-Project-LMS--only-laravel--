@@ -33,8 +33,7 @@ class MenuSettingController extends Controller
 
     public function destroy(MenuItem $menuSetting): RedirectResponse
     {
-        // Promote children to top-level so deleting a parent never hides menu links.
-        $menuSetting->children()->update(['parent_id' => null]);
+        // Soft deletion keeps the hierarchy intact so restoring the parent restores its menu tree.
         $menuSetting->delete();
 
         return back()->with('success', 'Menu item deleted.');
