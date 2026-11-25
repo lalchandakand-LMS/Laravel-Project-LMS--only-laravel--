@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Level;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\Level;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class LevelController extends Controller
 {
