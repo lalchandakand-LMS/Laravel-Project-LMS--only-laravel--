@@ -26,6 +26,9 @@
             <div class="flex justify-between font-bold text-rose-700"><dt>Remaining due</dt><dd>৳{{ number_format($order->dueAmount(), 2) }}</dd></div>
         </dl>
         <p class="mt-2 text-xs text-slate-500">Branch: {{ $branch?->name ?? 'Not assigned' }}</p>
+        @if ($order->amountPaid() > 0)
+            <a href="{{ route('orders.receipt', $order->order_no) }}" class="mt-3 inline-block rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-emerald-700">View / print payment receipt</a>
+        @endif
 
         @if ($order->status === 'paid')
             <div class="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Payment fully confirmed — your course and e-book access is active.</div>
