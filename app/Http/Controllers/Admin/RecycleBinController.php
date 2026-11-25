@@ -132,7 +132,12 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Permanent deletion blocked: this record still has linked learning, account, or transaction data. Keep it in the Recycle Bin or remove dependent records first.');
         }
 
-        $record->forceDelete();
+        try {
+            $record->forceDelete();
+        } catch (QueryException $exception) {
+            report($exception);
+            return back()->with('error', 'Permanent deletion was blocked by a linked database record. The item remains safely in the Recycle Bin.');
+        }
 
         return back()->with('success', class_basename($class).' permanently deleted.');
     }
