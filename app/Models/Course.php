@@ -13,7 +13,7 @@ class Course extends Model
         'category_id','level_id','instructor_id','title','slug','subtitle','description','requirements',
         'outcomes','thumbnail','promo_video','price','discount_price','level','language',
         'duration_minutes','is_published','is_featured','has_certificate','starts_at',
-        'seat_limit','meta_title','meta_description',
+        'seat_limit','meta_title','meta_description','access_duration_days',
     ];
 
     protected $casts = [
