@@ -5,7 +5,6 @@
     @if ($course->exists)
         <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600">Preview</a>
     @endif
-@endif
 @endsection
 @section('content')
 
