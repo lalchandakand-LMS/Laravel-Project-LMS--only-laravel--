@@ -2,8 +2,8 @@
 @section('title', 'About us')
 @section('content')
 <div class="mx-auto max-w-4xl px-4 py-16">
-    <h1 class="text-4xl font-extrabold tracking-tight text-slate-900">About Redwan's Method</h1>
-    <p class="mt-4 text-lg text-slate-600">A comprehensive online learning platform providing diverse courses delivered by highly qualified educators. We started in 2023 and have already engaged hundreds of thousands of students nationwide — ensuring quality education is accessible to everyone, including those in remote areas.</p>
+    <h1 class="text-4xl font-extrabold tracking-tight text-slate-900">About Alom's English Center</h1>
+    <p class="mt-4 text-lg text-slate-600">Alom's English Center helps learners build practical English skills through structured lessons, guided practice and supportive teaching. Our goal is to make quality English education accessible to learners at every level.</p>
 
     <div class="mt-10 grid gap-6 sm:grid-cols-3">
         @foreach ([['🎯', 'Our mission', 'Make quality education affordable and reachable for every student.'], ['👩‍🏫', 'Expert teachers', 'Learn from top-ranked teachers and admission coaches.'], ['📈', 'Proven results', 'Exam-focused lessons, MCQ practice and analytics.'],] as [$icon, $title, $text])
