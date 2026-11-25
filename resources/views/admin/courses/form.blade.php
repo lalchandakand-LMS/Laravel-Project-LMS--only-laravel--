@@ -5,40 +5,6 @@
     @if ($course->exists)
         <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600">Preview</a>
     @endif
-@if ($course->exists)
-<script>
-(() => {
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-    let dragged = null;
-    document.querySelectorAll('[data-sortable-list]').forEach((list) => {
-        list.addEventListener('dragstart', (event) => {
-            const item = event.target.closest('[data-sort-item]');
-            if (!item || !list.contains(item)) return;
-            dragged = item;
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', item.dataset.sortId);
-            item.classList.add('opacity-40');
-        });
-        list.addEventListener('dragover', (event) => {
-            if (!dragged || dragged.parentElement !== list) return;
-            event.preventDefault();
-            const target = event.target.closest('[data-sort-item]');
-            if (!target || target === dragged || target.parentElement !== list) return;
-            const box = target.getBoundingClientRect();
-            list.insertBefore(dragged, event.clientY > box.top + box.height / 2 ? target.nextSibling : target);
-        });
-        list.addEventListener('dragend', () => {
-            if (!dragged || dragged.parentElement !== list) { dragged = null; return; }
-            dragged.classList.remove('opacity-40');
-            const ids = [...list.querySelectorAll(':scope > [data-sort-item]')].map(item => Number(item.dataset.sortId));
-            dragged = null;
-            fetch(list.dataset.sortUrl, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf || ''}, body:JSON.stringify({ordered_ids:ids})})
-                .then(response => { if (!response.ok) throw new Error('Save failed'); window.location.reload(); })
-                .catch(() => { alert('Could not save the new order. Reloading the saved curriculum.'); window.location.reload(); });
-        });
-    });
-})();
-</script>
 @endif
 @endsection
 @section('content')
@@ -252,4 +218,39 @@
         </section>
     </aside>
 </form>
+@if ($course->exists)
+<script>
+(() => {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    let dragged = null;
+    document.querySelectorAll('[data-sortable-list]').forEach((list) => {
+        list.addEventListener('dragstart', (event) => {
+            const item = event.target.closest('[data-sort-item]');
+            if (!item || !list.contains(item)) return;
+            dragged = item;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', item.dataset.sortId);
+            item.classList.add('opacity-40');
+        });
+        list.addEventListener('dragover', (event) => {
+            if (!dragged || dragged.parentElement !== list) return;
+            event.preventDefault();
+            const target = event.target.closest('[data-sort-item]');
+            if (!target || target === dragged || target.parentElement !== list) return;
+            const box = target.getBoundingClientRect();
+            list.insertBefore(dragged, event.clientY > box.top + box.height / 2 ? target.nextSibling : target);
+        });
+        list.addEventListener('dragend', () => {
+            if (!dragged || dragged.parentElement !== list) { dragged = null; return; }
+            dragged.classList.remove('opacity-40');
+            const ids = [...list.querySelectorAll(':scope > [data-sort-item]')].map(item => Number(item.dataset.sortId));
+            dragged = null;
+            fetch(list.dataset.sortUrl, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf || ''}, body:JSON.stringify({ordered_ids:ids})})
+                .then(response => { if (!response.ok) throw new Error('Save failed'); window.location.reload(); })
+                .catch(() => { alert('Could not save the new order. Reloading the saved curriculum.'); window.location.reload(); });
+        });
+    });
+})();
+</script>
+@endif
 @endsection
