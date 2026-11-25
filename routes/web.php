@@ -133,6 +133,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::delete('reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
         Route::get('recycle-bin', [Admin\RecycleBinController::class, 'index'])->name('recycle-bin.index');
+        Route::get('activity-logs', [Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::post('recycle-bin/{type}/{id}/restore', [Admin\RecycleBinController::class, 'restore'])->name('recycle-bin.restore');
         Route::post('recycle-bin/{type}/bulk-restore', [Admin\RecycleBinController::class, 'bulkRestore'])->name('recycle-bin.bulk-restore');
         Route::delete('recycle-bin/{type}/{id}', [Admin\RecycleBinController::class, 'destroy'])->name('recycle-bin.destroy');
