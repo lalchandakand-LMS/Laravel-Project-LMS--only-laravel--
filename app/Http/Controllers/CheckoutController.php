@@ -19,7 +19,9 @@ class CheckoutController extends Controller
         }
 
         $assignedBranch = $totals['count'] ? auth()->user()->branch : null;
-        $branches = Branch::active()->orderBy('name')->get();
+        $branches = Branch::active()->orderBy('name')->get()
+            ->filter(fn (Branch $branch) => count($branch->payment_methods ?? []) > 0)
+            ->values();
 
         return view('cart.checkout', $totals + compact('branches', 'assignedBranch'));
     }
@@ -39,6 +41,9 @@ class CheckoutController extends Controller
         ]);
 
         $branch = Branch::active()->findOrFail($data['branch_id']);
+        if (count($branch->payment_methods ?? []) === 0) {
+            throw ValidationException::withMessages(['branch_id' => 'This branch has not enabled any payment method yet.']);
+        }
         if (auth()->user()->branch_id && auth()->user()->branch_id !== $branch->id) {
             throw ValidationException::withMessages(['branch_id' => 'Please select your assigned branch.']);
         }
