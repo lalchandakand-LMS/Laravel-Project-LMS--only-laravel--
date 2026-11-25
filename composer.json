@@ -1,11 +1,13 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "aloms-english-center/lms",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Learning Management System for Alom's English Center.",
     "keywords": [
-        "laravel",
-        "framework"
+        "alom",
+        "english-center",
+        "learning-management-system",
+        "laravel"
     ],
     "license": "MIT",
     "require": {
