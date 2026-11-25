@@ -2,7 +2,7 @@
 @section('title', 'Settings')
 @section('heading', 'Site settings')
 @section('content')
-<form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="grid max-w-5xl gap-6 lg:grid-cols-2">
+<form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="grid max-w-6xl gap-6 lg:grid-cols-2">
     @csrf
     @php
         $fields = [
@@ -11,15 +11,10 @@
                 ['site_email', 'Support email'], ['site_phone', 'Support phone'],
                 ['site_address', 'Address'], ['currency', 'Currency symbol'],
             ],
-            'Payments' => [
-                ['bkash_number', 'bKash number'], ['nagad_number', 'Nagad number'],
-            ],
-            'Social' => [
-                ['facebook', 'Facebook URL'], ['youtube', 'YouTube URL'], ['instagram', 'Instagram URL'],
-            ],
+            'Payments' => [['bkash_number', 'bKash number'], ['nagad_number', 'Nagad number']],
+            'Social' => [['facebook', 'Facebook URL'], ['youtube', 'YouTube URL'], ['instagram', 'Instagram URL']],
         ];
     @endphp
-
     @foreach ($fields as $group => $items)
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="font-bold text-slate-900">{{ $group }}</h3>
@@ -35,29 +30,55 @@
     @endforeach
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-        <h3 class="font-bold text-slate-900">About & branding</h3>
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <h3 class="font-bold text-slate-900">Brand identity</h3>
+        <div class="mt-4 grid gap-5 sm:grid-cols-2">
             <div>
                 <label class="mb-1 block text-sm font-semibold text-slate-700">About text</label>
                 <textarea name="about_text" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">{{ old('about_text', $settings['about_text'] ?? '') }}</textarea>
+                <label class="mt-4 mb-1 block text-sm font-semibold text-slate-700">Certificate signature name</label>
+                <input name="certificate_signature" value="{{ old('certificate_signature', $settings['certificate_signature'] ?? '') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
             </div>
             <div>
-                <label class="mb-1 block text-sm font-semibold text-slate-700">Certificate signature name</label>
-                <input name="certificate_signature" value="{{ old('certificate_signature', $settings['certificate_signature'] ?? '') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-                <label class="mt-3 mb-1 block text-sm font-semibold text-slate-700">Logo</label>
-                @if (!empty($settings['logo']))
-                    <img src="{{ asset('storage/'.$settings['logo']) }}" alt="Current site logo" class="mb-2 h-16 w-16 rounded-lg border border-slate-200 object-contain">
-                @else
-                    <img src="{{ asset('images/aec-logo.svg') }}" alt="Alom's English Center logo" class="mb-2 h-16 w-16 rounded-lg border border-slate-200 object-contain">
-                @endif
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Logo</label>
+                <img src="{{ !empty($settings['logo']) ? asset('storage/'.$settings['logo']) : asset('images/aec-logo.svg') }}" alt="Current logo" class="mb-3 h-16 w-16 rounded-lg border border-slate-200 object-contain">
                 <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
-                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 2 MB. Uploading a logo replaces the default AEC logo.</p>
+                @if (!empty($settings['logo']))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_logo" value="1"> Remove current logo</label>@endif
+                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 2 MB.</p>
             </div>
         </div>
     </section>
 
-    <div class="lg:col-span-2">
-        <button class="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white">Save settings</button>
-    </div>
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="font-bold text-slate-900">Dashboard welcome banner</h3><p class="mt-1 text-xs text-slate-500">Customize the banner shown at the top of the admin dashboard.</p></div>
+        <label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="dashboard_banner_enabled" value="1" @checked(($settings['dashboard_banner_enabled'] ?? '1') === '1')> Show banner</label></div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Banner heading</label><input name="dashboard_banner_title" value="{{ old('dashboard_banner_title', $settings['dashboard_banner_title'] ?? 'Welcome back!') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Subtitle</label><input name="dashboard_banner_subtitle" value="{{ old('dashboard_banner_subtitle', $settings['dashboard_banner_subtitle'] ?? 'Here is what is happening at your academy today.') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Button text</label><input name="dashboard_banner_button_text" value="{{ old('dashboard_banner_button_text', $settings['dashboard_banner_button_text'] ?? 'Manage courses') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Button URL (optional)</label><input name="dashboard_banner_button_url" value="{{ old('dashboard_banner_button_url', $settings['dashboard_banner_button_url'] ?? '') }}" placeholder="https://... or /admin/courses" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            <div class="sm:col-span-2"><label class="mb-2 block text-sm font-semibold text-slate-700">Banner image</label>
+                @if (!empty($settings['dashboard_banner']))<img src="{{ asset('storage/'.$settings['dashboard_banner']) }}" alt="Current dashboard banner" class="mb-3 h-36 w-full rounded-xl object-cover">@endif
+                <input type="file" name="dashboard_banner" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
+                @if (!empty($settings['dashboard_banner']))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_dashboard_banner" value="1"> Remove banner image</label>@endif
+                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 5 MB. Without an image, the banner uses a gradient background.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <h3 class="font-bold text-slate-900">Dashboard appearance & widgets</h3>
+        <div class="mt-4 grid gap-5 sm:grid-cols-2">
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="dashboard_primary_color" value="{{ old('dashboard_primary_color', $settings['dashboard_primary_color'] ?? '#059669') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary brand color</label><input type="color" name="dashboard_secondary_color" value="{{ old('dashboard_secondary_color', $settings['dashboard_secondary_color'] ?? '#0f172a') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+        </div>
+        <p class="mt-5 text-sm font-bold text-slate-800">Visible dashboard sections</p>
+        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+            @foreach (['stats' => 'Statistics cards', 'chart' => 'Revenue chart', 'courses' => 'Top courses', 'orders' => 'Recent orders', 'enrollments' => 'New enrollments', 'reviews' => 'Pending reviews'] as $key => $label)
+                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="dashboard_widget_{{ $key }}" value="1" @checked(($settings['dashboard_widget_'.$key] ?? '1') === '1')> {{ $label }}</label>
+            @endforeach
+        </div>
+    </section>
+
+    <div class="lg:col-span-2"><button class="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Save all settings</button></div>
 </form>
 @endsection
