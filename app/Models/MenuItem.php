@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MenuItem extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = [
         'label', 'url', 'location', 'parent_id', 'sort_order', 'icon',
         'open_new_tab', 'is_enabled', 'show_desktop', 'show_mobile',
