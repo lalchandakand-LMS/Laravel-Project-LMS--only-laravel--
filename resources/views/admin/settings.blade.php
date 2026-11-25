@@ -140,6 +140,89 @@
         </div>
     </section>
 
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2" data-settings-group="design">
+        <h3 class="font-bold text-slate-900">Homepage, footer & developer design</h3>
+        <p class="mt-1 text-sm text-slate-500">Customize section titles, backgrounds and text colors. Leave content fields blank to use the built-in defaults.</p>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ([
+                'homepage_learning_title' => ['Learning path heading', 'text', 'Choose your learning path'],
+                'homepage_learning_subtitle' => ['Learning path description', 'text', 'Choose a course to improve your skills'],
+                'homepage_testimonial_title' => ['Testimonial heading', 'text', 'What our students say'],
+                'footer_copyright' => ['Footer copyright text', 'text', 'All rights reserved.'],
+                'developer_name' => ['Developer / agency name', 'text', ''],
+                'developer_url' => ['Developer website URL', 'url', ''],
+                'developer_text' => ['Developer credit text', 'text', 'Developed by'],
+            ] as $key => [$label, $type, $placeholder])
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="{{ $type }}" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? '') }}" placeholder="{{ $placeholder }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            @endforeach
+        </div>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ([
+                'homepage_learning_bg' => ['Learning path background', '#ffffff'],
+                'homepage_learning_text' => ['Learning path text', '#0f172a'],
+                'homepage_testimonial_bg' => ['Testimonial background', '#f1f5f9'],
+                'homepage_testimonial_text' => ['Testimonial text', '#0f172a'],
+                'homepage_stats_bg' => ['Statistics background', '#047857'],
+                'homepage_stats_text' => ['Statistics text', '#ffffff'],
+                'footer_bg' => ['Footer background', '#ffffff'],
+                'footer_text' => ['Footer text', '#475569'],
+                'footer_heading' => ['Footer heading', '#0f172a'],
+                'developer_bg' => ['Developer strip background', '#0f172a'],
+                'developer_text_color' => ['Developer strip text', '#ffffff'],
+            ] as $key => [$label, $default])
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+            @endforeach
+        </div>
+        <label class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="developer_show" value="1" @checked(($settings['developer_show'] ?? '0') === '1')> Show developer credit strip on website</label>
+    </section>
+
     <div class="lg:col-span-2"><button class="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Save all settings</button></div>
 </form>
-@endsection
+
+@push('scripts')
+<script>
+(function () {
+    const form = document.querySelector('form[action="{{ route('admin.settings.update') }}"]');
+    if (!form) return;
+    const sections = Array.from(form.querySelectorAll(':scope > section'));
+    const tabs = [
+        ['general','General & Branding'],['dashboard','Dashboard'],['homepage','Homepage'],['design','Design & Footer'],['menu','Menu Settings'],['slider','Slider Settings']
+    ];
+    const nav = document.createElement('div');
+    nav.className = 'mb-6 flex flex-wrap gap-2 lg:col-span-2';
+    nav.setAttribute('role','tablist');
+    const panels = {};
+    tabs.forEach(([id,label]) => {
+        const panel=document.createElement('div'); panel.dataset.tabPanel=id; panel.className='grid gap-6 lg:grid-cols-2 lg:col-span-2'; panels[id]=panel;
+        const button=document.createElement('button'); button.type='button'; button.textContent=label; button.dataset.tab=id; button.setAttribute('role','tab'); button.className='rounded-xl border px-4 py-2.5 text-sm font-bold';
+        button.addEventListener('click',()=>activate(id)); nav.appendChild(button);
+    });
+    function group(section) {
+        if (section.dataset.settingsGroup) return section.dataset.settingsGroup;
+        const title=(section.querySelector('h3')?.textContent || '').toLowerCase();
+        if (title.includes('dashboard')) return 'dashboard';
+        if (title.includes('homepage')) return 'homepage';
+        if (title.includes('brand identity') || title.includes('general') || title.includes('payments') || title.includes('social')) return 'general';
+        return 'general';
+    }
+    sections.forEach(section=>panels[group(section)].appendChild(section));
+    const save=form.querySelector(':scope > div:last-child');
+    form.prepend(nav);
+    Object.values(panels).forEach(panel=>{form.insertBefore(panel,save);});
+    const linkPanel=(id,title,href,description)=>{
+        const card=document.createElement('section'); card.className='rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2';
+        card.innerHTML='<h3 class="font-bold text-slate-900">'+title+'</h3><p class="mt-2 text-sm text-slate-600">'+description+'</p><a class="mt-4 inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white" href="'+href+'">Open '+title+'</a>';
+        panels[id].appendChild(card);
+    };
+    linkPanel('menu','Menu Settings',"{{ route('admin.menu-settings.index') }}",'Manage header and footer links, dropdowns, ordering and desktop/mobile visibility.');
+    linkPanel('slider','Slider Settings',"{{ route('admin.sliders.index') }}",'Create, edit, publish, hide and reorder homepage slides, including images and call-to-action buttons.');
+    function activate(id) {
+        Object.entries(panels).forEach(([key,panel])=>panel.hidden=key!==id);
+        nav.querySelectorAll('button').forEach(button=>{const active=button.dataset.tab===id;button.setAttribute('aria-selected',active?'true':'false');button.className='rounded-xl border px-4 py-2.5 text-sm font-bold '+(active?'border-emerald-700 bg-emerald-700 text-white':'border-slate-200 bg-white text-slate-700');});
+        try{localStorage.setItem('aec-site-settings-tab',id)}catch(e){}
+    }
+    activate((()=>{try{return localStorage.getItem('aec-site-settings-tab')||'general'}catch(e){return 'general'}})());
+})();
+</script>
+@endpush
+\n@endsection

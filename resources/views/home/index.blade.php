@@ -139,11 +139,11 @@
 @endif
 
 {{-- CATEGORIES --}}
-<section class="mx-auto max-w-7xl px-4 py-16">
+<section class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
     <div class="flex items-end justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Choose your learning path</h2>
-            <p class="mt-1 text-slate-500">Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.</p>
+            <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose your learning path' }}</h2>
+            <p class="mt-1">{{ $homepageSettings['homepage_learning_subtitle'] ?? 'Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.' }}</p>
         </div>
         <a href="{{ route('courses.index') }}" class="hidden text-sm font-semibold text-emerald-700 hover:underline sm:block">See all courses →</a>
     </div>
@@ -178,7 +178,7 @@
 @endif
 
 {{-- STATS BANNER --}}
-<section class="bg-emerald-700">
+<section style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#047857' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
     <div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-center text-white sm:grid-cols-4">
         @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']], ['Lessons', $stats['lessons']]] as [$label, $value])
             <div>
@@ -276,9 +276,9 @@
 
 {{-- REVIEWS --}}
 @if ($reviews->count())
-<section class="bg-slate-100 py-16">
+<section class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
     <div class="mx-auto max-w-7xl px-4">
-        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">What our students say</h2>
+        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2>
         <div class="mt-8 grid gap-5 md:grid-cols-3">
             @foreach ($reviews as $review)
                 <figure class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

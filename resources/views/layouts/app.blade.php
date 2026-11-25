@@ -31,7 +31,7 @@
     @yield('content')
 </main>
 
-<footer class="mt-16 border-t border-slate-200 bg-white">
+<footer class="mt-16 border-t border-slate-200" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#ffffff') }}; color: {{ \App\Models\Setting::get('footer_text', '#475569') }}">
     <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
             <div class="flex items-center gap-2">
@@ -41,7 +41,7 @@
             <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>
         </div>
         <div>
-            <h4 class="text-sm font-bold uppercase tracking-wide text-slate-900">Learn</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Learn</h4>
             <ul class="mt-3 space-y-2 text-sm text-slate-600">
                 <li><a class="hover:text-emerald-700" href="{{ route('courses.index') }}">All Courses</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('ebooks.index') }}">E-Books</a></li>
@@ -50,7 +50,7 @@
             </ul>
         </div>
         <div>
-            <h4 class="text-sm font-bold uppercase tracking-wide text-slate-900">Company</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Company</h4>
             <ul class="mt-3 space-y-2 text-sm text-slate-600">
                 <li><a class="hover:text-emerald-700" href="{{ route('about') }}">About us</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('contact') }}">Contact</a></li>
@@ -61,7 +61,7 @@
             </ul>
         </div>
         <div>
-            <h4 class="text-sm font-bold uppercase tracking-wide text-slate-900">Get in touch</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Get in touch</h4>
             <ul class="mt-3 space-y-2 text-sm text-slate-600">
                 <li>{{ \App\Models\Setting::get('site_email', 'support@example.com') }}</li>
                 <li>{{ \App\Models\Setting::get('site_phone', '+880 1700-000000') }}</li>
@@ -79,8 +79,14 @@
         </div>
     </div>
     <div class="border-t border-slate-100 py-4 text-center text-xs text-slate-500">
-        © {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. All rights reserved.
+        © {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. {{ \App\Models\Setting::get('footer_copyright', 'All rights reserved.') }}
     </div>
+    @if (\App\Models\Setting::get('developer_show', '0') === '1' && \App\Models\Setting::get('developer_name'))
+    <div class="border-t border-white/10 px-4 py-3 text-center text-xs" style="background-color: {{ \App\Models\Setting::get('developer_bg', '#0f172a') }}; color: {{ \App\Models\Setting::get('developer_text_color', '#ffffff') }}">
+        {{ \App\Models\Setting::get('developer_text', 'Developed by') }}
+        @if ($developerUrl = \App\Models\Setting::get('developer_url'))<a href="{{ $developerUrl }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ \App\Models\Setting::get('developer_name') }}</a>@else <strong>{{ \App\Models\Setting::get('developer_name') }}</strong>@endif
+    </div>
+    @endif
 </footer>
 @stack('scripts')
 </body>
