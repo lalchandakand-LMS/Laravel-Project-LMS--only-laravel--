@@ -50,7 +50,7 @@ class NoticeAndComplaintTest extends TestCase
         $this->actingAs($student)->get(route('complaints.show', $complaint))->assertOk()->assertSee($complaint->tracking_code);
         $this->actingAs($admin)->patch(route('admin.complaints.update', $complaint), [
             'status' => 'in_progress', 'priority' => 'high', 'assigned_to' => null,
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('in_progress', $complaint->fresh()->status);
     }
 
