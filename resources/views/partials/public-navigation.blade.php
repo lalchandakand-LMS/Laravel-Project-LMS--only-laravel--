@@ -2,7 +2,7 @@
     $desktopMenu = \App\Models\MenuItem::publicNavigation('header', 'desktop');
     $mobileMenu = \App\Models\MenuItem::publicNavigation('header', 'mobile');
     $menuUrl = fn ($item) => str_starts_with($item->url, 'http://') || str_starts_with($item->url, 'https://') ? $item->url : url($item->url);
-    $menuActive = fn ($item) => request()->is(trim(parse_url($item->url, PHP_URL_PATH) ?: '/', '/'));
+    $menuActive = function ($item) { $path = trim(parse_url($item->url, PHP_URL_PATH) ?: '/', '/'); return $path === '' ? request()->is('/') : (request()->is($path) || request()->is($path.'/*')); };
 @endphp
 
 <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
@@ -32,7 +32,16 @@
     </div>
     <nav aria-label="Main navigation" class="mx-auto hidden max-w-7xl items-center justify-center gap-1 overflow-x-auto px-3 pb-2 lg:flex">
         @foreach ($desktopMenu as $item)
-            <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif class="whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $item['active'] ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }}@if($item->children->isNotEmpty()) <span class="relative">@foreach($item->children as $child)<a href="{{ $menuUrl($child) }}" class="ml-2 text-xs text-emerald-700">{{ $child->label }}</a>@endforeach</span>@endif</a>
+            <div class="group relative">
+                <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="inline-flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }} @if($item->children->isNotEmpty()) <span aria-hidden="true">⌄</span> @endif</a>
+                @if($item->children->isNotEmpty())
+                    <div class="invisible absolute left-0 top-full z-50 min-w-48 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                        @foreach($item->children as $child)
+                            <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">{{ $child->icon }} {{ $child->label }}</a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
         @endforeach
     </nav>
 </header>
@@ -50,11 +59,12 @@
         </form>
         <nav aria-label="Mobile main navigation" class="grid gap-1">
             @foreach ($mobileMenu as $item)
-                <a href="{{ $item['url'] }}" @if ($item['active']) aria-current="page" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $item['active'] ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item['label'] }} <span aria-hidden="true" class="text-slate-400">›</span></a>
-                @foreach($item->children as $child)<a href="{{ $menuUrl($child) }}" class="ml-5 block rounded-lg px-4 py-2 text-sm text-slate-600">{{ $child->icon }} {{ $child->label }}</a>@endforeach
+                <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item->icon }} {{ $item->label }} <span aria-hidden="true" class="text-slate-400">›</span></a>
+                @foreach($item->children as $child)
+                    <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="ml-5 block rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">{{ $child->icon }} {{ $child->label }}</a>
+                @endforeach
             @endforeach
-        </nav>
-        @auth
+        </nav>        @auth
             <a href="{{ auth()->user()->dashboardRoute() }}" class="mt-4 block rounded-xl bg-emerald-700 px-4 py-3 text-center text-sm font-bold text-white">Dashboard</a>
             <form method="POST" action="{{ route('logout') }}" class="mt-2">@csrf<button class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-rose-600">Log out</button></form>
         @else
