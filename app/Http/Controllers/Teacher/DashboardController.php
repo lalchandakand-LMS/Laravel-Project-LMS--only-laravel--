@@ -8,6 +8,8 @@ use App\Models\Enrollment;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\LiveClass;
+use App\Models\Order;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -34,7 +36,7 @@ class DashboardController extends Controller
             'courses' => count($ids),
             'students' => (clone $enrollments)->distinct('user_id')->count('user_id'),
             'active' => (clone $enrollments)->where('status', 'active')->count(),
-            'revenue' => (float) (clone $enrollments)->sum('price_paid'),
+            'revenue' => $this->revenueRows($ids)->sum('amount'),
             'rating' => $ids ? round((float) Review::whereIn('course_id', $ids)->where('is_approved', true)->avg('rating'), 1) : 0.0,
             'exams' => Exam::whereIn('course_id', $ids)->count(),
         ];
@@ -91,7 +93,19 @@ class DashboardController extends Controller
             ->select('user_id', DB::raw('AVG(score) as avg_score'))
             ->groupBy('user_id')->pluck('avg_score', 'user_id');
 
-        return view('teacher.students', compact('students', 'scores'));
+        $progress = $students->getCollection()->mapWithKeys(function (User $student) use ($ids) {
+            $enrollments = $student->enrollments()->whereIn('course_id', $ids)->with('course')->get();
+            $values = $enrollments->filter(fn ($enrollment) => $enrollment->course)
+                ->map(fn ($enrollment) => $enrollment->course->progressFor($student));
+
+            return [$student->id => $values->isEmpty() ? 0 : round($values->avg(), 1)];
+        });
+
+        $lastActivity = $students->getCollection()->mapWithKeys(function (User $student) {
+            return [$student->id => $student->lessonProgress()->latest('updated_at')->value('updated_at')];
+        });
+
+        return view('teacher.students', compact('students', 'scores', 'progress', 'lastActivity'));
     }
 
     public function student(User $user)
@@ -99,8 +113,25 @@ class DashboardController extends Controller
         abort_unless($user->isStudent(), 404);
         $ids = $this->scopeIds(auth()->user());
 
-        $enrollments = $user->enrollments()->whereIn('course_id', $ids)->with('course')->get();
+        $enrollments = $user->enrollments()->whereIn('course_id', $ids)->with(['course', 'batch'])->get();
         abort_if($enrollments->isEmpty(), 403, 'This student is not in your courses.');
+
+        $enrollments->each(function ($enrollment) use ($user) {
+            if (! $enrollment->course) {
+                $enrollment->progress_percent = 0;
+                $enrollment->completed_lessons = 0;
+                $enrollment->total_lessons = 0;
+                return;
+            }
+
+            $lessonIds = $enrollment->course->lessons()->where('is_published', true)->pluck('id');
+            $enrollment->total_lessons = $lessonIds->count();
+            $enrollment->completed_lessons = $user->lessonProgress()
+                ->whereIn('lesson_id', $lessonIds)->whereNotNull('completed_at')->count();
+            $enrollment->progress_percent = $enrollment->total_lessons
+                ? round($enrollment->completed_lessons / $enrollment->total_lessons * 100, 1)
+                : 0;
+        });
 
         return view('teacher.student-show', [
             'student' => $user,
@@ -114,22 +145,102 @@ class DashboardController extends Controller
     public function earnings()
     {
         $ids = $this->scopeIds(auth()->user());
+        $rows = $this->revenueRows($ids);
 
-        $months = collect(range(5, 0))->map(function ($m) use ($ids) {
+        $months = collect(range(5, 0))->map(function ($m) use ($rows) {
             $start = now()->subMonths($m)->startOfMonth();
+            $end = $start->copy()->endOfMonth();
             return [
                 'label' => $start->format('M'),
-                'amount' => (float) Enrollment::whereIn('course_id', $ids)
-                    ->whereBetween('created_at', [$start, $start->copy()->endOfMonth()])->sum('price_paid'),
+                'amount' => round($rows->filter(fn ($row) => $row->created_at >= $start && $row->created_at <= $end)->sum('amount'), 2),
             ];
         });
 
+        $total = round($rows->sum('amount'), 2);
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 25;
+        $paginatedRows = new LengthAwarePaginator(
+            $rows->sortByDesc('created_at')->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
         return view('teacher.earnings', [
             'months' => $months,
-            'total' => (float) Enrollment::whereIn('course_id', $ids)->sum('price_paid'),
-            'rows' => Enrollment::whereIn('course_id', $ids)->with(['user', 'course'])
-                ->latest()->paginate(20),
+            'total' => $total,
+            'rows' => $paginatedRows,
         ]);
+    }
+
+    /**
+     * Allocate verified payments and refunds to owned courses by each course item's
+     * share of the order value. This avoids counting an entire multi-course order
+     * once for every instructor.
+     */
+    private function revenueRows(array $courseIds)
+    {
+        if ($courseIds === []) {
+            return collect();
+        }
+
+        $courses = Course::whereIn('id', $courseIds)->get()->keyBy('id');
+        $orders = Order::with([
+            'user',
+            'items',
+            'payments' => fn ($query) => $query->where('status', 'verified'),
+            'adjustments' => fn ($query) => $query->where('type', 'refund'),
+        ])->whereHas('items', fn ($query) => $query->where('item_type', 'course')->whereIn('item_id', $courseIds))
+            ->get();
+
+        $rows = collect();
+        foreach ($orders as $order) {
+            $allItemsValue = (float) $order->items->sum(fn ($item) => (float) $item->price * max(1, (int) $item->qty));
+            if ($allItemsValue <= 0) {
+                continue;
+            }
+
+            $ownedItems = $order->items->filter(fn ($item) =>
+                $item->item_type === 'course' && in_array((int) $item->item_id, $courseIds, true)
+            );
+
+            foreach ($ownedItems as $item) {
+                $course = $courses->get($item->item_id);
+                if (! $course) {
+                    continue;
+                }
+
+                $share = ((float) $item->price * max(1, (int) $item->qty)) / $allItemsValue;
+                foreach ($order->payments as $payment) {
+                    $rows->push((object) [
+                        'user' => $order->user,
+                        'course' => $course,
+                        'type' => 'payment',
+                        'gateway' => $payment->gateway,
+                        'reference' => $payment->transaction_id,
+                        'amount' => round((float) $payment->amount * $share, 2),
+                        'status' => 'verified',
+                        'created_at' => $payment->created_at,
+                    ]);
+                }
+
+                foreach ($order->adjustments as $adjustment) {
+                    $rows->push((object) [
+                        'user' => $order->user,
+                        'course' => $course,
+                        'type' => 'refund',
+                        'gateway' => 'refund',
+                        'reference' => $adjustment->reference,
+                        'amount' => -round((float) $adjustment->amount * $share, 2),
+                        'status' => 'recorded',
+                        'created_at' => $adjustment->created_at,
+                    ]);
+                }
+            }
+        }
+
+        return $rows;
     }
 
     public function liveClasses()
