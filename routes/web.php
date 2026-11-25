@@ -12,6 +12,8 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\NoticeController;
+use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ReviewController;
@@ -60,6 +62,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/success/{order:order_no}', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
+
+    Route::get('/notices', [NoticeController::class, 'index'])->name('notices.index');
+    Route::get('/notices/{announcement}', [NoticeController::class, 'show'])->name('notices.show');
+    Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
+    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::get('/complaints/{complaint}', [ComplaintController::class, 'show'])->name('complaints.show');
+    Route::post('/complaints/{complaint}/replies', [ComplaintController::class, 'reply'])->name('complaints.reply');
+    Route::get('/complaint-attachments/{attachment}', [ComplaintController::class, 'attachment'])->name('complaints.attachments.download');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
@@ -127,6 +137,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::resource('ebooks', Admin\EbookController::class)->except('show');
         Route::resource('coupons', Admin\CouponController::class)->except('show');
         Route::resource('announcements', Admin\AnnouncementController::class)->except('show');
+        Route::get('complaints', [Admin\ComplaintController::class, 'index'])->name('complaints.index');
+        Route::get('complaints/{complaint}', [Admin\ComplaintController::class, 'show'])->name('complaints.show');
+        Route::patch('complaints/{complaint}', [Admin\ComplaintController::class, 'update'])->name('complaints.update');
+        Route::post('complaints/{complaint}/replies', [Admin\ComplaintController::class, 'reply'])->name('complaints.reply');
 
         Route::get('enrollments', [Admin\EnrollmentController::class, 'index'])->name('enrollments.index');
         Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');

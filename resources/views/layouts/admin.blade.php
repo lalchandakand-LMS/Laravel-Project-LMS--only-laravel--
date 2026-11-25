@@ -26,8 +26,8 @@
         @php
             $isAdmin = auth()->user()->isAdmin();
             $groups = [
-                'Content' => [['admin.courses.index', 'Courses', '📚'],['admin.categories.index', 'Categories', '🗂'],['admin.levels.index', 'Levels', '🎯'],['admin.batches.index', 'Batches', '👨‍🏫'],['admin.exams.index', 'Exams', '📝'],['admin.ebooks.index', 'E-books', '📖'],['admin.live-classes.index', 'Live classes', '🎥'],['admin.announcements.index', 'Announcements', '📣']],
-                'People' => array_values(array_filter([['admin.enrollments.index', 'Enrollments', '🎓'],['admin.users.index', 'Students & staff', '👥'],$isAdmin ? ['admin.branches.index', 'Branches', '🏢'] : null,['admin.reviews.index', 'Reviews', '⭐']])),
+                'Content' => [['admin.courses.index', 'Courses', '📚'],['admin.categories.index', 'Categories', '🗂'],['admin.levels.index', 'Levels', '🎯'],['admin.batches.index', 'Batches', '👨‍🏫'],['admin.exams.index', 'Exams', '📝'],['admin.ebooks.index', 'E-books', '📖'],['admin.live-classes.index', 'Live classes', '🎥'],['admin.announcements.index', 'Announcements', '📣'],['notices.index', 'Notice board', '📢']],
+                'People' => array_values(array_filter([['admin.enrollments.index', 'Enrollments', '🎓'],['admin.users.index', 'Students & staff', '👥'],$isAdmin ? ['admin.branches.index', 'Branches', '🏢'] : null,['admin.reviews.index', 'Reviews', '⭐'],['admin.complaints.index', 'Complaints', '🛟']])),
                 'Commerce' => [['admin.orders.index', 'Orders', '🧾'],['admin.payment-reports.index', 'Payment reports', '💳'],['admin.coupons.index', 'Coupons', '🎟']],
                 'System' => array_values(array_filter([$isAdmin ? ['admin.sliders.index', 'Home slider', '🖼'] : null,$isAdmin ? ['admin.settings.index', 'Settings', '⚙️'] : null,$isAdmin ? ['admin.menu-settings.index', 'Menu Settings', '🧭'] : null,$isAdmin ? ['admin.recycle-bin.index', 'Recycle Bin', '🗑️'] : null,$isAdmin ? ['admin.activity-logs.index', 'Activity Logs', '📋'] : null,$isAdmin ? ['admin.system.backups.index', 'Backup & Restore', '💾'] : null])),
             ];
