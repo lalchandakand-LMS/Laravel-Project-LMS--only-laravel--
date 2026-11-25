@@ -2,13 +2,13 @@
     $publicMenu = [
         ['label' => 'Home', 'url' => route('home'), 'active' => request()->routeIs('home')],
         ['label' => 'Courses', 'url' => route('courses.index'), 'active' => request()->routeIs('courses.*', 'categories.*')],
-        ['label' => 'Learn', 'url' => auth()->check() ? route('student.courses') : route('courses.index'), 'active' => request()->routeIs('student.learn*', 'student.courses')],
+        ['label' => 'Learn', 'url' => auth()->check() && in_array(auth()->user()->role, ['student', 'instructor', 'admin'], true) ? route('student.courses') : route('courses.index'), 'active' => request()->routeIs('student.learn*', 'student.courses')],
         ['label' => 'Instructors', 'url' => route('home').'#teachers', 'active' => false],
-        ['label' => 'Exams', 'url' => auth()->check() ? route('student.exams.index') : route('login'), 'active' => request()->routeIs('student.exams.*')],
+        ['label' => 'Exams', 'url' => auth()->check() && in_array(auth()->user()->role, ['student', 'instructor', 'admin'], true) ? route('student.exams.index') : (auth()->check() ? auth()->user()->dashboardRoute() : route('login')), 'active' => request()->routeIs('student.exams.*')],
         ['label' => 'Products', 'url' => route('courses.index'), 'active' => false],
         ['label' => 'E-Books', 'url' => route('ebooks.index'), 'active' => request()->routeIs('ebooks.*')],
         ['label' => 'Board Result', 'url' => route('home').'#board-results', 'active' => false],
-        ['label' => 'Profile', 'url' => auth()->check() ? route('student.profile') : route('login'), 'active' => request()->routeIs('student.profile*')],
+        ['label' => 'Profile', 'url' => auth()->check() && in_array(auth()->user()->role, ['student', 'instructor', 'admin'], true) ? route('student.profile') : (auth()->check() ? auth()->user()->dashboardRoute() : route('login')), 'active' => request()->routeIs('student.profile*')],
     ];
 @endphp
 
