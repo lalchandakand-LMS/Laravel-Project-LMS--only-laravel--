@@ -188,6 +188,13 @@ class PaymentVerificationWorkflowTest extends TestCase
             'price' => 1000,
             'is_published' => true,
         ]);
+        $order->items()->create([
+            'item_type' => 'course',
+            'item_id' => $course->id,
+            'title' => $course->title,
+            'price' => 1000,
+            'qty' => 1,
+        ]);
         Enrollment::create([
             'user_id' => $student->id,
             'course_id' => $course->id,
