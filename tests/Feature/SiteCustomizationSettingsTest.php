@@ -67,6 +67,6 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('General & Branding', false)
             ->assertSee('Menu Settings')
             ->assertSee('Slider Settings')
-            ->assertSee('Homepage, footer & developer design');
+            ->assertSee('Homepage, footer & developer design', false);
     }
 }
