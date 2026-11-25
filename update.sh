@@ -70,7 +70,8 @@ mkdir -p "$BACKUP_DIR" storage/framework/cache/data storage/framework/sessions \
          storage/framework/views storage/logs storage/app/public bootstrap/cache
 
 if [ "$DRY_RUN" -eq 0 ]; then
-  cp -p .env "$BACKUP_DIR/env-$STAMP.bak"
+  cp -p .env "$BACKUP_DIR/env-$STAMP.bak" || die ".env backup failed."
+  [ -s "$BACKUP_DIR/env-$STAMP.bak" ] || die ".env backup is empty."
   ok ".env -> $BACKUP_DIR/env-$STAMP.bak"
 fi
 
