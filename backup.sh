@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Redwan's Method LMS - database + .env backup only (no code changes).
+# Alom's English Center LMS - database, .env and uploaded media backup (no code changes).
 # Use this before any manual change, or from a daily cron job.
 #
 #   ./backup.sh
@@ -27,8 +27,9 @@ DB_CONNECTION="$(ENV_VAL DB_CONNECTION)"; DB_CONNECTION="${DB_CONNECTION:-sqlite
 case "$DB_CONNECTION" in
   sqlite)
     DB_FILE="${DB_DATABASE:-$(ENV_VAL DB_DATABASE)}"; DB_FILE="${DB_FILE:-database/database.sqlite}"
-    [ -f "$DB_FILE" ] && { cp -p "$DB_FILE" "$BACKUP_DIR/sqlite-$STAMP.sqlite"; echo "database -> $BACKUP_DIR/sqlite-$STAMP.sqlite"; } \
-                      || echo "no sqlite database at $DB_FILE"
+    [ -f "$DB_FILE" ] || { echo "missing sqlite database at $DB_FILE"; exit 1; }
+    cp -p "$DB_FILE" "$BACKUP_DIR/sqlite-$STAMP.sqlite" && [ -s "$BACKUP_DIR/sqlite-$STAMP.sqlite" ] || { echo "sqlite backup failed"; exit 1; }
+    echo "database -> $BACKUP_DIR/sqlite-$STAMP.sqlite"
     ;;
   mysql)
     command -v mysqldump >/dev/null 2>&1 || { echo "mysqldump missing - export from phpMyAdmin"; exit 1; }
@@ -44,7 +45,7 @@ case "$DB_CONNECTION" in
       -U "$(ENV_VAL DB_USERNAME)" -f "$BACKUP_DIR/pgsql-$STAMP.sql" "$(ENV_VAL DB_DATABASE)"
     echo "database -> $BACKUP_DIR/pgsql-$STAMP.sql"
     ;;
-  *) echo "unknown DB_CONNECTION: $DB_CONNECTION"; exit 1 ;;
+  *) echo "unsupported DB_CONNECTION: $DB_CONNECTION"; exit 1 ;;
 esac
 
 ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +31 | while read -r old; do rm -rf "${BACKUP_DIR:?}/$old"; done
