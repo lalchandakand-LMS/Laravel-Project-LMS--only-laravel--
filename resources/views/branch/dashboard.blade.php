@@ -62,10 +62,13 @@
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2">
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-3 flex items-center justify-between">
+        @if (\App\Models\Setting::get('dashboard_widget_branch_students', '1') === '1')
+<div class="mb-3 flex items-center justify-between">
             <h2 class="font-bold text-slate-800">New students</h2>
             <a href="{{ route('branch.students') }}" class="text-sm font-bold text-emerald-700">All →</a>
         </div>
+@endif
+
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($recentStudents as $student)
                 <li class="flex items-center gap-3 py-2.5">
@@ -83,10 +86,13 @@
     </div>
 
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-3 flex items-center justify-between">
+        @if (\App\Models\Setting::get('dashboard_widget_branch_orders', '1') === '1')
+<div class="mb-3 flex items-center justify-between">
             <h2 class="font-bold text-slate-800">Recent orders</h2>
             <a href="{{ route('branch.revenue') }}" class="text-sm font-bold text-emerald-700">Revenue →</a>
         </div>
+@endif
+
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($recentOrders as $order)
                 <li class="flex items-center justify-between py-2.5">
