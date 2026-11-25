@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
+use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -175,6 +177,98 @@ class PaymentVerificationWorkflowTest extends TestCase
 
         $this->assertSame('paid', $order->fresh()->status);
         $this->assertSame(1000.0, $order->fresh()->amountPaid());
+    }
+
+    public function test_refund_reduces_net_paid_suspends_access_and_can_be_repaid(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $course = Course::create([
+            'title' => 'Refundable English Course',
+            'slug' => 'refundable-english-course',
+            'price' => 1000,
+            'is_published' => true,
+        ]);
+        $order->items()->create([
+            'item_type' => 'course',
+            'item_id' => $course->id,
+            'title' => $course->title,
+            'price' => 1000,
+            'qty' => 1,
+        ]);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'order_id' => $order->id,
+            'price_paid' => 1000,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'REFUND-ORIGINAL',
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'paid']);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'amount' => 300,
+            'reference' => 'REFUND-300',
+            'reason' => 'Student withdrew from the course.',
+        ])->assertRedirect();
+
+        $this->assertSame('partially_paid', $order->fresh()->status);
+        $this->assertSame(700.0, $order->fresh()->amountPaid());
+        $this->assertSame(300.0, $order->fresh()->dueAmount());
+        $this->assertSame('suspended', $student->enrollments()->where('course_id', $course->id)->firstOrFail()->status);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'amount' => 700,
+            'reference' => 'REFUND-700',
+            'reason' => 'Remaining amount refunded.',
+        ])->assertRedirect();
+
+        $this->assertSame('refunded', $order->fresh()->status);
+        $this->assertSame(0.0, $order->fresh()->amountPaid());
+
+        // Reopen the refunded order for a replacement settlement and restore the suspended enrollment.
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'pending',
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('admin.orders.offline-payment', $order->order_no), [
+            'gateway' => 'cash',
+            'amount' => 1000,
+            'reference' => 'REPAY-CASH-1000',
+        ])->assertRedirect();
+
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame('active', $student->enrollments()->where('course_id', $course->id)->firstOrFail()->status);
+    }
+
+    public function test_payment_report_and_csv_export_are_admin_only(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 250,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'REPORT-TRX',
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.payment-reports.index'))
+            ->assertOk()->assertSee('Payment reports & ledger')->assertSee('REPORT-TRX');
+        $this->actingAs($admin)->get(route('admin.payment-reports.export'))
+            ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $this->actingAs($student)->get(route('admin.payment-reports.index'))->assertForbidden();
     }
 
     public function test_rejection_requires_a_reason_and_keeps_order_payable(): void

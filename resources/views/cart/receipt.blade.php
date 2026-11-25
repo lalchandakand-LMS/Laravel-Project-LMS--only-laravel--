@@ -35,7 +35,7 @@
 
         <dl class="ml-auto mt-5 max-w-xs space-y-2 text-sm">
             <div class="flex justify-between"><dt class="text-slate-500">Order total</dt><dd class="font-semibold">৳{{ number_format($order->total, 2) }}</dd></div>
-            <div class="flex justify-between text-emerald-700"><dt>Verified received</dt><dd class="font-bold">৳{{ number_format($order->amountPaid(), 2) }}</dd></div>
+            <div class="flex justify-between text-emerald-700"><dt>Net received after refunds</dt><dd class="font-bold">৳{{ number_format($order->amountPaid(), 2) }}</dd></div>
             <div class="flex justify-between border-t border-slate-200 pt-2 font-extrabold"><dt>Balance due</dt><dd>৳{{ number_format($order->dueAmount(), 2) }}</dd></div>
         </dl>
 
@@ -51,7 +51,19 @@
             @endforelse
         </div>
 
-        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">This is a computer-generated receipt. Please retain it for your records.</p>
+        @if ($order->adjustments->count())
+            <h2 class="mt-6 border-b border-slate-200 pb-2 font-bold">Refund adjustments</h2>
+            <div class="mt-2 space-y-2 text-sm">
+                @foreach ($order->adjustments as $adjustment)
+                    <div class="flex justify-between gap-3 border-b border-slate-100 py-2">
+                        <div><p class="font-semibold text-rose-700">{{ ucfirst($adjustment->type) }} · {{ $adjustment->reference ?: 'No reference' }}</p><p class="text-xs text-slate-500">{{ $adjustment->reason }}</p></div>
+                        <p class="font-bold text-rose-700">−৳{{ number_format($adjustment->amount, 2) }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">This is a computer-generated receipt. Please retain it for your records.</p>        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">This is a computer-generated receipt. Please retain it for your records.</p>
     </article>
 </div>
 @endsection

@@ -109,7 +109,7 @@ class CheckoutController extends Controller
         abort_unless($order->user_id === auth()->id() || auth()->user()->isAdmin(), 403);
 
         return view('cart.receipt', [
-            'order' => $order->load(['items', 'payments.verifier', 'branch', 'user']),
+            'order' => $order->load(['items', 'payments.verifier', 'adjustments.creator', 'branch', 'user']),
         ]);
     }
 
