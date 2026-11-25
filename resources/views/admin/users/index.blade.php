@@ -48,7 +48,7 @@
                     <td class="px-5 py-3">{{ $user->enrollments_count }}</td>
                     <td class="px-5 py-3">{{ $user->orders_count }}</td>
                     <td class="px-5 py-3"><span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $user->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">{{ $user->is_active ? 'Active' : 'Disabled' }}</span></td>
-                    <td class="px-5 py-3 text-right"><a href="{{ route('admin.users.edit', $user) }}" class="text-sm font-semibold text-emerald-700">Edit</a></td>
+                    <td class="px-5 py-3 text-right"><div class="inline-flex items-center gap-3"><a href="{{ route('admin.users.edit', $user) }}" class="text-sm font-semibold text-emerald-700">Edit</a><form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Move this account to the Recycle Bin?');">@csrf @method('DELETE')<button class="text-sm font-semibold text-rose-600">Delete</button></form></div></td>
                 </tr>
             @endforeach
         </tbody>
