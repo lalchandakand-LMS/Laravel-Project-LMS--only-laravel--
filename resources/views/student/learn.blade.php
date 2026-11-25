@@ -2,16 +2,41 @@
 @section('title', $lesson->title)
 @section('heading', Str::limit($course->title, 60))
 @section('content')
+@php
+    $videoPath = parse_url((string) $lesson->video_url, PHP_URL_PATH) ?: '';
+    $isYoutubeVideo = $lesson->type === 'video' && (bool) preg_match('/(?:youtube\\.com\\/(?:watch\\?v=|embed\\/)|youtu\\.be\\/)/i', (string) $lesson->video_url);
+    $isVimeoVideo = $lesson->type === 'video' && (bool) preg_match('/vimeo\\.com\\/\\d+/i', (string) $lesson->video_url);
+    $isDirectVideo = $lesson->type === 'video' && (bool) preg_match('/\\.(mp4|webm|ogg)$/i', $videoPath);
+    $videoSrc = $lesson->embedUrl();
+    if ($isYoutubeVideo && $videoSrc) {
+        $videoSrc .= (str_contains($videoSrc, '?') ? '&' : '?').'enablejsapi=1&origin='.urlencode(request()->getSchemeAndHttpHost());
+    } elseif ($isVimeoVideo && $videoSrc) {
+        $videoSrc .= (str_contains($videoSrc, '?') ? '&' : '?').'api=1&player_id=lesson-video-player';
+    }
+    $watchedSeconds = (int) ($watchedSeconds ?? 0);
+@endphp
 <div class="grid gap-5 xl:grid-cols-[1fr_340px]">
     <div class="space-y-4">
-        {{-- PLAYER --}}
         <div class="overflow-hidden rounded-2xl bg-black shadow-sm">
-            @if ($lesson->type === 'video' && $lesson->embedUrl())
+            @if ($isDirectVideo)
                 <div class="aspect-video">
-                    <iframe src="{{ $lesson->embedUrl() }}" class="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                    <video id="lesson-video-player" class="h-full w-full" controls playsinline preload="metadata"
+                           src="{{ $lesson->video_url }}" data-resume-seconds="{{ $watchedSeconds }}"
+                           data-heartbeat-url="{{ route('student.learn.heartbeat', [$course->slug, $lesson->id]) }}">
+                        Your browser does not support HTML5 video.
+                    </video>
+                </div>
+            @elseif ($lesson->type === 'video' && $videoSrc)
+                <div class="aspect-video">
+                    <iframe id="lesson-video-player" src="{{ $videoSrc }}" class="h-full w-full"
+                            title="{{ $lesson->title }}" data-player="{{ $isYoutubeVideo ? 'youtube' : ($isVimeoVideo ? 'vimeo' : 'external') }}"
+                            data-resume-seconds="{{ $watchedSeconds }}"
+                            data-heartbeat-url="{{ route('student.learn.heartbeat', [$course->slug, $lesson->id]) }}"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; fullscreen"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
             @elseif ($lesson->type === 'video')
-                <div class="grid aspect-video place-items-center text-slate-500">No video uploaded for this lesson.</div>
+                <div class="grid aspect-video place-items-center text-slate-400">No video uploaded for this lesson.</div>
             @else
                 <div class="flex items-center gap-3 bg-slate-900 px-5 py-4 text-white">
                     <span class="text-xl">{{ $lesson->type === 'pdf' ? '📄' : '📖' }}</span>
@@ -19,6 +44,9 @@
                 </div>
             @endif
         </div>
+        @if ($watchedSeconds > 0 && $lesson->type === 'video')
+            <p class="text-xs text-slate-500" role="status">Your saved resume point: {{ gmdate('H:i:s', $watchedSeconds) }}. Playback will continue from here when supported by the video provider.</p>
+        @endif
 
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -69,7 +97,6 @@
         </div>
     </div>
 
-    {{-- CURRICULUM SIDEBAR --}}
     <aside class="space-y-4">
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between text-sm">
@@ -120,4 +147,116 @@
         @endif
     </aside>
 </div>
+
+@if ($lesson->type === 'video' && ($isDirectVideo || $isYoutubeVideo || $isVimeoVideo))
+<script>
+(() => {
+    const player = document.getElementById('lesson-video-player');
+    if (!player) return;
+
+    const resumeAt = Math.max(0, Number(player.dataset.resumeSeconds || 0));
+    const endpoint = player.dataset.heartbeatUrl;
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    let lastSent = -1;
+    let latestTime = 0;
+    let trackingTimer = null;
+
+    const savePosition = async (seconds) => {
+        const position = Math.max(0, Math.floor(Number(seconds) || 0));
+        if (!endpoint || !csrf || position <= lastSent) return;
+        lastSent = position;
+        try {
+            await fetch(endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                keepalive: true,
+                headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf},
+                body: JSON.stringify({seconds: position})
+            });
+        } catch (_) {
+            lastSent = Math.min(lastSent, position - 1);
+        }
+    };
+
+    const startTracking = (getTime) => {
+        if (trackingTimer) clearInterval(trackingTimer);
+        trackingTimer = setInterval(async () => {
+            try {
+                latestTime = await getTime();
+                await savePosition(latestTime);
+            } catch (_) {}
+        }, 15000);
+    };
+    const stopTracking = async () => {
+        if (trackingTimer) clearInterval(trackingTimer);
+        trackingTimer = null;
+        await savePosition(latestTime);
+    };
+
+    if (player.tagName === 'VIDEO') {
+        player.addEventListener('loadedmetadata', () => {
+            if (resumeAt > 0 && Number.isFinite(player.duration) && resumeAt < player.duration) {
+                player.currentTime = resumeAt;
+            }
+        }, {once: true});
+        player.addEventListener('timeupdate', () => { latestTime = player.currentTime; });
+        player.addEventListener('play', () => startTracking(() => player.currentTime));
+        player.addEventListener('pause', stopTracking);
+        player.addEventListener('ended', stopTracking);
+        window.addEventListener('pagehide', () => savePosition(latestTime));
+        return;
+    }
+
+    const provider = player.dataset.player;
+    if (provider === 'youtube') {
+        const boot = () => {
+            if (!window.YT?.Player) return;
+            const yt = new YT.Player(player, {
+                events: {
+                    onReady: (event) => {
+                        if (resumeAt > 0) event.target.seekTo(resumeAt, true);
+                    },
+                    onStateChange: (event) => {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            startTracking(() => yt.getCurrentTime());
+                        } else {
+                            try { latestTime = yt.getCurrentTime(); } catch (_) {}
+                            stopTracking();
+                        }
+                    }
+                }
+            });
+        };
+        if (window.YT?.Player) boot();
+        else {
+            window.onYouTubeIframeAPIReady = boot;
+            const script = document.createElement('script');
+            script.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(script);
+        }
+    } else if (provider === 'vimeo') {
+        const boot = () => {
+            if (!window.Vimeo?.Player) return;
+            const vimeo = new Vimeo.Player(player);
+            vimeo.ready().then(() => resumeAt > 0 ? vimeo.setCurrentTime(resumeAt) : null).catch(() => {});
+            vimeo.on('play', () => startTracking(() => vimeo.getCurrentTime()));
+            vimeo.on('timeupdate', (event) => { latestTime = event.seconds; });
+            vimeo.on('pause', stopTracking);
+            vimeo.on('ended', stopTracking);
+        };
+        if (window.Vimeo?.Player) boot();
+        else {
+            const script = document.createElement('script');
+            script.src = 'https://player.vimeo.com/api/player.js';
+            script.onload = boot;
+            document.head.appendChild(script);
+        }
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) savePosition(latestTime);
+    });
+    window.addEventListener('pagehide', () => savePosition(latestTime));
+})();
+</script>
+@endif
 @endsection

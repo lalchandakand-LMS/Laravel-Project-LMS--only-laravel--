@@ -92,7 +92,10 @@ class LearnController extends Controller
         $flat = $course->lessons()->where('is_published', true)->get();
         $index = $flat->search(fn ($item) => (int) $item->id === (int) $lesson->id);
 
-        LessonProgress::firstOrCreate(['user_id' => $user->id, 'lesson_id' => $lesson->id]);
+        $lessonProgress = LessonProgress::firstOrCreate([
+            'user_id' => $user->id,
+            'lesson_id' => $lesson->id,
+        ]);
 
         return view('student.learn', [
             'course' => $course,
@@ -102,6 +105,7 @@ class LearnController extends Controller
             'completedIds' => LessonProgress::where('user_id', $user->id)
                 ->whereNotNull('completed_at')->pluck('lesson_id')->all(),
             'progress' => $course->progressFor($user),
+            'watchedSeconds' => (int) $lessonProgress->watched_seconds,
             'exams' => $lesson->exams()->where('is_published', true)->get(),
             'announcements' => $course->announcements()->where('is_published', true)->latest()->take(3)->get(),
         ]);
@@ -159,9 +163,13 @@ class LearnController extends Controller
             'user_id' => auth()->id(),
             'lesson_id' => $lesson->id,
         ]);
-        $progress->update(['watched_seconds' => max((int) $progress->watched_seconds, (int) $data['seconds'])]);
 
-        return response()->json(['ok' => true]);
+        // Keep the furthest playback position so seeking backwards never loses a saved resume point.
+        $progress->update([
+            'watched_seconds' => max((int) $progress->watched_seconds, (int) $data['seconds']),
+        ]);
+
+        return response()->json(['ok' => true, 'watched_seconds' => (int) $progress->fresh()->watched_seconds]);
     }
 
     public function attachment(Course $course, Lesson $lesson)
