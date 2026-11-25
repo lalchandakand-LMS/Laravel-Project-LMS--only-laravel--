@@ -18,7 +18,7 @@ class Level extends Model
     {
         static::saving(function (self $level) {
             if (! $level->slug || $level->isDirty('name')) {
-                $level->slug = Str::slug($level->name);
+                $level->slug = Str::slug($level->name).'-'.Str::lower(Str::random(4));
             }
         });
     }
