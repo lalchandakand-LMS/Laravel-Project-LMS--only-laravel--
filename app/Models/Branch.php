@@ -1,9 +1,9 @@
 <?php
 
-namespace App\\Models;
+namespace App\Models;
 
-use Illuminate\\Database\\Eloquent\\Model;
-use App\\Models\\Concerns\\TracksDeletionActor;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Branch extends Model
 {
@@ -31,8 +31,7 @@ class Branch extends Model
 
     public function enabledStudentPaymentMethods(): array
     {
-        $enabled = $this->payment_methods ?? [];
-        return array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank', 'sslcommerz'], $enabled));
+        return array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank', 'sslcommerz'], $this->payment_methods ?? []));
     }
 
     public function revenue(): float
