@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
         ])->map(fn ($row, $i) => User::create([
             'name' => $row[0], 'email' => 'teacher'.$i.'@lms.test', 'password' => Hash::make('password'),
             'role' => 'instructor', 'designation' => $row[2], 'phone' => '',
-            'bio' => $row[1].' instructor with 8+ years of teaching experience.',
+            'bio' => $row[1].' instructor at Alom’s English Center.',
         ]));
 
         $students = collect([
@@ -160,7 +160,7 @@ class DatabaseSeeder extends Seeder
                 'subtitle' => $bp['subtitle'],
                 'category_id' => $categories[$bp['category']]->id,
                 'instructor_id' => $i % 2 === 0 ? $admin->id : $instructors[$i % $instructors->count()]->id,
-                'description' => $bp['subtitle']."\n\nThis course is designed by the Alom's English Center academic team. You get recorded lessons, lecture notes, chapter-wise MCQ exams and live doubt-solving classes. Lifetime access, no expiry.",
+                'description' => $bp['subtitle']."\n\nThis course is designed for practical English learning. Study the lesson notes, complete guided exercises, review your quiz results and join scheduled teacher-led practice sessions.",
                 'requirements' => "Basic understanding of the previous class syllabus.\nA notebook and a stable internet connection.",
                 'outcomes' => $bp['outcomes'],
                 'price' => $bp['price'],
@@ -218,15 +218,15 @@ class DatabaseSeeder extends Seeder
             Announcement::create([
                 'course_id' => $course->id,
                 'title' => 'Welcome to '.Str::words($course->title, 3, ''),
-                'body' => 'Class routine has been published. Live class every Friday at 8 PM. Complete the first chapter before the live session.',
+                'body' => 'Welcome to the course. Review the first lessons and complete the practice activities. Check your student dashboard for scheduled teacher-led sessions.',
                 'is_published' => true,
             ]);
 
             LiveClass::create([
                 'course_id' => $course->id,
                 'title' => 'Doubt solving: '.Str::limit($course->title, 38),
-                'meeting_url' => 'https://zoom.us/j/123456789',
-                'platform' => 'zoom',
+                'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
+                'platform' => 'jitsi',
                 'starts_at' => now()->addDays(2),
                 'duration_minutes' => 90,
             ]);
@@ -312,7 +312,7 @@ class DatabaseSeeder extends Seeder
             'course_id' => $allCourses->first()->id,
             'user_id' => $students->last()->id,
             'rating' => 5,
-            'comment' => 'Just finished chapter 2 — the explanation was superb!',
+            'comment' => 'The lesson examples are clear and the practice tasks are useful.',
             'is_approved' => false,
         ]);
 
@@ -324,7 +324,7 @@ class DatabaseSeeder extends Seeder
             'phone' => $students->first()->phone, 'email' => $students->first()->email,
         ]);
         $pending->items()->create([
-            'item_type' => 'course', 'item_id' => 2, 'title' => 'Physics 1st Paper — HSC Full Course',
+            'item_type' => 'course', 'item_id' => 2, 'title' => 'English Grammar from Basic to Advanced',
             'price' => 2990, 'qty' => 1,
         ]);
         $pending->payments()->create([
@@ -352,22 +352,14 @@ class DatabaseSeeder extends Seeder
     private function seedQuestions(Exam $exam): void
     {
         $bank = [
-            ['Which of the following is an irrational number?', ['√2', '0.25', '3/4', '0.333…'], 0,
-             '√2 cannot be written as a fraction p/q, so it is irrational.'],
-            ['If x + 1/x = 3, what is x² + 1/x²?', ['7', '9', '11', '6'], 0,
-             'x² + 1/x² = (x + 1/x)² − 2 = 9 − 2 = 7.'],
-            ['The SI unit of force is —', ['Newton', 'Joule', 'Watt', 'Pascal'], 0,
-             'Force is measured in Newton (N).'],
-            ['sin²θ + cos²θ = ?', ['1', '0', '2', 'tanθ'], 0,
-             'This is the fundamental trigonometric identity.'],
-            ['Which gas is most abundant in the atmosphere?', ['Nitrogen', 'Oxygen', 'Carbon dioxide', 'Argon'], 0,
-             'Nitrogen makes up about 78% of the atmosphere.'],
-            ['The derivative of sin x is —', ['cos x', '−cos x', 'sin x', '−sin x'], 0,
-             'd/dx(sin x) = cos x.'],
-            ['A body moving with uniform velocity has acceleration —', ['zero', 'constant', 'increasing', 'decreasing'], 0,
-             'Uniform velocity means no change in velocity, so acceleration is zero.'],
-            ['The value of log₁₀ 1000 is —', ['3', '2', '10', '100'], 0,
-             '10³ = 1000, so log₁₀1000 = 3.'],
+            ['Which greeting is most suitable at 9:00 a.m.?', ['Good morning', 'Good night', 'Good evening', 'Goodbye'], 0, 'Good morning is used in the morning.'],
+            ['She _____ to class every day.', ['goes', 'go', 'going', 'gone'], 0, 'With she, he or it in the present simple, the verb usually takes -s or -es.'],
+            ['Which sentence is grammatically correct?', ['He does not like coffee.', 'He do not likes coffee.', 'He not like coffee.', 'He does not likes coffee.'], 0, 'After does not, use the base form of the verb: like.'],
+            ['What is the closest meaning of “happy”?', ['Glad', 'Angry', 'Tired', 'Afraid'], 0, 'Glad is a synonym of happy.'],
+            ['What is the plural form of “child”?', ['Children', 'Childs', 'Childes', 'Childrens'], 0, 'Children is the irregular plural form of child.'],
+            ['Choose the correct article: “She ate _____ apple.”', ['an', 'a', 'the', 'no article'], 0, 'Use an before a vowel sound, as in apple.'],
+            ['Choose the correct preposition: “I am interested _____ learning English.”', ['in', 'on', 'at', 'for'], 0, 'The expression is interested in.'],
+            ['What is the past tense of “go”?', ['Went', 'Goed', 'Gone', 'Going'], 0, 'Went is the simple past form of go.'],
         ];
 
         shuffle($bank);
@@ -377,7 +369,7 @@ class DatabaseSeeder extends Seeder
                 'exam_id' => $exam->id,
                 'type' => 'mcq',
                 'question' => $row[0],
-                'explanation' => $row[2],
+                'explanation' => $row[3],
                 'marks' => 1,
                 'position' => $i + 1,
             ]);
