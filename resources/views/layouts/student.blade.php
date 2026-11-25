@@ -37,6 +37,8 @@
                 ['student.certificates', 'Certificates', '🏅'],
                 ['student.orders', 'Orders', '🧾'],
                 ['student.profile', 'Profile', '👤'],
+                ['notices.index', 'Notice board', '📣'],
+                ['complaints.index', 'Complaints', '🛟']
             ];
         @endphp
 

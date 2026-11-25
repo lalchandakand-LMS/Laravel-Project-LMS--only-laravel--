@@ -30,18 +30,26 @@
             ['teacher.students',     'My students',  '👩‍🎓'],
             ['teacher.live-classes', 'Live classes', '🎥'],
             ['teacher.earnings',     'Earnings',     '💳'],
+            ['notices.index', 'Notice board', '📣'],
+            ['complaints.index', 'Complaints', '🛟']
         ],
         'guardian' => [
             ['guardian.dashboard', 'My children', '👨‍👩‍👦'],
+            ['notices.index', 'Notice board', '📣'],
+            ['complaints.index', 'Complaints', '🛟']
         ],
         'branch_manager' => [
             ['branch.dashboard', 'Dashboard',      '📊'],
             ['branch.students',  'Branch students','👩‍🎓'],
             ['branch.staff',     'Teachers & staff','👥'],
             ['branch.revenue',   'Revenue',        '💰'],
+            ['notices.index', 'Notice board', '📣'],
+            ['complaints.index', 'Complaints', '🛟']
         ],
         'admin' => [
             ['admin.dashboard', 'Admin panel', '⚙️'],
+            ['notices.index', 'Notice board', '📣'],
+            ['complaints.index', 'Complaints', '🛟']
         ],
     ];
     $menu  = $menus[$role] ?? $menus['instructor'];
