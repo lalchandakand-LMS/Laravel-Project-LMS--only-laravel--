@@ -106,7 +106,7 @@
             <form method="POST" action="{{ route('admin.orders.status', $order->order_no) }}" class="mt-3 space-y-3">
                 @csrf
                 <select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-                    @foreach (['pending', 'paid', 'failed', 'cancelled', 'refunded'] as $status)
+                    @foreach (['pending', 'paid', 'failed', 'cancelled'] as $status)
                         <option value="{{ $status }}" @selected($order->status === $status)>{{ ucfirst($status) }}</option>
                     @endforeach
                 </select>
