@@ -31,7 +31,7 @@ class ComplaintController extends Controller
     {
         return view('admin.complaints.show', [
             'complaint' => $complaint->load(['user', 'assignee', 'branch', 'allReplies.user', 'allReplies.attachments', 'attachments', 'events']),
-            'staff' => User::whereIn('role', ['admin', 'instructor'])->where('is_active', true)->orderBy('name')->get(),
+            'staff' => User::where('role', 'admin')->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -59,7 +59,7 @@ class ComplaintController extends Controller
                 ]);
             }
         }
-        $complaint->user?->notify(new ComplaintUpdateNotification($complaint, 'Status changed to '.str_replace('_', ' ', $complaint->status).'.'));
+        $complaint->user?->notify(new ComplaintUpdateNotification($complaint, 'Your complaint details were updated by the administration.'));
         return back()->with('success', 'Complaint updated and complainant notified.');
     }
 
