@@ -1,22 +1,39 @@
 <?php
 
-namespace App\Models;
+namespace App\\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use App\Models\Concerns\TracksDeletionActor;
+use Illuminate\\Database\\Eloquent\\Model;
+use App\\Models\\Concerns\\TracksDeletionActor;
 
 class Branch extends Model
 {
     use TracksDeletionActor;
-    protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    public const PAYMENT_METHODS = [
+        'bkash' => 'bKash',
+        'nagad' => 'Nagad',
+        'rocket' => 'Rocket',
+        'bank' => 'Bank transfer',
+        'cash' => 'Cash at office',
+        'office' => 'Office payment',
+        'sslcommerz' => 'Online gateway (API-ready)',
+    ];
+
+    protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active', 'payment_methods'];
+
+    protected $casts = ['is_active' => 'boolean', 'payment_methods' => 'array'];
 
     public function manager()  { return $this->belongsTo(User::class, 'manager_id'); }
     public function students() { return $this->hasMany(User::class)->where('role', 'student'); }
     public function users()    { return $this->hasMany(User::class); }
 
     public function scopeActive($q) { return $q->where('is_active', true); }
+
+    public function enabledStudentPaymentMethods(): array
+    {
+        $enabled = $this->payment_methods ?? [];
+        return array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank', 'sslcommerz'], $enabled));
+    }
 
     public function revenue(): float
     {
