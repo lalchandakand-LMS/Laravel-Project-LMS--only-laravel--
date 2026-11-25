@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MenuItem extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'label', 'url', 'location', 'parent_id', 'sort_order', 'icon',
         'open_new_tab', 'is_enabled', 'show_desktop', 'show_mobile',
