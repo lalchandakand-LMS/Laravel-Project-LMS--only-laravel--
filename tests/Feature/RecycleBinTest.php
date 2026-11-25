@@ -56,6 +56,26 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_move_a_student_account_to_recycle_bin_and_restore_it(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::where('email', 'student@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $student))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted('users', [
+            'id' => $student->id,
+            'deleted_by' => $admin->id,
+        ]);
+
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'users', 'id' => $student->id]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('users', ['id' => $student->id, 'deleted_at' => null]);
+    }
+
     public function test_permanent_delete_is_blocked_when_course_has_enrolment_history(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
