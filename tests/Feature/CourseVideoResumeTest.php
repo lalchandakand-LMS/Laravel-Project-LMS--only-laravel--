@@ -33,6 +33,7 @@ class CourseVideoResumeTest extends TestCase
             'type' => 'video',
             'video_url' => 'https://youtu.be/abcdefghijk',
         ]);
+        LessonProgress::where('user_id', $student->id)->where('lesson_id', $lesson->id)->delete();
         Enrollment::updateOrCreate(
             ['user_id' => $student->id, 'course_id' => $course->id],
             ['status' => 'active', 'enrolled_at' => now(), 'expires_at' => null]
