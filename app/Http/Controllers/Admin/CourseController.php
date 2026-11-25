@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\Level;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -79,6 +80,7 @@ class CourseController extends Controller
         return [
             'course' => $course,
             'categories' => Category::orderBy('name')->get(),
+            'levels' => Level::where('is_active', true)->orderBy('position')->orderBy('name')->get(),
             'instructors' => User::whereIn('role', ['instructor', 'admin'])->orderBy('name')->get(),
         ];
     }
@@ -89,6 +91,7 @@ class CourseController extends Controller
             'title' => 'required|string|max:180',
             'subtitle' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
+            'level_id' => 'nullable|exists:levels,id',
             'instructor_id' => 'nullable|exists:users,id',
             'description' => 'nullable|string',
             'requirements' => 'nullable|string',
