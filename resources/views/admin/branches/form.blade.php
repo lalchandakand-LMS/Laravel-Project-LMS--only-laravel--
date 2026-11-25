@@ -59,6 +59,23 @@
         </div>
     </section>
 
+    <section class="rounded-xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900">Branch payment account details</h2>
+        <p class="mt-1 text-xs text-slate-500">These details are shown only when the matching method is enabled for this branch.</p>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            @foreach (['bkash_number' => 'bKash merchant/personal number', 'nagad_number' => 'Nagad number', 'rocket_number' => 'Rocket number', 'bank_name' => 'Bank name', 'bank_branch' => 'Bank branch', 'bank_account_name' => 'Bank account name', 'bank_account_number' => 'Bank account number'] as $field => $label)
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-slate-600">{{ $label }}</label>
+                    <input name="{{ $field }}" value="{{ old($field, $branch->{$field}) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                </div>
+            @endforeach
+            <div class="sm:col-span-2">
+                <label class="mb-1 block text-xs font-semibold text-slate-600">Payment instructions</label>
+                <textarea name="payment_instructions" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Explain how students should pay and what reference to enter.">{{ old('payment_instructions', $branch->payment_instructions) }}</textarea>
+            </div>
+        </div>
+    </section>
+
     <div class="flex gap-2">
         <button class="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white">Save branch</button>
         <a href="{{ route('admin.branches.index') }}" class="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600">Cancel</a>
