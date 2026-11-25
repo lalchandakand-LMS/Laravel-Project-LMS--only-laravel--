@@ -42,11 +42,18 @@ case "$DB_CONNECTION" in
   pgsql)
     command -v pg_dump >/dev/null 2>&1 || { echo "pg_dump missing"; exit 1; }
     PGPASSWORD="$(ENV_VAL DB_PASSWORD)" pg_dump -h "$(ENV_VAL DB_HOST)" -p "$(ENV_VAL DB_PORT)" \
-      -U "$(ENV_VAL DB_USERNAME)" -f "$BACKUP_DIR/pgsql-$STAMP.sql" "$(ENV_VAL DB_DATABASE)"
+      -U "$(ENV_VAL DB_USERNAME)" -f "$BACKUP_DIR/pgsql-$STAMP.sql" "$(ENV_VAL DB_DATABASE)" || exit 1
+    [ -s "$BACKUP_DIR/pgsql-$STAMP.sql" ] || { echo "PostgreSQL backup is empty"; exit 1; }
     echo "database -> $BACKUP_DIR/pgsql-$STAMP.sql"
     ;;
   *) echo "unsupported DB_CONNECTION: $DB_CONNECTION"; exit 1 ;;
 esac
 
-ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +31 | while read -r old; do rm -rf "${BACKUP_DIR:?}/$old"; done
+if [ -d storage/app/public ] && find storage/app/public -type f -print -quit | grep -q .; then
+  tar -czf "$BACKUP_DIR/uploads-$STAMP.tar.gz" -C storage/app public || { echo "uploaded files backup failed"; exit 1; }
+  tar -tzf "$BACKUP_DIR/uploads-$STAMP.tar.gz" >/dev/null 2>&1 || { echo "uploaded files backup verification failed"; exit 1; }
+  echo "uploads -> $BACKUP_DIR/uploads-$STAMP.tar.gz"
+fi
+
+ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +31 | while read -r old; do rm -f "${BACKUP_DIR:?}/$old"; done
 echo "done ($(ls -1 "$BACKUP_DIR" | wc -l | tr -d ' ') files in $BACKUP_DIR)"
