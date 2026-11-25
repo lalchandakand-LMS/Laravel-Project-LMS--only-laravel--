@@ -5,6 +5,7 @@
 <a href="{{ route('admin.settings.index') }}" class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Customize dashboard</a>
 @endsection
 @section('content')
+<div class="mb-5 flex flex-wrap gap-3"><a href="{{ route('admin.attendance.index') }}" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Review teacher attendance</a></div>
 @php
     $brandPrimary = \App\Models\Setting::get('dashboard_primary_color', '#059669');
     $brandSecondary = \App\Models\Setting::get('dashboard_secondary_color', '#0f172a');
