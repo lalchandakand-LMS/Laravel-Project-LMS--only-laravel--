@@ -44,24 +44,34 @@ class CourseController extends Controller
 
     public function show(Course $course)
     {
+        $this->authorizeOwner($course);
         return redirect()->route('admin.courses.edit', $course);
     }
 
     public function edit(Course $course)
     {
+        $this->authorizeOwner($course);
         return view('admin.courses.form', $this->formData($course->load('sections.lessons', 'exams')));
     }
 
     public function update(Request $request, Course $course)
     {
+        $this->authorizeOwner($course);
         $course->update($this->validated($request, $course));
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Course updated.');
     }
 
     public function destroy(Course $course)
     {
+        $this->authorizeOwner($course);
         $course->delete();
         return redirect()->route('admin.courses.index')->with('success', 'Course deleted.');
+    }
+
+    private function authorizeOwner(Course $course): void
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isAdmin() || (int) $course->instructor_id === (int) $user->id), 403);
     }
 
     private function formData(Course $course): array

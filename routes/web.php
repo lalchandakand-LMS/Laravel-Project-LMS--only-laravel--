@@ -101,13 +101,49 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
  |  ADMIN / INSTRUCTOR PANEL
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+    // Instructors may use the teaching workspace only. The admin dashboard and
+    // all organisation, account, finance, and site-wide management stay admin-only.
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::resource('categories', Admin\CategoryController::class)->except('show');
+        Route::resource('ebooks', Admin\EbookController::class)->except('show');
+        Route::resource('coupons', Admin\CouponController::class)->except('show');
+        Route::resource('announcements', Admin\AnnouncementController::class)->except('show');
 
-    Route::resource('categories', Admin\CategoryController::class)->except('show');
+        Route::get('enrollments', [Admin\EnrollmentController::class, 'index'])->name('enrollments.index');
+        Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
+        Route::post('enrollments/manual', [Admin\EnrollmentController::class, 'store'])->name('enrollments.store');
+
+        Route::get('students/create', [Admin\UserController::class, 'create'])->name('users.create');
+        Route::post('students', [Admin\UserController::class, 'store'])->name('users.store');
+        Route::get('students', [Admin\UserController::class, 'index'])->name('users.index');
+        Route::get('students/{user}', [Admin\UserController::class, 'show'])->name('users.show');
+        Route::get('students/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
+        Route::put('students/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+
+        Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
+        Route::post('orders/{order:order_no}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('payments/{payment}/verify', [Admin\OrderController::class, 'verifyPayment'])->name('payments.verify');
+
+        Route::get('reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
+        Route::post('reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
+        Route::delete('reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
+
+        Route::resource('branches', Admin\BranchController::class)->except('show')
+            ->parameters(['branches' => 'branch']);
+        Route::resource('sliders', Admin\SliderController::class)->except('show');
+        Route::post('sliders/{slider}/toggle', [Admin\SliderController::class, 'toggle'])->name('sliders.toggle');
+        Route::post('branches/{branch}/toggle', [Admin\BranchController::class, 'toggle'])->name('branches.toggle');
+    });
+
+    // Teaching content: controllers additionally enforce course ownership.
     Route::resource('courses', Admin\CourseController::class);
     Route::resource('exams', Admin\ExamController::class)->except('show');
 
-    // Curriculum builder (explicit routes keep URLs predictable)
     Route::get('courses/{course}/sections/create', [Admin\SectionController::class, 'create'])->name('courses.sections.create');
     Route::post('courses/{course}/sections', [Admin\SectionController::class, 'store'])->name('courses.sections.store');
     Route::get('sections/{section}/edit', [Admin\SectionController::class, 'edit'])->name('sections.edit');
@@ -120,54 +156,16 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::put('lessons/{lesson}', [Admin\LessonController::class, 'update'])->name('lessons.update');
     Route::delete('lessons/{lesson}', [Admin\LessonController::class, 'destroy'])->name('lessons.destroy');
 
-    // Exam questions
     Route::get('exams/{exam}/questions', [Admin\QuestionController::class, 'index'])->name('exams.questions.index');
     Route::get('exams/{exam}/questions/create', [Admin\QuestionController::class, 'create'])->name('exams.questions.create');
     Route::post('exams/{exam}/questions', [Admin\QuestionController::class, 'store'])->name('exams.questions.store');
     Route::get('questions/{question}/edit', [Admin\QuestionController::class, 'edit'])->name('questions.edit');
     Route::put('questions/{question}', [Admin\QuestionController::class, 'update'])->name('questions.update');
     Route::delete('questions/{question}', [Admin\QuestionController::class, 'destroy'])->name('questions.destroy');
-    Route::resource('ebooks', Admin\EbookController::class)->except('show');
-    Route::resource('coupons', Admin\CouponController::class)->except('show');
-    Route::resource('announcements', Admin\AnnouncementController::class)->except('show');
 
-    Route::get('enrollments', [Admin\EnrollmentController::class, 'index'])->name('enrollments.index');
-    Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
-    Route::post('enrollments/manual', [Admin\EnrollmentController::class, 'store'])->name('enrollments.store');
-
-    Route::get('students/create', [Admin\UserController::class, 'create'])->name('users.create');
-    Route::post('students', [Admin\UserController::class, 'store'])->name('users.store');
-    Route::get('students', [Admin\UserController::class, 'index'])->name('users.index');
-    Route::get('students/{user}', [Admin\UserController::class, 'show'])->name('users.show');
-    Route::get('students/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
-    Route::put('students/{user}', [Admin\UserController::class, 'update'])->name('users.update');
-
-    Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
-    Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
-    Route::post('orders/{order:order_no}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
-    Route::post('payments/{payment}/verify', [Admin\OrderController::class, 'verifyPayment'])->name('payments.verify');
-
-    Route::get('reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
-    Route::post('reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
-    Route::delete('reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
-
-    Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
-    Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
-
-    // Live classes (admins and instructors)
     Route::resource('live-classes', Admin\LiveClassController::class)->except('show')
         ->parameters(['live-classes' => 'liveClass']);
-
-    /* ------- admin-only modules: branches, sliders, accounts ------- */
-    Route::middleware('role:admin')->group(function () {
-        Route::resource('branches', Admin\BranchController::class)->except('show')
-            ->parameters(['branches' => 'branch']);
-        Route::resource('sliders', Admin\SliderController::class)->except('show');
-        Route::post('sliders/{slider}/toggle', [Admin\SliderController::class, 'toggle'])->name('sliders.toggle');
-        Route::post('branches/{branch}/toggle', [Admin\BranchController::class, 'toggle'])->name('branches.toggle');
-    });
 });
-
 /* ------------------------------------------------------------------
  |  TEACHER PORTAL
  |------------------------------------------------------------------*/

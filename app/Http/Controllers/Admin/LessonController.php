@@ -13,6 +13,7 @@ class LessonController extends Controller
     public function create(Request $request)
     {
         $course = Course::with('sections')->findOrFail($request->get('course_id'));
+        $this->authorizeCourse($course);
 
         return view('admin.lessons.form', [
             'lesson' => new Lesson(['course_id' => $course->id, 'section_id' => $request->get('section_id'), 'type' => 'video']),
@@ -23,6 +24,8 @@ class LessonController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $this->authorizeCourse(Course::findOrFail($data['course_id']));
+        $this->assertSectionBelongsToCourse($data);
         Lesson::create($data);
 
         return redirect()->route('admin.courses.edit', $data['course_id'])->with('success', 'Lesson added.');
@@ -30,6 +33,7 @@ class LessonController extends Controller
 
     public function edit(Lesson $lesson)
     {
+        $this->authorizeCourse($lesson->course);
         return view('admin.lessons.form', [
             'lesson' => $lesson,
             'course' => $lesson->course->load('sections'),
@@ -38,15 +42,33 @@ class LessonController extends Controller
 
     public function update(Request $request, Lesson $lesson)
     {
-        $lesson->update($this->validated($request));
+        $this->authorizeCourse($lesson->course);
+        $data = $this->validated($request);
+        $this->authorizeCourse(Course::findOrFail($data['course_id']));
+        $this->assertSectionBelongsToCourse($data);
+        $lesson->update($data);
         return redirect()->route('admin.courses.edit', $lesson->course_id)->with('success', 'Lesson updated.');
     }
 
     public function destroy(Lesson $lesson)
     {
+        $this->authorizeCourse($lesson->course);
         $courseId = $lesson->course_id;
         $lesson->delete();
         return redirect()->route('admin.courses.edit', $courseId)->with('success', 'Lesson deleted.');
+    }
+
+    private function authorizeCourse(Course $course): void
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isAdmin() || (int) $course->instructor_id === (int) $user->id), 403);
+    }
+
+    private function assertSectionBelongsToCourse(array $data): void
+    {
+        if (! empty($data['section_id'])) {
+            abort_unless(Section::whereKey($data['section_id'])->where('course_id', $data['course_id'])->exists(), 422);
+        }
     }
 
     private function validated(Request $request): array

@@ -12,6 +12,7 @@ class QuestionController extends Controller
 {
     public function index(Exam $exam)
     {
+        $this->authorizeExam($exam);
         return view('admin.questions.index', [
             'exam' => $exam->load('questions.options'),
         ]);
@@ -19,11 +20,13 @@ class QuestionController extends Controller
 
     public function create(Exam $exam)
     {
+        $this->authorizeExam($exam);
         return view('admin.questions.form', ['exam' => $exam, 'question' => new Question(['type' => 'mcq', 'marks' => 1])]);
     }
 
     public function store(Request $request, Exam $exam)
     {
+        $this->authorizeExam($exam);
         $this->save($request, $exam);
         $this->syncTotalMarks($exam);
 
@@ -32,6 +35,7 @@ class QuestionController extends Controller
 
     public function edit(Question $question)
     {
+        $this->authorizeExam($question->exam);
         return view('admin.questions.form', [
             'exam' => $question->exam,
             'question' => $question->load('options'),
@@ -40,6 +44,7 @@ class QuestionController extends Controller
 
     public function update(Request $request, Question $question)
     {
+        $this->authorizeExam($question->exam);
         $this->save($request, $question->exam, $question);
         $this->syncTotalMarks($question->exam);
 
@@ -48,11 +53,18 @@ class QuestionController extends Controller
 
     public function destroy(Question $question)
     {
+        $this->authorizeExam($question->exam);
         $exam = $question->exam;
         $question->delete();
         $this->syncTotalMarks($exam);
 
         return back()->with('success', 'Question deleted.');
+    }
+
+    private function authorizeExam(Exam $exam): void
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isAdmin() || $exam->course?->instructor_id === $user->id), 403);
     }
 
     private function save(Request $request, Exam $exam, ?Question $question = null): void
