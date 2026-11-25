@@ -2,6 +2,7 @@
 @section('title', $child->name.' — report card')
 @section('heading', $child->name)
 @section('content')
+<div class="mb-5"><a href="{{ route('guardian.child.attendance', $child) }}" class="inline-flex rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">View approved attendance report</a></div>
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <div class="grid gap-5 lg:grid-cols-3">
