@@ -33,6 +33,7 @@
             <p class="mt-5 text-sm font-semibold text-slate-500">This complaint is closed for further replies.</p>
         @endif
     </section>
+    <section class="rounded-2xl border border-slate-200 bg-white p-5"><h3 class="font-bold text-slate-900">Case activity</h3><ol class="mt-4 space-y-3">@foreach($complaint->events->where('is_internal', false) as $event)<li class="flex gap-3 text-sm"><span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-600"></span><div><p class="font-semibold text-slate-700">{{ $event->description }}</p><p class="text-xs text-slate-400">{{ $event->actor?->name ?? 'System' }} · {{ $event->created_at->format('d M Y, h:i A') }}</p></div></li>@endforeach</ol></section>
     <a href="{{ route('complaints.index') }}" class="text-sm font-bold text-emerald-700">← Back to my complaints</a>
 </div>
 @endsection
