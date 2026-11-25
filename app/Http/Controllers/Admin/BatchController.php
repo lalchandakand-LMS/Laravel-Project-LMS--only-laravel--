@@ -70,6 +70,11 @@ class BatchController extends Controller
         $data = $request->validate([
             'student_id' => ['required', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'student')->where('is_active', true))],
         ]);
+        $student = User::findOrFail($data['student_id']);
+        if ($batch->branch_id && (int) $student->branch_id !== (int) $batch->branch_id) {
+            return back()->with('error', 'The student must belong to the same branch as this batch.');
+        }
+
         $enrollment = Enrollment::where('user_id', $data['student_id'])->where('course_id', $batch->course_id)->first();
         if ((int) ($enrollment?->batch_id) !== (int) $batch->id && $batch->capacity && $batch->activeStudentCount() >= $batch->capacity) {
             return back()->with('error', 'This batch has reached its student capacity.');

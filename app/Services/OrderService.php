@@ -51,7 +51,7 @@ class OrderService
                             'price_paid' => $item->price,
                             'status' => 'active',
                             'enrolled_at' => now(),
-                            'expires_at' => null,
+                            'expires_at' => $course->access_duration_days ? now()->addDays($course->access_duration_days) : null,
                         ]);
                     } else {
                         Enrollment::create([
@@ -61,6 +61,7 @@ class OrderService
                             'price_paid' => $item->price,
                             'status' => 'active',
                             'enrolled_at' => now(),
+                            'expires_at' => $course->access_duration_days ? now()->addDays($course->access_duration_days) : null,
                         ]);
                     }
                 }

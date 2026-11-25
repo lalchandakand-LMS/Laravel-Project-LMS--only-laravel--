@@ -35,6 +35,21 @@
             <label class="mb-1 block text-sm font-semibold text-slate-700">Video URL (YouTube / Vimeo / mp4)</label>
             <input name="video_url" value="{{ old('video_url', $lesson->video_url) }}" placeholder="https://www.youtube.com/watch?v=…" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
+        <div>
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Release date & time (drip content)</label>
+            <input type="datetime-local" name="available_at" value="{{ old('available_at', optional($lesson->available_at)->format('Y-m-d\TH:i')) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Leave blank to make this lesson available immediately.</p>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Prerequisite lesson</label>
+            <select name="prerequisite_lesson_id" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                <option value="">No prerequisite</option>
+                @foreach ($lessons as $prerequisite)
+                    <option value="{{ $prerequisite->id }}" @selected(old('prerequisite_lesson_id', $lesson->prerequisite_lesson_id) == $prerequisite->id)>{{ $prerequisite->title }}</option>
+                @endforeach
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Students must complete this lesson before unlocking the current lesson.</p>
+        </div>
         <div class="sm:col-span-2">
             <label class="mb-1 block text-sm font-semibold text-slate-700">Content / notes</label>
             <textarea name="content" rows="6" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">{{ old('content', $lesson->content) }}</textarea>

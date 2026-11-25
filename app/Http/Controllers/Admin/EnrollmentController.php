@@ -37,9 +37,15 @@ class EnrollmentController extends Controller
             'course_id' => 'required|exists:courses,id',
         ]);
 
+        $course = Course::findOrFail($data['course_id']);
         Enrollment::firstOrCreate(
             $data,
-            ['price_paid' => 0, 'status' => 'active', 'enrolled_at' => now()]
+            [
+                'price_paid' => 0,
+                'status' => 'active',
+                'enrolled_at' => now(),
+                'expires_at' => $course->access_duration_days ? now()->addDays($course->access_duration_days) : null,
+            ]
         );
 
         return back()->with('success', 'Student enrolled manually.');

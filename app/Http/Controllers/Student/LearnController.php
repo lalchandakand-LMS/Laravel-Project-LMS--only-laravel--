@@ -6,12 +6,66 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\User;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class LearnController extends Controller
 {
+    /** Return a currently valid enrollment, including batch and branch restrictions. */
+    private function activeEnrollment(User $user, Course $course)
+    {
+        $enrollment = $user->enrollments()
+            ->with('batch')
+            ->where('course_id', $course->id)
+            ->where('status', 'active')
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->first();
+
+        if (! $enrollment) {
+            return null;
+        }
+
+        if ($enrollment->batch_id) {
+            $batch = $enrollment->batch;
+            if (! $batch || $batch->status === 'cancelled' || $batch->status === 'upcoming') {
+                return null;
+            }
+
+            if ($batch->branch_id && (int) $user->branch_id !== (int) $batch->branch_id) {
+                return null;
+            }
+        }
+
+        return $enrollment;
+    }
+
+    /** Lessons visible to this learner at this moment (published, released and prerequisite-unlocked). */
+    private function accessibleLessons(Course $course, User $user)
+    {
+        $query = $course->lessons()->where('is_published', true);
+
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        $query->where(fn ($available) => $available->whereNull('available_at')->orWhere('available_at', '<=', now()))
+            ->where(fn ($prerequisite) => $prerequisite->whereNull('prerequisite_lesson_id')
+                ->orWhereExists(function ($completed) use ($user) {
+                    $completed->selectRaw('1')->from('lesson_progress')
+                        ->whereColumn('lesson_progress.lesson_id', 'lessons.prerequisite_lesson_id')
+                        ->where('lesson_progress.user_id', $user->id)
+                        ->whereNotNull('lesson_progress.completed_at');
+                }));
+
+        if (! $this->activeEnrollment($user, $course)) {
+            $query->where('is_free_preview', true);
+        }
+
+        return $query;
+    }
+
     private function guard(Course $course, ?Lesson $lesson = null): void
     {
         $user = auth()->user();
@@ -24,20 +78,22 @@ class LearnController extends Controller
 
         if ($lesson) {
             abort_unless($course->is_published && $lesson->is_published, 404);
+            abort_if($lesson->available_at && $lesson->available_at->isFuture(), 403, 'This lesson will unlock on its scheduled release date.');
+
+            if ($lesson->prerequisite_lesson_id) {
+                $completed = LessonProgress::where('user_id', $user->id)
+                    ->where('lesson_id', $lesson->prerequisite_lesson_id)
+                    ->whereNotNull('completed_at')->exists();
+                abort_unless($completed, 403, 'Complete the prerequisite lesson to unlock this lesson.');
+            }
+
             if ($lesson->is_free_preview) {
                 return;
             }
         }
 
-        $hasActiveEnrollment = $user->enrollments()
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(function ($query) {
-                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->exists();
-
-        abort_unless($hasActiveEnrollment, 403, 'An active course enrollment is required.');
+        abort_unless($this->activeEnrollment($user, $course), 403,
+            'An active, unexpired course enrollment and eligible batch are required.');
     }
 
     public function show(Course $course)
@@ -45,39 +101,12 @@ class LearnController extends Controller
         $user = auth()->user();
         abort_unless($user->isAdmin() || ($user->isStudent() && $course->is_published), 403);
 
-        $hasActiveEnrollment = $user->isAdmin() || $user->enrollments()
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(function ($query) {
-                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->exists();
-        $hasFreePreview = $course->lessons()->where('is_published', true)
-            ->where('is_free_preview', true)->exists();
-
-        abort_unless($user->isAdmin() || $hasActiveEnrollment || $hasFreePreview, 403,
+        $hasPreview = $course->lessons()->where('is_published', true)->where('is_free_preview', true)->exists();
+        abort_unless($user->isAdmin() || $this->activeEnrollment($user, $course) || $hasPreview, 403,
             'An active course enrollment is required.');
 
-        $lessons = $course->lessons()->where('is_published', true);
-        if (! $user->isAdmin()) {
-            $lessons->where(function ($query) use ($user, $course) {
-                $query->where('is_free_preview', true)
-                    ->orWhereExists(function ($enrollments) use ($user, $course) {
-                        $enrollments->selectRaw('1')->from('enrollments')
-                            ->whereColumn('enrollments.course_id', 'lessons.course_id')
-                            ->where('enrollments.course_id', $course->id)
-                            ->where('enrollments.user_id', $user->id)
-                            ->where('enrollments.status', 'active')
-                            ->where(function ($expiry) {
-                                $expiry->whereNull('enrollments.expires_at')
-                                    ->orWhere('enrollments.expires_at', '>', now());
-                            });
-                    });
-            });
-        }
-
-        $lesson = $lessons->orderBy('position')->first();
-        abort_if(! $lesson, 404, 'This course has no accessible lessons yet.');
+        $lesson = $this->accessibleLessons($course, $user)->orderBy('position')->first();
+        abort_if(! $lesson, 404, 'There are no lessons available to you yet. Check the release schedule or your enrollment.');
 
         return redirect()->route('student.learn.lesson', [$course->slug, $lesson->id]);
     }
@@ -89,7 +118,7 @@ class LearnController extends Controller
 
         $user = auth()->user();
         $course->load(['sections.lessons' => fn ($query) => $query->where('is_published', true), 'announcements', 'instructor']);
-        $flat = $course->lessons()->where('is_published', true)->get();
+        $flat = $this->accessibleLessons($course, $user)->orderBy('position')->get();
         $index = $flat->search(fn ($item) => (int) $item->id === (int) $lesson->id);
 
         $lessonProgress = LessonProgress::firstOrCreate([
@@ -122,25 +151,16 @@ class LearnController extends Controller
             ['completed_at' => now()]
         );
 
-        $hasActiveEnrollment = $user->enrollments()
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(function ($query) {
-                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->exists();
+        $hasActiveEnrollment = $user->isAdmin() || (bool) $this->activeEnrollment($user, $course);
         $certificate = $hasActiveEnrollment
             ? OrderService::maybeIssueCertificate($user->id, $course)
             : null;
-        $nextQuery = $course->lessons()->where('is_published', true)
-            ->whereNotIn('id', LessonProgress::where('user_id', $user->id)
-                ->whereNotNull('completed_at')->pluck('lesson_id'));
 
-        if (! $hasActiveEnrollment) {
-            $nextQuery->where('is_free_preview', true);
-        }
-
-        $next = $nextQuery->orderBy('position')->first();
+        $completedIds = LessonProgress::where('user_id', $user->id)
+            ->whereNotNull('completed_at')->pluck('lesson_id');
+        $next = $this->accessibleLessons($course, $user)
+            ->whereNotIn('id', $completedIds)
+            ->orderBy('position')->first();
 
         $redirect = $next
             ? redirect()->route('student.learn.lesson', [$course->slug, $next->id])

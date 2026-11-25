@@ -9,16 +9,19 @@ class Lesson extends Model
     use TracksDeletionActor;
     protected $fillable = [
         'course_id','section_id','title','type','video_url','attachment','content',
-        'duration_minutes','position','is_free_preview','is_published',
+        'duration_minutes','position','is_free_preview','is_published','available_at','prerequisite_lesson_id',
     ];
 
     protected $casts = [
         'is_free_preview' => 'boolean',
         'is_published' => 'boolean',
+        'available_at' => 'datetime',
     ];
 
     public function course()   { return $this->belongsTo(Course::class); }
     public function section()  { return $this->belongsTo(Section::class); }
+    public function prerequisite() { return $this->belongsTo(self::class, 'prerequisite_lesson_id'); }
+    public function dependents() { return $this->hasMany(self::class, 'prerequisite_lesson_id'); }
     public function progress() { return $this->hasMany(LessonProgress::class); }
     public function exams()    { return $this->hasMany(Exam::class); }
 
