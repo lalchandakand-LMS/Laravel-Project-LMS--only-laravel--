@@ -1,15 +1,8 @@
 @php
-    $publicMenu = [
-        ['label' => 'Home', 'url' => route('home'), 'active' => request()->routeIs('home')],
-        ['label' => 'Courses', 'url' => route('courses.index'), 'active' => request()->routeIs('courses.*', 'categories.*')],
-        ['label' => 'Learn', 'url' => auth()->check() && in_array(auth()->user()->role, ['student', 'instructor', 'admin'], true) ? route('student.courses') : route('courses.index'), 'active' => request()->routeIs('student.learn*', 'student.courses')],
-        ['label' => 'Instructors', 'url' => route('home').'#teachers', 'active' => false],
-        ['label' => 'Exams', 'url' => auth()->check() && in_array(auth()->user()->role, ['student', 'instructor', 'admin'], true) ? route('student.exams.index') : (auth()->check() ? auth()->user()->dashboardRoute() : route('login')), 'active' => request()->routeIs('student.exams.*')],
-        ['label' => 'Products', 'url' => route('courses.index'), 'active' => false],
-        ['label' => 'E-Books', 'url' => route('ebooks.index'), 'active' => request()->routeIs('ebooks.*')],
-        ['label' => 'Board Result', 'url' => route('home').'#board-results', 'active' => false],
-        ['label' => 'Profile', 'url' => auth()->check() && in_array(auth()->user()->role, ['student', 'instructor', 'admin'], true) ? route('student.profile') : (auth()->check() ? auth()->user()->dashboardRoute() : route('login')), 'active' => request()->routeIs('student.profile*')],
-    ];
+    $desktopMenu = \App\Models\MenuItem::publicNavigation('header', 'desktop');
+    $mobileMenu = \App\Models\MenuItem::publicNavigation('header', 'mobile');
+    $menuUrl = fn ($item) => str_starts_with($item->url, 'http://') || str_starts_with($item->url, 'https://') ? $item->url : url($item->url);
+    $menuActive = fn ($item) => request()->is(trim(parse_url($item->url, PHP_URL_PATH) ?: '/', '/'));
 @endphp
 
 <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
@@ -38,8 +31,8 @@
         </div>
     </div>
     <nav aria-label="Main navigation" class="mx-auto hidden max-w-7xl items-center justify-center gap-1 overflow-x-auto px-3 pb-2 lg:flex">
-        @foreach ($publicMenu as $item)
-            <a href="{{ $item['url'] }}" @if ($item['active']) aria-current="page" @endif class="whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $item['active'] ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item['label'] }}</a>
+        @foreach ($desktopMenu as $item)
+            <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif class="whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $item['active'] ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }}@if($item->children->isNotEmpty()) <span class="relative">@foreach($item->children as $child)<a href="{{ $menuUrl($child) }}" class="ml-2 text-xs text-emerald-700">{{ $child->label }}</a>@endforeach</span>@endif</a>
         @endforeach
     </nav>
 </header>
@@ -56,8 +49,9 @@
             <input id="mobile-course-search" name="q" value="{{ request('q') }}" placeholder="Search courses…" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
         </form>
         <nav aria-label="Mobile main navigation" class="grid gap-1">
-            @foreach ($publicMenu as $item)
+            @foreach ($mobileMenu as $item)
                 <a href="{{ $item['url'] }}" @if ($item['active']) aria-current="page" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $item['active'] ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item['label'] }} <span aria-hidden="true" class="text-slate-400">›</span></a>
+                @foreach($item->children as $child)<a href="{{ $menuUrl($child) }}" class="ml-5 block rounded-lg px-4 py-2 text-sm text-slate-600">{{ $child->icon }} {{ $child->label }}</a>@endforeach
             @endforeach
         </nav>
         @auth
