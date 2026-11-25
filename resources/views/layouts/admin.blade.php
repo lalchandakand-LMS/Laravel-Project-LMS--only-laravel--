@@ -29,7 +29,7 @@
                 'Content' => [['admin.courses.index', 'Courses', '📚'],['admin.categories.index', 'Categories', '🗂'],['admin.exams.index', 'Exams', '📝'],['admin.ebooks.index', 'E-books', '📖'],['admin.live-classes.index', 'Live classes', '🎥'],['admin.announcements.index', 'Announcements', '📣']],
                 'People' => array_values(array_filter([['admin.enrollments.index', 'Enrollments', '🎓'],['admin.users.index', 'Students & staff', '👥'],$isAdmin ? ['admin.branches.index', 'Branches', '🏢'] : null,['admin.reviews.index', 'Reviews', '⭐']])),
                 'Commerce' => [['admin.orders.index', 'Orders', '🧾'],['admin.coupons.index', 'Coupons', '🎟']],
-                'System' => array_values(array_filter([$isAdmin ? ['admin.sliders.index', 'Home slider', '🖼'] : null,$isAdmin ? ['admin.settings.index', 'Settings', '⚙️'] : null,$isAdmin ? ['admin.menu-settings.index', 'Menu Settings', '🧭'] : null,$isAdmin ? ['admin.recycle-bin.index', 'Recycle Bin', '🗑️'] : null])),
+                'System' => array_values(array_filter([$isAdmin ? ['admin.sliders.index', 'Home slider', '🖼'] : null,$isAdmin ? ['admin.settings.index', 'Settings', '⚙️'] : null,$isAdmin ? ['admin.menu-settings.index', 'Menu Settings', '🧭'] : null,$isAdmin ? ['admin.recycle-bin.index', 'Recycle Bin', '🗑️'] : null,$isAdmin ? ['admin.activity-logs.index', 'Activity Logs', '📋'] : null])),
             ];
         @endphp
         <nav class="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm">
