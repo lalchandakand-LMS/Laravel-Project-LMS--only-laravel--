@@ -16,7 +16,7 @@
                         <input type="hidden" name="branch_id" value="{{ $assignedBranch->id }}">
                         <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold">{{ $assignedBranch->name }}</div>
                     @else
-                        <p class="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">Your assigned branch is currently inactive. Please contact the office before placing an order.</p>
+                        <p class="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">Your assigned branch is inactive or has no payment method configured. Please contact the office before placing an order.</p>
                     @endif
                 @else
                     <select name="branch_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
