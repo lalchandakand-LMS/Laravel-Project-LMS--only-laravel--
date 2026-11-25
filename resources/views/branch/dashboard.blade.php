@@ -93,7 +93,6 @@
             <h2 class="font-bold text-slate-800">Recent orders</h2>
             <a href="{{ route('branch.revenue') }}" class="text-sm font-bold text-emerald-700">Revenue →</a>
         </div>
-@endif
 
         <ul class="divide-y divide-slate-100 text-sm">
             @forelse ($recentOrders as $order)
