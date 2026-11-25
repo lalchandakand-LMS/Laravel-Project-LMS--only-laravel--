@@ -101,8 +101,10 @@ class DashboardController extends Controller
             return [$student->id => $values->isEmpty() ? 0 : round($values->avg(), 1)];
         });
 
-        $lastActivity = $students->getCollection()->mapWithKeys(function (User $student) {
-            return [$student->id => $student->lessonProgress()->latest('updated_at')->value('updated_at')];
+        $scopedLessonIds = DB::table('lessons')->whereIn('course_id', $ids)->pluck('id');
+        $lastActivity = $students->getCollection()->mapWithKeys(function (User $student) use ($scopedLessonIds) {
+            return [$student->id => $student->lessonProgress()->whereIn('lesson_id', $scopedLessonIds)
+                ->latest('updated_at')->value('updated_at')];
         });
 
         return view('teacher.students', compact('students', 'scores', 'progress', 'lastActivity'));
