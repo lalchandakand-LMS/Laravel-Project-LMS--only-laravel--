@@ -1,9 +1,9 @@
 <?php
 
-use App\\Models\\Ebook;
-use App\\Models\\Lesson;
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Support\\Facades\\Storage;
+use App\Models\Ebook;
+use App\Models\Lesson;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Storage;
 
 return new class extends Migration
 {
