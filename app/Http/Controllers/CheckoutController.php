@@ -99,6 +99,15 @@ class CheckoutController extends Controller
         ]);
     }
 
+    public function receipt(Order $order)
+    {
+        abort_unless($order->user_id === auth()->id() || auth()->user()->isAdmin(), 403);
+
+        return view('cart.receipt', [
+            'order' => $order->load(['items', 'payments.verifier', 'branch', 'user']),
+        ]);
+    }
+
     /** Student submits a full or partial manual payment for branch-approved verification. */
     public function pay(Request $request, Order $order)
     {
