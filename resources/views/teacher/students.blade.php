@@ -15,6 +15,8 @@
                 <th class="px-5 py-3">Contact</th>
                 <th class="px-5 py-3">Courses</th>
                 <th class="px-5 py-3">Avg. exam score</th>
+                <th class="px-5 py-3">Course progress</th>
+                <th class="px-5 py-3">Last activity</th>
                 <th class="px-5 py-3"></th>
             </tr>
         </thead>
@@ -36,12 +38,19 @@
                     </td>
                     <td class="px-5 py-3"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{{ $student->enrollments_count }}</span></td>
                     <td class="px-5 py-3 font-semibold text-slate-700">{{ isset($scores[$student->id]) ? round($scores[$student->id], 1).'%' : '—' }}</td>
+                    <td class="px-5 py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-emerald-600" style="width: {{ $progress[$student->id] ?? 0 }}%"></div></div>
+                            <span class="text-xs font-bold text-slate-700">{{ $progress[$student->id] ?? 0 }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3 text-xs text-slate-500">{{ !empty($lastActivity[$student->id]) ? \\Carbon\\Carbon::parse($lastActivity[$student->id])->diffForHumans() : 'No activity' }}</td>
                     <td class="px-5 py-3 text-right">
                         <a href="{{ route('teacher.students.show', $student) }}" class="text-sm font-bold text-emerald-700">View progress →</a>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">No students found.</td></tr>
+                <tr><td colspan="7" class="px-5 py-10 text-center text-slate-500">No students found.</td></tr>
             @endforelse
         </tbody>
     </table>
