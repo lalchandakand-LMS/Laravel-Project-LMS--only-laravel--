@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/checkout/success/{order:order_no}', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
