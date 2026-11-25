@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAdjustment;
-use App\Models\PaymentAdjustment;
 use App\Models\Enrollment;
 use App\Models\EbookPurchase;
 use App\Notifications\PaymentStatusNotification;
