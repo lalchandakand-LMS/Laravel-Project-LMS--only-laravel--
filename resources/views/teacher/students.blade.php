@@ -44,7 +44,7 @@
                             <span class="text-xs font-bold text-slate-700">{{ $progress[$student->id] ?? 0 }}%</span>
                         </div>
                     </td>
-                    <td class="px-5 py-3 text-xs text-slate-500">{{ !empty($lastActivity[$student->id]) ? \\Carbon\\Carbon::parse($lastActivity[$student->id])->diffForHumans() : 'No activity' }}</td>
+                    <td class="px-5 py-3 text-xs text-slate-500">{{ !empty($lastActivity[$student->id]) ? \Carbon\Carbon::parse($lastActivity[$student->id])->diffForHumans() : 'No activity' }}</td>
                     <td class="px-5 py-3 text-right">
                         <a href="{{ route('teacher.students.show', $student) }}" class="text-sm font-bold text-emerald-700">View progress →</a>
                     </td>
