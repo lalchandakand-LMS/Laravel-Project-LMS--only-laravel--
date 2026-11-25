@@ -18,6 +18,10 @@ class SettingController extends Controller
         'dashboard_banner_enabled', 'dashboard_primary_color', 'dashboard_secondary_color',
         'dashboard_widget_stats', 'dashboard_widget_chart', 'dashboard_widget_courses',
         'dashboard_widget_orders', 'dashboard_widget_enrollments', 'dashboard_widget_reviews',
+        'dashboard_widget_student_stats', 'dashboard_widget_student_courses', 'dashboard_widget_student_exams', 'dashboard_widget_student_activity',
+        'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
+        'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
+        'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
     ];
 
     public function index()
@@ -51,7 +55,11 @@ class SettingController extends Controller
             }
         }
 
-        foreach (['dashboard_widget_stats', 'dashboard_widget_chart', 'dashboard_widget_courses', 'dashboard_widget_orders', 'dashboard_widget_enrollments', 'dashboard_widget_reviews'] as $key) {
+        foreach (['dashboard_widget_stats', 'dashboard_widget_chart', 'dashboard_widget_courses', 'dashboard_widget_orders', 'dashboard_widget_enrollments', 'dashboard_widget_reviews',
+            'dashboard_widget_student_stats', 'dashboard_widget_student_courses', 'dashboard_widget_student_exams', 'dashboard_widget_student_activity',
+            'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
+            'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
+            'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders'] as $key) {
             Setting::set($key, $request->boolean($key) ? '1' : '0');
         }
 
