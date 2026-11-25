@@ -39,7 +39,7 @@
             @endif
 
             @if ($lesson->attachment)
-                <a href="{{ asset('storage/'.$lesson->attachment) }}" download class="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                <a href="{{ route('student.learn.attachment', [$course->slug, $lesson->id]) }}" download class="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                     📎 Download lesson resource
                 </a>
             @endif

@@ -86,7 +86,7 @@ class LessonController extends Controller
         ]);
 
         if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('lessons', 'public');
+            $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
         }
 
         $data['is_free_preview'] = $request->boolean('is_free_preview');

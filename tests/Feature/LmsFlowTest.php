@@ -87,6 +87,8 @@ class LmsFlowTest extends TestCase
     {
         $user = User::where('email', 'student6@lms.test')->firstOrFail();
         $course = Course::whereDoesntHave('enrollments', fn ($q) => $q->where('user_id', $user->id))->firstOrFail();
+        // This scenario is specifically a paid course, not a course with a public preview.
+        $course->lessons()->update(['is_free_preview' => false]);
 
         $this->actingAs($user)->get('/my/learn/'.$course->slug)->assertForbidden();
     }
