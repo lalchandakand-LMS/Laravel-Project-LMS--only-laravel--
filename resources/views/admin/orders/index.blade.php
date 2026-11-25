@@ -15,7 +15,7 @@
     <input name="q" value="{{ request('q') }}" placeholder="Order no / name / phone" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm">
     <select name="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
         <option value="">Any status</option>
-        @foreach (['pending', 'paid', 'failed', 'cancelled', 'refunded'] as $status)
+        @foreach (['pending', 'partially_paid', 'paid', 'failed', 'cancelled'] as $status)
             <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
         @endforeach
     </select>

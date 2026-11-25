@@ -87,6 +87,14 @@ class BranchController extends Controller
             'manager_id' => 'nullable|exists:users,id',
             'payment_methods' => 'sometimes|array',
             'payment_methods.*' => ['string', Rule::in(array_keys(Branch::PAYMENT_METHODS))],
+            'bkash_number' => 'nullable|string|max:40',
+            'nagad_number' => 'nullable|string|max:40',
+            'rocket_number' => 'nullable|string|max:40',
+            'bank_name' => 'nullable|string|max:120',
+            'bank_branch' => 'nullable|string|max:120',
+            'bank_account_name' => 'nullable|string|max:120',
+            'bank_account_number' => 'nullable|string|max:80',
+            'payment_instructions' => 'nullable|string|max:3000',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');

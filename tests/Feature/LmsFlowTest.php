@@ -235,7 +235,7 @@ class LmsFlowTest extends TestCase
 
         // Student submits payment
         $this->actingAs($user)->post('/checkout/success/'.$order->order_no.'/pay', [
-            'gateway' => 'bkash', 'sender_number' => '01700000000', 'transaction_id' => 'TRX999',
+            'gateway' => 'bkash', 'amount' => $order->total, 'sender_number' => '01700000000', 'transaction_id' => 'TRX999',
         ])->assertRedirect();
 
         $payment = $order->payments()->firstOrFail();

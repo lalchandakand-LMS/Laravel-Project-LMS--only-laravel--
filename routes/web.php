@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/checkout/success/{order:order_no}', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -143,6 +144,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{order:order_no}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::post('payments/{payment}/verify', [Admin\OrderController::class, 'verifyPayment'])->name('payments.verify');
+        Route::get('payments/{payment}/proof', [Admin\OrderController::class, 'paymentProof'])->name('payments.proof');
+        Route::post('orders/{order:order_no}/offline-payment', [Admin\OrderController::class, 'recordOfflinePayment'])->name('orders.offline-payment');
 
         Route::get('reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
         Route::post('reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
