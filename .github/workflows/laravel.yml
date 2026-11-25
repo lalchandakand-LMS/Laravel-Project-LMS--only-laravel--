@@ -44,18 +44,21 @@ jobs:
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache
           touch database/database.sqlite
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
       - name: Run test suite
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
         run: php artisan test
 
-      - name: Build frontend assets
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-            npm run build
-          else
-            echo "No package-lock.json; frontend build is not reproducible in CI."
-            test -d public/build
-          fi
