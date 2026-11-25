@@ -40,7 +40,12 @@ class LmsFlowTest extends TestCase
             ->assertSee('Choose your learning path')
             ->assertSee('Featured courses')
             ->assertSee('Latest courses')
-            ->assertSee('Main navigation');
+            ->assertSee('Main navigation')
+            ->assertSee('Learn')
+            ->assertSee('Instructors')
+            ->assertSee('Products')
+            ->assertSee('Board Result')
+            ->assertSee('Profile');
         $this->get('/courses')->assertOk();
         $this->get('/courses/'.$course->slug)->assertOk()->assertSee($course->title);
         $this->get('/ebooks')->assertOk();
