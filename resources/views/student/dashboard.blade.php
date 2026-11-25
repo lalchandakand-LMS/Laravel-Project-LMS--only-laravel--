@@ -29,12 +29,11 @@
             <p class="text-sm text-slate-600">{{ $label }}</p>
         </div>
     @endforeach
-@endif
 </div>
+@endif
 
 <div class="mt-8 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
-@if (\App\Models\Setting::get('dashboard_widget_courses', '1') === '1')
-    @if (\App\Models\Setting::get('dashboard_widget_student_courses', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_student_courses', '1') === '1')
 <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-900">Continue learning</h3>
@@ -104,7 +103,6 @@
                 @endforelse
             </ul>
         </section>
-@endif
 @endif
     </div>
 </div>
