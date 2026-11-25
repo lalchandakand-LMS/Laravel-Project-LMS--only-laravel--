@@ -17,7 +17,7 @@ one rule to remember:
 ```bash
 # requirements: PHP 8.2+ (pdo_sqlite or pdo_mysql, mbstring, openssl, fileinfo),
 #               composer, Node 20+ only if you want to rebuild the CSS/JS
-unzip redwans-method-lms.zip && cd lms
+unzip aloms-english-center-lms.zip && cd aloms-english-center-lms
 
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
@@ -34,7 +34,7 @@ touch database/database.sqlite
 #   DB_USERNAME=lms_user
 #   DB_PASSWORD=secret
 
-php artisan migrate --seed      # first install only - creates tables + demo data
+php artisan migrate --seed      # local/demo fresh install only; review production checklist before public launch
 php artisan storage:link        # thumbnails, PDFs, avatars
 php artisan serve               # http://127.0.0.1:8000
 ```
@@ -64,8 +64,7 @@ prefer. Point the web root at `lms/public` (never at the project root).
 
 ### After installing (production checklist)
 
-- Log in as `admin@lms.test` / `password` and **change every demo password**
-  (`/admin/students`), or delete the demo users.
+- The seeder creates demo accounts with the documented `password` password. These are for local/demo use only. Before any public deployment, replace the demo credentials with unique strong passwords or remove demo accounts; never expose seeded credentials to the public internet.
 - `APP_ENV=production`, `APP_DEBUG=false`, correct `APP_URL`.
 - `php artisan config:cache && php artisan route:cache && php artisan view:cache`.
 - Add the cron entry for scheduled tasks (if you enable any):
@@ -153,8 +152,7 @@ mysql -u user -p lms < storage/backups/mysql-<stamp>.sql
 - Every migration is **additive**: `Schema::create(...)` or
   `Schema::table(... ->add column)` with a `down()` that only reverses its own
   change — no existing table is dropped or truncated.
-- Seeders use `updateOrCreate` / `firstOrCreate`, so even an accidental re-seed
-  updates demo rows instead of duplicating or clearing yours.
+- The demo seeder is intended for a fresh database only. It creates sample users, courses and related records; it is not a production data migration and must not be rerun on a live database.
 - New columns are added as nullable or with defaults, so old rows remain valid.
 - `update.sh` refuses to continue when no database backup can be produced.
 
