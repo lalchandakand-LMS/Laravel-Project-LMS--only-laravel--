@@ -47,7 +47,7 @@ class CourseBuilderSafetyTest extends TestCase
     {
         $course = Course::firstOrFail();
         $section = $course->sections()->create(['title' => 'Safety test section', 'position' => 99]);
-        $lesson = $section->lessons()->create(['title' => 'Preserved lesson']);
+        $lesson = $section->lessons()->create(['course_id' => $course->id, 'title' => 'Preserved lesson']);
         $student = User::where('role', 'student')->firstOrFail();
 
         LessonProgress::create([
@@ -75,9 +75,12 @@ class CourseBuilderSafetyTest extends TestCase
         $first = $course->sections()->create(['title' => 'First section', 'position' => 1]);
         $second = $course->sections()->create(['title' => 'Second section', 'position' => 2]);
 
+        $orderedSectionIds = $course->sections()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $orderedSectionIds = array_reverse($orderedSectionIds);
+
         $this->actingAs($this->admin())
             ->postJson(route('admin.courses.sections.reorder', $course), [
-                'ordered_ids' => [$second->id, $first->id],
+                'ordered_ids' => $orderedSectionIds,
             ])
             ->assertOk()
             ->assertJson(['ok' => true]);
@@ -85,8 +88,8 @@ class CourseBuilderSafetyTest extends TestCase
         $this->assertSame(1, (int) $second->fresh()->position);
         $this->assertSame(2, (int) $first->fresh()->position);
 
-        $lessonA = $first->lessons()->create(['title' => 'Lesson A']);
-        $lessonB = $first->lessons()->create(['title' => 'Lesson B']);
+        $lessonA = $first->lessons()->create(['course_id' => $course->id, 'title' => 'Lesson A']);
+        $lessonB = $first->lessons()->create(['course_id' => $course->id, 'title' => 'Lesson B']);
 
         $this->actingAs($this->admin())
             ->postJson(route('admin.sections.lessons.reorder', $first), [
