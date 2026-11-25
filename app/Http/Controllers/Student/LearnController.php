@@ -105,7 +105,16 @@ class LearnController extends Controller
             ['completed_at' => now()]
         );
 
-        $certificate = OrderService::maybeIssueCertificate($user->id, $course);
+        $hasActiveEnrollment = $user->enrollments()
+            ->where('course_id', $course->id)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+        $certificate = $hasActiveEnrollment
+            ? OrderService::maybeIssueCertificate($user->id, $course)
+            : null;
         $next = $course->lessons()->where('is_published', true)
             ->whereNotIn('id', LessonProgress::where('user_id', $user->id)
                 ->whereNotNull('completed_at')->pluck('lesson_id'))
@@ -143,6 +152,10 @@ class LearnController extends Controller
         $this->guard($course, $lesson);
         abort_unless($lesson->attachment && Storage::disk('local')->exists($lesson->attachment), 404);
 
-        return Storage::disk('local')->download($lesson->attachment);
+        return response()->download(
+            Storage::disk('local')->path($lesson->attachment),
+            basename($lesson->attachment),
+            ['Cache-Control' => 'private, no-store, max-age=0', 'X-Content-Type-Options' => 'nosniff']
+        );
     }
 }
