@@ -122,6 +122,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('students/{user}', [Admin\UserController::class, 'show'])->name('users.show');
         Route::get('students/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
         Route::put('students/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+        Route::delete('students/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
