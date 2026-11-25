@@ -174,7 +174,7 @@ class AttendanceController extends Controller
             ->whereHas('session', fn ($q) => $q->where('status', 'approved')->whereIn('batch_id', $batchIds))
             ->latest()->paginate(25)->withQueryString();
 
-        return view('attendance.reports.index', ['records' => $records, 'reportTitle' => $child->name.\' — attendance report\']);
+        return view('attendance.reports.index', ['records' => $records, 'reportTitle' => $child->name.' — attendance report']);
     }
 
     public function review(Request $request, AttendanceSession $session)
