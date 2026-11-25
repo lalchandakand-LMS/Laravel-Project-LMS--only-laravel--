@@ -39,7 +39,7 @@ class NoticeAndComplaintTest extends TestCase
     public function test_user_can_submit_and_track_a_complaint_and_admin_can_update_it(): void
     {
         $student = User::factory()->create(['role' => 'student']);
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $this->actingAs($student)->post(route('complaints.store'), [
             'category' => 'class', 'subject' => 'Class timing issue', 'body' => 'The class schedule is not matching the announced time.',
         ])->assertRedirect();
