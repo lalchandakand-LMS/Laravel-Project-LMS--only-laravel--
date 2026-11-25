@@ -24,7 +24,7 @@ class ExamController extends Controller
     {
         return view('admin.exams.form', [
             'exam' => new Exam(['duration_minutes' => 30, 'is_published' => true, 'pass_marks' => 0]),
-            'courses' => Course::orderBy('title')->get(),
+            'courses' => $this->courses(),
         ]);
     }
 
@@ -36,6 +36,7 @@ class ExamController extends Controller
 
     public function edit(Exam $exam)
     {
+        $this->authorizeExam($exam);
         return view('admin.exams.form', [
             'exam' => $exam,
             'courses' => Course::orderBy('title')->get(),
@@ -44,21 +45,36 @@ class ExamController extends Controller
 
     public function update(Request $request, Exam $exam)
     {
+        $this->authorizeExam($exam);
         $exam->update($this->validated($request));
         return redirect()->route('admin.exams.index')->with('success', 'Exam updated.');
     }
 
     public function destroy(Exam $exam)
     {
+        $this->authorizeExam($exam);
         $exam->delete();
         return redirect()->route('admin.exams.index')->with('success', 'Exam deleted.');
+    }
+
+    private function authorizeExam(Exam $exam): void
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->isAdmin() || $exam->course?->instructor_id === $user->id), 403);
+    }
+
+    private function courses()
+    {
+        $user = auth()->user();
+        return Course::when(! $user->isAdmin(), fn ($q) => $q->where('instructor_id', $user->id))
+            ->orderBy('title')->get();
     }
 
     private function validated(Request $request): array
     {
         $data = $request->validate([
             'title' => 'required|string|max:180',
-            'course_id' => 'nullable|exists:courses,id',
+            'course_id' => auth()->user()->isAdmin() ? 'nullable|exists:courses,id' : 'required|exists:courses,id',
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'pass_marks' => 'nullable|numeric|min:0',
@@ -67,6 +83,10 @@ class ExamController extends Controller
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
+
+        if (! auth()->user()->isAdmin() && ! empty($data['course_id'])) {
+            abort_unless(Course::whereKey($data['course_id'])->where('instructor_id', auth()->id())->exists(), 403);
+        }
 
         $data['is_published'] = $request->boolean('is_published');
         $data['is_free'] = $request->boolean('is_free');
