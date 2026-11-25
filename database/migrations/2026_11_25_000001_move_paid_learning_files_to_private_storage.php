@@ -30,11 +30,16 @@ return new class extends Migration
                 $path = $record->{$column};
                 if (! Storage::disk('local')->exists($path) && Storage::disk('public')->exists($path)) {
                     $stream = Storage::disk('public')->readStream($path);
-                    if ($stream !== false) {
-                        Storage::disk('local')->writeStream($path, $stream);
-                        if (is_resource($stream)) {
-                            fclose($stream);
-                        }
+                    if ($stream === false) {
+                        throw new RuntimeException("Unable to read public learning file: {$path}");
+                    }
+
+                    $written = Storage::disk('local')->writeStream($path, $stream);
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
+                    if (! $written) {
+                        throw new RuntimeException("Unable to secure learning file: {$path}");
                     }
                 }
 
