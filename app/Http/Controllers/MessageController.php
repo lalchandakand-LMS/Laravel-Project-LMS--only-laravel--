@@ -16,7 +16,7 @@ class MessageController extends Controller
             ->where(fn ($query) => $query->where('sender_id', $user->id)->orWhere('recipient_id', $user->id))
             ->latest()->paginate(30);
 
-        $recipients = User::where('is_active', true)->whereKeyNot($user->id)
+        $recipients = User::where('is_active', true)->where('id', '!=', $user->id)
             ->orderBy('name')->get(['id', 'name', 'role']);
 
         return view('communication.messages', [
@@ -33,7 +33,7 @@ class MessageController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'recipient_id' => ['required', 'integer', 'exists:users,id', 'different:sender_id'],
+            'recipient_id' => ['required', 'integer', 'exists:users,id'],
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
