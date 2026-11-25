@@ -32,7 +32,13 @@ class LmsFlowTest extends TestCase
     {
         $course = Course::first();
 
-        $this->get('/')->assertOk()->assertSee("Alom's English Center");
+        $this->get('/')
+            ->assertOk()
+            ->assertSee("Alom's English Center")
+            ->assertSee('Choose your learning path')
+            ->assertSee('Featured courses')
+            ->assertSee('Latest courses')
+            ->assertSee('Main navigation');
         $this->get('/courses')->assertOk();
         $this->get('/courses/'.$course->slug)->assertOk()->assertSee($course->title);
         $this->get('/ebooks')->assertOk();
