@@ -63,6 +63,6 @@
             <div class="py-14 text-center"><div class="text-4xl">🗑️</div><h3 class="mt-3 font-bold text-slate-900">Recycle Bin is empty</h3><p class="mt-1 text-sm text-slate-500">Deleted records will appear here and can be restored.</p></div>
         @endif
     </section>
-    <p class="text-xs text-slate-500">Safety lock: permanent deletion is blocked while a record is linked to student accounts, learning progress, exams, enrolments or transactions. Financial orders and payments are never included in this Recycle Bin.</p>
+    <p class="text-xs text-slate-500">Safety lock: permanent deletion is blocked while a record is linked to student accounts, learning progress, exams, enrolments or transactions. Financial orders and payments are never included in this Recycle Bin. Records older than the configured retention period (30 days by default) are automatically purged only when no protected records depend on them; linked records are retained.</p>
 </div>
 @endsection

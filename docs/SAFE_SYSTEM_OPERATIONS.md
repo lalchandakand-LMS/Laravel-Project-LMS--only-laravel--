@@ -8,7 +8,7 @@
 - Backup files are written to `storage/app/private/system-backups`, outside the public web root, with restrictive directory/file permissions.
 - Download backups and keep an encrypted off-server copy. A backup stored only on the same hosting account is not a disaster-recovery strategy.
 - The scheduled command is `php artisan system:backup --keep=14`; it retains the newest 14 backups and removes activity log rows older than 180 days.
-- The scheduler runs the backup daily at 02:00 server time. In cPanel → Cron Jobs, add the standard Laravel scheduler entry (replace the path and PHP binary with the account's actual values):
+- The scheduler runs the database backup daily at 02:00 server time and safe Recycle Bin cleanup at 02:30 server time. Recycle Bin retention defaults to 30 days and can be changed with RECYCLE_BIN_RETENTION_DAYS; linked/financial records are never auto-purged. In cPanel → Cron Jobs, add the standard Laravel scheduler entry (replace the path and PHP binary with the account's actual values):
 
 ```cron
 * * * * * cd /home/CPANEL_USER/public_html && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1

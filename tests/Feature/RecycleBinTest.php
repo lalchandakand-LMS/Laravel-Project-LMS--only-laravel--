@@ -7,6 +7,8 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class RecycleBinTest extends TestCase
@@ -97,6 +99,30 @@ class RecycleBinTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('error');
 
+        $this->assertSoftDeleted('courses', ['id' => $course->id]);
+        $this->assertDatabaseHas('enrollments', ['course_id' => $course->id, 'user_id' => $student->id]);
+    }
+
+    public function test_expired_safe_records_are_pruned_but_linked_course_history_is_retained(): void
+    {
+        $student = User::where('email', 'student@lms.test')->firstOrFail();
+        $slider = Slider::create(['title' => 'Expired slider', 'is_active' => false]);
+        $slider->delete();
+        DB::table('sliders')->where('id', $slider->id)->update(['deleted_at' => now()->subDays(31)]);
+
+        $course = Course::create(['title' => 'Protected old course', 'slug' => 'protected-old-course']);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'price_paid' => 50,
+        ]);
+        $course->delete();
+        DB::table('courses')->where('id', $course->id)->update(['deleted_at' => now()->subDays(31)]);
+
+        Artisan::call('recycle-bin:prune', ['--days' => 30]);
+
+        $this->assertDatabaseMissing('sliders', ['id' => $slider->id]);
         $this->assertSoftDeleted('courses', ['id' => $course->id]);
         $this->assertDatabaseHas('enrollments', ['course_id' => $course->id, 'user_id' => $student->id]);
     }

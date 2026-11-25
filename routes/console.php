@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('system:backup --keep=14')->dailyAt('02:00')->withoutOverlapping();
+
+Schedule::command('recycle-bin:prune')->dailyAt('02:30')->withoutOverlapping();
