@@ -9,6 +9,7 @@
     Code: <b>{{ $branch->code }}</b> · {{ $branch->address }} @if($branch->phone)· {{ $branch->phone }}@endif
 </p>
 
+@if (\App\Models\Setting::get('dashboard_widget_stats', '1') === '1')
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
     @foreach ([
         ['Students', $stats['students']],
@@ -22,9 +23,11 @@
             <p class="mt-2 text-2xl font-black text-slate-900">{{ $value }}</p>
         </div>
     @endforeach
-</div>
+</div>@endif
+
 
 <div class="mt-5 grid gap-5 lg:grid-cols-3">
+@if (\App\Models\Setting::get('dashboard_widget_collection', '1') === '1')
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
         <h2 class="mb-4 font-bold text-slate-800">Branch collection (6 months)</h2>
         @php $max = max(1, $months->max('amount')); @endphp
@@ -37,8 +40,10 @@
                 </div>
             @endforeach
         </div>
-    </div>
+    </div>@endif
 
+
+@if (\App\Models\Setting::get('dashboard_widget_courses', '1') === '1')
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Top courses</h2>
         <ul class="divide-y divide-slate-100 text-sm">
@@ -51,7 +56,8 @@
                 <li class="py-3 text-slate-500">No enrolments in this branch yet.</li>
             @endforelse
         </ul>
-    </div>
+    </div>@endif
+
 </div>
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2">
