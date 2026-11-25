@@ -26,6 +26,7 @@ class QuestionController extends Controller
 
     public function store(Request $request, Exam $exam)
     {
+        $this->authorizeExam($exam);
         $this->save($request, $exam);
         $this->syncTotalMarks($exam);
 
