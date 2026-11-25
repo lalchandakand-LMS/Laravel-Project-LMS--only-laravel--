@@ -15,8 +15,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $this->moveToPrivateStorage(Lesson::query(), 'attachment');
-        $this->moveToPrivateStorage(Ebook::query(), 'file');
+        $this->moveToPrivateStorage(DB::table('lessons'), 'attachment');
+        $this->moveToPrivateStorage(DB::table('ebooks'), 'file');
     }
 
     /**
