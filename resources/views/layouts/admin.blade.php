@@ -59,5 +59,6 @@
  if(saved==='system'&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>apply('system'));}
 })();
 </script>
+@stack('scripts')
 </body>
 </html>
