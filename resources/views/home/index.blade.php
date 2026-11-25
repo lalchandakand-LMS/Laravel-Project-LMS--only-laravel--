@@ -9,12 +9,12 @@
 @endphp
 @if ($slides->count())
 <section class="relative overflow-hidden bg-slate-900 text-white">
-    <div id="heroSlides" class="relative">
+    <div id="heroSlides" class="hero-carousel relative" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
         @foreach ($slides as $i => $slide)
             @php
                 [$theme, $badge, $accent, $button] = $slide->palette();
             @endphp
-            <div class="hero-slide {{ $i === 0 ? '' : 'hidden' }} bg-gradient-to-br {{ $theme }}" data-slide="{{ $i }}">
+            <div class="hero-slide {{ $i === 0 ? '' : 'hidden' }} bg-gradient-to-br {{ $theme }}" data-slide="{{ $i }}" data-hero-slide aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
                 <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
                 <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 lg:grid-cols-2 lg:py-20">
                     <div>
@@ -56,13 +56,13 @@
 
         @if ($slides->count() > 1)
             <button type="button" onclick="heroGo(-1)" aria-label="Previous slide"
-                class="absolute left-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow hover:bg-white sm:block">‹</button>
+                class="hero-arrow absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-3 text-slate-900 shadow-lg hover:bg-white">‹</button>
             <button type="button" onclick="heroGo(1)" aria-label="Next slide"
-                class="absolute right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-slate-900 shadow hover:bg-white sm:block">›</button>
+                class="hero-arrow absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-3 text-slate-900 shadow-lg hover:bg-white">›</button>
             <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
                 @foreach ($slides as $i => $slide)
                     <button type="button" onclick="heroShow({{ $i }})" aria-label="Slide {{ $i + 1 }}"
-                        class="hero-dot h-2.5 w-2.5 rounded-full transition {{ $i === 0 ? 'bg-emerald-500 w-6' : 'bg-white/60' }}"></button>
+                        data-hero-dot class="hero-dot h-2.5 w-2.5 rounded-full transition" aria-current="{{ $i === 0 ? 'true' : 'false' }}"></button>
                 @endforeach
             </div>
         @endif
@@ -71,26 +71,28 @@
 
 @push('scripts')
 <script>
-    let heroIndex = 0, heroTimer = null;
-    const heroSlides = document.querySelectorAll('.hero-slide');
-    const heroDots = document.querySelectorAll('.hero-dot');
-    function heroShow(n) {
-        if (!heroSlides.length) return;
-        heroIndex = (n + heroSlides.length) % heroSlides.length;
-        heroSlides.forEach((el, i) => el.classList.toggle('hidden', i !== heroIndex));
-        heroDots.forEach((el, i) => {
-            el.classList.toggle('bg-emerald-500', i === heroIndex);
-            el.classList.toggle('w-6', i === heroIndex);
-            el.classList.toggle('bg-white/60', i !== heroIndex);
-        });
-        heroRestart();
-    }
-    function heroGo(dir) { heroShow(heroIndex + dir); }
-    function heroRestart() {
-        if (heroTimer) clearInterval(heroTimer);
-        if (heroSlides.length > 1) heroTimer = setInterval(() => heroShow(heroIndex + 1), 6000);
-    }
-    heroRestart();
+(() => {
+ const slides=[...document.querySelectorAll('[data-hero-slide]')],dots=[...document.querySelectorAll('[data-hero-dot]')],root=document.getElementById('heroSlides');
+ if(!root||!slides.length)return;
+ let active=Math.max(0,slides.findIndex(s=>!s.classList.contains('hidden'))),timer=null,startX=0,startY=0;
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ const stop=()=>{if(timer)clearInterval(timer);timer=null;};
+ function restart(){stop();if(slides.length>1&&!reduced.matches&&!root.matches(':hover')&&!root.contains(document.activeElement))timer=setInterval(()=>show(active+1),6500);}
+ function show(index){
+  const next=(index+slides.length)%slides.length;if(next===active&&!slides[next].classList.contains('hidden')){restart();return;}
+  const old=slides[active],incoming=slides[next];old.classList.remove('is-active');old.setAttribute('aria-hidden','true');
+  setTimeout(()=>old.classList.add('hidden'),reduced.matches?0:450);incoming.classList.remove('hidden');incoming.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>incoming.classList.add('is-active')));active=next;
+  dots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===active);dot.setAttribute('aria-current',i===active?'true':'false');});restart();
+ }
+ window.heroShow=show;window.heroGo=dir=>show(active+dir);
+ root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',restart);root.addEventListener('focusin',stop);root.addEventListener('focusout',e=>{if(!root.contains(e.relatedTarget))restart();});
+ root.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();show(active+1);}if(e.key==='ArrowLeft'){e.preventDefault();show(active-1);}});
+ root.addEventListener('touchstart',e=>{startX=e.changedTouches[0].clientX;startY=e.changedTouches[0].clientY;stop();},{passive:true});
+ root.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))show(active+(dx<0?1:-1));else restart();},{passive:true});
+ slides.forEach((s,i)=>{s.setAttribute('aria-hidden',i===active?'false':'true');if(i===active)s.classList.add('is-active');});
+ dots.forEach((d,i)=>{d.setAttribute('aria-current',i===active?'true':'false');d.classList.toggle('is-active',i===active);});reduced.addEventListener('change',restart);restart();
+})();
 </script>
 @endpush
 @else
