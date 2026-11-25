@@ -16,7 +16,7 @@ class Branch extends Model
         'bank' => 'Bank transfer',
         'cash' => 'Cash at office',
         'office' => 'Office payment',
-        'sslcommerz' => 'Online gateway (API-ready)',
+        'sslcommerz' => 'Online gateway (API integration pending)',
     ];
 
     protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active', 'payment_methods', 'bkash_number', 'nagad_number', 'rocket_number', 'bank_name', 'bank_branch', 'bank_account_name', 'bank_account_number', 'payment_instructions'];
