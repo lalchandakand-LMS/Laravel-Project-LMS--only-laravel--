@@ -11,7 +11,7 @@
 <div class="flex min-h-screen">
     <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-slate-900 p-4 text-slate-300 lg:flex">
         <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-500 font-black text-slate-900">R</span>
+            <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain">
             <span class="font-extrabold text-white">Admin panel</span>
         </a>
 
