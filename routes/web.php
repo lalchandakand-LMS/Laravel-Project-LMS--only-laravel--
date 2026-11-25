@@ -13,7 +13,8 @@ use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\Student;\nuse Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Student;
+use Illuminate\Support\Facades\Route;
 
 /* ------------------------------------------------------------------
  |  PUBLIC
@@ -132,7 +133,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::delete('reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
-        Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');\n        Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);
+        Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
+        Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);
 
         Route::resource('branches', Admin\BranchController::class)->except('show')
             ->parameters(['branches' => 'branch']);
