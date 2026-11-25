@@ -18,7 +18,7 @@ class ActivityLogController extends Controller
             ->orderByDesc('activity_logs.created_at');
 
         if ($request->filled('event')) {
-            $query->where('activity_logs.event', $request->string('event'));
+            $query->where('activity_logs.event', $request->string('event')->toString());
         }
         if ($request->filled('user_id')) {
             $query->where('activity_logs.user_id', $request->integer('user_id'));
