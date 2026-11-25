@@ -2,6 +2,7 @@
 @section('title', 'Dashboard')
 @section('heading', 'Dashboard')
 @section('content')
+<div class="mb-5"><a href="{{ route('student.attendance') }}" class="inline-flex rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">My attendance report</a></div>
 @include('partials.dashboard-banner')
 
 <div class="rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-900 p-6 text-white">
