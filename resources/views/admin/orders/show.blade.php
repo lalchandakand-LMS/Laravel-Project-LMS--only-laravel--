@@ -66,6 +66,24 @@
                 @endforelse
             </div>
         </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="font-bold text-slate-900">Refund / adjustment history</h3>
+            <div class="mt-3 space-y-2 text-sm">
+                @forelse ($order->adjustments as $adjustment)
+                    <div class="rounded-lg bg-rose-50 p-3">
+                        <div class="flex justify-between gap-3">
+                            <span class="font-bold uppercase text-rose-700">{{ $adjustment->type }} · {{ $adjustment->reference ?: 'No reference' }}</span>
+                            <span class="font-extrabold text-rose-700">−৳{{ number_format($adjustment->amount, 2) }}</span>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-600">{{ $adjustment->reason }}</p>
+                        <p class="mt-1 text-xs text-slate-400">{{ $adjustment->created_at->format('d M Y, h:i A') }} · {{ $adjustment->creator?->name ?? 'Staff' }}</p>
+                    </div>
+                @empty
+                    <p class="text-slate-500">No refunds or adjustments recorded.</p>
+                @endforelse
+            </div>
+        </section>
     </div>
 
     <div class="space-y-6">
@@ -97,6 +115,20 @@
                     <input name="reference" placeholder="Receipt / reference number (optional)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                     <textarea name="note" rows="2" placeholder="Internal note (optional)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
                     <button class="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Record received payment</button>
+                </form>
+            </section>
+        @endif
+
+        @if ($order->amountPaid() > 0)
+            <section class="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
+                <h3 class="font-bold text-rose-700">Record refund</h3>
+                <p class="mt-1 text-xs text-slate-500">Refunds are recorded as separate ledger adjustments. If net verified payment falls below the order total, paid course/e-book access is suspended until the balance is settled again.</p>
+                <form method="POST" action="{{ route('admin.orders.refunds.store', $order->order_no) }}" class="mt-3 space-y-3">
+                    @csrf
+                    <input type="number" name="amount" min="0.01" max="{{ $order->amountPaid() }}" step="0.01" required placeholder="Refund amount (max ৳{{ number_format($order->amountPaid(), 2) }})" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input name="reference" placeholder="Refund reference (optional)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <textarea name="reason" rows="3" required placeholder="Reason for refund (required)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
+                    <button class="w-full rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-bold text-white">Record refund</button>
                 </form>
             </section>
         @endif
