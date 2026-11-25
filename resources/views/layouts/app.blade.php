@@ -31,7 +31,7 @@
             <span class="hidden text-lg font-extrabold tracking-tight text-slate-900 sm:block">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
-        <nav class="ml-4 hidden items-center gap-1 text-sm font-medium text-slate-600 lg:flex">
+        <nav aria-label="Main navigation" class="ml-4 hidden items-center gap-1 text-sm font-medium text-slate-600 lg:flex">
             <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-900">Home</a>
             <a href="{{ route('courses.index') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-900">Courses</a>
             <a href="{{ route('ebooks.index') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-900">E-Books</a>
@@ -84,24 +84,30 @@
     </div>
 
     <div id="mobile-nav" class="hidden border-t border-slate-200 bg-white px-4 pb-4 pt-3 lg:hidden">
-        <nav class="grid gap-1 text-sm font-medium text-slate-700">
+        <nav aria-label="Mobile navigation" class="grid gap-1 text-sm font-medium text-slate-700">
             <a href="{{ route('home') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100">Home</a>
             <a href="{{ route('courses.index') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100">Courses</a>
             <a href="{{ route('ebooks.index') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100">E-Books</a>
             <a href="{{ route('about') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100">About</a>
             <a href="{{ route('contact') }}" class="rounded-lg px-3 py-2 hover:bg-slate-100">Contact</a>
         </nav>
-        @guest
+        @auth
+            <div class="mt-3 grid gap-1 border-t border-slate-200 pt-3 text-sm font-semibold">
+                <a href="{{ auth()->user()->dashboardRoute() }}" class="rounded-lg px-3 py-2 hover:bg-slate-100">Dashboard</a>
+                <form method="POST" action="{{ route('logout') }}">@csrf<button class="w-full rounded-lg px-3 py-2 text-left text-rose-600 hover:bg-rose-50">Log out</button></form>
+            </div>
+        @else
             <div class="mt-3 grid gap-1 border-t border-slate-200 pt-3 text-sm font-semibold">
                 <a href="{{ route('login') }}" class="rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100">Login</a>
                 <a href="{{ route('register') }}" class="rounded-lg bg-emerald-700 px-3 py-2 text-center text-white hover:bg-emerald-800">Create free account</a>
             </div>
-        @endguest
+        @endauth
         <form action="{{ route('courses.index') }}" class="mt-3">
             <input name="q" value="{{ request('q') }}" placeholder="Search courses…"
                    class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100">
         </form>
     </div>
+</header>
 
 <main class="min-h-[70vh]">
     @include('partials.flash')

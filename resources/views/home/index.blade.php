@@ -12,13 +12,7 @@
     <div id="heroSlides" class="relative">
         @foreach ($slides as $i => $slide)
             @php
-                $theme = $slide->theme === 'light'
-                    ? 'from-white via-slate-50 to-emerald-50 text-slate-900'
-                    : 'from-slate-900 via-slate-900 to-emerald-950 text-white';
-                $sub = $slide->theme === 'light' ? 'text-slate-600' : 'text-slate-300';
-                $badge = $slide->theme === 'light'
-                    ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
-                    : 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300';
+                [$theme, $badge, $accent, $button] = $slide->palette();
             @endphp
             <div class="hero-slide {{ $i === 0 ? '' : 'hidden' }} bg-gradient-to-br {{ $theme }}" data-slide="{{ $i }}">
                 <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
@@ -31,28 +25,28 @@
                         @endif
                         <h1 class="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">{{ $slide->title }}</h1>
                         @if ($slide->subtitle)
-                            <p class="mt-4 max-w-xl text-lg {{ $sub }}">{{ $slide->subtitle }}</p>
+                            <p class="mt-4 max-w-xl text-lg text-slate-300">{{ $slide->subtitle }}</p>
                         @endif
                         <div class="mt-8 flex flex-wrap gap-3">
-                            <a href="{{ $slide->button_url ?: route('courses.index') }}" class="rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700">{{ $slide->button_text ?: 'Explore courses' }}</a>
-                            <a href="{{ auth()->check() ? auth()->user()->dashboardRoute() : route('register') }}" class="rounded-xl border px-6 py-3 font-semibold {{ $slide->theme === 'light' ? 'border-slate-300 text-slate-800 hover:bg-white' : 'border-white/20 text-white hover:bg-white/10' }}">Create free account</a>
+                            <a href="{{ $slide->button_url ?: route('courses.index') }}" class="rounded-xl px-6 py-3 font-bold shadow-lg transition hover:-translate-y-0.5 {{ $button }}">{{ $slide->button_text ?: 'Explore courses' }}</a>
+                            <a href="{{ auth()->check() ? auth()->user()->dashboardRoute() : route('register') }}" class="rounded-xl border px-6 py-3 font-semibold border-white/20 text-white hover:bg-white/10">Create free account</a>
                         </div>
                         <dl class="mt-10 grid max-w-md grid-cols-3 gap-4">
                             @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']]] as [$label, $value])
                                 <div>
-                                    <dt class="text-xs uppercase tracking-wide {{ $slide->theme === 'light' ? 'text-slate-500' : 'text-slate-400' }}">{{ $label }}</dt>
-                                    <dd class="text-2xl font-extrabold {{ $slide->theme === 'light' ? 'text-slate-900' : 'text-white' }}">{{ number_format($value) }}+</dd>
+                                    <dt class="text-xs uppercase tracking-wide text-slate-400">{{ $label }}</dt>
+                                    <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}</dd>
                                 </div>
                             @endforeach
                         </dl>
                     </div>
                     <div class="relative">
-                        <div class="rounded-3xl border {{ $slide->theme === 'light' ? 'border-slate-200 bg-white' : 'border-white/10 bg-white/5' }} p-3 shadow-2xl backdrop-blur">
-                            <img src="{{ $slide->image ? (str_starts_with($slide->image, 'http') ? $slide->image : asset('storage/'.$slide->image)) : 'https://picsum.photos/seed/slide'.$slide->id.'/1200/800' }}"
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-2xl backdrop-blur">
+                            <img src="{{ $slide->imageUrl() ?: asset('images/aec-logo.svg') }}"
                                  alt="{{ $slide->title }}" class="h-72 w-full rounded-2xl object-cover sm:h-96">
                         </div>
                         <div class="absolute -bottom-6 -left-4 rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
-                            <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}+</p>
+                            <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}</p>
                             <p class="text-xs text-slate-300">learning activities</p>
                         </div>
                     </div>
@@ -123,17 +117,17 @@
                 @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']]] as [$label, $value])
                     <div>
                         <dt class="text-xs uppercase tracking-wide text-slate-400">{{ $label }}</dt>
-                        <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</dd>
+                        <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}</dd>
                     </div>
                 @endforeach
             </dl>
         </div>
         <div class="relative">
             <div class="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-2xl backdrop-blur">
-                <img src="https://picsum.photos/seed/lmshero/1200/800" alt="Learning" class="h-72 w-full rounded-2xl object-cover sm:h-96">
+                <div class="grid h-72 place-items-center rounded-2xl bg-white/5 text-center sm:h-96"><div><span class="text-7xl">📚</span><p class="mt-4 text-2xl font-bold">Learn. Practise. Progress.</p><p class="mt-2 text-sm text-slate-300">Alom’s English Center</p></div></div>
             </div>
             <div class="absolute -bottom-6 -left-4 rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
-                <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}+</p>
+                <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}</p>
                 <p class="text-xs text-slate-300">video lessons</p>
             </div>
         </div>
@@ -159,7 +153,7 @@
                 <div>
                     <h3 class="font-bold text-slate-900 group-hover:text-emerald-700">{{ $category->name }}</h3>
                     <p class="mt-1 line-clamp-2 text-sm text-slate-600">{{ $category->description }}</p>
-                    <span class="mt-2 inline-block text-xs font-semibold text-emerald-700">{{ $category->publishedCourses()->count() }} courses →</span>
+                    <span class="mt-2 inline-block text-xs font-semibold text-emerald-700">{{ $category->published_courses_count ?? $category->publishedCourses()->count() }} courses →</span>
                 </div>
             </a>
         @endforeach
