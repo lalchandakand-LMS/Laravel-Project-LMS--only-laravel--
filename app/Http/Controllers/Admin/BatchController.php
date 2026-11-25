@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Batch;
 use App\Models\Branch;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Level;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -46,6 +47,52 @@ class BatchController extends Controller
     {
         $batch->delete();
         return redirect()->route('admin.batches.index')->with('success', 'Batch moved to the Recycle Bin. Enrollments are preserved.');
+    }
+
+
+    public function show(Request $request, Batch $batch)
+    {
+        $batch->load(['course', 'level', 'branch', 'instructor']);
+        $enrollments = $batch->enrollments()->with('user')
+            ->whereHas('user', fn ($query) => $query->where('role', 'student'))
+            ->latest()->paginate(20);
+        $students = User::where('role', 'student')->where('is_active', true)
+            ->when($request->filled('q'), fn ($query) => $query->where(fn ($search) => $search
+                ->where('name', 'like', '%'.$request->string('q').'%')
+                ->orWhere('email', 'like', '%'.$request->string('q').'%')))
+            ->orderBy('name')->limit(100)->get();
+        return view('admin.batches.show', compact('batch', 'enrollments', 'students'));
+    }
+
+    public function assignStudent(Request $request, Batch $batch)
+    {
+        abort_if(! $batch->course_id, 422, 'Assign a course to this batch before enrolling students.');
+        $data = $request->validate([
+            'student_id' => ['required', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'student')->where('is_active', true))],
+        ]);
+        $enrollment = Enrollment::where('user_id', $data['student_id'])->where('course_id', $batch->course_id)->first();
+        if ((int) ($enrollment?->batch_id) !== (int) $batch->id && $batch->capacity && $batch->activeStudentCount() >= $batch->capacity) {
+            return back()->with('error', 'This batch has reached its student capacity.');
+        }
+        if ($enrollment && $enrollment->batch_id && (int) $enrollment->batch_id !== (int) $batch->id) {
+            return back()->with('error', 'This student is already assigned to another batch for the same course.');
+        }
+        if ($enrollment) {
+            $enrollment->update(['batch_id' => $batch->id, 'status' => 'active']);
+        } else {
+            Enrollment::create([
+                'user_id' => $data['student_id'], 'course_id' => $batch->course_id,
+                'batch_id' => $batch->id, 'status' => 'active', 'price_paid' => 0, 'enrolled_at' => now(),
+            ]);
+        }
+        return back()->with('success', 'Student assigned to the batch.');
+    }
+
+    public function removeStudent(Batch $batch, Enrollment $enrollment)
+    {
+        abort_unless((int) $enrollment->batch_id === (int) $batch->id, 404);
+        $enrollment->update(['batch_id' => null]);
+        return back()->with('success', 'Student removed from this batch. Course enrollment and learning history remain active.');
     }
 
     private function formData(Batch $batch): array
