@@ -26,7 +26,7 @@
             <div class="mt-6 flex items-center gap-3">
                 <img src="{{ $course->instructor->avatarUrl() ?? '' }}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white/20" alt="">
                 <div>
-                    <p class="text-sm font-bold">{{ $course->instructor->name ?? 'Redwan’s Method' }}</p>
+                    <p class="text-sm font-bold">{{ $course->instructor->name ?? 'Alom's English Center' }}</p>
                     <p class="text-xs text-slate-400">{{ $course->instructor->designation ?? 'Instructor' }}</p>
                 </div>
             </div>
