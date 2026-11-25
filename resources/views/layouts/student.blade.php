@@ -12,7 +12,7 @@
     {{-- SIDEBAR --}}
     <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white p-4 lg:flex">
         <a href="{{ route('home') }}" class="flex items-center gap-2 px-2 py-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white">R</span>
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white" >A</span>
             <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
