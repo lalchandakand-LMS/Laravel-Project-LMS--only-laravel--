@@ -42,21 +42,28 @@ class LearnController extends Controller
 
     public function show(Course $course)
     {
-        $this->guard($course);
-        $lesson = $course->lessons()
-            ->where('is_published', true)
-            ->where(function ($query) {
+        $user = auth()->user();
+        abort_unless($user->isAdmin() || ($user->isStudent() && $course->is_published), 403);
+
+        $lessons = $course->lessons()->where('is_published', true);
+        if (! $user->isAdmin()) {
+            $lessons->where(function ($query) use ($user, $course) {
                 $query->where('is_free_preview', true)
-                    ->orWhereHas('course.enrollments', function ($enrollments) {
-                        $enrollments->where('user_id', auth()->id())
-                            ->where('status', 'active')
+                    ->orWhereExists(function ($enrollments) use ($user, $course) {
+                        $enrollments->selectRaw('1')->from('enrollments')
+                            ->whereColumn('enrollments.course_id', 'lessons.course_id')
+                            ->where('enrollments.course_id', $course->id)
+                            ->where('enrollments.user_id', $user->id)
+                            ->where('enrollments.status', 'active')
                             ->where(function ($expiry) {
-                                $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                                $expiry->whereNull('enrollments.expires_at')
+                                    ->orWhere('enrollments.expires_at', '>', now());
                             });
                     });
-            })
-            ->first();
+            });
+        }
 
+        $lesson = $lessons->orderBy('position')->first();
         abort_if(! $lesson, 404, 'This course has no accessible lessons yet.');
 
         return redirect()->route('student.learn.lesson', [$course->slug, $lesson->id]);
