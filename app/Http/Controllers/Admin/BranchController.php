@@ -56,11 +56,10 @@ class BranchController extends Controller
 
     public function destroy(Branch $branch)
     {
-        // Detach users instead of deleting them.
-        User::where('branch_id', $branch->id)->update(['branch_id' => null]);
+        // Keep staff/student branch assignments intact so the branch can be restored without data loss.
         $branch->delete();
 
-        return redirect()->route('admin.branches.index')->with('success', 'Branch removed. Its users were unassigned.');
+        return redirect()->route('admin.branches.index')->with('success', 'Branch moved to the Recycle Bin.');
     }
 
     public function toggle(Branch $branch)
