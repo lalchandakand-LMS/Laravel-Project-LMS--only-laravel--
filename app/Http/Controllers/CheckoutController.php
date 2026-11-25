@@ -109,6 +109,10 @@ class CheckoutController extends Controller
         abort_unless($branch && $branch->is_active, 403, 'The selected branch is no longer accepting payments.');
 
         $enabledMethods = $branch->enabledStudentPaymentMethods();
+        if ($enabledMethods === []) {
+            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
+        }
+
         $data = $request->validate([
             'gateway' => ['required', 'string', 'in:'.implode(',', $enabledMethods)],
             'sender_number' => 'required|string|max:30',
