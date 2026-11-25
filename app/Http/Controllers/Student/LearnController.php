@@ -45,6 +45,19 @@ class LearnController extends Controller
         $user = auth()->user();
         abort_unless($user->isAdmin() || ($user->isStudent() && $course->is_published), 403);
 
+        $hasActiveEnrollment = $user->isAdmin() || $user->enrollments()
+            ->where('course_id', $course->id)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+        $hasFreePreview = $course->lessons()->where('is_published', true)
+            ->where('is_free_preview', true)->exists();
+
+        abort_unless($user->isAdmin() || $hasActiveEnrollment || $hasFreePreview, 403,
+            'An active course enrollment is required.');
+
         $lessons = $course->lessons()->where('is_published', true);
         if (! $user->isAdmin()) {
             $lessons->where(function ($query) use ($user, $course) {
