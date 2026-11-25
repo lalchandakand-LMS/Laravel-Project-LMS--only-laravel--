@@ -155,6 +155,28 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame(750.0, $order->fresh()->dueAmount());
     }
 
+    public function test_paid_order_cannot_be_downgraded_without_refund_ledger(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'cash',
+            'transaction_id' => 'PAID-LEDGER',
+            'amount' => 1000,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'paid']);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'pending',
+        ])->assertRedirect();
+
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame(1000.0, $order->fresh()->amountPaid());
+    }
+
     public function test_rejection_requires_a_reason_and_keeps_order_payable(): void
     {
         [$student, $admin, $branch, $order] = $this->orderForStudent();
