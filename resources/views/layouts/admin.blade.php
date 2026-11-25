@@ -5,7 +5,7 @@
     <script>
     (function(){var t=localStorage.getItem('aec-admin-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';})();
     </script>
-    <title>@yield('title', 'Admin') — {{ \\App\\Models\\Setting::get('site_name', "Alom's English Center") }}</title>
+    <title>@yield('title', 'Admin') — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     @include('partials.assets')
     <style>
       html[data-theme="dark"] body{background:#0b1220!important;color:#e2e8f0!important}
@@ -22,7 +22,7 @@
 <body class="bg-slate-100 text-slate-800 antialiased">
 <div class="flex min-h-screen">
     <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-slate-900 p-4 text-slate-300 lg:flex">
-        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-2"><img src="{{ \\App\\Models\\Setting::get('logo') ? asset('storage/'.\\App\\Models\\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain"><span class="font-extrabold text-white">Admin panel</span></a>
+        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-2"><img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain"><span class="font-extrabold text-white">Admin panel</span></a>
         @php
             $isAdmin = auth()->user()->isAdmin();
             $groups = [
