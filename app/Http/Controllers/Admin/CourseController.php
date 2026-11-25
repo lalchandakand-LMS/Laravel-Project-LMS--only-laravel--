@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\\Http\\Controllers\\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Category;
-use App\Models\Course;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\Category;
+use App\\Models\\Course;
+use App\\Models\\User;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Str;
 
 class CourseController extends Controller
 {
@@ -94,7 +94,7 @@ class CourseController extends Controller
             'requirements' => 'nullable|string',
             'outcomes' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'discount_price' => 'nullable|numeric|min:0',
+            'discount_price' => 'nullable|numeric|min:0|lt:price',
             'level' => 'required|in:beginner,intermediate,advanced',
             'language' => 'required|string|max:30',
             'duration_minutes' => 'nullable|integer|min:0',
@@ -104,13 +104,15 @@ class CourseController extends Controller
             'promo_video' => 'nullable|string|max:255',
             'meta_title' => 'nullable|string|max:180',
             'meta_description' => 'nullable|string|max:300',
+        ], [
+            'discount_price.lt' => 'Discount price must be lower than the regular course price.',
         ]);
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
         }
 
-        $data['outcomes'] = collect(preg_split('/\r\n|\r|\n/', (string) $request->input('outcomes')))
+        $data['outcomes'] = collect(preg_split('/\\r\\n|\\r|\\n/', (string) $request->input('outcomes')))
             ->map(fn ($l) => trim($l))->filter()->values()->all();
 
         $data['is_published'] = $request->boolean('is_published');
