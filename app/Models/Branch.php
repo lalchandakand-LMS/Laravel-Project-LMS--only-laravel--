@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Branch extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
