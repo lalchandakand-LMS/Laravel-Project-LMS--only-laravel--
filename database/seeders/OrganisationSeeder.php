@@ -32,12 +32,12 @@ class OrganisationSeeder extends Seeder
             $manager = User::firstOrCreate(
                 ['email' => 'manager'.($i + 1).'@lms.test'],
                 [
-                    'name' => ['Dhanmondi Manager', 'Uttara Manager', 'Chattogram Manager'][$i],
+                    'name' => ['Main Center Manager', 'Online Center Manager', 'Speaking Practice Manager'][$i],
                     'password' => $password,
                     'role' => 'branch_manager',
                     'branch_id' => $branch->id,
                     'designation' => 'Branch Manager',
-                    'phone' => '+880 1811-20000'.($i + 1),
+                    'phone' => '',
                     'is_active' => true,
                 ]
             );
@@ -63,7 +63,7 @@ class OrganisationSeeder extends Seeder
                     'password' => $password,
                     'role' => 'guardian',
                     'branch_id' => $student->branch_id,
-                    'phone' => '+880 1911-30000'.($i + 1),
+                    'phone' => '',
                     'is_active' => true,
                 ]
             );
