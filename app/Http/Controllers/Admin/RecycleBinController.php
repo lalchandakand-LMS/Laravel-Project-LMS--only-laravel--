@@ -165,7 +165,7 @@ class RecycleBinController extends Controller
             'sections' => [['lessons', 'section_id']],
             'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id']],
             'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
-            'questions' => [['options', 'question_id'], ['attempt_answers', 'question_id']],
+            'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
             'branches' => [['users', 'branch_id']],
             'menu-items' => [['menu_items', 'parent_id']],
