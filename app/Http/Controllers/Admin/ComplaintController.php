@@ -30,7 +30,7 @@ class ComplaintController extends Controller
     public function show(Complaint $complaint)
     {
         return view('admin.complaints.show', [
-            'complaint' => $complaint->load(['user', 'assignee', 'branch', 'allReplies.user', 'allReplies.attachments', 'attachments']),
+            'complaint' => $complaint->load(['user', 'assignee', 'branch', 'allReplies.user', 'allReplies.attachments', 'attachments', 'events']),
             'staff' => User::whereIn('role', ['admin', 'instructor'])->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
