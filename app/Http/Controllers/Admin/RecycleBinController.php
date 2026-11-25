@@ -44,7 +44,7 @@ class RecycleBinController extends Controller
         'coupons' => Coupon::class,
         'branches' => Branch::class,
         'batches' => Batch::class,
-        'levels' => Level::class,\n        'batches' => Batch::class,\n        'levels' => Level::class,
+        'levels' => Level::class,
     ];
 
     public function index(Request $request)
