@@ -134,6 +134,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
 
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
+        Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);
 
         Route::resource('branches', Admin\BranchController::class)->except('show')
             ->parameters(['branches' => 'branch']);
