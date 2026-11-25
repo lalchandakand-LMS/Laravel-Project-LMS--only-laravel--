@@ -43,6 +43,7 @@
             <h1 class="text-lg font-bold text-slate-900">@yield('heading', 'Dashboard')</h1>
             <div class="ml-auto flex items-center gap-3 text-sm">
                 @yield('actions')
+                @include('partials.communication-badges')
                 <label for="admin-theme" class="sr-only">Admin theme</label><select id="admin-theme" class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
                 <img src="{{ auth()->user()->avatarUrl() }}" class="h-8 w-8 rounded-full" alt=""><span class="hidden font-semibold text-slate-700 sm:block">{{ auth()->user()->name }}</span>
             </div>
