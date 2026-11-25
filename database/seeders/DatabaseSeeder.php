@@ -27,9 +27,9 @@ class DatabaseSeeder extends Seeder
     {
         /* ---------------- Users ---------------- */
         $admin = User::create([
-            'name' => 'Alom's English Center Admin', 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
-            'role' => 'admin', 'phone' => '01700000001', 'designation' => 'Founder & Lead Instructor',
-            'bio' => 'Administrator account for Alom's English Center.',
+            'name' => "Alom's English Center Admin", 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
+            'role' => 'admin', 'phone' => '', 'designation' => 'Administrator',
+            'bio' => "Administrator account for Alom's English Center.",
         ]);
 
         $instructors = collect([
@@ -55,17 +55,17 @@ class DatabaseSeeder extends Seeder
         /* ---------------- Settings ---------------- */
         foreach ([
             'site_name' => "Alom's English Center",
-            'site_tagline' => 'Quality education for everyone, everywhere.',
+            'site_tagline' => 'Build confidence in English through practical lessons and guided learning.',
             'site_email' => 'support@alomsenglishcenter.com',
             'site_phone' => '',
             'site_address' => '',
             'bkash_number' => '',
             'nagad_number' => '',
             'currency' => '৳',
-            'facebook' => 'https://facebook.com/',
-            'youtube' => 'https://youtube.com/',
-            'instagram' => 'https://instagram.com/',
-            'certificate_signature' => 'Alom's English Center Admin',
+            'facebook' => '',
+            'youtube' => '',
+            'instagram' => '',
+            'certificate_signature' => "Alom's English Center Admin",
             'about_text' => 'A comprehensive online learning platform with courses delivered by highly qualified educators.',
         ] as $key => $value) {
             Setting::set($key, $value);
