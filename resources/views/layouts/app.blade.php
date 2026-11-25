@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', \App\Models\Setting::get('site_name', "Redwan's Method")) — {{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</title>
+    <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     <meta name="description" content="@yield('meta_description', \App\Models\Setting::get('site_tagline', 'Online learning platform for SSC, HSC & Admission preparation.'))">
     @include('partials.assets')
 </head>
@@ -14,7 +14,7 @@
     <div class="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
         <a href="{{ route('home') }}" class="flex items-center gap-2">
             <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 text-lg font-black text-white">R</span>
-            <span class="hidden text-lg font-extrabold tracking-tight text-slate-900 sm:block">{{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</span>
+            <span class="hidden text-lg font-extrabold tracking-tight text-slate-900 sm:block">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
         <nav class="ml-4 hidden items-center gap-1 text-sm font-medium text-slate-600 lg:flex">
@@ -99,7 +99,7 @@
         <div>
             <div class="flex items-center gap-2">
                 <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white">R</span>
-                <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</span>
+                <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
             </div>
             <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>
         </div>
@@ -130,7 +130,7 @@
         </div>
     </div>
     <div class="border-t border-slate-100 py-4 text-center text-xs text-slate-500">
-        © {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Redwan's Method") }}. All rights reserved.
+        © {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. All rights reserved.
     </div>
 </footer>
 @stack('scripts')
