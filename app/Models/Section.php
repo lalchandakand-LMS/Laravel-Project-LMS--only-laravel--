@@ -2,11 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Section extends Model
 {
-    use SoftDeletes;
+    use TracksDeletionActor;
     protected $fillable = ['course_id','title','position'];
 
     public function course()  { return $this->belongsTo(Course::class); }
