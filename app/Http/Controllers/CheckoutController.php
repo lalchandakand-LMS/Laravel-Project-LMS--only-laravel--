@@ -99,11 +99,11 @@ class CheckoutController extends Controller
         ]);
     }
 
-    /** Student submits a manual payment for branch-approved verification. */
+    /** Student submits a full or partial manual payment for branch-approved verification. */
     public function pay(Request $request, Order $order)
     {
         abort_unless($order->user_id === auth()->id(), 403);
-        abort_unless($order->status === 'pending', 403, 'This order is not awaiting payment.');
+        abort_unless(in_array($order->status, ['pending', 'partially_paid'], true), 403, 'This order is not awaiting payment.');
 
         $branch = $order->branch;
         abort_unless($branch && $branch->is_active, 403, 'The selected branch is no longer accepting payments.');
@@ -113,22 +113,42 @@ class CheckoutController extends Controller
             throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
         }
 
+        if ($order->dueAmount() <= 0) {
+            return back()->with('info', 'This order has no outstanding balance.');
+        }
+
+        if ($order->payments()->where('status', 'pending')->exists()) {
+            throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order. Please wait for the branch to review it.']);
+        }
+
         $data = $request->validate([
             'gateway' => ['required', 'string', 'in:'.implode(',', $enabledMethods)],
-            'sender_number' => 'required|string|max:30',
-            'transaction_id' => 'required|string|max:60',
+            'amount' => ['required', 'numeric', 'min:1', 'max:'.$order->dueAmount()],
+            'sender_number' => 'required|string|max:80',
+            'transaction_id' => 'required|string|max:80',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf,webp|max:5120',
         ]);
+
+        if ($data['gateway'] === 'bank' && ! $request->hasFile('proof')) {
+            throw ValidationException::withMessages(['proof' => 'Please upload the bank deposit slip or transfer receipt.']);
+        }
 
         if (Payment::where('transaction_id', $data['transaction_id'])->whereNotNull('transaction_id')->exists()) {
             throw ValidationException::withMessages(['transaction_id' => 'This transaction ID has already been submitted.']);
         }
 
-        Payment::create($data + [
+        $proofPath = $request->file('proof')?->store('payment-proofs', 'local');
+
+        Payment::create([
             'order_id' => $order->id,
-            'amount' => $order->total,
+            'gateway' => $data['gateway'],
+            'amount' => $data['amount'],
+            'sender_number' => $data['sender_number'],
+            'transaction_id' => $data['transaction_id'],
+            'proof_path' => $proofPath,
             'status' => 'pending',
         ]);
 
-        return back()->with('success', 'Payment submitted for verification. Your access will be enabled after approval.');
+        return back()->with('success', 'Payment submitted for verification. Your remaining balance and course access will update after approval.');
     }
 }
