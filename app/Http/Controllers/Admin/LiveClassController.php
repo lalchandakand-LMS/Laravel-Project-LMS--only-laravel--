@@ -100,6 +100,10 @@ class LiveClassController extends Controller
             'duration_minutes' => 'required|integer|min:5|max:600',
         ]);
 
+        if (! auth()->user()->isAdmin()) {
+            abort_unless(Course::whereKey($data['course_id'])->where('instructor_id', auth()->id())->exists(), 403);
+        }
+
         $data['is_published'] = $request->boolean('is_published');
 
         return $data;
