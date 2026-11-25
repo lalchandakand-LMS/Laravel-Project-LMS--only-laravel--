@@ -72,7 +72,6 @@ class MenuSettingController extends Controller
 
         if (str_starts_with($data['url'], '//') ||
             (! str_starts_with($data['url'], '/') && ! filter_var($data['url'], FILTER_VALIDATE_URL))) {
-            validator([], [])->errors(); // Keep the validation failure in Laravel's normal error flow below.
             abort(422, 'Use a site-relative path (starting with /) or a complete http/https URL.');
         }
 
@@ -81,8 +80,14 @@ class MenuSettingController extends Controller
             abort(422, 'Only HTTP and HTTPS menu links are allowed.');
         }
 
-        if ($current && $data['parent_id'] && (int) $data['parent_id'] === $current->id) {
-            abort(422, 'A menu item cannot be its own parent.');
+        if ($data['parent_id']) {
+            $parent = MenuItem::findOrFail($data['parent_id']);
+            if ($parent->location !== $data['location'] || $parent->parent_id !== null) {
+                abort(422, 'Choose a top-level parent from the same menu location.');
+            }
+            if ($current && ($parent->id === $current->id || $current->children()->exists())) {
+                abort(422, 'This parent-child combination would create an unsupported nested menu.');
+            }
         }
 
         $data['open_new_tab'] = $request->boolean('open_new_tab');
