@@ -31,7 +31,7 @@ class Branch extends Model
 
     public function enabledStudentPaymentMethods(): array
     {
-        return array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank', 'sslcommerz'], $this->payment_methods ?? []));
+        return array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank'], $this->payment_methods ?? []));
     }
 
     public function revenue(): float
