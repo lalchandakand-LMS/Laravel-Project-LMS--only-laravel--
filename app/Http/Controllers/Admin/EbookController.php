@@ -56,7 +56,7 @@ class EbookController extends Controller
             $data['cover'] = $request->file('cover')->store('ebooks', 'public');
         }
         if ($request->hasFile('file')) {
-            $data['file'] = $request->file('file')->store('ebook-files', 'public');
+            $data['file'] = $request->file('file')->store('ebook-files', 'local');
         }
 
         $data['is_free'] = $request->boolean('is_free');
