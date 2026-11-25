@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Notifications\PaymentStatusNotification;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -73,9 +74,11 @@ class OrderController extends Controller
             }
 
             $payment->update(['status' => 'verified']);
+            $payment->order->user?->notify(new PaymentStatusNotification($payment->fresh()->load('order'), 'verified'));
         } else {
             $payment->update(['status' => 'rejected']);
             $payment->order->update(['status' => 'failed']);
+            $payment->order->user?->notify(new PaymentStatusNotification($payment->fresh()->load('order'), 'rejected'));
         }
 
         return back()->with('success', 'Payment '.($action === 'verify' ? 'verified — access granted.' : 'rejected.'));
