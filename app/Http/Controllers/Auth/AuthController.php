@@ -36,7 +36,8 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('student.dashboard')->with('success', 'Welcome to Redwan\'s Method!');
+        return redirect()->route('student.dashboard')
+            ->with('success', "Welcome to ".config('app.name', "Alom's English Center")."!");
     }
 
     public function showLogin()
