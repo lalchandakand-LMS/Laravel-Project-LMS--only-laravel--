@@ -98,7 +98,7 @@ class CourseController extends Controller
             'outcomes' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lt:price',
-            'level' => 'required|in:beginner,intermediate,advanced',
+            'level' => 'nullable|string|max:50',
             'language' => 'required|string|max:30',
             'duration_minutes' => 'nullable|integer|min:0',
             'starts_at' => 'nullable|date',
@@ -118,7 +118,7 @@ class CourseController extends Controller
         $data['outcomes'] = collect(preg_split('/\r\n|\r|\n/', (string) $request->input('outcomes')))
             ->map(fn ($l) => trim($l))->filter()->values()->all();
 
-        $data['is_published'] = $request->boolean('is_published');
+        if (! empty($data['level_id'])) {\n            $managedLevel = Level::findOrFail($data['level_id']);\n            $label = strtolower($managedLevel->name);\n            $data['level'] = str_contains($label, 'advanced') ? 'advanced' : (str_contains($label, 'intermediate') ? 'intermediate' : 'beginner');\n        } else {\n            $data['level'] = $data['level'] ?? 'beginner';\n        }\n\n        $data['is_published'] = $request->boolean('is_published');
         $data['is_featured'] = $request->boolean('is_featured');
         $data['has_certificate'] = $request->boolean('has_certificate');
 
