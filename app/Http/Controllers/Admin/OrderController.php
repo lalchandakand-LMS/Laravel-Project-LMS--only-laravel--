@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAdjustment;
+use App\Models\PaymentAdjustment;
 use App\Models\Enrollment;
 use App\Models\EbookPurchase;
 use App\Notifications\PaymentStatusNotification;
@@ -39,7 +40,7 @@ class OrderController extends Controller
                 'all' => Order::count(),
                 'paid' => Order::where('status', 'paid')->count(),
                 'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
-                'revenue' => Payment::where('status', 'verified')->sum('amount'),
+                'revenue' => max(0, (float) Payment::where('status', 'verified')->sum('amount') - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')),
             ],
         ]);
     }
