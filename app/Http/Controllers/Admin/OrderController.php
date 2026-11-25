@@ -51,8 +51,8 @@ class OrderController extends Controller
     {
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled']);
 
-        if ($order->status === 'paid' && $data['status'] !== 'paid') {
-            return back()->with('error', 'A paid order cannot be downgraded. Use a recorded refund or adjustment workflow.');
+        if ($order->amountPaid() > 0 && $data['status'] !== 'paid' && $data['status'] !== $order->status) {
+            return back()->with('error', 'An order with verified money cannot be downgraded outside the payment ledger. Record a refund or adjustment first.');
         }
 
         if ($data['status'] === 'paid' && $order->status !== 'paid') {
