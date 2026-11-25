@@ -25,6 +25,10 @@ class SettingController extends Controller
         'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission',
         'homepage_board_results_title', 'homepage_board_results_subtitle', 'homepage_board_results_body', 'homepage_board_results_year',
         'homepage_admission_title', 'homepage_admission_subtitle', 'homepage_admission_button_text', 'homepage_admission_button_url',
+        'homepage_learning_title', 'homepage_learning_subtitle', 'homepage_testimonial_title',
+        'homepage_learning_bg', 'homepage_learning_text', 'homepage_testimonial_bg', 'homepage_testimonial_text',
+        'homepage_stats_bg', 'homepage_stats_text', 'footer_bg', 'footer_text', 'footer_heading', 'footer_copyright',
+        'developer_name', 'developer_url', 'developer_text', 'developer_bg', 'developer_text_color', 'developer_show',
     ];
 
     public function index()
@@ -58,6 +62,25 @@ class SettingController extends Controller
             'homepage_admission_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
             'homepage_admission_button_text' => ['sometimes', 'nullable', 'string', 'max:60'],
             'homepage_admission_button_url' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'homepage_learning_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_learning_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'homepage_testimonial_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_learning_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'homepage_learning_text' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'homepage_testimonial_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'homepage_testimonial_text' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'homepage_stats_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'homepage_stats_text' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'footer_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'footer_text' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'footer_heading' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'footer_copyright' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'developer_name' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'developer_url' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'developer_text' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'developer_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'developer_text_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'developer_show' => ['sometimes', 'boolean'],
         ]);
 
         foreach (self::KEYS as $key) {
@@ -71,7 +94,7 @@ class SettingController extends Controller
             'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
             'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
             'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-            'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission'] as $key) {
+            'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'developer_show'] as $key) {
             Setting::set($key, $request->boolean($key) ? '1' : '0');
         }
 
