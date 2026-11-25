@@ -5,7 +5,7 @@
 @include('partials.dashboard-banner')
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
-@if (\App\Models\Setting::get('dashboard_widget_stats', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_teacher_stats', '1') === '1')
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ([
         ['Courses', $stats['courses'], 'emerald'],
@@ -23,7 +23,7 @@
 
 
 <div class="mt-5 grid items-start gap-5 lg:grid-cols-3">
-@if (\App\Models\Setting::get('dashboard_widget_trend', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_teacher_trend', '1') === '1')
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
         <div class="mb-4 flex items-center justify-between">
             <h2 class="font-bold text-slate-800">New enrolments (last 7 days)</h2>
@@ -42,7 +42,7 @@
     </div>@endif
 
 
-@if (\App\Models\Setting::get('dashboard_widget_upcoming', '1') === '1')
+@if (\App\Models\Setting::get('dashboard_widget_teacher_upcoming', '1') === '1')
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="mb-3 font-bold text-slate-800">Upcoming live classes</h2>
         <ul class="space-y-3 text-sm">
