@@ -69,6 +69,9 @@
     </div>
 
     <div class="space-y-6">
+        <div class="flex justify-end">
+            <a href="{{ route('orders.receipt', $order->order_no) }}" target="_blank" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-emerald-700">View receipt</a>
+        </div>
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="font-bold text-slate-900">Customer</h3>
             <dl class="mt-3 space-y-2 text-sm">
