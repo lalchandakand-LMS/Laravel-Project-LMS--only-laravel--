@@ -221,8 +221,8 @@ class OrderController extends Controller
             'reason' => 'required|string|max:2000',
         ]);
 
-        if (! empty($data['payment_id']) && ! $order->payments()->whereKey($data['payment_id'])->exists()) {
-            throw ValidationException::withMessages(['payment_id' => 'The selected payment does not belong to this order.']);
+        if (! empty($data['payment_id']) && ! $order->payments()->whereKey($data['payment_id'])->where('status', 'verified')->exists()) {
+            throw ValidationException::withMessages(['payment_id' => 'Select a verified payment belonging to this order.']);
         }
 
         try {
