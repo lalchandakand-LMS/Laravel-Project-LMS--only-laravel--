@@ -82,7 +82,7 @@ class SectionController extends Controller
     public function destroy(Section $section)
     {
         $this->authorizeCourse($section->course);
-        $courseId = $section->course_id;
+        $course = $section->course;
 
         // Keep lesson records and learning history intact: move lessons to the
         // course-level curriculum before the section enters the recycle bin.
@@ -91,7 +91,7 @@ class SectionController extends Controller
             $section->delete();
         });
 
-        return redirect()->route('admin.courses.edit', $courseId)
+        return redirect()->route('admin.courses.edit', $course)
             ->with('success', 'Section deleted. Its lessons were kept in the course curriculum.');
     }
 }
