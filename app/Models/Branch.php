@@ -19,7 +19,7 @@ class Branch extends Model
         'sslcommerz' => 'Online gateway (API-ready)',
     ];
 
-    protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active', 'payment_methods'];
+    protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active', 'payment_methods', 'bkash_number', 'nagad_number', 'rocket_number', 'bank_name', 'bank_branch', 'bank_account_name', 'bank_account_number', 'payment_instructions'];
 
     protected $casts = ['is_active' => 'boolean', 'payment_methods' => 'array'];
 
