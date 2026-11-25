@@ -80,6 +80,7 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
     Route::get('/learn/{course:slug}/{lesson}', [Student\LearnController::class, 'lesson'])->name('learn.lesson');
     Route::post('/learn/{course:slug}/{lesson}/complete', [Student\LearnController::class, 'complete'])->name('learn.complete');
     Route::post('/learn/{course:slug}/{lesson}/heartbeat', [Student\LearnController::class, 'heartbeat'])->name('learn.heartbeat');
+    Route::get('/learn/{course:slug}/{lesson}/attachment', [Student\LearnController::class, 'attachment'])->name('learn.attachment');
 
     // Exams
     Route::get('/exams', [Student\ExamController::class, 'index'])->name('exams.index');
