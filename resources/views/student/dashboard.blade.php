@@ -15,6 +15,7 @@
     @endif
 </div>
 
+@if (\App\Models\Setting::get('dashboard_widget_stats', '1') === '1')
 <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     @foreach ([
         ['Enrolled courses', $stats['enrolled'], '📚'],
@@ -28,9 +29,11 @@
             <p class="text-sm text-slate-600">{{ $label }}</p>
         </div>
     @endforeach
+@endif
 </div>
 
 <div class="mt-8 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
+@if (\App\Models\Setting::get('dashboard_widget_courses', '1') === '1')
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-900">Continue learning</h3>
@@ -96,6 +99,7 @@
                 @endforelse
             </ul>
         </section>
+@endif
     </div>
 </div>
 @endsection
