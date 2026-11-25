@@ -1,9 +1,8 @@
 <?php
 
-use App\Models\Ebook;
-use App\Models\Lesson;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -15,8 +14,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $this->moveToPrivateStorage(Lesson::query(), 'attachment');
-        $this->moveToPrivateStorage(Ebook::query(), 'file');
+        $this->moveToPrivateStorage(\Illuminate\Support\Facades\DB::table('lessons'), 'attachment');
+        $this->moveToPrivateStorage(DB::table('ebooks'), 'file');
     }
 
     /**
@@ -24,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        $this->restorePublicCopies(Lesson::query(), 'attachment');
-        $this->restorePublicCopies(Ebook::query(), 'file');
+        $this->restorePublicCopies(\Illuminate\Support\Facades\DB::table('lessons'), 'attachment');
+        $this->restorePublicCopies(\Illuminate\Support\Facades\DB::table('ebooks'), 'file');
     }
 
     private function moveToPrivateStorage($query, string $column): void

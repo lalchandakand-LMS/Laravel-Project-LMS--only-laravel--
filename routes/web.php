@@ -122,6 +122,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('students/{user}', [Admin\UserController::class, 'show'])->name('users.show');
         Route::get('students/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
         Route::put('students/{user}', [Admin\UserController::class, 'update'])->name('users.update');
+        Route::delete('students/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
@@ -131,6 +132,16 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
         Route::post('reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
         Route::delete('reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+        Route::get('recycle-bin', [Admin\RecycleBinController::class, 'index'])->name('recycle-bin.index');
+        Route::get('activity-logs', [Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('system/backups', [Admin\SystemBackupController::class, 'index'])->name('system.backups.index');
+        Route::post('system/backups', [Admin\SystemBackupController::class, 'create'])->name('system.backups.create');
+        Route::get('system/backups/{name}', [Admin\SystemBackupController::class, 'download'])->name('system.backups.download');
+        Route::post('system/backups/restore', [Admin\SystemBackupController::class, 'restore'])->name('system.backups.restore');
+        Route::post('recycle-bin/{type}/{id}/restore', [Admin\RecycleBinController::class, 'restore'])->name('recycle-bin.restore');
+        Route::post('recycle-bin/{type}/bulk-restore', [Admin\RecycleBinController::class, 'bulkRestore'])->name('recycle-bin.bulk-restore');
+        Route::delete('recycle-bin/{type}/{id}', [Admin\RecycleBinController::class, 'destroy'])->name('recycle-bin.destroy');
 
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');

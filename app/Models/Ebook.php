@@ -2,10 +2,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 use Illuminate\Support\Str;
 
 class Ebook extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = ['title','slug','cover','file','description','price','pages','is_free','is_published'];
     protected $casts = ['is_free' => 'boolean', 'is_published' => 'boolean', 'price' => 'float'];
 

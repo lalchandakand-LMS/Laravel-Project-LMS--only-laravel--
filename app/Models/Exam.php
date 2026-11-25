@@ -2,9 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Exam extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = [
         'course_id','lesson_id','title','description','duration_minutes','total_marks','pass_marks',
         'negative_marking','starts_at','ends_at','attempt_limit','shuffle_questions','is_free','is_published',

@@ -2,9 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Lesson extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = [
         'course_id','section_id','title','type','video_url','attachment','content',
         'duration_minutes','position','is_free_preview','is_published',

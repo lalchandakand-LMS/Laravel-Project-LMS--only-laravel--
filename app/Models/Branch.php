@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Branch extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = ['name', 'code', 'address', 'phone', 'email', 'manager_id', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];

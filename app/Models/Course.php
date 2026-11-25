@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 use Illuminate\Support\Str;
 
 class Course extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = [
         'category_id','instructor_id','title','slug','subtitle','description','requirements',
         'outcomes','thumbnail','promo_video','price','discount_price','level','language',

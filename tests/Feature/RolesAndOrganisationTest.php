@@ -141,7 +141,7 @@ class RolesAndOrganisationTest extends TestCase
         $this->assertDatabaseHas('branches', ['code' => 'SYL-01', 'name' => 'Sylhet Centre (Main)']);
         $this->actingAs($admin)->post(route('admin.branches.toggle', $branch))->assertRedirect();
         $this->actingAs($admin)->delete(route('admin.branches.destroy', $branch))->assertRedirect();
-        $this->assertDatabaseMissing('branches', ['code' => 'SYL-01']);
+        $this->assertNotNull(Branch::withTrashed()->where('code', 'SYL-01')->firstOrFail()->deleted_at);
 
         // Sliders
         $this->actingAs($admin)->get(route('admin.sliders.index'))->assertOk();
@@ -154,7 +154,7 @@ class RolesAndOrganisationTest extends TestCase
         $this->actingAs($admin)->post(route('admin.sliders.toggle', $slider))->assertRedirect();
         $this->assertFalse($slider->fresh()->is_active);
         $this->actingAs($admin)->delete(route('admin.sliders.destroy', $slider))->assertRedirect();
-        $this->assertDatabaseMissing('sliders', ['title' => 'New batch announcement']);
+        $this->assertNotNull(Slider::withTrashed()->where('title', 'New batch announcement')->firstOrFail()->deleted_at);
 
         // Live classes
         $course = \App\Models\Course::firstOrFail();

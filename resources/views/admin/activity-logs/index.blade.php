@@ -1,0 +1,16 @@
+@extends('layouts.admin')
+@section('title', 'Activity Logs')
+@section('heading', 'Activity Logs')
+@section('content')
+<div class="space-y-5">
+<section class="rounded-xl border border-slate-200 bg-white p-4"><div class="mb-4"><h2 class="font-bold text-slate-900">Audit trail</h2><p class="mt-1 text-sm text-slate-500">Successful create, update and delete requests. Passwords and sensitive form values are never stored.</p></div>
+<form method="GET" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+<select name="event" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All actions</option>@foreach(['post','put','patch','delete'] as $event)<option value="{{ $event }}" @selected(($filters['event'] ?? '') === $event)>{{ strtoupper($event) }}</option>@endforeach</select>
+<select name="user_id" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All users</option>@foreach($users as $user)<option value="{{ $user->id }}" @selected((string)($filters['user_id'] ?? '') === (string)$user->id)>{{ $user->name }}</option>@endforeach</select>
+<input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Filter logs</button></form></section>
+<section class="overflow-hidden rounded-xl border border-slate-200 bg-white"><div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm"><thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="p-3">Date / Time</th><th class="p-3">User</th><th class="p-3">Action</th><th class="p-3">Route / Path</th><th class="p-3">IP Address</th><th class="p-3">Device</th></tr></thead><tbody class="divide-y divide-slate-100">
+@forelse($logs as $log)<tr><td class="p-3 whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($log->created_at)->format('d M Y, h:i:s A') }}</td><td class="p-3"><span class="font-semibold">{{ $log->actor_name ?? 'Guest / Deleted account' }}</span><span class="block text-xs text-slate-500">{{ $log->actor_email ?? '—' }}</span></td><td class="p-3"><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold uppercase">{{ $log->event }}</span><span class="mt-1 block text-xs text-slate-500">{{ $log->description }}</span></td><td class="p-3"><span class="font-medium">{{ $log->route ?? '—' }}</span><span class="block max-w-xs truncate text-xs text-slate-500">{{ $log->path }}</span></td><td class="p-3">{{ $log->ip_address ?? '—' }}</td><td class="p-3 max-w-[220px] truncate" title="{{ $log->user_agent }}">{{ $log->user_agent ?: '—' }}</td></tr>@empty<tr><td colspan="6" class="p-10 text-center text-slate-500">No activity recorded yet. New successful changes will appear here.</td></tr>@endforelse
+</tbody></table></div><div class="border-t border-slate-100 p-4">{{ $logs->links() }}</div></section>
+<p class="text-xs text-slate-500">Audit logs are append-only from this screen. IP address and browser details are retained for security auditing; configure your privacy notice and retention policy accordingly.</p>
+</div>
+@endsection

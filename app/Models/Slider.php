@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Slider extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = [
         'badge', 'title', 'subtitle', 'image', 'button_text', 'button_url',
         'theme', 'sort_order', 'is_active',

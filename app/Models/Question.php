@@ -2,9 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Question extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = ['exam_id','type','question','explanation','marks','position'];
     protected $casts = ['marks' => 'float'];
 

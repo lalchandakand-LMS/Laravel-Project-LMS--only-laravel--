@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\TracksDeletionActor;
 use Illuminate\Support\Str;
 
 class Category extends Model
 {
+    use TracksDeletionActor;
     protected $fillable = ['parent_id','name','slug','icon','image','description','position','is_active'];
 
     protected static function booted(): void
