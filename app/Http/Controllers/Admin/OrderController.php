@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\PaymentAdjustment;
+use App\Models\Enrollment;
+use App\Models\EbookPurchase;
 use App\Notifications\PaymentStatusNotification;
+use App\Notifications\PaymentRefundNotification;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -204,6 +208,66 @@ class OrderController extends Controller
         ));
 
         return back()->with('success', 'Offline payment recorded in the ledger.');
+    }
+
+    /** Record a refund as a separate immutable ledger adjustment. */
+    public function recordRefund(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:'.$order->amountPaid()],
+            'payment_id' => 'nullable|integer|exists:payments,id',
+            'reference' => 'nullable|string|max:100',
+            'reason' => 'required|string|max:2000',
+        ]);
+
+        if (! empty($data['payment_id']) && ! $order->payments()->whereKey($data['payment_id'])->exists()) {
+            throw ValidationException::withMessages(['payment_id' => 'The selected payment does not belong to this order.']);
+        }
+
+        try {
+            $adjustment = DB::transaction(function () use ($request, $order, $data) {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                $netPaid = $lockedOrder->amountPaid();
+                if ((float) $data['amount'] > $netPaid) {
+                    throw ValidationException::withMessages(['amount' => 'Refund cannot exceed the verified net amount received.']);
+                }
+
+                if (! empty($data['reference']) && PaymentAdjustment::where('reference', $data['reference'])->exists()) {
+                    throw ValidationException::withMessages(['reference' => 'This refund reference has already been recorded.']);
+                }
+
+                $adjustment = PaymentAdjustment::create([
+                    'order_id' => $lockedOrder->id,
+                    'payment_id' => $data['payment_id'] ?? null,
+                    'created_by' => $request->user()->id,
+                    'type' => 'refund',
+                    'amount' => $data['amount'],
+                    'reference' => $data['reference'] ?? null,
+                    'reason' => $data['reason'],
+                ]);
+
+                $netAfterRefund = $lockedOrder->amountPaid();
+                if ($netAfterRefund < $lockedOrder->total) {
+                    Enrollment::where('order_id', $lockedOrder->id)
+                        ->where('status', 'active')
+                        ->update(['status' => 'suspended']);
+                    EbookPurchase::where('order_id', $lockedOrder->id)->delete();
+
+                    $lockedOrder->update([
+                        'status' => $netAfterRefund > 0 ? 'partially_paid' : 'refunded',
+                    ]);
+                }
+
+                return $adjustment;
+            });
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        }
+
+        $adjustment->load('order.user');
+        $adjustment->order->user?->notify(new PaymentRefundNotification($adjustment));
+
+        return back()->with('success', 'Refund recorded. The ledger and outstanding balance have been updated.');
     }
 
     public function paymentProof(Payment $payment): BinaryFileResponse
