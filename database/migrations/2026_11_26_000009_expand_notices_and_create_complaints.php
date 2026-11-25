@@ -52,6 +52,17 @@ return new class extends Migration {
             $table->index(['complaint_id', 'created_at']);
         });
 
+        Schema::create('complaint_events', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('complaint_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('event_type', 40);
+            $table->text('description');
+            $table->boolean('is_internal')->default(false);
+            $table->timestamps();
+            $table->index(['complaint_id', 'created_at']);
+        });
+
         Schema::create('complaint_attachments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('complaint_id')->constrained()->cascadeOnDelete();
@@ -68,6 +79,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('complaint_attachments');
+        Schema::dropIfExists('complaint_events');
         Schema::dropIfExists('complaint_replies');
         Schema::dropIfExists('complaints');
         Schema::dropIfExists('announcement_reads');
