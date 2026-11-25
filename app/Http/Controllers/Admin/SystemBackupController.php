@@ -16,7 +16,38 @@ class SystemBackupController extends Controller
         if (! is_dir($path)) {
             mkdir($path, 0700, true);
         }
+        @chmod($path, 0700);
         return $path;
+    }
+
+    private function dumpMysqlToFile(string $target): void
+    {
+        $process = new Process([
+            'mysqldump', '--single-transaction', '--quick', '--no-tablespaces',
+            '--host='.config('database.connections.mysql.host'),
+            '--port='.config('database.connections.mysql.port'),
+            '--user='.config('database.connections.mysql.username'),
+            config('database.connections.mysql.database'),
+        ], base_path(), ['MYSQL_PWD' => (string) config('database.connections.mysql.password')]);
+        $process->setTimeout(600);
+        $handle = fopen($target, 'wb');
+        if ($handle === false) {
+            throw new \\RuntimeException('Could not create backup file.');
+        }
+        try {
+            $process->run(function ($type, $buffer) use ($handle) {
+                if ($type === Process::OUT) {
+                    fwrite($handle, $buffer);
+                }
+            });
+        } finally {
+            fclose($handle);
+        }
+        if (! $process->isSuccessful() || ! is_file($target) || filesize($target) === 0) {
+            @unlink($target);
+            throw new \\RuntimeException('mysqldump failed or returned an empty backup.');
+        }
+        chmod($target, 0600);
     }
 
     public function index()
@@ -101,7 +132,7 @@ class SystemBackupController extends Controller
 
         $uploaded = $data['backup']->getRealPath();
         $directory = $this->directory();
-        $safetyName = 'aec-'.$connection.'-before-restore-'.now()->format('Ymd-His').'.'.$extension;
+        $safetyName = 'aec-'.$connection.'-'.now()->format('Ymd-His').'.'.$extension;
         $safetyPath = $directory.'/'.$safetyName;
 
         try {
@@ -111,11 +142,13 @@ class SystemBackupController extends Controller
                     throw new \RuntimeException('Could not create pre-restore SQLite safety backup.');
                 }
                 Artisan::call('down', ['--retry' => 60]);
+                DB::disconnect();
                 try {
                     if (! copy($uploaded, $current)) {
                         throw new \RuntimeException('Could not replace SQLite database file.');
                     }
                 } finally {
+                    DB::purge();
                     Artisan::call('up');
                 }
             } elseif ($connection === 'mysql') {
@@ -141,9 +174,14 @@ class SystemBackupController extends Controller
                         '--user='.config('database.connections.mysql.username'),
                         config('database.connections.mysql.database'),
                     ], base_path(), ['MYSQL_PWD' => (string) config('database.connections.mysql.password')]);
-                    $process->setInput(file_get_contents($uploaded));
+                    $input = fopen($uploaded, 'rb');
+                    if ($input === false) {
+                        throw new \\RuntimeException('Could not read uploaded SQL backup.');
+                    }
+                    $process->setInput($input);
                     $process->setTimeout(600);
                     $process->run();
+                    fclose($input);
                     if (! $process->isSuccessful()) {
                         throw new \RuntimeException('MySQL restore process failed.');
                     }
