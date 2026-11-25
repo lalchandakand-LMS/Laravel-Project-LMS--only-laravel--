@@ -152,6 +152,15 @@ class DatabaseSeeder extends Seeder
                     'Workplace Writing' => ['Professional email structure', 'Meeting notes and follow-up messages', 'Presentation language basics'],
                 ],
             ],
+            [
+                'title' => 'Free English Starter Pack',
+                'category' => 0, 'price' => 0, 'discount' => null, 'featured' => false, 'level' => 'beginner',
+                'subtitle' => 'A free first step into English learning with greetings, simple sentences and essential vocabulary.',
+                'outcomes' => ['Use common greetings and polite expressions', 'Build simple everyday sentences', 'Learn essential words for daily communication'],
+                'sections' => [
+                    'Your First English Lessons' => ['Greetings and polite expressions', 'Common words and simple sentences', 'Introduce yourself in English'],
+                ],
+            ],
         ];
 
         foreach ($courseBlueprints as $i => $bp) {
