@@ -12,6 +12,7 @@ class PaymentReportController extends Controller
 {
     public function index(Request $request)
     {
+        $this->validateFilters($request);
         $payments = $this->paymentsQuery($request)->latest()->paginate(25)->withQueryString();
         $adjustments = $this->adjustmentsQuery($request)->latest()->paginate(15, ['*'], 'adjustments_page')->withQueryString();
 
@@ -35,6 +36,7 @@ class PaymentReportController extends Controller
 
     public function export(Request $request)
     {
+        $this->validateFilters($request);
         $payments = $this->paymentsQuery($request)->with(['order.branch', 'verifier'])->oldest()->get();
         $adjustments = $this->adjustmentsQuery($request)->with(['order.branch', 'creator'])->oldest()->get();
 
@@ -78,10 +80,21 @@ class PaymentReportController extends Controller
         ]);
     }
 
+    private function validateFilters(Request $request): void
+    {
+        $request->validate([
+            'gateway' => 'nullable|in:bkash,nagad,rocket,bank,cash,office,admin_manual',
+            'status' => 'nullable|in:pending,verified,rejected',
+            'branch_id' => 'nullable|integer|exists:branches,id',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+        ]);
+    }
+
     private function paymentsQuery(Request $request)
     {
         return Payment::with(['order.user', 'order.branch', 'verifier'])
-            ->when($request->filled('gateway'), fn ($q) => $q->where('gateway', $request->string('gateway')))
+            ->when($request->filled('gateway'), fn ($q) => $q->where('gateway', $request->input('gateway')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('branch_id'), fn ($q) => $q->whereHas('order', fn ($order) => $order->where('branch_id', $request->integer('branch_id'))))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
