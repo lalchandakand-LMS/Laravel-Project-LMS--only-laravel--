@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AttemptAnswer;
 use App\Models\Coupon;
+use App\Models\Branch;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Exam;
@@ -206,6 +207,18 @@ class LmsFlowTest extends TestCase
             'min_amount' => 0, 'usage_limit' => 0, 'is_active' => true,
         ]);
 
+        // Ensure checkout uses an active branch with bKash enabled for this test.
+        $branch = $user->branch;
+        if (! $branch) {
+            $branch = Branch::create([
+                'name' => 'Test Payment Branch', 'code' => 'TEST-PAY',
+                'is_active' => true, 'payment_methods' => ['bkash'],
+            ]);
+            $user->update(['branch_id' => $branch->id]);
+        } else {
+            $branch->update(['is_active' => true, 'payment_methods' => ['bkash']]);
+        }
+
         // Paid course through cart + coupon
         $this->actingAs($user)->post('/cart/add/course/'.$course->id)->assertRedirect('/cart');
         $this->actingAs($user)->post('/cart/coupon', ['code' => 'FLAT500'])->assertRedirect();
@@ -213,6 +226,7 @@ class LmsFlowTest extends TestCase
 
         $this->actingAs($user)->post('/checkout', [
             'name' => 'Test Student', 'phone' => '01700000000', 'email' => $user->email,
+            'branch_id' => $branch->id,
         ])->assertRedirect();
 
         $order = Order::where('user_id', $user->id)->latest('id')->firstOrFail();
