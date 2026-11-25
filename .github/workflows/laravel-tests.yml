@@ -24,6 +24,9 @@ jobs:
           extensions: bcmath, ctype, fileinfo, mbstring, openssl, pdo, pdo_sqlite, tokenizer, xml
           coverage: none
 
+      - name: Validate safe update scripts
+        run: bash -n update.sh backup.sh
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
