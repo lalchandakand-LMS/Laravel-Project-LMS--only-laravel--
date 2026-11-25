@@ -57,11 +57,13 @@ class NoticeController extends Controller
                 });
             } elseif ($user->isGuardian()) {
                 $scope->orWhere(function ($target) use ($user) {
+                    $childIds = $user->children()->select('users.id');
                     $target->whereNotNull('batch_id')
-                        ->whereHas('batch.enrollments.user.guardians', fn ($g) => $g->where('users.id', $user->id));
+                        ->whereHas('batch.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'));
                 })->orWhere(function ($target) use ($user) {
+                    $childIds = $user->children()->select('users.id');
                     $target->whereNotNull('course_id')->whereNull('batch_id')
-                        ->whereHas('course.enrollments.user.guardians', fn ($g) => $g->where('users.id', $user->id));
+                        ->whereHas('course.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'));
                 });
             } elseif ($user->isInstructor()) {
                 $scope->orWhere(function ($target) use ($user) {
