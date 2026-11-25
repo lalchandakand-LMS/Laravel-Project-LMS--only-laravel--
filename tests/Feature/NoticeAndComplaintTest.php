@@ -52,6 +52,7 @@ class NoticeAndComplaintTest extends TestCase
             'status' => 'in_progress', 'priority' => 'high', 'assigned_to' => null,
         ])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('in_progress', $complaint->fresh()->status);
+        $this->assertDatabaseHas('complaint_events', ['complaint_id' => $complaint->id, 'event_type' => 'status']);
     }
 
     public function test_user_cannot_view_another_users_complaint(): void
@@ -72,4 +73,42 @@ class NoticeAndComplaintTest extends TestCase
         Announcement::create(['title' => 'Expired', 'body' => 'Old notice.', 'expires_at' => now()->subDay(), 'is_published' => true]);
         $this->actingAs($student)->get(route('notices.index'))->assertOk()->assertDontSee('Guardian only')->assertDontSee('Expired');
     }
+    public function test_guardian_sees_course_notice_for_a_linked_child_only(): void
+    {
+        $guardian = User::factory()->create(['role' => 'guardian']);
+        $child = User::factory()->create(['role' => 'student']);
+        DB::table('guardian_students')->insert([
+            'guardian_id' => $guardian->id, 'student_id' => $child->id,
+            'relation' => 'mother', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $course = Course::create(['title' => 'Child Course', 'slug' => 'child-course']);
+        Enrollment::create(['user_id' => $child->id, 'course_id' => $course->id, 'status' => 'active']);
+        Announcement::create([
+            'course_id' => $course->id, 'audience_role' => 'guardian',
+            'title' => 'Guardian course update', 'body' => 'A report is ready.', 'is_published' => true,
+        ]);
+
+        $this->actingAs($guardian)->get(route('notices.index'))
+            ->assertOk()->assertSee('Guardian course update');
+    }
+
+    public function test_internal_complaint_notes_are_hidden_from_complainant(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $complaint = Complaint::create([
+            'tracking_code' => 'AEC-TEST-87654321', 'user_id' => $student->id,
+            'category' => 'other', 'subject' => 'Private note test', 'body' => 'A complaint body for internal note test.',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.complaints.reply', $complaint), [
+            'body' => 'Confidential staff note', 'is_internal' => '1',
+        ])->assertRedirect();
+
+        $this->actingAs($student)->get(route('complaints.show', $complaint))
+            ->assertOk()->assertDontSee('Confidential staff note');
+        $this->actingAs($admin)->get(route('admin.complaints.show', $complaint))
+            ->assertOk()->assertSee('Confidential staff note');
+    }
+
 }
