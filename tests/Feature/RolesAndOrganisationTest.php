@@ -175,6 +175,78 @@ class RolesAndOrganisationTest extends TestCase
         $this->assertDatabaseHas('live_classes', ['title' => 'Final revision class (moved)']);
     }
 
+
+    /** Instructors cannot enter admin-only account, finance, or site-management routes. */
+    public function test_instructors_are_denied_admin_only_routes_and_role_escalation(): void
+    {
+        $teacher = $this->user('teacher0@lms.test');
+
+        foreach ([
+            'admin.dashboard',
+            'admin.categories.index',
+            'admin.ebooks.index',
+            'admin.coupons.index',
+            'admin.announcements.index',
+            'admin.enrollments.index',
+            'admin.users.index',
+            'admin.orders.index',
+            'admin.reviews.index',
+            'admin.settings.index',
+            'admin.branches.index',
+            'admin.sliders.index',
+        ] as $route) {
+            $this->actingAs($teacher)->get(route($route))->assertForbidden();
+            $this->forgetGuards();
+        }
+
+        // A forged registration of an administrator must never create a privileged account.
+        $this->actingAs($teacher)->post(route('admin.users.store'), [
+            'name' => 'Injected Administrator',
+            'email' => 'injected-admin@example.test',
+            'role' => 'admin',
+            'password' => 'StrongPassword123',
+            'is_active' => 1,
+        ])->assertForbidden();
+        $this->assertDatabaseMissing('users', ['email' => 'injected-admin@example.test', 'role' => 'admin']);
+
+        // Nor may an instructor change an existing account's role.
+        $admin = $this->user('admin@lms.test');
+        $this->actingAs($teacher)->put(route('admin.users.update', $admin), [
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'role' => 'instructor',
+            'password' => '',
+            'is_active' => 1,
+        ])->assertForbidden();
+        $this->assertSame('admin', $admin->fresh()->role);
+    }
+
+    /** Instructors can manage only the courses and exams assigned to them. */
+    public function test_instructors_cannot_manage_other_teachers_courses_or_exams(): void
+    {
+        $teacher = $this->user('teacher0@lms.test');
+        $otherTeacher = $this->user('teacher1@lms.test');
+        $ownCourse = $teacher->courses()->firstOrFail();
+        $otherCourse = $otherTeacher->courses()->firstOrFail();
+
+        $this->actingAs($teacher)->get(route('admin.courses.edit', $ownCourse))->assertOk();
+        $this->actingAs($teacher)->get(route('admin.courses.edit', $otherCourse))->assertForbidden();
+        $this->actingAs($teacher)->put(route('admin.courses.update', $otherCourse), [
+            'title' => 'Hijacked course',
+            'price' => 0,
+            'level' => 'beginner',
+            'language' => 'English',
+        ])->assertForbidden();
+        $this->assertNotSame('Hijacked course', $otherCourse->fresh()->title);
+
+        $ownExam = $ownCourse->exams()->firstOrFail();
+        $otherExam = $otherCourse->exams()->firstOrFail();
+        $this->actingAs($teacher)->get(route('admin.exams.edit', $ownExam))->assertOk();
+        $this->actingAs($teacher)->get(route('admin.exams.edit', $otherExam))->assertForbidden();
+        $this->actingAs($teacher)->delete(route('admin.exams.destroy', $otherExam))->assertForbidden();
+        $this->assertDatabaseHas('exams', ['id' => $otherExam->id]);
+    }
+
     /** Home page hero comes from the slider table. */
     public function test_home_page_renders_active_sliders(): void
     {
