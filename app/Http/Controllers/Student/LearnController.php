@@ -124,7 +124,7 @@ class LearnController extends Controller
             ? redirect()->route('student.learn.lesson', [$course->slug, $next->id])
             : redirect()->route('student.learn.lesson', [$course->slug, $lesson->id]);
 
-        if ($course->progressFor($user) >= 100) {
+        if ($hasActiveEnrollment && $course->progressFor($user) >= 100) {
             return $redirect->with('success', 'Congratulations, you finished the course! 🎉');
         }
 
