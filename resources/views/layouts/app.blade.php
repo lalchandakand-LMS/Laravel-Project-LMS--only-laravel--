@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @php($brandName = \\App\\Models\\Setting::get('site_name', "Alom's English Center"))
-    @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \\App\\Models\\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))))
+    @php($brandName = \App\Models\Setting::get('site_name', "Alom's English Center"))
+    @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))))
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url()->current() }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
@@ -19,7 +19,7 @@
     <meta name="twitter:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta name="twitter:description" content="{{ $brandDescription }}">
     <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
-    <meta name="description" content="@yield('meta_description', \App\Models\Setting::get('site_tagline', 'Online learning platform for SSC, HSC & Admission preparation.'))">
+    <meta name="description" content="{{ $brandDescription }}">
     @include('partials.assets')
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
@@ -27,7 +27,7 @@
 <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
         <a href="{{ route('home') }}" class="flex items-center gap-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 text-lg font-black text-white" >A</span>
+            <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-10 w-10 rounded-lg object-contain">
             <span class="hidden text-lg font-extrabold tracking-tight text-slate-900 sm:block">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
@@ -112,7 +112,7 @@
     <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
             <div class="flex items-center gap-2">
-                <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-700 font-black text-white" >A</span>
+                <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-9 w-9 rounded-lg object-contain">
                 <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
             </div>
             <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>
@@ -139,8 +139,17 @@
             <ul class="mt-3 space-y-2 text-sm text-slate-600">
                 <li>{{ \App\Models\Setting::get('site_email', 'support@example.com') }}</li>
                 <li>{{ \App\Models\Setting::get('site_phone', '+880 1700-000000') }}</li>
-                <li>{{ \App\Models\Setting::get('site_address', 'Dhaka, Bangladesh') }}</li>
+                @if (\App\Models\Setting::get('site_address'))
+                    <li>{{ \App\Models\Setting::get('site_address') }}</li>
+                @endif
             </ul>
+            <div class="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+                @foreach (['facebook' => 'Facebook', 'youtube' => 'YouTube', 'instagram' => 'Instagram'] as $key => $label)
+                    @if ($url = \App\Models\Setting::get($key))
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:underline">{{ $label }}</a>
+                    @endif
+                @endforeach
+            </div>
         </div>
     </div>
     <div class="border-t border-slate-100 py-4 text-center text-xs text-slate-500">
