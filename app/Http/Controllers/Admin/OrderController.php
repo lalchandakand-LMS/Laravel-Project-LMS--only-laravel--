@@ -49,7 +49,7 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order)
     {
-        $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled,refunded']);
+        $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled']);
 
         if ($order->status === 'paid' && $data['status'] !== 'paid') {
             return back()->with('error', 'A paid order cannot be downgraded. Use a recorded refund or adjustment workflow.');
