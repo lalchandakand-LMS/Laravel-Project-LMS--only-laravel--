@@ -2,6 +2,7 @@
 @section('title', 'Dashboard')
 @section('heading', 'Dashboard')
 @section('content')
+@include('partials.dashboard-banner')
 
 <div class="rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-900 p-6 text-white">
     <h2 class="text-2xl font-extrabold">Hello, {{ auth()->user()->name }} 👋</h2>
