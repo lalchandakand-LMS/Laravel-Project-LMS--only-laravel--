@@ -101,6 +101,10 @@ class LearnController extends Controller
         $user = auth()->user();
         abort_unless($user->isAdmin() || ($user->isStudent() && $course->is_published), 403);
 
+        $hasPreview = $course->lessons()->where('is_published', true)->where('is_free_preview', true)->exists();
+        abort_unless($user->isAdmin() || $this->activeEnrollment($user, $course) || $hasPreview, 403,
+            'An active course enrollment is required.');
+
         $lesson = $this->accessibleLessons($course, $user)->orderBy('position')->first();
         abort_if(! $lesson, 404, 'There are no lessons available to you yet. Check the release schedule or your enrollment.');
 
