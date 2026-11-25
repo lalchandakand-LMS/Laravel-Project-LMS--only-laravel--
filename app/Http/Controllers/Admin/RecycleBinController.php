@@ -97,6 +97,8 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Restore blocked because a unique value is already in use. Resolve the duplicate record first.');
         }
 
+        $this->afterRestore($record);
+
         return back()->with('success', class_basename($class).' restored successfully.');
     }
 
@@ -114,6 +116,7 @@ class RecycleBinController extends Controller
         foreach ($restored as $record) {
             try {
                 $record->restore();
+                $this->afterRestore($record);
                 $restoredCount++;
             } catch (QueryException $exception) {
                 report($exception);
@@ -142,6 +145,16 @@ class RecycleBinController extends Controller
         return back()->with('success', class_basename($class).' permanently deleted.');
     }
 
+    private function afterRestore($record): void
+    {
+        if ($record instanceof Question) {
+            $exam = Exam::withTrashed()->find($record->exam_id);
+            if ($exam) {
+                $exam->update(['total_marks' => Question::where('exam_id', $exam->id)->sum('marks')]);
+            }
+        }
+    }
+
     private function modelClass(string $type): string
     {
         abort_unless(array_key_exists($type, self::MODELS), 404);
@@ -155,7 +168,8 @@ class RecycleBinController extends Controller
             'users' => [
                 ['orders', 'user_id'], ['enrollments', 'user_id'], ['lesson_progress', 'user_id'],
                 ['exam_attempts', 'user_id'], ['certificates', 'user_id'], ['ebook_purchases', 'user_id'],
-                ['reviews', 'user_id'], ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
+                ['reviews', 'user_id'], ['courses', 'instructor_id'], ['branches', 'manager_id'],
+                ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
             ],
             'courses' => [
                 ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
