@@ -1,7 +1,15 @@
 @php
     $desktopMenu = \App\Models\MenuItem::publicNavigation('header', 'desktop');
     $mobileMenu = \App\Models\MenuItem::publicNavigation('header', 'mobile');
-    $menuUrl = fn ($item) => str_starts_with($item->url, 'http://') || str_starts_with($item->url, 'https://') ? $item->url : url($item->url);
+    $menuUrl = function ($item) {
+        $role = auth()->user()->role ?? null;
+        $studentRoles = ['student', 'instructor', 'admin'];
+        if ($item->url === '/my/my-courses' && (! $role || ! in_array($role, $studentRoles, true))) return route('courses.index');
+        if (in_array($item->url, ['/my/exams', '/my/profile'], true) && (! $role || ! in_array($role, $studentRoles, true))) {
+            return $role ? auth()->user()->dashboardRoute() : route('login');
+        }
+        return str_starts_with($item->url, 'http://') || str_starts_with($item->url, 'https://') ? $item->url : url($item->url);
+    };
     $menuActive = function ($item) { $path = trim(parse_url($item->url, PHP_URL_PATH) ?: '/', '/'); return $path === '' ? request()->is('/') : (request()->is($path) || request()->is($path.'/*')); };
 @endphp
 
