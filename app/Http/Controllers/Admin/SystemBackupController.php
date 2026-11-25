@@ -259,6 +259,7 @@ class SystemBackupController extends Controller
             }
 
             if ($maintenance && ! $snapshotReady) {
+                @unlink($safetyPath);
                 if (Artisan::call('up') === 0) {
                     $maintenance = false;
                     return back()->with('error', 'Restore stopped before a safety snapshot was complete. The live database was not changed and the site is back online.');
