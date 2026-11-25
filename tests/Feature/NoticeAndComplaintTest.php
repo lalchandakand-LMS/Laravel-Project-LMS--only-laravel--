@@ -7,6 +7,7 @@ use App\Models\Complaint;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
