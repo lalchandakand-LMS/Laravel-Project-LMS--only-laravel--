@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\\Http\\Controllers\\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\Payment;
-use App\Services\OrderService;
-use Illuminate\Http\Request;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\Order;
+use App\\Models\\Payment;
+use App\\Services\\OrderService;
+use Illuminate\\Http\\Request;
+use Illuminate\\Validation\\ValidationException;
 
 class OrderController extends Controller
 {
@@ -45,10 +46,15 @@ class OrderController extends Controller
     {
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled,refunded']);
 
-        $order->update($data);
-
         if ($data['status'] === 'paid') {
-            OrderService::fulfill($order);
+            try {
+                OrderService::fulfill($order);
+            } catch (ValidationException $exception) {
+                return back()->withErrors($exception->errors())
+                    ->with('error', 'Course capacity has been reached. Order remains unpaid and requires manual review.');
+            }
+        } else {
+            $order->update($data);
         }
 
         return back()->with('success', 'Order marked as '.$data['status'].'.');
@@ -57,11 +63,18 @@ class OrderController extends Controller
     public function verifyPayment(Request $request, Payment $payment)
     {
         $action = $request->validate(['action' => 'required|in:verify,reject'])['action'];
-        $payment->update(['status' => $action === 'verify' ? 'verified' : 'rejected']);
 
         if ($action === 'verify') {
-            OrderService::fulfill($payment->order);
+            try {
+                OrderService::fulfill($payment->order);
+            } catch (ValidationException $exception) {
+                return back()->withErrors($exception->errors())
+                    ->with('error', 'Payment is still pending: course capacity has been reached. Please review or refund it manually.');
+            }
+
+            $payment->update(['status' => 'verified']);
         } else {
+            $payment->update(['status' => 'rejected']);
             $payment->order->update(['status' => 'failed']);
         }
 
