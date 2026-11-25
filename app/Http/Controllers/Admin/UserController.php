@@ -85,6 +85,18 @@ class UserController extends Controller
         ]);
     }
 
+    public function destroy(User $user)
+    {
+        if ($user->is(auth()->user())) {
+            return back()->with('error', 'You cannot delete your own account while signed in.');
+        }
+        if ($user->isAdmin() && User::where('role', 'admin')->where('is_active', true)->count() <= 1) {
+            return back()->with('error', 'The last active administrator cannot be deleted.');
+        }
+        $user->delete();
+        return redirect()->route('admin.users.index')->with('success', 'Account moved to the Recycle Bin.');
+    }
+
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
