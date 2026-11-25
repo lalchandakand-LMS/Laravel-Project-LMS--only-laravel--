@@ -108,6 +108,11 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
+        Route::resource('levels', Admin\LevelController::class)->except('show');
+        Route::resource('batches', Admin\BatchController::class)->except('show');
+        Route::get('batches/{batch}', [Admin\BatchController::class, 'show'])->name('batches.show');
+        Route::post('batches/{batch}/students', [Admin\BatchController::class, 'assignStudent'])->name('batches.students.store');
+        Route::delete('batches/{batch}/students/{enrollment}', [Admin\BatchController::class, 'removeStudent'])->name('batches.students.destroy');
         Route::resource('ebooks', Admin\EbookController::class)->except('show');
         Route::resource('coupons', Admin\CouponController::class)->except('show');
         Route::resource('announcements', Admin\AnnouncementController::class)->except('show');

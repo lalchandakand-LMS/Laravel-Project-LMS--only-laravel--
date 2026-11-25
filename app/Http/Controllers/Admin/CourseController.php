@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\Level;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -79,6 +80,7 @@ class CourseController extends Controller
         return [
             'course' => $course,
             'categories' => Category::orderBy('name')->get(),
+            'levels' => Level::where('is_active', true)->orderBy('position')->orderBy('name')->get(),
             'instructors' => User::whereIn('role', ['instructor', 'admin'])->orderBy('name')->get(),
         ];
     }
@@ -89,13 +91,14 @@ class CourseController extends Controller
             'title' => 'required|string|max:180',
             'subtitle' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
+            'level_id' => 'nullable|exists:levels,id',
             'instructor_id' => 'nullable|exists:users,id',
             'description' => 'nullable|string',
             'requirements' => 'nullable|string',
             'outcomes' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lt:price',
-            'level' => 'required|in:beginner,intermediate,advanced',
+            'level' => 'nullable|string|max:50',
             'language' => 'required|string|max:30',
             'duration_minutes' => 'nullable|integer|min:0',
             'starts_at' => 'nullable|date',
@@ -112,8 +115,18 @@ class CourseController extends Controller
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
         }
 
-        $data['outcomes'] = collect(preg_split('/\r\n|\r|\n/', (string) $request->input('outcomes')))
+        $data['outcomes'] = collect(preg_split('/\r
+|\r|
+/', (string) $request->input('outcomes')))
             ->map(fn ($l) => trim($l))->filter()->values()->all();
+
+        if (! empty($data['level_id'])) {
+            $managedLevel = Level::findOrFail($data['level_id']);
+            $label = strtolower($managedLevel->name);
+            $data['level'] = str_contains($label, 'advanced') ? 'advanced' : (str_contains($label, 'intermediate') ? 'intermediate' : 'beginner');
+        } else {
+            $data['level'] = $data['level'] ?? 'beginner';
+        }
 
         $data['is_published'] = $request->boolean('is_published');
         $data['is_featured'] = $request->boolean('is_featured');

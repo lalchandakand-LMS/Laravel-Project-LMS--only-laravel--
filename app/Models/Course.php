@@ -10,7 +10,7 @@ class Course extends Model
 {
     use TracksDeletionActor;
     protected $fillable = [
-        'category_id','instructor_id','title','slug','subtitle','description','requirements',
+        'category_id','level_id','instructor_id','title','slug','subtitle','description','requirements',
         'outcomes','thumbnail','promo_video','price','discount_price','level','language',
         'duration_minutes','is_published','is_featured','has_certificate','starts_at',
         'seat_limit','meta_title','meta_description',
@@ -39,6 +39,8 @@ class Course extends Model
 
     /* Relations */
     public function category()    { return $this->belongsTo(Category::class); }
+    public function courseLevel() { return $this->belongsTo(Level::class, 'level_id'); }
+    public function batches() { return $this->hasMany(Batch::class); }
     public function instructor()  { return $this->belongsTo(User::class, 'instructor_id'); }
     public function sections()    { return $this->hasMany(Section::class)->orderBy('position'); }
     public function lessons()     { return $this->hasMany(Lesson::class)->orderBy('position'); }
