@@ -8,13 +8,17 @@ use App\Models\Payment;
 use App\Notifications\PaymentStatusNotification;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with('user')->withCount('items')->latest();
+        $query = Order::with(['user', 'branch'])->withCount('items')->latest();
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
@@ -30,8 +34,8 @@ class OrderController extends Controller
             'totals' => [
                 'all' => Order::count(),
                 'paid' => Order::where('status', 'paid')->count(),
-                'pending' => Order::where('status', 'pending')->count(),
-                'revenue' => Order::where('status', 'paid')->sum('total'),
+                'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
+                'revenue' => Payment::where('status', 'verified')->sum('amount'),
             ],
         ]);
     }
@@ -39,7 +43,7 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         return view('admin.orders.show', [
-            'order' => $order->load(['items', 'payments', 'user']),
+            'order' => $order->load(['items', 'payments.verifier', 'user', 'branch']),
         ]);
     }
 
@@ -47,7 +51,21 @@ class OrderController extends Controller
     {
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled,refunded']);
 
-        if ($data['status'] === 'paid') {
+        if ($data['status'] === 'paid' && $order->status !== 'paid') {
+            $due = $order->dueAmount();
+            if ($due > 0) {
+                Payment::create([
+                    'order_id' => $order->id,
+                    'gateway' => 'admin_manual',
+                    'transaction_id' => 'ADMIN-'.Str::upper(Str::random(12)),
+                    'sender_number' => 'Recorded by '.$request->user()->name,
+                    'amount' => $due,
+                    'status' => 'verified',
+                    'verified_by' => $request->user()->id,
+                    'verified_at' => now(),
+                ]);
+            }
+
             try {
                 OrderService::fulfill($order);
             } catch (ValidationException $exception) {
@@ -63,24 +81,120 @@ class OrderController extends Controller
 
     public function verifyPayment(Request $request, Payment $payment)
     {
-        $action = $request->validate(['action' => 'required|in:verify,reject'])['action'];
+        $data = $request->validate([
+            'action' => 'required|in:verify,reject',
+            'rejection_reason' => 'required_if:action,reject|nullable|string|max:2000',
+        ]);
 
-        if ($action === 'verify') {
-            try {
-                OrderService::fulfill($payment->order);
-            } catch (ValidationException $exception) {
-                return back()->withErrors($exception->errors())
-                    ->with('error', 'Payment is still pending: course capacity has been reached. Please review or refund it manually.');
-            }
+        try {
+            DB::transaction(function () use ($request, $payment, $data) {
+                $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+                $order = Order::whereKey($lockedPayment->order_id)->lockForUpdate()->firstOrFail();
 
-            $payment->update(['status' => 'verified']);
-            $payment->order->user?->notify(new PaymentStatusNotification($payment->fresh()->load('order'), 'verified'));
-        } else {
-            $payment->update(['status' => 'rejected']);
-            $payment->order->update(['status' => 'failed']);
-            $payment->order->user?->notify(new PaymentStatusNotification($payment->fresh()->load('order'), 'rejected'));
+                if ($lockedPayment->status !== 'pending') {
+                    throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
+                }
+
+                if ($data['action'] === 'reject') {
+                    $lockedPayment->update([
+                        'status' => 'rejected',
+                        'verified_by' => $request->user()->id,
+                        'verified_at' => now(),
+                        'rejection_reason' => $data['rejection_reason'] ?? 'Payment could not be verified.',
+                    ]);
+                    $order->update(['status' => $order->amountPaid() > 0 ? 'partially_paid' : 'pending']);
+                    return;
+                }
+
+                $alreadyPaid = (float) $order->payments()->where('status', 'verified')->sum('amount');
+                if (round($alreadyPaid + $lockedPayment->amount, 2) > round($order->total, 2)) {
+                    throw ValidationException::withMessages(['payment' => 'Approving this payment would exceed the order balance. Review the amount before approval.']);
+                }
+
+                $lockedPayment->update([
+                    'status' => 'verified',
+                    'verified_by' => $request->user()->id,
+                    'verified_at' => now(),
+                    'rejection_reason' => null,
+                ]);
+
+                $newPaid = round($alreadyPaid + $lockedPayment->amount, 2);
+                if ($newPaid >= round($order->total, 2)) {
+                    OrderService::fulfill($order);
+                } else {
+                    $order->update(['status' => 'partially_paid']);
+                }
+            });
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
         }
 
-        return back()->with('success', 'Payment '.($action === 'verify' ? 'verified — access granted.' : 'rejected.'));
+        $payment->fresh()->load('order.user');
+        $payment->order->user?->notify(new PaymentStatusNotification(
+            $payment,
+            $data['action'] === 'verify' ? 'verified' : 'rejected'
+        ));
+
+        return back()->with('success', $data['action'] === 'verify'
+            ? 'Payment verified. The remaining balance has been recalculated.'
+            : 'Payment rejected. The student can submit a corrected payment.');
+    }
+
+    /** Record cash or office collection received by an administrator. */
+    public function recordOfflinePayment(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'gateway' => 'required|in:cash,office',
+            'amount' => ['required', 'numeric', 'min:1', 'max:'.$order->dueAmount()],
+            'reference' => 'nullable|string|max:80',
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        $branch = $order->branch;
+        abort_unless($branch && $branch->is_active, 403, 'The order branch is inactive.');
+        abort_unless(in_array($data['gateway'], $branch->payment_methods ?? [], true), 403, 'This offline method is not enabled for the order branch.');
+
+        try {
+            DB::transaction(function () use ($request, $order, $data) {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                $alreadyPaid = $lockedOrder->amountPaid();
+                if (round($alreadyPaid + (float) $data['amount'], 2) > round($lockedOrder->total, 2)) {
+                    throw ValidationException::withMessages(['amount' => 'The amount exceeds the outstanding balance.']);
+                }
+
+                Payment::create([
+                    'order_id' => $lockedOrder->id,
+                    'gateway' => $data['gateway'],
+                    'transaction_id' => $data['reference'] ?: 'OFFLINE-'.Str::upper(Str::random(12)),
+                    'sender_number' => 'Received by '.$request->user()->name,
+                    'amount' => $data['amount'],
+                    'status' => 'verified',
+                    'payload' => ['note' => $data['note'] ?? null],
+                    'verified_by' => $request->user()->id,
+                    'verified_at' => now(),
+                ]);
+
+                if (round($alreadyPaid + (float) $data['amount'], 2) >= round($lockedOrder->total, 2)) {
+                    OrderService::fulfill($lockedOrder);
+                } else {
+                    $lockedOrder->update(['status' => 'partially_paid']);
+                }
+            });
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        }
+
+        $order->user?->notify(new PaymentStatusNotification(
+            $order->payments()->latest()->first()->load('order'),
+            'verified'
+        ));
+
+        return back()->with('success', 'Offline payment recorded in the ledger.');
+    }
+
+    public function paymentProof(Payment $payment): BinaryFileResponse
+    {
+        abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
+        return response()->file(Storage::disk('local')->path($payment->proof_path));
     }
 }
