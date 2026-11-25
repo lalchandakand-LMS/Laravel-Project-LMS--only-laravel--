@@ -103,6 +103,7 @@ class CourseController extends Controller
             'duration_minutes' => 'nullable|integer|min:0',
             'starts_at' => 'nullable|date',
             'seat_limit' => 'nullable|integer|min:1',
+            'access_duration_days' => 'nullable|integer|min:1|max:3650',
             'thumbnail' => 'nullable|image|max:4096',
             'promo_video' => 'nullable|string|max:255',
             'meta_title' => 'nullable|string|max:180',
