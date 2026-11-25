@@ -24,7 +24,7 @@ class OrganisationSeeder extends Seeder
 
         $models = collect($branches)->map(fn ($b) => Branch::firstOrCreate(
             ['code' => $b['code']],
-            $b + ['email' => strtolower($b['code']).'@redwansmethod.test', 'is_active' => true]
+            $b + ['email' => strtolower($b['code']).'@alomsenglishcenter.test', 'is_active' => true]
         ));
 
         // Branch managers
@@ -76,7 +76,7 @@ class OrganisationSeeder extends Seeder
         $slides = [
             [
                 'badge' => 'Admission 2026 — online & offline batches open',
-                'title' => "Learn smarter with Redwan's Method",
+                'title' => "Learn English with confidence at Alom's English Center",
                 'subtitle' => "Class 9–10 (SSC), HSC and admission preparation with the country's best teachers. Video lessons, class notes, MCQ exams and lifetime access.",
                 'image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80',
                 'button_text' => 'Explore courses',
@@ -116,7 +116,7 @@ class OrganisationSeeder extends Seeder
                 ['course_id' => $course->id, 'title' => 'Weekly doubt-solving session'],
                 [
                     'platform' => 'jitsi',
-                    'meeting_url' => 'https://meet.jit.si/redwans-method-demo',
+                    'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
                     'starts_at' => now()->addDays(2)->setTime(20, 0),
                     'duration_minutes' => 60,
                     'is_published' => true,
