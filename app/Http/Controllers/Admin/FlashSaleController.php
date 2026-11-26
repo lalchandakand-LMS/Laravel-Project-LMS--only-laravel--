@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Category;
-use App\\Models\\Course;
-use App\\Models\\FlashSale;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Course;
+use App\Models\FlashSale;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class FlashSaleController extends Controller
 {
