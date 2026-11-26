@@ -9,7 +9,8 @@ use App\Http\Controllers\Teacher;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\CourseController;\nuse App\Http\Controllers\CoachingAdmissionController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CoachingAdmissionController;
 use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
@@ -29,7 +30,9 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'sendContact'])->name('contact.send');
 
-Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');\nRoute::get('/coaching-admission', [CoachingAdmissionController::class, 'create'])->name('coaching-admission.create');\nRoute::post('/coaching-admission', [CoachingAdmissionController::class, 'store'])->middleware('throttle:5,10')->name('coaching-admission.store');
+Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+Route::get('/coaching-admission', [CoachingAdmissionController::class, 'create'])->name('coaching-admission.create');
+Route::post('/coaching-admission', [CoachingAdmissionController::class, 'store'])->middleware('throttle:5,10')->name('coaching-admission.store');
 Route::get('/courses/{course:slug}', [CourseController::class, 'show'])->name('courses.show');
 Route::get('/category/{category:slug}', [CourseController::class, 'category'])->name('categories.show');
 
@@ -130,7 +133,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     // all organisation, account, finance, and site-wide management stay admin-only.
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
-        Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');\n        Route::get('coaching-admissions', [Admin\\CoachingAdmissionController::class, 'index'])->name('coaching-admissions.index');\n        Route::post('coaching-admissions/{admission}/approve', [Admin\\CoachingAdmissionController::class, 'approve'])->name('coaching-admissions.approve');\n        Route::post('coaching-admissions/{admission}/reject', [Admin\\CoachingAdmissionController::class, 'reject'])->name('coaching-admissions.reject');
+        Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');
+        Route::get('coaching-admissions', [Admin\\CoachingAdmissionController::class, 'index'])->name('coaching-admissions.index');
+        Route::post('coaching-admissions/{admission}/approve', [Admin\\CoachingAdmissionController::class, 'approve'])->name('coaching-admissions.approve');
+        Route::post('coaching-admissions/{admission}/reject', [Admin\\CoachingAdmissionController::class, 'reject'])->name('coaching-admissions.reject');
         Route::get('attendance/{session}', [AttendanceController::class, 'adminShow'])->name('attendance.show');
         Route::post('attendance/{session}/review', [AttendanceController::class, 'review'])->name('attendance.review');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
