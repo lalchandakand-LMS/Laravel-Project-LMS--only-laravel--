@@ -83,6 +83,37 @@ class MarketingLeadCaptureTest extends TestCase
         $this->assertNotNull($lead->fresh()->converted_at);
     }
 
+    public function test_admin_lead_inbox_offers_whatsapp_follow_up_for_valid_bangladesh_numbers(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        MarketingLead::create([
+            'name' => 'Amina Rahman',
+            'email' => 'amina@example.test',
+            'phone' => '01700000000',
+            'message' => 'Interested in spoken English.',
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.marketing.leads.index'))
+            ->assertOk()
+            ->assertSee('WhatsApp follow-up')
+            ->assertSee('https://wa.me/8801700000000', false);
+    }
+
+    public function test_invalid_phone_numbers_do_not_get_a_whatsapp_action(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        MarketingLead::create([
+            'name' => 'Invalid Phone Lead',
+            'email' => 'invalid@example.test',
+            'phone' => '12345',
+            'message' => 'Invalid phone.',
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.marketing.leads.index'))
+            ->assertOk()
+            ->assertDontSee('https://wa.me/', false);
+    }
+
     public function test_non_admin_cannot_access_or_update_marketing_leads(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
