@@ -122,13 +122,13 @@
             </section>
         @endif
 
-        @if ($order->amountPaid() > 0)
+        @if ($order->refundableAmount() > 0)
             <section class="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
                 <h3 class="font-bold text-rose-700">Record refund</h3>
                 <p class="mt-1 text-xs text-slate-500">Refunds are recorded as separate ledger adjustments. If net verified payment falls below the order total, paid course/e-book access is suspended until the balance is settled again.</p>
                 <form method="POST" action="{{ route('admin.orders.refunds.store', $order->order_no) }}" class="mt-3 space-y-3">
                     @csrf
-                    <input type="number" name="amount" min="0.01" max="{{ $order->amountPaid() }}" step="0.01" required placeholder="Refund amount (max ৳{{ number_format($order->amountPaid(), 2) }})" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <input type="number" name="amount" min="0.01" max="{{ $order->refundableAmount() }}" step="0.01" required placeholder="Refund amount (max ৳{{ number_format($order->refundableAmount(), 2) }})" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                     <input name="reference" placeholder="Refund reference (optional)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                     <textarea name="reason" rows="3" required placeholder="Reason for refund (required)" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
                     <button class="w-full rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-bold text-white">Record refund</button>
