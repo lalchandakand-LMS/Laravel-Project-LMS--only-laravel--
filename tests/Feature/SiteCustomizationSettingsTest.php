@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SiteCustomizationSettingsTest extends TestCase
@@ -77,6 +79,22 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->assertSame('Loading Alom LMS', Setting::get('brand_loader_message'));
     }
 
+
+    public function test_failed_brand_logo_storage_reports_an_error_and_keeps_the_existing_logo(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        Setting::set('logo', 'brand/existing-logo.png');
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->once()->with('public')->andReturn($disk);
+
+        $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
+            'logo' => UploadedFile::fake()->image('new-logo.png'),
+        ])->assertRedirect('/admin/settings')
+            ->assertSessionHasErrors('logo');
+
+        $this->assertSame('brand/existing-logo.png', Setting::get('logo'));
+    }
 
     public function test_homepage_sections_render_saved_carousel_preferences(): void
     {

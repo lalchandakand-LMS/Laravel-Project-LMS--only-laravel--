@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
@@ -153,11 +154,16 @@ class SettingController extends Controller
             if ($request->hasFile($field)) {
                 $oldPath = Setting::get($field);
                 $newPath = $request->file($field)->store($directory, 'public');
-                if ($newPath) {
-                    Setting::set($field, $newPath);
-                    if ($oldPath && $oldPath !== $newPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
-                        delete_stored_media('public', $oldPath);
-                    }
+
+                if (! is_string($newPath) || $newPath === '') {
+                    throw ValidationException::withMessages([
+                        $field => 'The uploaded brand media could not be stored. The existing media has been kept.',
+                    ]);
+                }
+
+                Setting::set($field, $newPath);
+                if ($oldPath && $oldPath !== $newPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
+                    delete_stored_media('public', $oldPath);
                 }
             }
         }
