@@ -20,8 +20,9 @@ class IdentityCardController extends Controller
         abort_unless(in_array($user->role, ['student', 'instructor', 'branch_manager'], true), 404);
 
         $user->load(['branch', 'studentProfile', 'staffProfile']);
-        $profile = $user->studentProfile ?? $user->staffProfile;
-        abort_unless($profile, 404, 'The user profile is not ready for an ID card.');
+        $profile = $user->isStudent()
+            ? $user->studentProfile()->firstOrCreate([])
+            : $user->staffProfile()->firstOrCreate([], ['employment_status' => 'active']);
 
         if (blank($profile->id_token)) {
             $profile->forceFill(['id_token' => Str::random(48)])->save();
