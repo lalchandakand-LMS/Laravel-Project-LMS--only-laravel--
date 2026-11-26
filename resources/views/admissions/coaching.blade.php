@@ -18,6 +18,7 @@
             </div>
             <label class="block text-sm font-semibold text-slate-700">কোর্স ও ব্যাচ নির্বাচন *</label>
             <select name="batch_id" required class="w-full rounded-xl border-slate-300"><option value="">ব্যাচ নির্বাচন করুন</option>@foreach($batches as $batch)<option value="{{ $batch->id }}" @selected(old('batch_id')==$batch->id)>{{ $batch->name }} — {{ $batch->course?->title }} / {{ $batch->branch?->name }}</option>@endforeach</select>
+            <div class="space-y-2 rounded-xl bg-slate-50 p-4 text-sm"><label class="flex items-start gap-2"><input type="checkbox" name="student_sms_consent" value="1" class="mt-1 rounded border-slate-300"><span>শিক্ষার্থীর মোবাইলে ভর্তি, ফি ও ক্লাস সংক্রান্ত SMS পেতে সম্মতি দিচ্ছি।</span></label><label class="flex items-start gap-2"><input type="checkbox" name="guardian_sms_consent" value="1" class="mt-1 rounded border-slate-300"><span>অভিভাবকের নম্বরে ভর্তি, ফি ও শিক্ষার্থী রিপোর্টের SMS পাঠাতে সম্মতি দিচ্ছি।</span></label></div>
             <label class="block text-sm font-semibold text-slate-700">অতিরিক্ত তথ্য<textarea name="applicant_note" rows="3" maxlength="2000" class="mt-1 w-full rounded-xl border-slate-300">{{ old('applicant_note') }}</textarea></label>
             <button class="w-full rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white hover:bg-emerald-800">ভর্তি আবেদন জমা দিন</button>
         </form>
