@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Batch;
 use App\Models\Course;
 use App\Models\LiveClass;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class LiveClassController extends Controller
     {
         $user = auth()->user();
 
-        $classes = LiveClass::with('course')
+        $classes = LiveClass::with(['course', 'batch'])
             ->when(! $user->isAdmin(), fn ($q) => $q
                 ->whereHas('course', fn ($c) => $c->where('instructor_id', $user->id)))
             ->when($request->get('course'), fn ($q, $id) => $q->where('course_id', $id))
@@ -26,6 +27,7 @@ class LiveClassController extends Controller
         return view('admin.live-classes.index', [
             'classes' => $classes,
             'courses' => $this->courses(),
+            'batches' => $this->batches(),
         ]);
     }
 
@@ -89,6 +91,15 @@ class LiveClassController extends Controller
             ->orderBy('title')->pluck('title', 'id');
     }
 
+    private function batches()
+    {
+        return Batch::query()
+            ->whereIn('course_id', $this->courses()->keys())
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('name')
+            ->get(['id', 'course_id', 'name', 'code']);
+    }
+
     private function validated(Request $request): array
     {
         // Accept legacy lowercase/mixed-case platform values and persist the canonical label.
@@ -100,8 +111,10 @@ class LiveClassController extends Controller
             $request->merge(['platform' => $canonicalPlatform]);
         }
 
+        $courseId = (int) $request->input('course_id');
         $data = $request->validate([
             'course_id' => 'required|exists:courses,id',
+            'batch_id' => ['nullable', 'integer', Rule::exists('batches', 'id')->where(fn ($query) => $query->where('course_id', $courseId))],
             'title' => 'required|string|max:160',
             'description' => 'nullable|string|max:2000',
             'platform' => ['required', 'string', Rule::in(LiveClass::PLATFORMS)],
