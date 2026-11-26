@@ -104,7 +104,7 @@
             <div class="mt-5 flex flex-wrap gap-2">
                 @foreach (['facebook' => ['Facebook','f'], 'youtube' => ['YouTube','▶'], 'instagram' => ['Instagram','◎']] as $key => [$label,$symbol])
                     @if ($url = \App\Models\Setting::get($key))
-                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-extrabold text-cyan-200 transition hover:bg-cyan-500 hover:text-slate-950">{{ $symbol }}</a>
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-extrabold text-orange-200 transition hover:bg-orange-500 hover:text-slate-950">{{ $symbol }}</a>
                     @endif
                 @endforeach
             </div>
@@ -112,13 +112,13 @@
         <div>
             <h4 class="text-sm font-extrabold uppercase tracking-wider text-white">Links</h4>
             <ul class="mt-4 space-y-3 text-sm text-slate-400">
-                <li><a class="hover:text-cyan-300" href="{{ route('courses.index') }}">All Courses</a></li>
-                <li><a class="hover:text-cyan-300" href="{{ route('blog.index') }}">Blog & News</a></li>
-                <li><a class="hover:text-cyan-300" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
-                <li><a class="hover:text-cyan-300" href="{{ route('ebooks.index') }}">E-Books</a></li>
-                <li><a class="hover:text-cyan-300" href="{{ route('about') }}">About us</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('courses.index') }}">All Courses</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('blog.index') }}">Blog & News</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('ebooks.index') }}">E-Books</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('about') }}">About us</a></li>
                 @foreach (\App\Models\MenuItem::publicNavigation('footer', 'desktop') as $footerItem)
-                    <li><a class="hover:text-cyan-300" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
+                    <li><a class="hover:text-orange-300" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
                 @endforeach
             </ul>
         </div>
@@ -128,7 +128,7 @@
                 <li>{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</li>
                 @if (\App\Models\Setting::get('company_license'))<li>License: {{ \App\Models\Setting::get('company_license') }}</li>@endif
                 @if (\App\Models\Setting::get('site_address'))<li>{{ \App\Models\Setting::get('site_address') }}</li>@endif
-                <li><a class="hover:text-cyan-300" href="{{ route('contact') }}">Contact company</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('contact') }}">Contact company</a></li>
             </ul>
         </div>
         <div>
@@ -153,7 +153,7 @@
     <div class="border-t border-white/10">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-xs text-slate-400">
             <span>© {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. {{ \App\Models\Setting::get('footer_copyright', 'All rights reserved.') }}</span>
-            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-cyan-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-cyan-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-cyan-300">Refund Policy</a></nav>
+            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-orange-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-orange-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-orange-300">Refund Policy</a></nav>
         </div>
     </div>
     @if (\App\Models\Setting::get('developer_show', '0') === '1' && \App\Models\Setting::get('developer_name'))
