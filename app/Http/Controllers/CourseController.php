@@ -75,7 +75,8 @@ class CourseController extends Controller
 
         // Count one course detail view per browser session per course per day.
         // The session identifier is HMACed so raw session IDs are never stored.
-        $visitorKey = hash_hmac('sha256', (string) $request->session()->getId(), (string) config('app.key'));
+        $visitorIdentity = $user ? 'user:'.$user->id : 'session:'.$request->session()->getId();
+        $visitorKey = hash_hmac('sha256', $visitorIdentity, (string) config('app.key'));
         DB::table('course_views')->insertOrIgnore([
             'course_id' => $course->id,
             'user_id' => $user?->id,
