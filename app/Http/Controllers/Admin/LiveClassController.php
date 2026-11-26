@@ -44,6 +44,7 @@ class LiveClassController extends Controller
                 'duration_minutes' => 60, 'is_published' => true,
             ]),
             'courses' => $this->courses(),
+            'batches' => $this->batches(),
             'platforms' => LiveClass::PLATFORMS,
         ]);
     }
@@ -124,7 +125,7 @@ class LiveClassController extends Controller
 
         if ($instructorId) {
             $conflict = LiveClass::query()
-                ->whereKeyNot($liveClass->id)
+                ->where('id', '!=', $liveClass->id)
                 ->whereNull('cancelled_at')
                 ->whereHas('course', fn ($query) => $query->where('instructor_id', $instructorId))
                 ->get(['starts_at', 'duration_minutes'])
@@ -159,12 +160,13 @@ class LiveClassController extends Controller
 
     private function notifyStudents(LiveClass $liveClass, string $event): void
     {
+        $branchId = $liveClass->batch?->branch_id;
         $legacy = Enrollment::query()
             ->where('course_id', $liveClass->course_id)
             ->where('status', 'active')
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->when($liveClass->batch_id, fn ($q) => $q->where('batch_id', $liveClass->batch_id))
-            ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true)->when($branchId, fn ($users) => $users->where('branch_id', $branchId)))
             ->pluck('user_id');
 
         $online = OnlineBatchEnrollment::query()
@@ -172,7 +174,7 @@ class LiveClassController extends Controller
             ->where('status', 'active')
             ->whereNull('ended_at')
             ->when($liveClass->batch_id, fn ($q) => $q->where('batch_id', $liveClass->batch_id))
-            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true)->when($branchId, fn ($users) => $users->where('branch_id', $branchId)))
             ->pluck('student_id');
 
         $studentIds = $legacy->merge($online)->unique()->values();
