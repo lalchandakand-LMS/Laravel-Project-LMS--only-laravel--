@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([\App\Console\Commands\SystemBackupCommand::class, \App\Console\Commands\RecycleBinPruneCommand::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [\App\Http\Middleware\RecordActivity::class]);
+        $middleware->validateCsrfTokens(except: ['payments/bkash/webhook']);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'required.email.verified' => \App\Http\Middleware\EnsureRequiredEmailIsVerified::class,
