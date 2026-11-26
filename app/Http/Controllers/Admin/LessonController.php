@@ -26,12 +26,13 @@ class LessonController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        $this->authorizeCourse(Course::findOrFail($data['course_id']));
+        $course = Course::findOrFail($data['course_id']);
+        $this->authorizeCourse($course);
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data);
         Lesson::create($data);
 
-        return redirect()->route('admin.courses.edit', $data['course_id'])->with('success', 'Lesson added.');
+        return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson added.');
     }
 
     public function edit(Lesson $lesson)
@@ -48,7 +49,8 @@ class LessonController extends Controller
     {
         $this->authorizeCourse($lesson->course);
         $data = $this->validated($request);
-        $this->authorizeCourse(Course::findOrFail($data['course_id']));
+        $course = Course::findOrFail($data['course_id']);
+        $this->authorizeCourse($course);
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data, $lesson);
         $oldAttachment = $lesson->attachment;
@@ -56,7 +58,7 @@ class LessonController extends Controller
         if (isset($data['attachment']) && $data['attachment'] !== $oldAttachment) {
             delete_stored_media('local', $oldAttachment);
         }
-        return redirect()->route('admin.courses.edit', $lesson->course_id)->with('success', 'Lesson updated.');
+        return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson updated.');
     }
 
     public function reorder(Request $request, Section $section)
@@ -83,11 +85,11 @@ class LessonController extends Controller
     public function destroy(Lesson $lesson)
     {
         $this->authorizeCourse($lesson->course);
-        $courseId = $lesson->course_id;
+        $course = $lesson->course;
         $attachment = $lesson->attachment;
         $lesson->delete();
         delete_stored_media('local', $attachment);
-        return redirect()->route('admin.courses.edit', $courseId)->with('success', 'Lesson deleted.');
+        return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson deleted.');
     }
 
     private function authorizeCourse(Course $course): void
