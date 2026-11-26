@@ -320,4 +320,33 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+
+    public function test_prerequisite_lesson_with_dependent_record_is_not_pruned(): void
+    {
+        $course = Course::create(['title' => 'Prerequisite Prune Course', 'slug' => 'prerequisite-prune-course']);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Expired archived prerequisite',
+            'type' => 'text',
+            'position' => 1,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Current dependent lesson',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+        $prerequisite->delete();
+        DB::table('lessons')->where('id', $prerequisite->id)->update(['deleted_at' => now()->subDays(31)]);
+
+        Artisan::call('recycle-bin:prune', ['--days' => 30]);
+
+        $this->assertSoftDeleted('lessons', ['id' => $prerequisite->id]);
+        $this->assertDatabaseHas('lessons', [
+            'id' => $dependent->id,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+    }
+
 }
