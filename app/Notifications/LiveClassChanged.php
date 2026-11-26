@@ -46,6 +46,8 @@ class LiveClassChanged extends Notification
     {
         $message = match ($this->event) {
             'cancelled' => "The live class \"{$this->liveClass->title}\" has been cancelled.",
+            'unpublished' => "The live class \"{$this->liveClass->title}\" is no longer published and is unavailable in your student schedule.",
+            'updated' => "The details for live class \"{$this->liveClass->title}\" have been updated. Check your LMS schedule for the latest joining information.",
             'rescheduled' => "The live class \"{$this->liveClass->title}\" has been rescheduled to ".$this->liveClass->starts_at?->format('d M Y, h:i A').'.',
             default => "A new live class \"{$this->liveClass->title}\" has been scheduled for ".$this->liveClass->starts_at?->format('d M Y, h:i A').'.',
         };
@@ -85,6 +87,8 @@ class LiveClassChanged extends Notification
     {
         $message = match ($this->event) {
             'cancelled' => "The live class \"{$this->liveClass->title}\" has been cancelled.",
+            'unpublished' => "The live class \"{$this->liveClass->title}\" is no longer published and is unavailable in your student schedule.",
+            'updated' => "The details for live class \"{$this->liveClass->title}\" have been updated. Check your LMS schedule for the latest joining information.",
             'rescheduled' => "The live class \"{$this->liveClass->title}\" has been rescheduled to ".$this->liveClass->starts_at?->format('d M Y, h:i A').'.',
             default => "A new live class \"{$this->liveClass->title}\" has been scheduled for ".$this->liveClass->starts_at?->format('d M Y, h:i A').'.',
         };
