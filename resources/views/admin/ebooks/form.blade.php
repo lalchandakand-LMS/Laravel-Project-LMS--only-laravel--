@@ -34,10 +34,13 @@
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">PDF / EPUB file</label>
             <input type="file" name="file" accept=".pdf,.epub,application/pdf,application/epub+zip" class="w-full text-xs">
-            <label class="mt-2 block text-xs font-semibold text-slate-600">Or use a hosted PDF / EPUB URL</label>
+            <label class="mt-2 block text-xs font-semibold text-slate-600">Hosted PDF / EPUB URL (free e-books only)</label>
             <input type="url" name="file_url" value="{{ old('file_url', str_starts_with((string) $ebook->file, 'http') ? $ebook->file : '') }}" placeholder="https://example.com/ebook.pdf" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <p class="mt-1 text-xs text-slate-500">PDF / EPUB · Maximum 50 MB · Stored privately</p>
+            <p class="mt-1 text-xs text-slate-500">Paid e-books require a private upload (PDF / EPUB, max 50 MB). Public hosted URLs cannot enforce purchase access.</p>
             <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library →</a>
+            @if ($ebook->exists && ! $ebook->is_free && is_string($ebook->file) && str_starts_with(strtolower($ebook->file), 'http'))
+                <p class="mt-2 rounded-lg bg-rose-50 p-2 text-xs text-rose-800">Security warning: this paid title currently points to a public URL. The protected download route will not redirect buyers to it. Migrate the original file to private storage through a controlled content migration before restoring paid downloads.</p>
+            @endif
             @if ($ebook->exists && $ebook->purchases()->exists())
                 <p class="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">This e-book has purchase history. Its PDF/EPUB cannot be replaced, so existing buyers keep the exact purchased file. You can still update its title, description, price and cover.</p>
             @endif
