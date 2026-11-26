@@ -16,8 +16,9 @@ use Illuminate\\Support\\Facades\\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $period = in_array((int) $request->query('period', 6), [6, 12], true) ? (int) $request->query('period', 6) : 6;
         $now = now();
         $currentStart = $now->copy()->startOfMonth();
         $previousStart = $now->copy()->subMonthNoOverflow()->startOfMonth();
@@ -36,8 +37,9 @@ class DashboardController extends Controller
         $courseQuery = Course::query();
         $batchQuery = Batch::query();
 
-        $months = collect(range(5, 0))->map(fn ($offset) => $now->copy()->subMonths($offset)->startOfMonth());
+        $months = collect(range($period - 1, 0))->map(fn ($offset) => $now->copy()->subMonths($offset)->startOfMonth());
         $analytics = [
+            'period' => $period,
             'labels' => $months->map(fn ($month) => $month->format('M'))->all(),
             'students' => $months->map(fn ($month) => (clone $studentQuery)->whereBetween('created_at', [$month, $month->copy()->endOfMonth()])->count())->all(),
             'enrollments' => $months->map(fn ($month) => Enrollment::whereBetween('created_at', [$month, $month->copy()->endOfMonth()])->count())->all(),
@@ -101,6 +103,7 @@ class DashboardController extends Controller
             'analytics' => $analytics,
             'progress' => $progress,
             'liveClass' => $liveClass,
+            'liveAttendanceCount' => $liveClass?->attendanceSession?->records()->count() ?? 0,
             'upcomingClasses' => $upcomingClasses,
             'topStudents' => $topStudents,
             'recentActivities' => $recentActivities,
