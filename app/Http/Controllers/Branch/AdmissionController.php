@@ -17,7 +17,7 @@ class AdmissionController extends Controller
     {
         $user = auth()->user();
         $branch = $user->isBranchManager()
-            ? Branch::where('manager_id', $user->id)->first()
+            ? Branch::forManager($user)
             : ($user->branch ?? null);
 
         abort_unless($branch, 403, 'No branch is assigned to this account.');
