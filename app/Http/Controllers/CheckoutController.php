@@ -119,6 +119,23 @@ class CheckoutController extends Controller
     public function pay(Request $request, Order $order)
     {
         abort_unless($order->user_id === $request->user()->id, 403);
+        abort_unless(in_array($order->status, ['pending', 'partially_paid'], true), 403, 'This order is not awaiting payment.');
+
+        $branch = Branch::whereKey($order->branch_id)->where('is_active', true)->first();
+        abort_unless($branch, 403, 'The selected branch is no longer accepting payments.');
+        $enabledMethods = $branch->enabledStudentPaymentMethods();
+        if ($enabledMethods === []) {
+            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
+        }
+        if ($request->filled('gateway') && ! in_array($request->input('gateway'), $enabledMethods, true)) {
+            throw ValidationException::withMessages(['gateway' => 'This payment method is not enabled for the order branch.']);
+        }
+        if ($order->payments()->where('status', 'pending')->exists()) {
+            throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order. Please wait for the branch to review it.']);
+        }
+        if ($order->dueAmount() <= 0) {
+            return back()->with('info', 'This order has no outstanding balance.');
+        }
 
         $data = $request->validate([
             'gateway' => ['required', 'string', 'max:30'],
