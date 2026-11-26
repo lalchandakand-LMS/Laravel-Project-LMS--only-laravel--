@@ -674,4 +674,85 @@ class LiveClassSchedulingTest extends TestCase
         app(MiMSmsGateway::class)->sendTransactional('01712345678', 'Test message');
     }
 
+
+    public function test_live_class_notifications_exclude_branch_ineligible_legacy_enrollments(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $studentBranch = \App\Models\Branch::create([
+            'name' => 'Notification Student Branch',
+            'code' => 'NOTIFY-ST',
+            'is_active' => true,
+        ]);
+        $oldBranch = \App\Models\Branch::create([
+            'name' => 'Notification Old Branch',
+            'code' => 'NOTIFY-OLD',
+            'is_active' => true,
+        ]);
+        $student = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+            'branch_id' => $studentBranch->id,
+        ]);
+        $course = Course::firstOrFail();
+        $batch = Batch::create([
+            'course_id' => $course->id,
+            'branch_id' => $studentBranch->id,
+            'name' => 'Notification eligible batch',
+            'code' => 'NOTIFY-BATCH',
+            'status' => 'ongoing',
+        ]);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'branch_id' => $oldBranch->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.live-classes.store'), [
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'title' => 'Branch-ineligible notification class',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(22)->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        Notification::assertNotSentTo($student, LiveClassChanged::class);
+    }
+
+    public function test_live_class_notifications_exclude_online_enrollments_in_cancelled_batches(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+        $batch = Batch::create([
+            'course_id' => $course->id,
+            'name' => 'Cancelled online notification batch',
+            'code' => 'NOTIFY-CANCELLED',
+            'status' => 'cancelled',
+        ]);
+        \App\Models\OnlineBatchEnrollment::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'status' => 'active',
+            'admitted_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.live-classes.store'), [
+            'course_id' => $course->id,
+            'title' => 'Cancelled online batch notification class',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(23)->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        Notification::assertNotSentTo($student, LiveClassChanged::class);
+    }
 }
