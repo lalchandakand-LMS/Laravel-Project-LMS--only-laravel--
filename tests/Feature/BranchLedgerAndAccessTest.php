@@ -245,4 +245,22 @@ class BranchLedgerAndAccessTest extends TestCase
         $this->assertDatabaseCount('student_fee_payments', 0);
     }
 
+
+    public function test_branch_finance_dashboard_uses_aggregate_totals_and_renders_for_an_empty_branch(): void
+    {
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $branch = $this->branch('FIN-EMPTY', $manager);
+        $manager->update(['branch_id' => $branch->id]);
+
+        $this->actingAs($manager)->get(route('branch.finance'))
+            ->assertOk()
+            ->assertViewHas('totals', function (array $totals) {
+                return $totals['collected'] === 0.0
+                    && $totals['order_due'] === 0.0
+                    && $totals['coaching_collected'] === 0.0
+                    && $totals['coaching_due'] === 0.0
+                    && $totals['pending_verification'] === 0;
+            });
+    }
+
 }
