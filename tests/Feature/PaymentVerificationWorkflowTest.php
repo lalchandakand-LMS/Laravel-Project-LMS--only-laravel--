@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Ebook;
 use App\Models\EbookPurchase;
+use App\Models\FlashSale;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
