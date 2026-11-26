@@ -88,13 +88,13 @@ class AssignmentController extends Controller
             'attachment' => 'nullable|file|max:20480',
         ]);
 
-        if (blank($data['answer_text'] ?? null) && ! $request->hasFile('attachment')) {
-            return back()->withErrors(['answer_text' => 'Write an answer or attach a file before submitting.'])->withInput();
-        }
-
         $submission = $assignment->submissions()->where('student_id', $user->id)->first();
         abort_if($submission && $submission->status !== 'returned', 409,
             'This assignment has already been submitted. You can edit it only after your teacher returns it.');
+
+        if (blank($data['answer_text'] ?? null) && ! $request->hasFile('attachment') && ! $submission?->attachment) {
+            return back()->withErrors(['answer_text' => 'Write an answer or attach a file before submitting.'])->withInput();
+        }
 
         $attachment = $submission?->attachment;
         if ($request->hasFile('attachment')) {
