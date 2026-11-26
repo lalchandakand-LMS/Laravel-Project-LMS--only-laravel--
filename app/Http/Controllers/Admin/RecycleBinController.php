@@ -98,6 +98,10 @@ class RecycleBinController extends Controller
     {
         $class = $this->modelClass($type);
         $record = $class::onlyTrashed()->findOrFail($id);
+        if ($this->hasArchivedPrerequisite($record)) {
+            return back()->with('error', 'Restore this lesson’s prerequisite before restoring the dependent lesson.');
+        }
+
         try {
             $record->restore();
         } catch (QueryException $exception) {
@@ -122,6 +126,10 @@ class RecycleBinController extends Controller
         $restored = $class::onlyTrashed()->whereIn('id', $data['ids'])->get();
         $restoredCount = 0;
         foreach ($restored as $record) {
+            if ($this->hasArchivedPrerequisite($record)) {
+                continue;
+            }
+
             try {
                 $record->restore();
                 $this->afterRestore($record);
@@ -184,6 +192,13 @@ class RecycleBinController extends Controller
         return self::MODELS[$type];
     }
 
+    private function hasArchivedPrerequisite($record): bool
+    {
+        return $record instanceof Lesson
+            && $record->prerequisite_lesson_id !== null
+            && Lesson::onlyTrashed()->whereKey($record->prerequisite_lesson_id)->exists();
+    }
+
     /** Prevent FK cascades from erasing learning history, accounts, or financial records. */
     private function hasProtectedRelations(string $type, int $id): bool
     {
@@ -201,7 +216,7 @@ class RecycleBinController extends Controller
                 ['assignments', 'course_id'], ['batches', 'course_id'], ['online_batch_enrollments', 'course_id'],
             ],
             'sections' => [['lessons', 'section_id']],
-            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id'], ['assignments', 'lesson_id']],
+            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id'], ['assignments', 'lesson_id'], ['lessons', 'prerequisite_lesson_id']],
             'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
