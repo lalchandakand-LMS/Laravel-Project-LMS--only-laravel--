@@ -263,4 +263,18 @@ class BranchLedgerAndAccessTest extends TestCase
             });
     }
 
+
+    public function test_branch_manager_with_inconsistent_branch_assignment_is_denied_across_finance_admissions_and_attendance(): void
+    {
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $profileBranch = $this->branch('SCOPE-PROFILE');
+        $managedBranch = $this->branch('SCOPE-MANAGED', $manager);
+        $manager->update(['branch_id' => $profileBranch->id]);
+
+        $this->actingAs($manager)->get(route('branch.finance'))->assertForbidden();
+        $this->actingAs($manager)->get(route('branch.admissions.index'))->assertForbidden();
+        $this->actingAs($manager)->get(route('branch.attendance'))->assertForbidden();
+
+        $this->assertNotSame($profileBranch->id, $managedBranch->id);
+    }
 }
