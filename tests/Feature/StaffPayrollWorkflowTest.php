@@ -138,7 +138,7 @@ class StaffPayrollWorkflowTest extends TestCase
                 'payroll_month' => '2026-12',
                 'basic_salary' => 20000,
             ])->assertRedirect(route('admin.staff-payroll.index'))
-                ->assertSessionHasErrors();
+                ->assertSessionHasErrors('staff_user_id');
 
         $teacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
         $profile = $teacher->staffProfile()->create(['employment_status' => 'active']);
