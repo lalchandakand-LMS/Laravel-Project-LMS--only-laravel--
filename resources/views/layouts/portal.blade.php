@@ -29,6 +29,7 @@
             ['teacher.courses',      'My courses',   '📚'],
             ['teacher.students',     'My students',  '👩‍🎓'],
             ['teacher.live-classes', 'Live classes', '🎥'],
+            ['teacher.leave-requests.index', 'Leave requests', '🗓'],
             ['teacher.assignments.index', 'Assignments', '📄'],
             ['ai-agent.index', 'AI Agents', '✨'],
             ['teacher.earnings',     'Earnings',     '💳'],
