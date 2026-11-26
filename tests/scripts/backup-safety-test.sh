@@ -12,6 +12,7 @@ mkdir -p "$PROJECT/storage/app/private/documents" \
          "$PROJECT/storage/app/public/courses" "$PROJECT/storage/backups" "$BIN"
 
 cp "$REPO_ROOT/backup.sh" "$PROJECT/backup.sh"
+chmod +x "$PROJECT/backup.sh"
 printf 'private student document\n' > "$PROJECT/storage/app/private/documents/student.pdf"
 printf 'old database backup\n' > "$PROJECT/storage/app/private/system-backups/old.sqlite"
 printf 'public course image\n' > "$PROJECT/storage/app/public/courses/course.jpg"
