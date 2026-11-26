@@ -37,7 +37,7 @@ class DashboardController extends Controller
     public function index()
     {
         $branch = $this->branch();
-        $studentIds = $branch->students()->pluck('id');
+        $studentCount = $branch->students()->count();
 
         $courseEnrollments = Enrollment::query()
             ->where(function ($query) use ($branch) {
@@ -55,14 +55,32 @@ class DashboardController extends Controller
         $onlineEnrollmentCount = OnlineBatchEnrollment::whereHas('batch', fn ($batch) => $batch->where('branch_id', $branch->id))->count();
         $coachingEnrollmentCount = CoachingEnrollment::whereHas('batch', fn ($batch) => $batch->where('branch_id', $branch->id))->count();
 
+        // Keep the dashboard's pending balance bounded: do not hydrate every
+        // order and trigger payment/adjustment queries for each row.
+        $verifiedPayments = DB::table('payments')
+            ->select('order_id')
+            ->where('status', 'verified')
+            ->selectRaw('SUM(amount) as received_total')
+            ->groupBy('order_id');
+        $orderAdjustments = DB::table('payment_adjustments')
+            ->select('order_id')
+            ->selectRaw("SUM(CASE WHEN type = 'refund' THEN amount ELSE 0 END) as refund_total")
+            ->selectRaw("SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as credit_total")
+            ->groupBy('order_id');
+        $pendingOrderDue = DB::table('orders')
+            ->leftJoinSub($verifiedPayments, 'verified_payments', fn ($join) => $join->on('verified_payments.order_id', '=', 'orders.id'))
+            ->leftJoinSub($orderAdjustments, 'order_adjustments', fn ($join) => $join->on('order_adjustments.order_id', '=', 'orders.id'))
+            ->where('orders.branch_id', $branch->id)
+            ->whereIn('orders.status', ['pending', 'partially_paid'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN orders.total - COALESCE(verified_payments.received_total, 0) + COALESCE(order_adjustments.refund_total, 0) - COALESCE(order_adjustments.credit_total, 0) > 0 THEN orders.total - COALESCE(verified_payments.received_total, 0) + COALESCE(order_adjustments.refund_total, 0) - COALESCE(order_adjustments.credit_total, 0) ELSE 0 END), 0) as due')
+            ->value('due');
+
         $stats = [
-            'students' => $studentIds->count(),
+            'students' => $studentCount,
             'teachers' => $branch->users()->where('role', 'instructor')->count(),
             'enrollments' => (clone $courseEnrollments)->count() + $onlineEnrollmentCount + $coachingEnrollmentCount,
             'revenue' => $branch->revenue(),
-            'pending' => (float) Order::where('branch_id', $branch->id)
-                ->whereIn('status', ['pending', 'partially_paid'])
-                ->get()->sum(fn (Order $order) => $order->dueAmount()),
+            'pending' => (float) $pendingOrderDue,
         ];
 
         $months = collect(range(5, 0))->map(function ($m) use ($branch) {
