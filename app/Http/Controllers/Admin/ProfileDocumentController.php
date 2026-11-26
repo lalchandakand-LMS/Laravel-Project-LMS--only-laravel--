@@ -66,6 +66,41 @@ class ProfileDocumentController extends Controller
         return back()->with('success', 'Document verification status updated.');
     }
 
+    public function downloadAdmission(\App\Models\CoachingAdmission $admission, ProfileDocument $document)
+    {
+        abort_unless(
+            $document->documentable_type === $admission->getMorphClass()
+            && (int) $document->documentable_id === (int) $admission->getKey(),
+            404
+        );
+        abort_unless(Storage::disk($document->disk)->exists($document->path), 404);
+
+        return Storage::disk($document->disk)->download($document->path, $document->original_name);
+    }
+
+    public function reviewAdmission(Request $request, \App\Models\CoachingAdmission $admission, ProfileDocument $document)
+    {
+        abort_unless(
+            $document->documentable_type === $admission->getMorphClass()
+            && (int) $document->documentable_id === (int) $admission->getKey(),
+            404
+        );
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['approved', 'rejected'])],
+            'review_note' => 'nullable|string|max:2000',
+        ]);
+
+        $document->update([
+            'status' => $data['status'],
+            'review_note' => $data['review_note'] ?? null,
+            'reviewed_by' => $request->user()->id,
+            'reviewed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Admission document verification updated.');
+    }
+
     private function profileFor(User $user)
     {
         if ($user->isStudent()) {
