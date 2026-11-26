@@ -44,9 +44,12 @@
     <button class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Filter</button>
 </form>
 @if($exam)
-<form id="attach-bank-items" method="POST" action="{{ route('admin.question-bank.attach', $exam) }}" class="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
-    @csrf
-    <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
+<div class="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+    <form id="attach-bank-items" method="POST" action="{{ route('admin.question-bank.attach', $exam) }}">
+        @csrf
+        <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
+    </form>
+</div>
 @endif
 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
     <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr>@if($exam)<th class="px-4 py-3">Select</th>@endif<th class="px-4 py-3">Question</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Topic</th><th class="px-4 py-3">Level</th><th class="px-4 py-3">Marks</th><th class="px-4 py-3">Actions</th></tr></thead><tbody class="divide-y divide-slate-100">
@@ -56,6 +59,5 @@
     </tr>@empty<tr><td colspan="{{ $exam ? 7 : 6 }}" class="px-4 py-10 text-center text-slate-500">No bank questions found.</td></tr>@endforelse
     </tbody></table></div>
 </div>
-@if($exam)</form>@endif
 <div class="mt-4">{{ $items->links() }}</div>
 @endsection
