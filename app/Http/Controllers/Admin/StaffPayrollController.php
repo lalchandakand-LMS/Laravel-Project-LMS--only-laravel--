@@ -26,6 +26,77 @@ class StaffPayrollController extends Controller
         return view('admin.staff-payroll.index', compact('payrolls', 'staff'));
     }
 
+    public function report(Request $request)
+    {
+        $filters = $this->reportFilters($request);
+        $query = $this->filteredPayrolls($filters);
+
+        $summary = (clone $query)->selectRaw('COUNT(*) as records, COALESCE(SUM(basic_salary), 0) as basic_total, COALESCE(SUM(allowances), 0) as allowance_total, COALESCE(SUM(deductions), 0) as deduction_total, COALESCE(SUM(net_salary), 0) as net_total')
+            ->first();
+
+        $monthly = (clone $query)->selectRaw("payroll_month, COUNT(*) as records, COALESCE(SUM(net_salary), 0) as net_total, COALESCE(SUM(deductions), 0) as deduction_total")
+            ->groupBy('payroll_month')->orderBy('payroll_month')->get();
+
+        $byStaff = (clone $query)->join('staff_profiles', 'staff_payrolls.staff_profile_id', '=', 'staff_profiles.id')
+            ->join('users', 'staff_profiles.user_id', '=', 'users.id')
+            ->selectRaw('users.id as user_id, users.name, staff_profiles.employee_code, COUNT(*) as records, COALESCE(SUM(staff_payrolls.net_salary), 0) as net_total')
+            ->groupBy('users.id', 'users.name', 'staff_profiles.employee_code')
+            ->orderBy('users.name')->get();
+
+        $branches = \App\Models\Branch::orderBy('name')->get();
+
+        return view('admin.staff-payroll.report', compact('filters', 'summary', 'monthly', 'byStaff', 'branches'));
+    }
+
+    public function exportReport(Request $request)
+    {
+        $filters = $this->reportFilters($request);
+        $rows = $this->filteredPayrolls($filters)->with('staffProfile.user.branch')->orderBy('payroll_month')->get();
+        $filename = 'staff-payroll-report-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($rows) {
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Staff', 'Employee ID', 'Branch', 'Month', 'Basic Salary', 'Allowances', 'Deductions', 'Net Salary', 'Status', 'Paid At', 'Payment Method', 'Payment Reference']);
+            foreach ($rows as $payroll) {
+                fputcsv($output, [
+                    $payroll->staffProfile?->user?->name ?? 'Deleted staff',
+                    $payroll->staffProfile?->employee_code,
+                    $payroll->staffProfile?->user?->branch?->name,
+                    $payroll->payroll_month,
+                    $payroll->basic_salary,
+                    $payroll->allowances,
+                    $payroll->deductions,
+                    $payroll->net_salary,
+                    $payroll->status,
+                    $payroll->paid_at?->format('Y-m-d'),
+                    $payroll->payment_method,
+                    $payroll->payment_reference,
+                ]);
+            }
+            fclose($output);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function reportFilters(Request $request): array
+    {
+        return $request->validate([
+            'start_month' => ['nullable', 'date_format:Y-m'],
+            'end_month' => ['nullable', 'date_format:Y-m', 'after_or_equal:start_month'],
+            'status' => ['nullable', Rule::in(['draft', 'approved', 'paid'])],
+            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+        ]);
+    }
+
+    private function filteredPayrolls(array $filters)
+    {
+        return StaffPayroll::query()
+            ->when($filters['start_month'] ?? null, fn ($query, $month) => $query->where('payroll_month', '>=', $month))
+            ->when($filters['end_month'] ?? null, fn ($query, $month) => $query->where('payroll_month', '<=', $month))
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['branch_id'] ?? null, fn ($query, $branch) => $query->whereHas('staffProfile.user', fn ($user) => $user->where('branch_id', $branch)));
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
