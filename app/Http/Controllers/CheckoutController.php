@@ -94,6 +94,7 @@ class CheckoutController extends Controller
                 'coupon_id' => $totals['coupon']?->id,
                 'subtotal' => $totals['subtotal'],
                 'discount' => $totals['discount'],
+                'shipping_fee' => $totals['shipping_fee'],
                 'total' => $totals['total'],
                 'status' => 'pending',
             ]);
