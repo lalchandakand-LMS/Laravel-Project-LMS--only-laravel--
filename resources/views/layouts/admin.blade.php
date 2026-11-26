@@ -20,7 +20,7 @@
       #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(14,165,233,.28),rgba(59,130,246,.12));color:white;box-shadow:inset 3px 0 #38bdf8}
       @media(min-width:1024px){#admin-sidebar[data-collapsed="true"]{width:5.25rem}#admin-sidebar[data-collapsed="true"] .sidebar-label,#admin-sidebar[data-collapsed="true"] .sidebar-group,#admin-sidebar[data-collapsed="true"] .sidebar-promo,#admin-sidebar[data-collapsed="true"] .sidebar-version{display:none}#admin-sidebar[data-collapsed="true"] .nav-link{justify-content:center;padding-left:.7rem;padding-right:.7rem}#admin-sidebar[data-collapsed="true"] .nav-icon{font-size:1.2rem}}
       :root{--admin-card-radius:{{ (int) \App\Models\Setting::get('admin_card_radius', 18) }}px}
-      body main section.rounded-2xl,body main article.rounded-2xl{border-radius:var(--admin-card-radius)!important}
+      body main .rounded-2xl{border-radius:var(--admin-card-radius)!important}
       html[data-admin-preset="orange"] #admin-sidebar{background:linear-gradient(165deg,#431407 0%,#9a3412 48%,#431407 100%)}
       html[data-admin-preset="orange"] #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(251,146,60,.32),rgba(249,115,22,.12));box-shadow:inset 3px 0 #fb923c}
       html[data-admin-preset="teal"] #admin-sidebar{background:linear-gradient(165deg,#042f2e 0%,#0f766e 48%,#042f2e 100%)}
