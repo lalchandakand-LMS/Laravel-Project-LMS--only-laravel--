@@ -132,4 +132,30 @@ class AdminDashboardV3Test extends TestCase
 
         $this->actingAs($student)->get(route('admin.certificates.index'))->assertForbidden();
     }
+    public function test_course_views_are_counted_once_per_course_per_session_per_day(): void
+    {
+        $teacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+        $course = Course::create([
+            'instructor_id' => $teacher->id,
+            'title' => 'Daily View Tracking Course',
+            'slug' => 'daily-view-tracking-course',
+            'subtitle' => 'A course page view test',
+            'description' => 'Course description for view tracking.',
+            'price' => 100,
+            'duration_minutes' => 60,
+            'level' => 'Beginner',
+            'language' => 'English',
+            'is_published' => true,
+        ]);
+
+        $this->get(route('courses.show', $course->slug))->assertOk();
+        $this->get(route('courses.show', $course->slug))->assertOk();
+
+        $this->assertDatabaseCount('course_views', 1);
+        $this->assertDatabaseHas('course_views', [
+            'course_id' => $course->id,
+            'viewed_on' => now()->toDateString(),
+        ]);
+    }
+
 }
