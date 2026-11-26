@@ -78,7 +78,7 @@ class LiveClassSchedulingTest extends TestCase
         $batch = Batch::create([
             'course_id' => $course->id,
             'name' => 'Sync attendance batch',
-            'code' => 'SYNC-ATT-'.strtoupper(\\Illuminate\\Support\\Str::random(4)),
+            'code' => 'SYNC-ATT-'.strtoupper(\Illuminate\Support\Str::random(4)),
             'status' => 'ongoing',
         ]);
         $liveClass = LiveClass::create([
