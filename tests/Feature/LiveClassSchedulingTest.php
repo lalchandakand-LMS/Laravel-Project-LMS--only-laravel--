@@ -9,6 +9,10 @@ use App\Models\AttendanceSession;
 use App\Models\LiveClass;
 use App\Models\User;
 use App\Notifications\LiveClassChanged;
+use App\Jobs\SendLiveClassSms;
+use App\Services\Sms\MiMSmsGateway;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -434,8 +438,97 @@ class LiveClassSchedulingTest extends TestCase
         config(['live_classes.email_notifications' => false]);
         $this->assertSame(['database'], $notification->via($student));
 
-        config(['live_classes.email_notifications' => true]);
+        config(['live_classes.email_notifications' => true, 'mail.default' => 'log']);
+        $this->assertSame(['database'], $notification->via($student));
+
+        config(['mail.default' => 'smtp']);
         $this->assertSame(['database', 'mail'], $notification->via($student));
+    }
+
+
+    public function test_live_class_sms_channel_is_opt_in_and_requires_a_phone_number(): void
+    {
+        $student = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+            'phone' => '01712345678',
+        ]);
+        $liveClass = LiveClass::create([
+            'course_id' => Course::firstOrFail()->id,
+            'title' => 'SMS opt-in session',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDay(),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        $notification = new LiveClassChanged($liveClass, 'scheduled');
+
+        config(['live_classes.sms_notifications' => false]);
+        $this->assertSame(['database'], $notification->via($student));
+
+        config(['live_classes.sms_notifications' => true]);
+        $this->assertContains(\App\Notifications\Channels\MiMSmsChannel::class, $notification->via($student));
+
+        $student->forceFill(['phone' => null])->save();
+        $this->assertNotContains(\App\Notifications\Channels\MiMSmsChannel::class, $notification->via($student));
+    }
+
+    public function test_mimsms_gateway_normalizes_bangladesh_numbers_and_sends_transactional_sms(): void
+    {
+        Http::fake([
+            'api.mimsms.com/api/V2/SMS' => Http::response([
+                'statusCode' => '200',
+                'status' => 'Success',
+                'trxnId' => 'TEST-TRACK-123',
+            ], 200),
+        ]);
+        config([
+            'live_classes.sms.username' => 'panel@example.test',
+            'live_classes.sms.api_key' => 'test-api-key',
+            'live_classes.sms.sender_name' => 'ALOMS',
+            'live_classes.sms.endpoint' => 'https://api.mimsms.com/api/V2/SMS',
+        ]);
+
+        $gateway = app(MiMSmsGateway::class);
+        $this->assertSame('8801712345678', $gateway->normalizeBangladeshNumber('+880 1712-345678'));
+        $this->assertSame('8801712345678', $gateway->normalizeBangladeshNumber('01712345678'));
+        $this->assertNull($gateway->normalizeBangladeshNumber('012345'));
+
+        $result = $gateway->sendTransactional('01712345678', 'Live class starts tomorrow.');
+
+        $this->assertSame('TEST-TRACK-123', $result['tracking_id']);
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.mimsms.com/api/V2/SMS'
+            && $request['mobileNumber'] === '8801712345678'
+            && $request['transactionType'] === 'T'
+            && $request['apiKey'] === 'test-api-key');
+    }
+
+    public function test_live_class_sms_channel_dispatches_a_queued_job(): void
+    {
+        Queue::fake();
+        config(['live_classes.sms_notifications' => true]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+            'phone' => '01712345678',
+        ]);
+        $liveClass = LiveClass::create([
+            'course_id' => Course::firstOrFail()->id,
+            'title' => 'Queued SMS session',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDay(),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        $notification = new LiveClassChanged($liveClass, 'scheduled');
+        $notification->id = 'notification-test-001';
+
+        app(\App\Notifications\Channels\MiMSmsChannel::class)->send($student, $notification);
+
+        Queue::assertPushed(SendLiveClassSms::class, fn ($job) => $job->userId === $student->id
+            && $job->liveClassId === $liveClass->id
+            && $job->event === 'scheduled');
     }
 
 }
