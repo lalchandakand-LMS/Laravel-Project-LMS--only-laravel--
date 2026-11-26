@@ -91,6 +91,8 @@ class ExamController extends Controller
             ?? $exam->attempts()->create([
                 'user_id' => $user->id,
                 'started_at' => now(),
+                'duration_minutes' => $exam->duration_minutes,
+                'negative_marking' => $exam->negative_marking,
                 'status' => 'in_progress',
             ]);
 
@@ -131,8 +133,25 @@ class ExamController extends Controller
     private function prepareAttemptQuestions(ExamAttempt $attempt): void
     {
         if ($attempt->questions()->exists()) {
+            $updates = [];
             if ($attempt->max_score === null) {
-                $attempt->update(['max_score' => $attempt->questions()->sum('marks')]);
+                $updates['max_score'] = $attempt->questions()->sum('marks');
+            }
+            if ($attempt->duration_minutes === null) {
+                $updates['duration_minutes'] = $attempt->exam->duration_minutes;
+            }
+            if ($attempt->negative_marking === null) {
+                $updates['negative_marking'] = $attempt->exam->negative_marking;
+            }
+            if ($attempt->pass_mark_target === null) {
+                $maxScore = $updates['max_score'] ?? $attempt->max_score;
+                $exam = $attempt->exam;
+                $updates['pass_mark_target'] = $exam->total_marks > 0
+                    ? round(($exam->pass_marks / $exam->total_marks) * $maxScore, 2)
+                    : $exam->pass_marks;
+            }
+            if ($updates) {
+                $attempt->update($updates);
             }
             return;
         }
@@ -147,7 +166,15 @@ class ExamController extends Controller
         }
 
         $maxScore = \App\Models\Question::whereIn('id', $pool)->sum('marks');
-        $attempt->update(['max_score' => $maxScore]);
+        $exam = $attempt->exam;
+        $attempt->update([
+            'max_score' => $maxScore,
+            'pass_mark_target' => $exam->total_marks > 0
+                ? round(($exam->pass_marks / $exam->total_marks) * $maxScore, 2)
+                : $exam->pass_marks,
+            'duration_minutes' => $attempt->duration_minutes ?? $exam->duration_minutes,
+            'negative_marking' => $attempt->negative_marking ?? $exam->negative_marking,
+        ]);
         $sync = [];
         foreach ($pool as $position => $questionId) {
             $sync[$questionId] = ['position' => $position];
@@ -282,7 +309,7 @@ class ExamController extends Controller
                     $awarded = (float) $question->marks;
                     $correct++;
                 } elseif ($answer && $answer->option_id) {
-                    $awarded = -1 * (float) $attempt->exam->negative_marking;
+                    $awarded = -1 * (float) ($attempt->negative_marking ?? $attempt->exam->negative_marking);
                     $wrong++;
                 }
 
