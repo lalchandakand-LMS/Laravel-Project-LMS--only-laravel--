@@ -66,6 +66,7 @@ class PaymentMethodController extends Controller
             'providers.*.mode' => ['required', 'in:sandbox,live'],
             'providers.*.credentials' => ['nullable', 'array'],
             'providers.*.credentials.*' => ['nullable', 'string', 'max:10000'],
+            'providers.*.credentials.base_url' => ['nullable', 'url:https', 'max:255'],
             'providers.*.clear_credentials' => ['nullable', 'boolean'],
         ]);
 
