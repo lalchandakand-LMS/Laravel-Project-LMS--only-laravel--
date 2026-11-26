@@ -15,6 +15,9 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAdjustment;
 use App\Models\StudentFeeInvoice;
+use App\Models\StudentFeePayment;
+use App\Models\StudentFeeCredit;
+use App\Models\StudentFeeCreditApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -245,6 +248,91 @@ class BranchLedgerAndAccessTest extends TestCase
         $this->assertDatabaseCount('student_fee_payments', 0);
     }
 
+
+    public function test_branch_coaching_collected_counts_cash_once_and_does_not_count_unused_advance_as_due(): void
+    {
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $branch = $this->branch('FEE-CASH-AGG', $manager);
+        $manager->update(['branch_id' => $branch->id]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $branch->id]);
+        $course = Course::create(['title' => 'Advance Credit Course', 'price' => 1200, 'is_published' => true]);
+        $batch = CoachingBatch::create([
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'name' => 'Advance Credit Batch',
+            'code' => 'FEE-CASH-AGG-B',
+            'status' => 'ongoing',
+        ]);
+        $admission = CoachingAdmission::create([
+            'student_name' => $student->name,
+            'student_email' => $student->email,
+            'student_phone' => '01700000000',
+            'coaching_batch_id' => $batch->id,
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'student_id' => $student->id,
+            'status' => 'admitted',
+            'admitted_at' => now(),
+        ]);
+        $invoice = StudentFeeInvoice::create([
+            'student_id' => $student->id,
+            'coaching_admission_id' => $admission->id,
+            'coaching_batch_id' => $batch->id,
+            'course_id' => $course->id,
+            'branch_id' => $branch->id,
+            'invoice_type' => 'recurring',
+            'description' => 'First month fee',
+            'issued_at' => now()->toDateString(),
+            'amount' => 1000,
+            'discount' => 0,
+            'status' => 'paid',
+            'created_by' => $manager->id,
+        ]);
+        $payment = StudentFeePayment::create([
+            'invoice_id' => $invoice->id,
+            'student_id' => $student->id,
+            'amount' => 1200,
+            'applied_amount' => 1000,
+            'advance_amount' => 200,
+            'method' => 'cash',
+            'collected_by' => $manager->id,
+            'received_at' => now(),
+        ]);
+        $credit = StudentFeeCredit::create([
+            'student_id' => $student->id,
+            'payment_id' => $payment->id,
+            'amount' => 200,
+            'note' => 'Advance payment balance',
+        ]);
+
+        $nextInvoice = StudentFeeInvoice::create([
+            'student_id' => $student->id,
+            'coaching_admission_id' => $admission->id,
+            'coaching_batch_id' => $batch->id,
+            'course_id' => $course->id,
+            'branch_id' => $branch->id,
+            'invoice_type' => 'recurring',
+            'description' => 'Second month fee',
+            'issued_at' => now()->toDateString(),
+            'amount' => 500,
+            'discount' => 0,
+            'status' => 'partial',
+            'created_by' => $manager->id,
+        ]);
+        StudentFeeCreditApplication::create([
+            'credit_id' => $credit->id,
+            'invoice_id' => $nextInvoice->id,
+            'amount' => 100,
+            'applied_by' => $manager->id,
+        ]);
+
+        $this->actingAs($manager)->get(route('branch.finance'))
+            ->assertOk()
+            ->assertViewHas('totals', function (array $totals) {
+                return $totals['coaching_collected'] === 1200.0
+                    && $totals['coaching_due'] === 400.0;
+            });
+    }
 
     public function test_branch_finance_dashboard_uses_aggregate_totals_and_renders_for_an_empty_branch(): void
     {
