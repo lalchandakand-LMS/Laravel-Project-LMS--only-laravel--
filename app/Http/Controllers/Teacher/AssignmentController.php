@@ -91,14 +91,10 @@ class AssignmentController extends Controller
         $this->assertLessonBelongsToCourse($data);
 
         if ($request->hasFile('attachment')) {
-            if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
-                Storage::disk('local')->delete($assignment->attachment);
-            }
+            delete_stored_media('local', $assignment->attachment);
             $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
         } elseif ($request->filled('resource_url')) {
-            if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
-                Storage::disk('local')->delete($assignment->attachment);
-            }
+            delete_stored_media('local', $assignment->attachment);
             $data['attachment'] = $data['resource_url'];
         } else {
             unset($data['attachment']);
@@ -116,9 +112,7 @@ class AssignmentController extends Controller
         abort_if($assignment->submissions()->exists(), 409,
             'Assignments with student submissions cannot be deleted. Unpublish the assignment instead.');
 
-        if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
-            Storage::disk('local')->delete($assignment->attachment);
-        }
+        delete_stored_media('local', $assignment->attachment);
         $assignment->delete();
 
         return redirect()->route('teacher.assignments.index')->with('success', 'Assignment deleted.');
