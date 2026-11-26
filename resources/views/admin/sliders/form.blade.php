@@ -44,6 +44,9 @@
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Background image (optional)</label>
             <input type="file" name="image" accept="image/*" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <label class="mb-1 mt-3 block text-sm font-semibold text-slate-700">Or use an image URL (HTTPS)</label>
+            <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $slider->image, 'https://') ? $slider->image : '') }}" placeholder="https://example.com/banner.webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Upload takes priority if both are supplied. JPG, PNG or WebP, max 4 MB.</p>
             @if ($slider->imageUrl())
                 <img src="{{ $slider->imageUrl() }}" class="mt-2 h-24 rounded-lg object-cover" alt="">
             @endif
