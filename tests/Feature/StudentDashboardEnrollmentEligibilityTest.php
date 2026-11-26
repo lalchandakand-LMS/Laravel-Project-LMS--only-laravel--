@@ -73,4 +73,38 @@ class StudentDashboardEnrollmentEligibilityTest extends TestCase
             ->assertDontSee('Expired Course Exam')
             ->assertDontSee('Expired Dashboard Course');
     }
+    public function test_dashboard_hides_exams_attached_to_unpublished_courses(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::create([
+            'title' => 'Unpublished Dashboard Course',
+            'slug' => 'unpublished-dashboard-course',
+            'price' => 1000,
+            'is_published' => false,
+        ]);
+
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'price_paid' => 1000,
+            'enrolled_at' => now(),
+        ]);
+
+        Exam::create([
+            'course_id' => $course->id,
+            'title' => 'Hidden Unpublished Course Exam',
+            'duration_minutes' => 30,
+            'total_marks' => 20,
+            'pass_marks' => 10,
+            'is_free' => false,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('student.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Hidden Unpublished Course Exam');
+    }
+
 }

@@ -66,6 +66,7 @@ class DashboardController extends Controller
             ],
             'upcomingExams' => Exam::with('course')->where('is_published', true)
                 ->whereIn('course_id', $enrollments->pluck('course_id'))
+                ->whereHas('course', fn ($query) => $query->where('is_published', true))
                 ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '>=', now()->subDay()))
                 ->orderBy('starts_at')->take(5)->get(),
             'recentLessons' => LessonProgress::with('lesson.course')->where('user_id', $user->id)
