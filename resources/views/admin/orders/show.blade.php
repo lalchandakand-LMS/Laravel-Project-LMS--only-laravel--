@@ -22,6 +22,7 @@
             <dl class="mt-4 space-y-2 border-t border-slate-100 pt-3 text-sm">
                 <div class="flex justify-between"><dt class="text-slate-500">Subtotal</dt><dd>৳{{ number_format($order->subtotal, 2) }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-500">Discount</dt><dd>−৳{{ number_format($order->discount, 2) }}</dd></div>
+                @if($order->items->contains('item_type', 'product'))<div class="flex justify-between"><dt class="text-slate-500">Delivery fee</dt><dd>৳{{ number_format($order->shipping_fee, 2) }}</dd></div>@endif
                 <div class="flex justify-between font-extrabold"><dt>Total</dt><dd>৳{{ number_format($order->total, 2) }}</dd></div>
                 <div class="flex justify-between font-bold text-emerald-700"><dt>Verified received</dt><dd>৳{{ number_format($order->amountPaid(), 2) }}</dd></div>
                 <div class="flex justify-between font-bold text-rose-700"><dt>Remaining due</dt><dd>৳{{ number_format($order->dueAmount(), 2) }}</dd></div>
