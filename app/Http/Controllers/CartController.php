@@ -17,7 +17,7 @@ class CartController extends Controller
             [$type, $id] = array_pad(explode(':', $key), 2, null);
             $id = (int) $id;
 
-            if ($type === 'course' && ($c = Course::find($id))) {
+            if ($type === 'course' && ($c = Course::published()->find($id)) && ! auth()->user()->hasCourse($c)) {
                 $rows[] = [
                     'key' => $key, 'type' => 'course', 'id' => $id, 'title' => $c->title,
                     'price' => $c->final_price, 'original_price' => (float) $c->price,
@@ -26,7 +26,7 @@ class CartController extends Controller
                 ];
             }
 
-            if ($type === 'ebook' && ($e = Ebook::find($id))) {
+            if ($type === 'ebook' && ($e = Ebook::where('is_published', true)->find($id)) && ! $e->ownedBy(auth()->user())) {
                 $rows[] = [
                     'key' => $key, 'type' => 'ebook', 'id' => $id, 'title' => $e->title,
                     'price' => $e->final_price, 'original_price' => (float) $e->price,
