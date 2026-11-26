@@ -186,6 +186,15 @@ class SiteCustomizationSettingsTest extends TestCase
         ])->assertSessionHasErrors(['site_primary_color', 'site_secondary_color']);
     }
 
+    public function test_new_installation_uses_cyan_teal_public_brand_defaults(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('--aec-primary: #06b6d4', false)
+            ->assertSee('--aec-primary-dark: #0d9488', false)
+            ->assertSee('linear-gradient(125deg,#062c30 0%,#041c24 100%)', false);
+    }
+
     public function test_public_brand_palette_is_rendered_on_the_website(): void
     {
         Setting::set('site_primary_color', '#ea580c');
@@ -347,6 +356,7 @@ class SiteCustomizationSettingsTest extends TestCase
     {
         Setting::set('homepage_latest_title', 'New learning courses this month');
         Setting::set('homepage_latest_subtitle', 'Fresh courses for every learner.');
+        Setting::set('homepage_show_latest', '1');
 
         $this->get('/')
             ->assertOk()
