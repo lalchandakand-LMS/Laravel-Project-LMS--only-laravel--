@@ -148,8 +148,9 @@ class AdminDashboardV3Test extends TestCase
             'is_published' => true,
         ]);
 
-        $this->get(route('courses.show', $course->slug))->assertOk();
-        $this->get(route('courses.show', $course->slug))->assertOk();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $this->actingAs($student)->get(route('courses.show', $course->slug))->assertOk();
+        $this->actingAs($student)->get(route('courses.show', $course->slug))->assertOk();
 
         $this->assertDatabaseCount('course_views', 1);
         $this->assertDatabaseHas('course_views', [
