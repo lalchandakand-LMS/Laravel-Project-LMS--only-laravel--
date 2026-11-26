@@ -10,6 +10,8 @@ use App\Models\Course;
 use App\Models\StudentFeeInvoice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CoachingAdmissionWorkflowTest extends TestCase
@@ -53,7 +55,7 @@ class CoachingAdmissionWorkflowTest extends TestCase
     public function test_failed_admission_document_storage_rolls_back_the_application(): void
     {
         [, , $batch] = $this->setupCoaching();
-        $disk = \\Mockery::mock(\\Illuminate\\Filesystem\\FilesystemAdapter::class);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
         $disk->shouldReceive('putFileAs')->once()->andReturn(false);
         Storage::shouldReceive('disk')->once()->with('local')->andReturn($disk);
 
