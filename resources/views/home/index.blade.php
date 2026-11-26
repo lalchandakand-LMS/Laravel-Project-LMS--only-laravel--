@@ -366,14 +366,13 @@
 
 
 </div>
-@php($homepageSectionOrder = json_decode($homepageSettings['homepage_section_order'] ?? '[]', true))
 @push('scripts')
 <script>
 (() => {
     const container = document.getElementById('homepage-sections');
     if (!container) return;
     const sections = new Map([...container.querySelectorAll(':scope > [data-home-section]')].map(section => [section.dataset.homeSection, section]));
-    const savedOrder = @json(is_array($homepageSectionOrder) ? $homepageSectionOrder : []);
+    const savedOrder = @json(json_decode($homepageSettings['homepage_section_order'] ?? '[]', true) ?: []);
     [...savedOrder, ...sections.keys()].forEach(key => {
         const section = sections.get(key);
         if (section) { container.appendChild(section); sections.delete(key); }
