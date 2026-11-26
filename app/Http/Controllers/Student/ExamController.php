@@ -76,29 +76,51 @@ class ExamController extends Controller
     public function start(Request $request, Exam $exam)
     {
         $user = $request->user();
-        abort_unless($this->canAccessExam($user, $exam) && $exam->isOpen(), 403, 'This exam is not available to your account.');
 
-        $questionPoolCount = $exam->questions()->count();
-        if ($exam->random_question_count > $questionPoolCount) {
-            abort(422, 'This exam does not have enough questions for its configured random set.');
-        }
+        $attempt = DB::transaction(function () use ($user, $exam) {
+            // Serialize starts for this exam so a rapid double-click cannot
+            // create multiple attempts or bypass the configured attempt limit.
+            $lockedExam = Exam::whereKey($exam->id)->lockForUpdate()->firstOrFail();
+            abort_unless($this->canAccessExam($user, $lockedExam) && $lockedExam->isOpen(), 403,
+                'This exam is not available to your account.');
 
-        $left = $exam->attemptsLeftFor($user);
-        if ($left !== null && $left <= 0) {
+            $questionPoolCount = $lockedExam->questions()->count();
+            if ($lockedExam->random_question_count > $questionPoolCount) {
+                abort(422, 'This exam does not have enough questions for its configured random set.');
+            }
+
+            // An unfinished attempt is resumable even when it has consumed the
+            // final allowed attempt; check for it before enforcing the limit.
+            $attempt = $lockedExam->attempts()
+                ->where('user_id', $user->id)
+                ->where('status', 'in_progress')
+                ->latest()
+                ->lockForUpdate()
+                ->first();
+
+            if (! $attempt) {
+                $left = $lockedExam->attemptsLeftFor($user);
+                if ($left !== null && $left <= 0) {
+                    return null;
+                }
+
+                $attempt = $lockedExam->attempts()->create([
+                    'user_id' => $user->id,
+                    'started_at' => now(),
+                    'duration_minutes' => $lockedExam->duration_minutes,
+                    'negative_marking' => $lockedExam->negative_marking,
+                    'status' => 'in_progress',
+                ]);
+            }
+
+            $this->prepareAttemptQuestions($attempt);
+
+            return $attempt;
+        });
+
+        if (! $attempt) {
             return redirect()->route('student.exams.show', $exam)->with('info', 'You have used all attempts.');
         }
-
-        // Resume an unfinished attempt instead of creating a new one.
-        $attempt = $exam->attempts()->where('user_id', $user->id)->where('status', 'in_progress')->latest()->first()
-            ?? $exam->attempts()->create([
-                'user_id' => $user->id,
-                'started_at' => now(),
-                'duration_minutes' => $exam->duration_minutes,
-                'negative_marking' => $exam->negative_marking,
-                'status' => 'in_progress',
-            ]);
-
-        $this->prepareAttemptQuestions($attempt);
 
         return redirect()->route('student.attempts.show', $attempt);
     }
