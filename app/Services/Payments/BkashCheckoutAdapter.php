@@ -325,6 +325,9 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
         if (! is_array($json)) {
             throw new RuntimeException('bKash returned an unreadable response.');
         }
+        if (isset($json['statusCode']) && (string) $json['statusCode'] !== '0000') {
+            throw new RuntimeException('bKash API returned provider status '.(string) $json['statusCode'].'.');
+        }
 
         return $json;
     }
