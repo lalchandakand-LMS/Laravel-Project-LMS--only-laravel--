@@ -13,6 +13,7 @@
     </div>
     <form method="POST" action="{{ route('contact.send') }}" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         @csrf
+        <div class="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Name</label>
             <input name="name" value="{{ old('name', auth()->user()->name ?? '') }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
@@ -20,6 +21,14 @@
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Email</label>
             <input type="email" name="email" value="{{ old('email', auth()->user()->email ?? '') }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none">
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Phone (optional)</label>
+            <input name="phone" value="{{ old('phone', auth()->user()->phone ?? '') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Subject (optional)</label>
+            <input name="subject" value="{{ old('subject') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Message</label>
