@@ -460,15 +460,15 @@ class OrderController extends Controller
         abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
 
         // Treat user-supplied proof as an untrusted attachment, never inline active content.
-        return response()->download(
+        $response = response()->download(
             Storage::disk('local')->path($payment->proof_path),
-            basename($payment->proof_path),
-            [
-                'X-Content-Type-Options' => 'nosniff',
-                'Cache-Control' => 'private, no-store, max-age=0',
-                'Referrer-Policy' => 'no-referrer',
-            ]
+            basename($payment->proof_path)
         );
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
+        $response->headers->set('Referrer-Policy', 'no-referrer');
+
+        return $response;
     }
 
     private function isTransactionReferenceConflict(QueryException $exception): bool
