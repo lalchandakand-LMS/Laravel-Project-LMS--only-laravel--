@@ -29,7 +29,8 @@
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
         .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
         .bg-emerald-50,[class~="bg-emerald-400/10"] { background-color: color-mix(in srgb, var(--aec-primary) 9%, white) !important; }
-        .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500,.text-emerald-400,.text-emerald-300 { color: var(--aec-primary-dark) !important; }
+        .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500 { color: var(--aec-primary-dark) !important; }
+        .text-emerald-400,.text-emerald-300,.text-emerald-200 { color: color-mix(in srgb, var(--aec-primary) 65%, white) !important; }
         .border-emerald-400,[class~="border-emerald-400/30"],.border-emerald-500 { border-color: color-mix(in srgb, var(--aec-primary) 42%, transparent) !important; }
         [class~="hover:bg-emerald-800"]:hover,[class~="hover:bg-emerald-700"]:hover,[class~="hover:bg-emerald-400"]:hover { background-color: var(--aec-primary-dark) !important; }
         [class~="hover:text-emerald-700"]:hover,[class~="hover:text-emerald-800"]:hover { color: var(--aec-primary-dark) !important; }
