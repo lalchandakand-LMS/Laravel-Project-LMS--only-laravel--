@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('coaching_admissions', function (Blueprint $table) {
+            $table->id();
+            $table->string('application_no', 32)->unique();
+            $table->string('student_name', 160);
+            $table->string('student_email')->index();
+            $table->string('student_phone', 30);
+            $table->string('guardian_name', 160)->nullable();
+            $table->string('guardian_phone', 30)->nullable();
+            $table->string('guardian_email')->nullable();
+            $table->foreignId('branch_id')->constrained()->restrictOnDelete();
+            $table->foreignId('course_id')->constrained()->restrictOnDelete();
+            $table->foreignId('batch_id')->constrained()->restrictOnDelete();
+            $table->foreignId('student_id')->nullable()->constrained('users')->restrictOnDelete();
+            $table->string('status', 20)->default('pending')->index();
+            $table->text('applicant_note')->nullable();
+            $table->text('admin_note')->nullable();
+            $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable();
+            $table->timestamp('admitted_at')->nullable();
+            $table->timestamps();
+            $table->index(['branch_id', 'status', 'created_at']);
+            $table->index(['student_id', 'status']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('coaching_admissions');
+    }
+};
