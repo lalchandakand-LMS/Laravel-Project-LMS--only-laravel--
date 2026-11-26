@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\MarketingLead;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Ebook;
@@ -101,13 +102,13 @@ class PageController extends Controller
             'phone' => $validated['phone'] ?? null,
             'subject' => $validated['subject'] ?? null,
             'message' => $validated['message'],
-            'source' => $attribution['utm_source'] ?? ($attribution['referrer_host'] ?? 'website'),
+            'source' => mb_substr((string) ($attribution['utm_source'] ?? ($attribution['referrer_host'] ?? 'website')), 0, 80),
             'utm_source' => $attribution['utm_source'] ?? null,
             'utm_medium' => $attribution['utm_medium'] ?? null,
             'utm_campaign' => $attribution['utm_campaign'] ?? null,
             'utm_term' => $attribution['utm_term'] ?? null,
             'utm_content' => $attribution['utm_content'] ?? null,
-            'landing_page' => $attribution['landing_page'] ?? '/contact',
+            'landing_page' => mb_substr((string) ($attribution['landing_page'] ?? '/contact'), 0, 500),
             'referrer_host' => $attribution['referrer_host'] ?? null,
             'status' => 'new',
         ]);
