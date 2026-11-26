@@ -9,12 +9,12 @@ class CoachingAdmission extends Model
 {
     protected $fillable = [
         'application_no', 'student_name', 'student_email', 'student_phone',
-        'guardian_name', 'guardian_phone', 'guardian_email', 'branch_id',
+        'guardian_name', 'guardian_phone', 'guardian_email', 'student_sms_consent', 'guardian_sms_consent', 'branch_id',
         'course_id', 'batch_id', 'student_id', 'status', 'applicant_note',
         'admin_note', 'reviewed_by', 'reviewed_at', 'admitted_at',
     ];
 
-    protected $casts = ['reviewed_at' => 'datetime', 'admitted_at' => 'datetime'];
+    protected $casts = ['reviewed_at' => 'datetime', 'admitted_at' => 'datetime', 'student_sms_consent' => 'boolean', 'guardian_sms_consent' => 'boolean'];
 
     protected static function booted(): void
     {
