@@ -207,6 +207,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
         Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
         Route::get('marketing/leads', [Admin\MarketingLeadController::class, 'index'])->name('marketing.leads.index');
+        Route::resource('marketing/campaigns', Admin\MarketingCampaignController::class)->except('show')->parameters(['campaigns' => 'campaign']);
         Route::patch('marketing/leads/{lead}', [Admin\MarketingLeadController::class, 'update'])->name('marketing.leads.update');
         Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
         Route::post('certificates', [Admin\CertificateController::class, 'store'])->name('certificates.store');
