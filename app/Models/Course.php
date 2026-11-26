@@ -78,7 +78,7 @@ class Course extends Model
     public function getThumbnailUrlAttribute(): string
     {
         return $this->thumbnail
-            ? asset('storage/'.$this->thumbnail)
+            ? (str_starts_with($this->thumbnail, 'https://') ? $this->thumbnail : asset('storage/'.$this->thumbnail))
             : 'https://picsum.photos/seed/'.$this->id.'/640/400';
     }
 
