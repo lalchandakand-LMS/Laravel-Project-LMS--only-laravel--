@@ -38,8 +38,8 @@ case "$DB_CONNECTION" in
     ;;
   mysql)
     command -v mysqldump >/dev/null 2>&1 || { echo "mysqldump missing - export from phpMyAdmin"; exit 1; }
-    mysqldump --single-transaction --quick --no-tablespaces \
-      -h"$(ENV_VAL DB_HOST)" -P"$(ENV_VAL DB_PORT)" -u"$(ENV_VAL DB_USERNAME)" -p"$(ENV_VAL DB_PASSWORD)" \
+    MYSQL_PWD="$(ENV_VAL DB_PASSWORD)" mysqldump --single-transaction --quick --no-tablespaces \
+      -h"$(ENV_VAL DB_HOST)" -P"$(ENV_VAL DB_PORT)" -u"$(ENV_VAL DB_USERNAME)" \
       "${DB_DATABASE:-$(ENV_VAL DB_DATABASE)}" > "$BACKUP_DIR/mysql-$STAMP.sql" 2>/dev/null
     [ -s "$BACKUP_DIR/mysql-$STAMP.sql" ] || { echo "dump failed (empty file)"; rm -f "$BACKUP_DIR/mysql-$STAMP.sql"; exit 1; }
     echo "database -> $BACKUP_DIR/mysql-$STAMP.sql"
