@@ -245,13 +245,34 @@ class LiveClassController extends Controller
 
     private function notifyStudents(LiveClass $liveClass, string $event): void
     {
-        $branchId = $liveClass->batch?->branch_id;
+        // Notification recipients must satisfy the same branch and batch
+        // eligibility rules as the student live-class schedule. A still-active
+        // enrollment can be stale after a branch transfer or batch cancellation.
         $legacy = Enrollment::query()
             ->where('course_id', $liveClass->course_id)
             ->where('status', 'active')
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->when($liveClass->batch_id, fn ($q) => $q->where('batch_id', $liveClass->batch_id))
-            ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true)->when($branchId, fn ($users) => $users->where('branch_id', $branchId)))
+            ->where(function ($eligibleBatch) {
+                $eligibleBatch->whereNull('batch_id')
+                    ->orWhereHas('batch', function ($batch) {
+                        $batch->whereNotIn('status', ['upcoming', 'cancelled'])
+                            ->where(function ($branch) {
+                                $branch->whereNull('batches.branch_id')
+                                    ->orWhereExists(function ($studentBranch) {
+                                        $studentBranch->selectRaw('1')
+                                            ->from('users')
+                                            ->whereColumn('users.id', 'enrollments.user_id')
+                                            ->whereColumn('users.branch_id', 'batches.branch_id');
+                                    });
+                            });
+                    });
+            })
+            ->whereHas('user', fn ($q) => $q
+                ->where('role', 'student')
+                ->where('is_active', true)
+                ->where(fn ($branch) => $branch->whereNull('enrollments.branch_id')
+                    ->orWhereColumn('enrollments.branch_id', 'users.branch_id')))
             ->pluck('user_id');
 
         $online = OnlineBatchEnrollment::query()
@@ -259,7 +280,19 @@ class LiveClassController extends Controller
             ->where('status', 'active')
             ->whereNull('ended_at')
             ->when($liveClass->batch_id, fn ($q) => $q->where('batch_id', $liveClass->batch_id))
-            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true)->when($branchId, fn ($users) => $users->where('branch_id', $branchId)))
+            ->whereHas('batch', function ($batch) {
+                $batch->whereNotIn('status', ['upcoming', 'cancelled'])
+                    ->where(function ($branch) {
+                        $branch->whereNull('batches.branch_id')
+                            ->orWhereExists(function ($studentBranch) {
+                                $studentBranch->selectRaw('1')
+                                    ->from('users')
+                                    ->whereColumn('users.id', 'online_batch_enrollments.student_id')
+                                    ->whereColumn('users.branch_id', 'batches.branch_id');
+                            });
+                    });
+            })
+            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
             ->pluck('student_id');
 
         $studentIds = $legacy->merge($online)->unique()->values();
