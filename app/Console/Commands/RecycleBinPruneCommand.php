@@ -92,6 +92,7 @@ class RecycleBinPruneCommand extends Command
                 ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
                 ['exams', 'course_id'], ['reviews', 'course_id'], ['announcements', 'course_id'],
                 ['certificates', 'course_id'], ['live_classes', 'course_id'], ['order_items', 'item_id'],
+                ['assignments', 'course_id'], ['batches', 'course_id'], ['online_batch_enrollments', 'course_id'],
             ],
             'categories' => [['categories', 'parent_id'], ['courses', 'category_id']],
             'sections' => [['lessons', 'section_id']],
