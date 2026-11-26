@@ -6,7 +6,9 @@ use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\OrderService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
@@ -153,16 +155,38 @@ class CheckoutController extends Controller
 
         $proofPath = $request->file('proof')?->store('payment-proofs', 'local');
 
-        Payment::create([
-            'order_id' => $order->id,
-            'gateway' => $data['gateway'],
-            'amount' => $data['amount'],
-            'sender_number' => $data['sender_number'],
-            'transaction_id' => $data['transaction_id'],
-            'proof_path' => $proofPath,
-            'status' => 'pending',
-        ]);
+        try {
+            Payment::create([
+                'order_id' => $order->id,
+                'gateway' => $data['gateway'],
+                'amount' => $data['amount'],
+                'sender_number' => $data['sender_number'],
+                'transaction_id' => $data['transaction_id'],
+                'proof_path' => $proofPath,
+                'status' => 'pending',
+            ]);
+        } catch (QueryException $exception) {
+            if (! $this->isTransactionReferenceConflict($exception)) {
+                throw $exception;
+            }
+
+            if ($proofPath) {
+                Storage::disk('local')->delete($proofPath);
+            }
+
+            throw ValidationException::withMessages([
+                'transaction_id' => 'This transaction ID has already been submitted.',
+            ]);
+        }
 
         return back()->with('success', 'Payment submitted for verification. Your remaining balance and course access will update after approval.');
     }
+    private function isTransactionReferenceConflict(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'payments_transaction_id_unique')
+            || str_contains($message, 'payments.transaction_id');
+    }
+
 }
