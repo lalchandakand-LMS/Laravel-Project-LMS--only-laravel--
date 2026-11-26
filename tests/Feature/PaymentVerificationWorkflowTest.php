@@ -582,4 +582,27 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame(800.0, (float) $editableOrder->fresh()->total);
         $this->assertSame(800.0, (float) $editableOrder->fresh()->items()->firstOrFail()->price);
     }
+
+    public function test_marking_an_order_paid_rejects_any_still_pending_payment_submission(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $pending = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 500,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'PENDING-BEFORE-ADMIN-PAID',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'paid',
+        ])->assertRedirect();
+
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame('rejected', $pending->fresh()->status);
+        $this->assertSame($admin->id, $pending->fresh()->verified_by);
+        $this->assertStringContainsString('marked paid', $pending->fresh()->rejection_reason);
+        $this->assertSame(1000.0, $order->fresh()->amountPaid());
+    }
 }
