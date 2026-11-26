@@ -295,7 +295,7 @@ class OrderController extends Controller
                     return;
                 }
 
-                $alreadyPaid = (float) $order->payments()->where('status', 'verified')->sum('amount');
+                $alreadyPaid = $order->amountPaid();
                 if (round($alreadyPaid + $lockedPayment->amount, 2) > round($order->total, 2)) {
                     throw ValidationException::withMessages(['payment' => 'Approving this payment would exceed the order balance. Review the amount before approval.']);
                 }
