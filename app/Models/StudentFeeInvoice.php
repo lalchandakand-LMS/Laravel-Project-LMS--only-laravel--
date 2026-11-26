@@ -18,7 +18,8 @@ class StudentFeeInvoice extends Model
         });
     }
 
-    public function student() { return $this->belongsTo(User::class, 'student_id'); }\n    public function coachingAdmission() { return $this->belongsTo(CoachingAdmission::class, 'coaching_admission_id'); }
+    public function student() { return $this->belongsTo(User::class, 'student_id'); }
+    public function coachingAdmission() { return $this->belongsTo(CoachingAdmission::class, 'coaching_admission_id'); }
     public function plan() { return $this->belongsTo(FeePlan::class, 'fee_plan_id'); }
     public function course() { return $this->belongsTo(Course::class); }
     public function batch() { return $this->belongsTo(Batch::class); }
