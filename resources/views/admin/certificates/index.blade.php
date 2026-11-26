@@ -2,6 +2,14 @@
 @section('title', 'Certificates')
 @section('heading', 'Certificates')
 @section('content')
+<div class="mb-5 rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
+    <div class="mb-3"><h2 class="font-extrabold text-slate-900">Generate Certificate</h2><p class="mt-1 text-xs text-slate-500">Only students with an active eligible enrolment and 100% course completion can receive a certificate.</p></div>
+    <form method="POST" action="{{ route('admin.certificates.store') }}" class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">@csrf
+        <select name="user_id" required class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Select student</option>@foreach($students as $student)<option value="{{ $student->id }}">{{ $student->name }} — {{ $student->email }}</option>@endforeach</select>
+        <select name="course_id" required class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Select completed course</option>@foreach($courses as $course)<option value="{{ $course->id }}">{{ $course->title }}</option>@endforeach</select>
+        <button class="rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white">Generate Certificate</button>
+    </form>
+</div>
 <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <p class="text-sm text-slate-500">Issued learner certificates and verification codes.</p>
     <form method="GET" action="{{ route('admin.certificates.index') }}" class="flex gap-2">
