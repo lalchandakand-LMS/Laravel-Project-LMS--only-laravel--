@@ -7,10 +7,6 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('staff_profiles', function (Blueprint $table) {
-            $table->dropColumn('base_salary');
-        });
-
         Schema::table('coaching_admissions', function (Blueprint $table) {
             $table->date('student_date_of_birth')->nullable();
             $table->string('student_gender', 30)->nullable();
@@ -40,6 +36,10 @@ return new class extends Migration {
 
     public function down(): void
     {
+        Schema::table('staff_profiles', function (Blueprint $table) {
+            $table->dropColumn('base_salary');
+        });
+
         Schema::table('student_profiles', function (Blueprint $table) {
             $table->dropColumn(['guardian_name', 'guardian_phone', 'guardian_email', 'quota_type', 'quota_notes']);
         });
