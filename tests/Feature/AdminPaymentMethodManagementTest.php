@@ -109,4 +109,21 @@ class AdminPaymentMethodManagementTest extends TestCase
         $this->actingAs($student)->get(route('admin.payment-methods.index'))->assertForbidden();
         $this->actingAs($student)->post(route('admin.payment-methods.update'), [])->assertForbidden();
     }
+
+    public function test_gateway_base_urls_must_use_https(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        $this->actingAs($admin)->post(route('admin.payment-methods.update'), [
+            'methods' => ['bkash'],
+            'providers' => [
+                'bkash' => [
+                    'mode' => 'sandbox',
+                    'credentials' => ['base_url' => 'http://untrusted.example.test'],
+                ],
+            ],
+        ])->assertSessionHasErrors('providers.bkash.credentials.base_url');
+
+        $this->assertNull(Setting::get('payment_gateway_credentials.bkash'));
+    }
 }
