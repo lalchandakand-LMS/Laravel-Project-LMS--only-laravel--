@@ -11,27 +11,49 @@ class HandleSeoRedirects
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
+        try {
+            $response = $next($request);
+        } catch (HttpExceptionInterface $exception) {
+            if ($exception->getStatusCode() !== 404) {
+                throw $exception;
+            }
 
-        if (! in_array($request->method(), ['GET', 'HEAD'], true)
-            || $response->getStatusCode() !== 404
-            || $this->isPrivateRequest($request)) {
+            $redirect = $this->findRedirect($request);
+            if (! $redirect) {
+                throw $exception;
+            }
+
+            return $this->redirectTo($redirect);
+        }
+
+        if ($response->getStatusCode() !== 404) {
             return $response;
+        }
+
+        $redirect = $this->findRedirect($request);
+
+        return $redirect ? $this->redirectTo($redirect) : $response;
+    }
+
+    private function findRedirect(Request $request): ?SeoRedirect
+    {
+        if (! in_array($request->method(), ['GET', 'HEAD'], true) || $this->isPrivateRequest($request)) {
+            return null;
         }
 
         $sourcePath = '/'.ltrim($request->path(), '/');
-        $redirect = SeoRedirect::query()
+
+        return SeoRedirect::query()
             ->where('source_path', $sourcePath)
             ->where('is_active', true)
             ->first();
+    }
 
-        if (! $redirect) {
-            return $response;
-        }
-
+    private function redirectTo(SeoRedirect $redirect): Response
+    {
         $destination = $redirect->destination_path;
         if (! is_string($destination) || ! str_starts_with($destination, '/') || str_starts_with($destination, '//')) {
-            return $response;
+            abort(404);
         }
 
         $redirect->increment('hits');
