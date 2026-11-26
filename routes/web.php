@@ -341,6 +341,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
 
         Route::get('seo', [Admin\SeoController::class, 'index'])->name('seo.index');
         Route::post('seo', [Admin\SeoController::class, 'update'])->name('seo.update');
+        Route::resource('seo/redirects', Admin\SeoRedirectController::class)->except('show')->parameters(['redirects' => 'redirect']);
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);
