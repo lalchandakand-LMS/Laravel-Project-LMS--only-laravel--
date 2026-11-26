@@ -13,7 +13,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Category::with(['parent', 'children'])->withCount(['courses', 'courseLinks']);
+        $query = Category::with(['parent', 'children'])->withCount(['courseLinks', 'children']);
         if ($search = $request->string('q')->toString()) {
             $query->where('name', 'like', "%{$search}%");
         }
