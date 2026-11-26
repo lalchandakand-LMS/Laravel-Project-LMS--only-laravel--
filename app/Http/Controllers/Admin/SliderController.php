@@ -66,7 +66,8 @@ class SliderController extends Controller
             'badge' => 'nullable|string|max:80',
             'title' => 'required|string|max:160',
             'subtitle' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:4096',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:4096',
+            'image_url' => 'nullable|url:http,https|max:2048',
             'button_text' => 'nullable|string|max:60',
             'button_url' => 'nullable|string|max:255',
             'theme' => 'required|in:'.implode(',', array_keys(Slider::THEMES)),
@@ -75,7 +76,10 @@ class SliderController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('sliders', 'public');
+        } elseif ($request->filled('image_url')) {
+            $data['image'] = $data['image_url'];
         }
+        unset($data['image_url']);
 
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = $request->boolean('is_active');
