@@ -107,6 +107,34 @@
             </dl>
         </section>
 
+        @if($order->status === 'paid' && $order->items->contains('item_type', 'product'))
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 class="font-bold text-slate-900">Physical order fulfillment</h3>
+                <p class="mt-1 text-xs text-slate-500">Current status: <b class="uppercase">{{ $order->shipping_status ?: 'processing' }}</b></p>
+                @if($order->tracking_number)
+                    <p class="mt-2 text-sm">Carrier: {{ $order->shipping_carrier ?: '—' }} · Tracking: <b>{{ $order->tracking_number }}</b></p>
+                @endif
+                <form method="POST" action="{{ route('admin.orders.shipping', $order->order_no) }}" class="mt-4 space-y-3">
+                    @csrf
+                    <label class="block text-sm font-semibold">Update status
+                        <select name="shipping_status" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                            @foreach(['processing', 'packed', 'shipped', 'delivered', 'returned'] as $status)
+                                <option value="{{ $status }}" @selected(($order->shipping_status ?: 'processing') === $status)>{{ ucfirst($status) }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="block text-sm font-semibold">Delivery carrier
+                        <input name="shipping_carrier" value="{{ old('shipping_carrier', $order->shipping_carrier) }}" maxlength="100" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </label>
+                    <label class="block text-sm font-semibold">Tracking number
+                        <input name="tracking_number" value="{{ old('tracking_number', $order->tracking_number) }}" maxlength="120" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </label>
+                    <p class="text-xs text-slate-500">Carrier and tracking number are mandatory before marking an order as shipped. Delivery states cannot move backwards.</p>
+                    <button class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-bold text-white">Save fulfillment update</button>
+                </form>
+            </section>
+        @endif
+
         @if ($order->dueAmount() > 0 && $order->branch && $order->branch->is_active && count(array_intersect(['cash', 'office'], $order->branch->payment_methods ?? [])))
             <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h3 class="font-bold text-slate-900">Record cash / office collection</h3>
