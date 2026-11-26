@@ -1,7 +1,8 @@
 @extends('layouts.portal')
 @section('title', 'Branch staff')
 @section('heading', 'Staff — '.$branch->name)
-@section('actions')<a href="{{ route('branch.staff.create') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">+ Add teacher</a>@endsection
+@section('actions')<a href="{{ route('branch.staff.create') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">+ Add teacher</a><div class="mt-4">{{ $staff->links() }}</div>
+@endsection
 @section('content')
 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
     <table class="w-full text-sm">
@@ -26,6 +27,7 @@
                     <td class="px-5 py-3">
                         <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $member->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">{{ $member->is_active ? 'Active' : 'Inactive' }}</span>
                     </td>
+                    <td class="px-5 py-3 text-right"><a href="{{ route('branch.staff.edit',$member) }}" class="font-semibold text-orange-700">Edit</a><form method="POST" action="{{ route('branch.staff.toggle',$member) }}" class="ml-3 inline">@csrf<button class="font-semibold text-slate-600">{{ $member->is_active ? 'Deactivate' : 'Activate' }}</button></form></td>
                 </tr>
             @empty
                 <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">No staff assigned to this branch.</td></tr>
