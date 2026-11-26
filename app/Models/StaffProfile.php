@@ -36,4 +36,9 @@ class StaffProfile extends Model
     {
         return $this->hasMany(StaffPayroll::class)->latest('payroll_month');
     }
+
+    public function attendances()
+    {
+        return $this->hasMany(StaffAttendance::class)->latest('attendance_date');
+    }
 }
