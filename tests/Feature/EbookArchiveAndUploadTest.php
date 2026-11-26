@@ -119,7 +119,13 @@ class EbookArchiveAndUploadTest extends TestCase
         Storage::disk('public')->assertExists($cover);
         Storage::disk('local')->assertExists($file);
 
-        // Archived items are hidden from the catalogue, but previous buyers retain access.
+        // Archived items are hidden from the catalogue, but remain in the buyer's library and readable.
+        $this->actingAs($student)
+            ->get(route('student.ebooks'))
+            ->assertOk()
+            ->assertSee('Purchased e-book archive')
+            ->assertSee('Your access remains active');
+
         $this->actingAs($student)
             ->get(route('student.ebooks.file', $ebook->slug))
             ->assertOk();
