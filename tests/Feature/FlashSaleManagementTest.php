@@ -66,6 +66,11 @@ class FlashSaleManagementTest extends TestCase
         $this->assertSame(750.0, $course->fresh()->final_price);
         $this->assertSame(25, $course->fresh()->discount_percent);
 
+        $this->actingAs($this->admin())->patch(route('admin.flash-sales.toggle', $sale))->assertRedirect();
+        $this->assertSame(900.0, $course->fresh()->final_price);
+        $this->actingAs($this->admin())->patch(route('admin.flash-sales.toggle', $sale->fresh()))->assertRedirect();
+        $this->assertSame(750.0, $course->fresh()->final_price);
+
         $this->actingAs($student)->get(route('courses.show', $course->slug))
             ->assertOk()->assertSee('Early bird flash sale')->assertSee('750');
         $this->actingAs($student)->post(route('cart.add', ['type' => 'course', 'id' => $course->id]))
