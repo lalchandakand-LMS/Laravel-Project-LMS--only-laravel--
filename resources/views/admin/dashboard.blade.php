@@ -3,8 +3,8 @@
 @section('heading', 'Dashboard')
 @section('content')
 @php
-    $brandPrimary = \\App\\Models\\Setting::get('dashboard_primary_color', '#2563eb');
-    $bannerImage = \\App\\Models\\Setting::get('dashboard_banner');
+    $brandPrimary = \App\Models\Setting::get('dashboard_primary_color', '#2563eb');
+    $bannerImage = \App\Models\Setting::get('dashboard_banner');
     $campusImage = $bannerImage ? media_url($bannerImage) : asset('images/aec-logo.svg');
     $studentAvatar = $latestStudents->first()?->avatarUrl() ?? asset('images/aec-logo.svg');
     $series = [
@@ -31,9 +31,9 @@
         <img src="{{ $studentAvatar }}" alt="Student" class="relative z-10 h-44 w-44 rounded-t-full border-4 border-white/30 object-cover shadow-2xl">
     </div>
     <div class="relative z-10 flex flex-col justify-center px-7 py-8 lg:px-3">
-        <p class="text-xs font-bold uppercase tracking-[.24em] text-cyan-100">{{ \\App\\Models\\Setting::get('site_name', "Alom's English Center") }} · LMS v3.0</p>
-        <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{{ \\App\\Models\\Setting::get('dashboard_banner_title', 'Welcome back, '.auth()->user()->name.'!') }}</h2>
-        <p class="mt-2 max-w-xl text-sm leading-6 text-blue-50">{{ \\App\\Models\\Setting::get('dashboard_banner_subtitle', 'Your learning community is growing. Here is your academy at a glance.') }}</p>
+        <p class="text-xs font-bold uppercase tracking-[.24em] text-cyan-100">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }} · LMS v3.0</p>
+        <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{{ \App\Models\Setting::get('dashboard_banner_title', 'Welcome back, '.auth()->user()->name.'!') }}</h2>
+        <p class="mt-2 max-w-xl text-sm leading-6 text-blue-50">{{ \App\Models\Setting::get('dashboard_banner_subtitle', 'Your learning community is growing. Here is your academy at a glance.') }}</p>
         <div class="mt-5 flex flex-wrap gap-3">
             <a href="{{ route('admin.courses.create') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-extrabold text-blue-800 shadow-lg hover:bg-cyan-50">Create a Course <span aria-hidden="true">→</span></a>
             <a href="{{ route('admin.users.create') }}" class="rounded-xl border border-white/50 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/20">Add a Student</a>
@@ -108,7 +108,7 @@
         <h3 class="font-extrabold text-slate-900">Recent Activities</h3>
         <div class="mt-4 space-y-4">
             @forelse($recentActivities as $activity)
-                <div class="flex gap-3"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">↗</span><div class="min-w-0"><p class="truncate text-xs font-bold text-slate-800">{{ Str::headline(str_replace(['_', '.'], ' ', $activity->event)) }}</p><p class="mt-0.5 text-[11px] text-slate-500">{{ $activity->actor_name ?: 'System' }} · {{ \\Carbon\\Carbon::parse($activity->created_at)->diffForHumans() }}</p></div></div>
+                <div class="flex gap-3"><span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">↗</span><div class="min-w-0"><p class="truncate text-xs font-bold text-slate-800">{{ Str::headline(str_replace(['_', '.'], ' ', $activity->event)) }}</p><p class="mt-0.5 text-[11px] text-slate-500">{{ $activity->actor_name ?: 'System' }} · {{ \Carbon\Carbon::parse($activity->created_at)->diffForHumans() }}</p></div></div>
             @empty
                 <p class="py-6 text-center text-xs text-slate-400">No activity has been logged yet.</p>
             @endforelse
