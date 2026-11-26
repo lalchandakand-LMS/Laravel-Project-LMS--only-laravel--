@@ -8,6 +8,26 @@
         <p class="mt-1 text-sm text-orange-900">Manage the public website's default search metadata and indexing policy. Page-specific course and blog metadata can override these defaults.</p>
     </section>
 
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div><h2 class="font-bold text-slate-900">On-page SEO audit</h2><p class="mt-1 text-sm text-slate-500">Checks published course and blog metadata and lists records that need attention.</p></div>
+            <span class="rounded-full px-3 py-1 text-xs font-bold {{ ($coursesMissingMeta + $postsMissingMeta) > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">{{ $coursesMissingMeta + $postsMissingMeta }} records need metadata</span>
+        </div>
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Published courses missing title or description</p><p class="mt-1 text-2xl font-black text-slate-900">{{ $coursesMissingMeta }}</p></div>
+            <div class="rounded-xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Published blog posts missing title or description</p><p class="mt-1 text-2xl font-black text-slate-900">{{ $postsMissingMeta }}</p></div>
+        </div>
+        @if($missingMeta->isNotEmpty())
+            <div class="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                @foreach($missingMeta as $item)
+                    <div class="flex flex-wrap items-center justify-between gap-2 p-3"><div><span class="text-[10px] font-bold uppercase text-slate-400">{{ $item['type'] }}</span><p class="text-sm font-semibold text-slate-800">{{ $item['title'] }}</p></div><a href="{{ $item['url'] }}" class="text-xs font-bold text-orange-700 underline">Edit SEO fields →</a></div>
+                @endforeach
+            </div>
+        @elseif(($coursesMissingMeta + $postsMissingMeta) === 0)
+            <p class="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">All published courses and blog posts have both SEO title and description fields filled.</p>
+        @endif
+    </section>
+
     <form method="POST" action="{{ route('admin.seo.update') }}" class="space-y-6">
         @csrf
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
