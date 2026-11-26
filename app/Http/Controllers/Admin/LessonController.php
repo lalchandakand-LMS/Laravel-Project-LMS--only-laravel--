@@ -31,17 +31,12 @@ class LessonController extends Controller
         $this->authorizeCourse($course);
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data);
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
-            if (! $data['attachment']) {
-                throw ValidationException::withMessages(['attachment' => 'The lesson attachment could not be stored.']);
-            }
-        }
+        $storedAttachment = $this->applyAttachment($request, $data);
         try {
             Lesson::create($data);
         } catch (\Throwable $exception) {
-            if ($request->hasFile('attachment') && ! empty($data['attachment'])) {
-                delete_stored_media('local', $data['attachment']);
+            if ($storedAttachment) {
+                delete_stored_media('local', $storedAttachment);
             }
             throw $exception;
         }
@@ -68,19 +63,12 @@ class LessonController extends Controller
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data, $lesson);
         $oldAttachment = $lesson->attachment;
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
-            if (! $data['attachment']) {
-                throw ValidationException::withMessages(['attachment' => 'The new lesson attachment could not be stored. The previous file has been kept.']);
-            }
-        } elseif (! $request->filled('attachment_url')) {
-            unset($data['attachment']);
-        }
+        $storedAttachment = $this->applyAttachment($request, $data);
         try {
             $lesson->update($data);
         } catch (\Throwable $exception) {
-            if ($request->hasFile('attachment') && ! empty($data['attachment'])) {
-                delete_stored_media('local', $data['attachment']);
+            if ($storedAttachment) {
+                delete_stored_media('local', $storedAttachment);
             }
             throw $exception;
         }
@@ -115,9 +103,30 @@ class LessonController extends Controller
     {
         $this->authorizeCourse($lesson->course);
         $course = $lesson->course;
-        // Keep the attachment while the lesson is recoverable from the Recycle Bin.
+        // Keep the private attachment while the lesson remains recoverable.
         $lesson->delete();
+
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson deleted.');
+    }
+
+
+    private function applyAttachment(Request $request, array &$data): ?string
+    {
+        $storedAttachment = null;
+
+        if ($request->hasFile('attachment')) {
+            $storedAttachment = $request->file('attachment')->store('lessons', 'local');
+            if (! $storedAttachment) {
+                throw ValidationException::withMessages(['attachment' => 'The lesson attachment could not be stored.']);
+            }
+            $data['attachment'] = $storedAttachment;
+        } elseif ($request->filled('attachment_url')) {
+            $data['attachment'] = $data['attachment_url'];
+        }
+
+        unset($data['attachment_url']);
+
+        return $storedAttachment;
     }
 
     private function authorizeCourse(Course $course): void
@@ -174,11 +183,6 @@ class LessonController extends Controller
             'available_at' => 'nullable|date',
             'prerequisite_lesson_id' => 'nullable|integer|exists:lessons,id',
         ]);
-
-        if ($request->filled('attachment_url')) {
-            $data['attachment'] = $data['attachment_url'];
-        }
-        unset($data['attachment_url']);
 
         $data['is_free_preview'] = $request->boolean('is_free_preview');
         $data['is_published'] = $request->boolean('is_published');
