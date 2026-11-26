@@ -79,4 +79,32 @@ class SystemMaintenanceTest extends TestCase
         $this->assertSame($admin->id, (int) $deletedStudent->deleted_by);
         $this->assertTrue(User::onlyTrashed()->whereKey($student->id)->exists());
     }
+
+    public function test_sqlite_restore_rejects_a_database_missing_required_lms_tables_before_replacement(): void
+    {
+        $source = tempnam(sys_get_temp_dir(), 'aec-invalid-backup-');
+        $target = tempnam(sys_get_temp_dir(), 'aec-live-database-');
+        $this->assertNotFalse($source);
+        $this->assertNotFalse($target);
+
+        try {
+            new \PDO('sqlite:'.$source);
+            $targetBefore = file_get_contents($target);
+            $controller = app(\App\Http\Controllers\Admin\SystemBackupController::class);
+            $method = new \ReflectionMethod($controller, 'replaceSqliteDatabase');
+
+            try {
+                $method->invoke($controller, $source, $target);
+                $this->fail('An SQLite database without the LMS schema must not be restored.');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('missing required LMS table', $exception->getMessage());
+            }
+
+            $this->assertSame($targetBefore, file_get_contents($target), 'The existing database file must remain untouched.');
+        } finally {
+            @unlink($source);
+            @unlink($target);
+        }
+    }
+
 }

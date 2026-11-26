@@ -89,8 +89,34 @@ class SystemBackupController extends Controller
         DB::connection('sqlite')->statement('PRAGMA wal_checkpoint(FULL)');
     }
 
+    private function verifySqliteBackupFile(string $source): void
+    {
+        try {
+            $pdo = new \PDO('sqlite:'.$source);
+            $integrity = $pdo->query('PRAGMA quick_check')->fetchColumn();
+            if ($integrity !== 'ok') {
+                throw new \RuntimeException('The SQLite backup failed its integrity check.');
+            }
+
+            $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(\PDO::FETCH_COLUMN);
+            foreach (['migrations', 'users', 'courses', 'orders'] as $table) {
+                if (! in_array($table, $tables, true)) {
+                    throw new \RuntimeException('The SQLite backup is missing required LMS table: '.$table);
+                }
+            }
+        } catch (Throwable $exception) {
+            if ($exception instanceof \RuntimeException) {
+                throw $exception;
+            }
+
+            throw new \RuntimeException('The uploaded SQLite backup is invalid or unreadable.', 0, $exception);
+        }
+    }
+
     private function replaceSqliteDatabase(string $source, string $target): void
     {
+        // Validate before disconnecting or replacing the live database.
+        $this->verifySqliteBackupFile($source);
         DB::disconnect('sqlite');
         $temporary = dirname($target).'/.'.basename($target).'.restore-'.Str::random(8);
 
@@ -111,6 +137,7 @@ class SystemBackupController extends Controller
         DB::purge('sqlite');
         DB::connection('sqlite')->getPdo();
         DB::connection('sqlite')->select('select 1');
+        $this->verifyDatabase();
     }
 
     private function verifyDatabase(): void
