@@ -26,6 +26,9 @@
       .role-nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(249,115,22,.28),rgba(59,130,246,.15));color:#fff;border-color:rgba(251,146,60,.18);box-shadow:inset 3px 0 #fb923c}
       .role-topbar{background:rgba(255,255,255,.88)!important;backdrop-filter:blur(18px);box-shadow:0 8px 28px rgba(15,23,42,.05)}
       .role-main{max-width:1680px;width:100%;margin-inline:auto}
+      .role-mobile-nav{box-shadow:0 12px 24px rgba(15,23,42,.06)}
+      .role-mobile-nav a{border-radius:10px}
+      .role-sidebar .text-rose-400{color:#fda4af}
       .role-main .rounded-2xl.border,.role-main .rounded-xl.border{box-shadow:0 8px 26px rgba(15,23,42,.045);transition:box-shadow .18s ease,border-color .18s ease}
       .role-main .rounded-2xl.border:hover{box-shadow:0 12px 30px rgba(15,23,42,.075)}
       .role-main a:focus-visible,.role-sidebar a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid rgba(249,115,22,.55);outline-offset:2px}
@@ -123,7 +126,7 @@
                 <span class="hidden font-semibold text-slate-700 sm:block">{{ $user->name }}</span>
             </div>
         </header>
-        <nav id="mobile-portal-nav" class="hidden border-b border-slate-200 bg-white p-3 lg:hidden">
+        <nav id="mobile-portal-nav" class="role-mobile-nav hidden border-b border-slate-200 bg-white p-3 lg:hidden">
             @foreach ($menu as [$routeName, $text, $icon])
                 <a href="{{ route($routeName) }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ $icon }} {{ $text }}</a>
             @endforeach
