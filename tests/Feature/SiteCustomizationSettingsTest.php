@@ -85,8 +85,7 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('data-home-carousel-layout="carousel"', false)
             ->assertSee('data-home-carousel-autoplay="1"', false)
             ->assertSee('data-home-carousel-speed="9"', false)
-            ->assertSee('data-home-carousel="featured"', false)
-            ->assertSee('data-home-carousel-layout="grid"', false);
+            ->assertSee('data-home-carousel="categories"', false);
     }
 
     public function test_invalid_homepage_carousel_preferences_are_rejected(): void
