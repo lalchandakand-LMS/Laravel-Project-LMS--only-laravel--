@@ -4,6 +4,43 @@
 
 @section('content')
 <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ route('student.live-classes', ['view' => 'list']) }}" class="rounded-lg px-3 py-2 text-sm font-bold {{ $viewMode === 'list' ? 'bg-emerald-700 text-white' : 'border border-slate-200 text-slate-600' }}">List view</a>
+        <a href="{{ route('student.live-classes', ['view' => 'calendar', 'month' => ($calendarMonth ?? now())->format('Y-m')]) }}" class="rounded-lg px-3 py-2 text-sm font-bold {{ $viewMode === 'calendar' ? 'bg-emerald-700 text-white' : 'border border-slate-200 text-slate-600' }}">Calendar</a>
+    </div>
+    @if ($viewMode === 'calendar')
+        <div class="flex items-center gap-2">
+            <a href="{{ route('student.live-classes', ['view' => 'calendar', 'month' => $calendarMonth->copy()->subMonth()->format('Y-m')]) }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold">←</a>
+            <span class="min-w-32 text-center font-bold text-slate-800">{{ $calendarMonth->format('F Y') }}</span>
+            <a href="{{ route('student.live-classes', ['view' => 'calendar', 'month' => $calendarMonth->copy()->addMonth()->format('Y-m')]) }}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold">→</a>
+        </div>
+    @endif
+</div>
+
+@if ($viewMode === 'calendar')
+    <div class="space-y-3">
+        @foreach (\\Carbon\\CarbonPeriod::create($calendarMonth->copy()->startOfMonth(), $calendarMonth->copy()->endOfMonth()) as $day)
+            @php($dayClasses = $calendarClasses->get($day->toDateString(), collect()))
+            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
+                    <span class="font-bold text-slate-800">{{ $day->format('D, d M') }}</span>
+                    <span class="text-xs text-slate-500">{{ $dayClasses->count() }} class(es)</span>
+                </div>
+                @forelse ($dayClasses as $class)
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 last:border-0">
+                        <div>
+                            <p class="font-semibold text-slate-900">{{ $class->starts_at?->format('h:i A') }} · {{ $class->title }}</p>
+                            <p class="text-xs text-slate-500">{{ $class->course?->title }} · {{ $class->batch?->name ?? 'Course-wide class' }}</p>
+                        </div>
+                        <span class="rounded-full px-2 py-1 text-xs font-bold {{ $class->statusBadge() }}">{{ $class->statusLabel() }}</span>
+                    </div>
+                @empty
+                    <p class="px-4 py-3 text-sm text-slate-400">No scheduled classes.</p>
+                @endforelse
+            </section>
+        @endforeach
+    </div>
+@else
     <div>
         <h2 class="text-xl font-extrabold text-slate-900">Your class schedule</h2>
         <p class="mt-1 text-sm text-slate-500">Live sessions and replays for courses you are currently enrolled in.</p>
@@ -81,5 +118,6 @@
 
 @if ($classes->hasPages())
     <div class="mt-5">{{ $classes->links() }}</div>
+@endif
 @endif
 @endsection
