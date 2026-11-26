@@ -37,11 +37,23 @@ class AttendanceController extends Controller
                     $batch->where('status', '!=', 'cancelled')
                         ->where(function ($branch) {
                             $branch->whereNull('coaching_batches.branch_id')
-                                ->orWhereExists(function ($studentBranch) {
-                                    $studentBranch->selectRaw('1')
-                                        ->from('users')
-                                        ->whereColumn('users.id', 'coaching_enrollments.student_id')
-                                        ->whereColumn('users.branch_id', 'coaching_batches.branch_id');
+                                ->orWhere(function ($scoped) {
+                                    // Coaching admission records the branch even
+                                    // when the user profile has no branch assigned.
+                                    $scoped->whereExists(function ($admission) {
+                                        $admission->selectRaw('1')
+                                            ->from('coaching_admissions')
+                                            ->whereColumn('coaching_admissions.id', 'coaching_enrollments.coaching_admission_id')
+                                            ->whereColumn('coaching_admissions.branch_id', 'coaching_batches.branch_id');
+                                    })->whereExists(function ($studentBranch) {
+                                        $studentBranch->selectRaw('1')
+                                            ->from('users')
+                                            ->whereColumn('users.id', 'coaching_enrollments.student_id')
+                                            ->where(function ($profileBranch) {
+                                                $profileBranch->whereNull('users.branch_id')
+                                                    ->orWhereColumn('users.branch_id', 'coaching_batches.branch_id');
+                                            });
+                                    });
                                 });
                         });
                 })
