@@ -10,6 +10,11 @@ use Illuminate\Support\Str;
 
 class IdentityCardController extends Controller
 {
+    public function own(\Illuminate\Http\Request $request)
+    {
+        return $this->show($request->user());
+    }
+
     public function show(User $user)
     {
         abort_unless(in_array($user->role, ['student', 'instructor', 'branch_manager'], true), 404);
