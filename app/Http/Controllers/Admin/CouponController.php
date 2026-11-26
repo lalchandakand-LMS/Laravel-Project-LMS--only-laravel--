@@ -1,17 +1,17 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Branch;
-use App\\Models\\Category;
-use App\\Models\\Coupon;
-use App\\Models\\Course;
-use App\\Models\\Ebook;
-use App\\Models\\Order;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
-use Symfony\\Component\\HttpFoundation\\StreamedResponse;
+use App\Http\Controllers\Controller;
+use App\Models\Branch;
+use App\Models\Category;
+use App\Models\Coupon;
+use App\Models\Course;
+use App\Models\Ebook;
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CouponController extends Controller
 {
@@ -151,7 +151,7 @@ class CouponController extends Controller
         ]);
 
         if ($data['type'] === 'percent' && (float) $data['value'] > 100) {
-            throw \\Illuminate\\Validation\\ValidationException::withMessages([
+            throw \Illuminate\Validation\ValidationException::withMessages([
                 'value' => 'Percentage discount cannot exceed 100%.',
             ]);
         }
