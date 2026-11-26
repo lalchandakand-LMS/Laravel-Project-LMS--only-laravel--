@@ -17,6 +17,10 @@ class AttendanceController extends Controller
             : ($user->branch ?? null);
 
         abort_unless($branch, 403, 'No branch is assigned to this account.');
+        if ($user->isBranchManager() && $user->branch_id && (int) $user->branch_id !== (int) $branch->id) {
+            abort(403, 'Your branch assignment is inconsistent. Please contact the admin.');
+        }
+
         return $branch;
     }
 
