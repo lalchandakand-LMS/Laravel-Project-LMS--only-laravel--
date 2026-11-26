@@ -12,6 +12,7 @@ class SettingController extends Controller
     private const HOMEPAGE_SECTION_KEYS = ['hero', 'categories', 'featured', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
     public const KEYS = [
         'site_name', 'site_tagline', 'admin_logo', 'admin_theme_preset', 'admin_card_radius', 'admin_brand_title', 'admin_brand_subtitle', 'admin_sidebar_promo_title', 'admin_sidebar_promo_body', 'admin_sidebar_promo_button', 'admin_sidebar_promo_url', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
+        'physical_shipping_fee', 'physical_free_shipping_threshold', 'physical_return_window_days', 'physical_returns_enabled',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
         'currency', 'certificate_signature', 'about_text',
         'dashboard_banner_title', 'dashboard_banner_subtitle',
@@ -75,6 +76,10 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $request->validate([
+            'physical_shipping_fee' => ['sometimes', 'required', 'numeric', 'min:0', 'max:50000'],
+            'physical_free_shipping_threshold' => ['sometimes', 'required', 'numeric', 'min:0', 'max:1000000'],
+            'physical_return_window_days' => ['sometimes', 'required', 'integer', 'min:1', 'max:30'],
+            'physical_returns_enabled' => ['sometimes', 'boolean'],
             'site_name' => ['sometimes', 'required', 'string', 'max:120'],
             'admin_theme_preset' => ['sometimes', 'required', 'in:navy,orange,teal,purple'],
             'admin_card_radius' => ['sometimes', 'required', 'integer', 'in:10,14,18,22'],
@@ -202,7 +207,7 @@ class SettingController extends Controller
             'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
             'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
             'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-            'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_carousel_autoplay', 'developer_show', 'brand_loader_enabled'] as $key) {
+            'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_carousel_autoplay', 'developer_show', 'brand_loader_enabled', 'physical_returns_enabled'] as $key) {
             Setting::set($key, $request->boolean($key) ? '1' : '0');
         }
 
