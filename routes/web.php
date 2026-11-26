@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/online-batches/apply', [OnlineBatchApplicationController::class, 'store'])->name('student.online-batches.apply');
     Route::get('/coaching-fees', [CoachingFeeReportController::class, 'student'])->middleware('role:student,instructor,admin')->name('coaching-fees.student');
     Route::get('/notices', [NoticeController::class, 'index'])->name('notices.index');
+    Route::get('/notices/attachments/{attachment}', [NoticeController::class, 'attachment'])->name('notices.attachments.download');
     Route::get('/notices/{announcement}', [NoticeController::class, 'show'])->name('notices.show');
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
