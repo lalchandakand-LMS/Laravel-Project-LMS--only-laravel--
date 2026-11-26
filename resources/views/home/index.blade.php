@@ -219,12 +219,12 @@
 @if (($homepageSettings['homepage_show_teachers'] ?? '0') === '1' && $teachers->isNotEmpty())
 <section data-home-section="teachers" data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
-        <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_teachers_title'] ?? 'Meet our teachers' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_teachers_subtitle'] ?? 'Learn with experienced instructors and practical guidance.' }}</p></div>
+        <div class="flex flex-wrap items-end justify-between gap-4"><div class="text-center sm:text-left"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_teachers_title'] ?? 'Meet our teachers' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_teachers_subtitle'] ?? 'Learn with experienced instructors and practical guidance.' }}</p></div><a href="{{ route('instructors.index') }}" class="rounded-full border border-blue-200 bg-white px-5 py-2.5 text-sm font-bold text-blue-800 shadow-sm transition hover:bg-blue-50">View all instructors →</a></div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($teachers as $teacher)
                 <article class="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
                     <img src="{{ $teacher->avatarUrl() }}" alt="{{ $teacher->name }}" class="mx-auto h-20 w-20 rounded-full object-cover ring-4 ring-emerald-50">
-                    <h3 class="mt-4 font-bold text-slate-900">{{ $teacher->name }}</h3>
+                    <h3 class="mt-4 font-bold text-slate-900"><a href="{{ route('instructors.show', $teacher) }}" class="hover:text-blue-700">{{ $teacher->name }}</a></h3>
                     @if ($teacher->designation)<p class="mt-1 text-sm font-semibold text-emerald-700">{{ $teacher->designation }}</p>@endif
                     @if ($teacher->bio)<p class="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">{{ $teacher->bio }}</p>@endif
                     <p class="mt-3 text-xs text-slate-500">{{ $teacher->courses_count }} published learning courses</p>

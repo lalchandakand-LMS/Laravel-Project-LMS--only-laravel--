@@ -212,6 +212,8 @@
                 'homepage_exams_subtitle' => ['Exams description', 'text', 'Prepare, practise and track your progress.'],
                 'homepage_teachers_title' => ['Teachers heading', 'text', 'Meet our teachers'],
                 'homepage_teachers_subtitle' => ['Teachers description', 'text', 'Learn with experienced instructors and practical guidance.'],
+                'instructors_title' => ['Public instructors page heading', 'text', 'Our Expert Instructors'],
+                'instructors_subtitle' => ['Public instructors page subtitle', 'text', 'Meet the experienced educators guiding your learning journey.'],
                 'homepage_reviews_subtitle' => ['Student reviews description', 'text', 'Real feedback from our learning community.'],
                 'homepage_ebooks_title' => ['E-books heading', 'text', 'E-books & notes'],
                 'homepage_ebooks_subtitle' => ['E-books description', 'text', 'Study guides and resources for learning anywhere.'],

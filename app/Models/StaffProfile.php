@@ -11,6 +11,7 @@ class StaffProfile extends Model
         'user_id', 'employee_code', 'id_token', 'department', 'designation', 'employment_type',
         'joining_date', 'confirmation_date', 'experience_years',
         'highest_qualification', 'institution', 'employment_status', 'professional_bio', 'base_salary',
+        'subject', 'panel_group', 'education', 'youtube_url', 'facebook_url', 'sort_order',
     ];
 
     protected function casts(): array
@@ -20,6 +21,7 @@ class StaffProfile extends Model
             'confirmation_date' => 'date',
             'experience_years' => 'integer',
             'base_salary' => 'decimal:2',
+            'sort_order' => 'integer',
         ];
     }
 

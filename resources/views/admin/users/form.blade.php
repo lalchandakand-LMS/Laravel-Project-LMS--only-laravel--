@@ -66,6 +66,19 @@
         </div>
     </section>
 
+    <section id="instructor-public-profile" class="space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
+        <div><h3 class="font-bold text-slate-900">Public instructor directory profile</h3><p class="text-xs text-slate-600">These details appear on the public instructor cards and profile page. Only saved for Teacher / Instructor accounts.</p></div>
+        @php($ip = $user->staffProfile)
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div><label class="mb-1 block text-sm font-semibold">Subject / expertise badge</label><input name="subject" maxlength="120" value="{{ old('subject', $ip?->subject) }}" placeholder="Physics, English, Higher Math" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold">Panel group</label><input name="panel_group" maxlength="120" value="{{ old('panel_group', $ip?->panel_group) }}" placeholder="Instructor Panel HSC, SSC Panel, IELTS & Spoken" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold">Education / experience line</label><input name="education" maxlength="255" value="{{ old('education', $ip?->education) }}" placeholder="CSE, AUST or 8 Years Experience" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold">Display order</label><input type="number" min="0" max="2147483647" name="sort_order" value="{{ old('sort_order', $ip?->sort_order ?? 0) }}" class="w-full rounded-lg border px-3 py-2 text-sm"><p class="mt-1 text-xs text-slate-500">Lower numbers appear first inside each panel.</p></div>
+            <div><label class="mb-1 block text-sm font-semibold">YouTube profile / channel URL</label><input type="url" name="youtube_url" value="{{ old('youtube_url', $ip?->youtube_url) }}" placeholder="https://youtube.com/@channel" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold">Facebook profile / page URL</label><input type="url" name="facebook_url" value="{{ old('facebook_url', $ip?->facebook_url) }}" placeholder="https://facebook.com/page" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
+        </div>
+    </section>
+
     <section class="rounded-xl border border-slate-200 bg-slate-50 p-3">
         <p class="mb-2 text-sm font-bold text-slate-700">Link guardian to students</p>
         <p class="mb-2 text-xs text-slate-500">Only used for Guardian / Parent accounts.</p>
@@ -82,9 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const role = document.getElementById('user-role');
     const student = document.getElementById('student-profile');
     const staff = document.getElementById('staff-profile');
+    const instructorProfile = document.getElementById('instructor-public-profile');
     const update = () => {
         student.hidden = role.value !== 'student';
         staff.hidden = !['instructor', 'branch_manager'].includes(role.value);
+        instructorProfile.hidden = role.value !== 'instructor';
+        instructorProfile.querySelectorAll('input').forEach((field) => field.disabled = instructorProfile.hidden);
         student.querySelectorAll('input, select, textarea').forEach((field) => field.disabled = student.hidden);
         staff.querySelectorAll('input, select, textarea').forEach((field) => field.disabled = staff.hidden);
     };
