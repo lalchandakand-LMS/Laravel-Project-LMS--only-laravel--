@@ -72,7 +72,7 @@
     </div>
 
     <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $liveClass->exists ? $liveClass->is_published : true)) class="rounded text-emerald-700"> Announce to students
+        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $liveClass->exists ? $liveClass->is_published : true)) class="rounded text-emerald-700"> Publish and notify eligible students and guardians
     </label>
 
     <div class="flex gap-2">
