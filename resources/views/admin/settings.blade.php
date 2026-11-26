@@ -119,7 +119,7 @@
         <h3 class="font-bold text-slate-900">Homepage sections & content</h3>
         <p class="mt-1 text-xs text-slate-500">Control which public homepage sections appear. Live classes, exams and teachers are populated from your LMS records. Board-result content is shown only when you publish verified information here.</p>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach (['live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
+            @foreach (['hero' => 'Hero slider / banner', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
                 <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? '1') === '1')> {{ $label }}</label>
             @endforeach
         </div>

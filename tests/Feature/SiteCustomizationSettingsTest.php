@@ -73,6 +73,7 @@ class SiteCustomizationSettingsTest extends TestCase
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
 
         $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_show_categories' => '1',
             'homepage_learning_layout' => 'carousel',
             'homepage_featured_layout' => 'grid',
             'homepage_carousel_autoplay' => '1',
@@ -86,6 +87,32 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('data-home-carousel-autoplay="1"', false)
             ->assertSee('data-home-carousel-speed="9"', false)
             ->assertSee('data-home-carousel="categories"', false);
+    }
+
+
+    public function test_admin_can_control_reference_homepage_sections(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_show_hero' => '1',
+            'homepage_show_categories' => '1',
+            'homepage_show_featured' => '1',
+            'homepage_show_online_batches' => '0',
+            'homepage_show_stats' => '1',
+            'homepage_show_latest' => '1',
+            'homepage_show_reviews' => '1',
+            'homepage_show_ebooks' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame('0', Setting::get('homepage_show_online_batches'));
+        $this->assertSame('1', Setting::get('homepage_show_categories'));
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSee('Hero slider / banner')
+            ->assertSee('Online batches')
+            ->assertSee('Trust statistics');
     }
 
     public function test_invalid_homepage_carousel_preferences_are_rejected(): void

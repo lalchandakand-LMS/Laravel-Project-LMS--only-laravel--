@@ -7,7 +7,7 @@
 @php
     $slides = $sliders ?? collect();
 @endphp
-@if ($slides->count())
+@if (($homepageSettings['homepage_show_hero'] ?? '1') === '1' && $slides->count())
 <section class="relative overflow-hidden bg-slate-900 text-white">
     <div id="heroSlides" class="hero-carousel relative" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
         @foreach ($slides as $i => $slide)
@@ -95,7 +95,7 @@
 })();
 </script>
 @endpush
-@else
+@elseif (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
 {{-- HERO --}}
 <section class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white">
     <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
@@ -139,6 +139,7 @@
 @endif
 
 {{-- CATEGORIES --}}
+@if (($homepageSettings['homepage_show_categories'] ?? '1') === '1')
 <section data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
     <div class="flex items-end justify-between">
         <div>
@@ -161,9 +162,10 @@
         @endforeach
     </div>
 </section>
+@endif
 
 {{-- FEATURED --}}
-@if ($featured->count())
+@if (($homepageSettings['homepage_show_featured'] ?? '1') === '1' && $featured->count())
 <section data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Featured courses</h2>
@@ -177,7 +179,33 @@
 </section>
 @endif
 
+
+{{-- ONLINE BATCHES --}}
+@if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1' && $onlineBatches->isNotEmpty())
+<section data-home-carousel="online_batches" data-home-carousel-layout="carousel" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="bg-orange-50 py-14">
+    <div class="mx-auto max-w-7xl px-4">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><p class="text-sm font-bold uppercase tracking-wider text-orange-700">Online Course</p><h2 class="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Online batches are ongoing!</h2><p class="mt-1 text-slate-600">Book your seat in an upcoming live learning batch.</p></div>
+            <a href="{{ auth()->check() && auth()->user()->isStudent() ? route('student.online-batches') : route('login') }}" class="rounded-xl bg-orange-600 px-5 py-3 text-sm font-bold text-white hover:bg-orange-700">Apply for a seat</a>
+        </div>
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ($onlineBatches as $batch)
+                <article class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
+                    <span class="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">{{ ucfirst($batch->status) }}</span>
+                    <h3 class="mt-3 text-lg font-extrabold text-slate-900">{{ $batch->name }}</h3>
+                    <p class="mt-1 text-sm text-slate-600">{{ $batch->course?->title }}</p>
+                    @if ($batch->starts_at)<p class="mt-3 text-xs text-slate-500">Starts: {{ $batch->starts_at->format('d M Y') }}</p>@endif
+                    @if ($batch->schedule_days || $batch->schedule_time)<p class="mt-1 text-xs text-slate-500">{{ $batch->schedule_days }} {{ $batch->schedule_time }}</p>@endif
+                    <a href="{{ auth()->check() && auth()->user()->isStudent() ? route('student.online-batches') : route('login') }}" class="mt-4 inline-flex text-sm font-bold text-orange-700 hover:underline">Book your seat →</a>
+                </article>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
 {{-- STATS BANNER --}}
+@if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
 <section style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#047857' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
     <div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-center text-white sm:grid-cols-4">
         @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']], ['Lessons', $stats['lessons']]] as [$label, $value])
@@ -188,8 +216,10 @@
         @endforeach
     </div>
 </section>
+@endif
 
 {{-- LATEST --}}
+@if (($homepageSettings['homepage_show_latest'] ?? '1') === '1')
 <section data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Latest courses</h2>
@@ -201,6 +231,7 @@
         @endforeach
     </div>
 </section>
+@endif
 
 {{-- UPCOMING LIVE CLASSES --}}
 @if (($homepageSettings['homepage_show_live_classes'] ?? '1') === '1' && $upcomingLiveClasses->isNotEmpty())
@@ -275,7 +306,7 @@
 @endif
 
 {{-- REVIEWS --}}
-@if ($reviews->count())
+@if (($homepageSettings['homepage_show_reviews'] ?? '1') === '1' && $reviews->count())
 <section data-home-carousel="reviews" data-home-carousel-layout="{{ $homepageSettings['homepage_reviews_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2>
@@ -299,7 +330,7 @@
 @endif
 
 {{-- EBOOKS --}}
-@if ($ebooks->count())
+@if (($homepageSettings['homepage_show_ebooks'] ?? '1') === '1' && $ebooks->count())
 <section data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">E-books & notes</h2>
