@@ -29,9 +29,9 @@ class CartController extends Controller
             if ($type === 'ebook' && ($e = Ebook::find($id))) {
                 $rows[] = [
                     'key' => $key, 'type' => 'ebook', 'id' => $id, 'title' => $e->title,
-                    'price' => $e->is_free ? 0 : (float) $e->price, 'original_price' => $e->is_free ? 0 : (float) $e->price,
-                    'has_discount' => false, 'flash_sale_name' => null, 'image' => $e->coverUrl(),
-                    'url' => route('ebooks.show', $e->slug),
+                    'price' => $e->final_price, 'original_price' => (float) $e->price,
+                    'has_discount' => $e->has_discount, 'flash_sale_name' => $e->activeFlashSale()?->name,
+                    'image' => $e->coverUrl(), 'url' => route('ebooks.show', $e->slug),
                 ];
             }
         }
