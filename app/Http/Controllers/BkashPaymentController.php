@@ -162,6 +162,7 @@ class BkashPaymentController extends Controller
             && ($result['transaction_id'] ?? '') === (string) $notification['trxID']
             && ($result['invoice'] ?? '') === (string) $notification['merchantInvoiceNumber']
             && strtoupper((string) ($result['currency'] ?? '')) === 'BDT'
+            && strtoupper((string) ($notification['currency'] ?? '')) === 'BDT'
             && round((float) ($result['amount'] ?? 0), 2) === round((float) ($notification['amount'] ?? 0), 2);
 
         if (! $sameEvent) {
