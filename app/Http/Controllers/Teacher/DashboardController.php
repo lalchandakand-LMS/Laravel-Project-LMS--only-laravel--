@@ -14,6 +14,7 @@ use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -253,7 +254,7 @@ class DashboardController extends Controller
         if ($viewMode === 'calendar') {
             try {
                 $calendarMonth = Carbon::createFromFormat('!Y-m', (string) $request->get('month', now()->format('Y-m')));
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $calendarMonth = now()->startOfMonth();
             }
             $calendarMonth->startOfMonth();
