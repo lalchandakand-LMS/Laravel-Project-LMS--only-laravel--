@@ -36,7 +36,14 @@ class StudentFeeInvoice extends Model
 
     public function paidAmount(): float
     {
-        return (float) $this->payments()->sum('applied_amount') + (float) $this->creditApplications()->sum('amount');
+        $payments = $this->relationLoaded('payments')
+            ? $this->payments->sum('applied_amount')
+            : $this->payments()->sum('applied_amount');
+        $credits = $this->relationLoaded('creditApplications')
+            ? $this->creditApplications->sum('amount')
+            : $this->creditApplications()->sum('amount');
+
+        return (float) $payments + (float) $credits;
     }
 
     public function dueAmount(): float
