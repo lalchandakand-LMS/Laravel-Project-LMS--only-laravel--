@@ -85,6 +85,9 @@ class User extends Authenticatable
     public function reviewedLeaveRequests() { return $this->hasMany(StaffLeaveRequest::class, 'reviewed_by'); }
     public function libraryLoans() { return $this->hasMany(LibraryLoan::class, 'student_id'); }
 
+    public function studentProfile() { return $this->hasOne(StudentProfile::class); }
+    public function staffProfile() { return $this->hasOne(StaffProfile::class); }
+
     public function branch()           { return $this->belongsTo(Branch::class); }
     public function managedBranches()  { return $this->hasMany(Branch::class, 'manager_id'); }
 
