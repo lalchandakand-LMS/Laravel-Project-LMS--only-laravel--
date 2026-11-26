@@ -385,6 +385,21 @@ class OrderController extends Controller
                 $newPaid = round($alreadyPaid + $lockedPayment->amount, 2);
                 if ($newPaid >= round($order->total, 2)) {
                     OrderService::fulfill($order);
+
+                    // Once this payment settles the full order, close any older
+                    // duplicate submissions so the student is not left with
+                    // stale pending slips and no further payment action is needed.
+                    $order->payments()
+                        ->where('status', 'pending')
+                        ->where('id', '!=', $lockedPayment->id)
+                        ->lockForUpdate()
+                        ->get()
+                        ->each(fn (Payment $pendingPayment) => $pendingPayment->update([
+                            'status' => 'rejected',
+                            'verified_by' => $request->user()->id,
+                            'verified_at' => now(),
+                            'rejection_reason' => 'Automatically closed because another payment completed the order.',
+                        ]));
                 } else {
                     $order->update(['status' => 'partially_paid']);
                 }
