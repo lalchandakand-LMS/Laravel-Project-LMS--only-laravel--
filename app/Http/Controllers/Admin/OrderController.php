@@ -140,7 +140,7 @@ class OrderController extends Controller
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
-            $price = $line['type'] === 'course' ? $product->final_price : (float) $product->price;
+            $price = (float) $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items should be enrolled or granted through the free access workflow, not an unpaid order.']);
             }
@@ -194,7 +194,7 @@ class OrderController extends Controller
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
-            $price = $line['type'] === 'course' ? $product->final_price : (float) $product->price;
+            $price = (float) $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items cannot be added to a paid order.']);
             }
@@ -230,14 +230,19 @@ class OrderController extends Controller
     {
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled']);
 
-        if ($order->amountPaid() > 0 && $data['status'] !== 'paid' && $data['status'] !== $order->status) {
-            return back()->with('error', 'An order with verified money cannot be downgraded outside the payment ledger. Record a refund or adjustment first.');
-        }
+        try {
+            DB::transaction(function () use ($request, $order, $data) {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-        if ($data['status'] === 'paid' && $order->status !== 'paid') {
-            try {
-                DB::transaction(function () use ($request, $order) {
-                    $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if ($lockedOrder->amountPaid() > 0
+                    && $data['status'] !== 'paid'
+                    && $data['status'] !== $lockedOrder->status) {
+                    throw ValidationException::withMessages([
+                        'status' => 'An order with verified money cannot be downgraded outside the payment ledger. Record a refund or adjustment first.',
+                    ]);
+                }
+
+                if ($data['status'] === 'paid' && $lockedOrder->status !== 'paid') {
                     $due = $lockedOrder->dueAmount();
                     if ($due > 0) {
                         Payment::create([
@@ -251,14 +256,28 @@ class OrderController extends Controller
                             'verified_at' => now(),
                         ]);
                     }
+
                     OrderService::fulfill($lockedOrder);
-                });
-            } catch (ValidationException $exception) {
-                return back()->withErrors($exception->errors())
-                    ->with('error', 'Course capacity has been reached. Order remains unpaid and requires manual review.');
-            }
-        } else {
-            $order->update($data);
+
+                    return;
+                }
+
+                if (in_array($data['status'], ['failed', 'cancelled'], true)) {
+                    $lockedOrder->payments()
+                        ->where('status', 'pending')
+                        ->update([
+                            'status' => 'rejected',
+                            'verified_by' => $request->user()->id,
+                            'verified_at' => now(),
+                            'rejection_reason' => 'Automatically closed because the order was marked '.$data['status'].'.',
+                        ]);
+                }
+
+                $lockedOrder->update($data);
+            });
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors())
+                ->with('error', 'Order status could not be changed. Review the payment ledger and course capacity.');
         }
 
         return back()->with('success', 'Order marked as '.$data['status'].'.');
@@ -273,8 +292,13 @@ class OrderController extends Controller
 
         try {
             DB::transaction(function () use ($request, $payment, $data) {
+                // Keep lock order consistent with order cancellation and offline collection.
+                $order = Order::whereKey($payment->order_id)->lockForUpdate()->firstOrFail();
                 $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
-                $order = Order::whereKey($lockedPayment->order_id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedPayment->order_id !== $order->id) {
+                    throw ValidationException::withMessages(['payment' => 'The payment no longer belongs to this order.']);
+                }
 
                 if ($lockedPayment->status !== 'pending') {
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
