@@ -135,4 +135,47 @@ class RecycleBinTest extends TestCase
             ->get('/admin/recycle-bin/not-a-model')
             ->assertNotFound();
     }
+
+    public function test_archived_lesson_and_slider_keep_media_until_permanent_deletion(): void
+    {
+        Storage::fake('public');
+        Storage::fake('local');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Media recovery course', 'slug' => 'media-recovery-course']);
+
+        $sliderImage = UploadedFile::fake()->image('recoverable-slider.jpg')->store('sliders', 'public');
+        $slider = Slider::create([
+            'title' => 'Slider with recoverable media',
+            'image' => $sliderImage,
+            'is_active' => true,
+        ]);
+
+        $lessonFile = UploadedFile::fake()->create('recoverable-lesson.pdf', 40, 'application/pdf')
+            ->store('lessons', 'local');
+        $lesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Lesson with recoverable media',
+            'type' => 'pdf',
+            'attachment' => $lessonFile,
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.sliders.destroy', $slider))->assertRedirect();
+        $this->delete(route('admin.lessons.destroy', $lesson))->assertRedirect();
+        Storage::disk('public')->assertExists($sliderImage);
+        Storage::disk('local')->assertExists($lessonFile);
+
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'sliders', 'id' => $slider->id]))->assertRedirect();
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $lesson->id]))->assertRedirect();
+        Storage::disk('public')->assertExists($sliderImage);
+        Storage::disk('local')->assertExists($lessonFile);
+
+        $this->delete(route('admin.sliders.destroy', $slider))->assertRedirect();
+        $this->delete(route('admin.lessons.destroy', $lesson))->assertRedirect();
+        $this->delete(route('admin.recycle-bin.destroy', ['type' => 'sliders', 'id' => $slider->id]))->assertRedirect();
+        $this->delete(route('admin.recycle-bin.destroy', ['type' => 'lessons', 'id' => $lesson->id]))->assertRedirect();
+
+        Storage::disk('public')->assertMissing($sliderImage);
+        Storage::disk('local')->assertMissing($lessonFile);
+    }
+
 }
