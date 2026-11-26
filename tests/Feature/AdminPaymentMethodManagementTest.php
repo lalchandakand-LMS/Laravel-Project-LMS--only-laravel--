@@ -60,7 +60,7 @@ class AdminPaymentMethodManagementTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.payment-methods.index'))
             ->assertOk()
-            ->assertSee('Credentials saved')
+            ->assertSee('Sandbox credentials complete')
             ->assertDontSee('test-app-secret');
     }
 
