@@ -179,4 +179,50 @@ class AttendanceWorkflowTest extends TestCase
         $this->actingAs($guardian)->get(route('guardian.child.attendance', $student))
             ->assertOk()->assertSee('Late');
     }
+
+    public function test_stale_attendance_save_cannot_reopen_a_submitted_session(): void
+    {
+        [$teacher, $student, $course, $batch] = $this->setupClassroom();
+        $session = AttendanceSession::create([
+            'batch_id' => $batch->id,
+            'course_id' => $course->id,
+            'instructor_id' => $teacher->id,
+            'mode' => 'online',
+            'starts_at' => now(),
+            'status' => 'draft',
+        ]);
+        Attendance::create([
+            'attendance_session_id' => $session->id,
+            'student_id' => $student->id,
+            'status' => 'present',
+            'marked_by' => $teacher->id,
+        ]);
+
+        // Keep a stale model as if a save request loaded it just before submit committed.
+        $staleSession = AttendanceSession::findOrFail($session->id);
+        DB::table('attendance_sessions')->where('id', $session->id)->update([
+            'status' => 'submitted',
+            'submitted_at' => now(),
+        ]);
+
+        $request = \\Illuminate\\Http\\Request::create('/teacher/attendance/'.$session->id.'/save', 'POST', [
+            'attendance' => [$student->id => ['status' => 'absent', 'note' => 'stale update']],
+        ]);
+        $request->setUserResolver(fn () => $teacher);
+
+        try {
+            app(\\App\\Http\\Controllers\\AttendanceController::class)->save($request, $staleSession);
+            $this->fail('A stale save must not modify a submitted attendance session.');
+        } catch (\\Symfony\\Component\\HttpKernel\\Exception\\HttpException $exception) {
+            $this->assertSame(422, $exception->getStatusCode());
+        }
+
+        $this->assertSame('submitted', $session->fresh()->status);
+        $this->assertDatabaseHas('attendances', [
+            'attendance_session_id' => $session->id,
+            'student_id' => $student->id,
+            'status' => 'present',
+        ]);
+    }
+
 }
