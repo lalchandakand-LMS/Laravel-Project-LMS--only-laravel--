@@ -48,7 +48,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
-@php($footerPaymentMethods = isset($branch) && $branch ? $branch->enabledStudentPaymentMethods() : \App\Models\Branch::active()->get()->flatMap(fn ($paymentBranch) => $paymentBranch->enabledStudentPaymentMethods())->unique()->values()->all())
+
 @php($brandLoaderEnabled = \App\Models\Setting::get('brand_loader_enabled', '0') === '1')
 @if ($brandLoaderEnabled)
 <style>
@@ -144,18 +144,11 @@
     <div class="border-t border-white/10">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-5 text-xs text-slate-400 sm:justify-between">
             <span class="font-bold uppercase tracking-wider text-slate-300">Pay With</span>
-            @php
-                $footerPaymentMethods = isset($branch) && $branch
-                    ? $branch->enabledStudentPaymentMethods()
-                    : \\App\\Models\\Branch::active()->get()
-                        ->flatMap(fn ($paymentBranch) => $paymentBranch->enabledStudentPaymentMethods())
-                        ->unique()
-                        ->values()
-                        ->all();
-            @endphp
             <div class="flex flex-wrap items-center justify-center gap-2" aria-label="Accepted payment methods">
                 @foreach (['bkash' => 'bKash', 'nagad' => 'Nagad', 'rocket' => 'Rocket', 'bank' => 'Bank transfer'] as $method => $label)
-                    @if (in_array($method, $footerPaymentMethods, true))
+                    @if (isset($branch) && $branch
+                        ? in_array($method, $branch->enabledStudentPaymentMethods(), true)
+                        : \\App\\Models\\Branch::active()->get()->contains(fn ($paymentBranch) => in_array($method, $paymentBranch->enabledStudentPaymentMethods(), true)))
                         <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-extrabold {{ $method === 'bkash' ? 'text-pink-600' : ($method === 'nagad' ? 'text-orange-600' : 'text-slate-800') }}">{{ $label }}</span>
                     @endif
                 @endforeach
