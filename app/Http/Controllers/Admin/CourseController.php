@@ -9,6 +9,8 @@ use App\Models\Level;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class CourseController extends Controller
 {
@@ -41,8 +43,19 @@ class CourseController extends Controller
         $data = $this->validated($request);
         $categoryIds = $data['category_ids'] ?? [];
         unset($data['category_ids']);
-        $course = Course::create($data);
-        $course->categories()->sync($categoryIds);
+        $storedThumbnail = $request->hasFile('thumbnail') ? ($data['thumbnail'] ?? null) : null;
+        try {
+            $course = DB::transaction(function () use ($data, $categoryIds) {
+                $course = Course::create($data);
+                $course->categories()->sync($categoryIds);
+                return $course;
+            });
+        } catch (\Throwable $exception) {
+            if ($storedThumbnail) {
+                delete_stored_media('public', $storedThumbnail);
+            }
+            throw $exception;
+        }
         return redirect()->route('admin.courses.edit', $course)
             ->with('success', 'Course created. Now build the curriculum.');
     }
@@ -66,11 +79,21 @@ class CourseController extends Controller
         $categoryIds = $data['category_ids'] ?? [];
         unset($data['category_ids']);
         $oldThumbnail = $course->thumbnail;
-        $course->update($data);
+        $storedThumbnail = $request->hasFile('thumbnail') ? ($data['thumbnail'] ?? null) : null;
+        try {
+            DB::transaction(function () use ($course, $data, $categoryIds) {
+                $course->update($data);
+                $course->categories()->sync($categoryIds);
+            });
+        } catch (\Throwable $exception) {
+            if ($storedThumbnail) {
+                delete_stored_media('public', $storedThumbnail);
+            }
+            throw $exception;
+        }
         if (isset($data['thumbnail']) && $data['thumbnail'] !== $oldThumbnail) {
             delete_stored_media('public', $oldThumbnail);
         }
-        $course->categories()->sync($categoryIds);
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Course updated.');
     }
 
@@ -137,6 +160,9 @@ class CourseController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
+            if (! $data['thumbnail']) {
+                throw ValidationException::withMessages(['thumbnail' => 'The course thumbnail could not be stored. The previous thumbnail has been kept.']);
+            }
         } elseif ($request->filled('thumbnail_url')) {
             $data['thumbnail'] = $data['thumbnail_url'];
         }

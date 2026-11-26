@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -59,12 +61,24 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $this->validatedData($request);
-        $user = User::create($this->accountData($data, $request));
+        $account = $this->accountData($data, $request);
 
-        $this->syncRoleProfile($user, $data);
+        try {
+            $user = DB::transaction(function () use ($account, $data, $request) {
+                $user = User::create($account);
+                $this->syncRoleProfile($user, $data);
 
-        if ($user->isGuardian()) {
-            $user->children()->sync($request->input('children', []));
+                if ($user->isGuardian()) {
+                    $user->children()->sync($request->input('children', []));
+                }
+
+                return $user;
+            });
+        } catch (\Throwable $exception) {
+            if ($request->hasFile('avatar') && ! empty($account['avatar'])) {
+                delete_stored_media('public', $account['avatar']);
+            }
+            throw $exception;
         }
 
         return redirect()->route('admin.users.index')->with('success', 'User created.');
@@ -108,12 +122,27 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $this->validatedData($request, $user);
-        $user->update($this->accountData($data, $request, $user));
+        $oldAvatar = $user->avatar;
+        $account = $this->accountData($data, $request, $user);
 
-        $this->syncRoleProfile($user, $data);
+        try {
+            DB::transaction(function () use ($user, $account, $data, $request) {
+                $user->update($account);
+                $this->syncRoleProfile($user, $data);
 
-        if ($user->isGuardian()) {
-            $user->children()->sync($request->input('children', []));
+                if ($user->isGuardian()) {
+                    $user->children()->sync($request->input('children', []));
+                }
+            });
+        } catch (\Throwable $exception) {
+            if ($request->hasFile('avatar') && ! empty($account['avatar'])) {
+                delete_stored_media('public', $account['avatar']);
+            }
+            throw $exception;
+        }
+
+        if (array_key_exists('avatar', $account) && $oldAvatar !== $account['avatar']) {
+            delete_stored_media('public', $oldAvatar);
         }
 
         return redirect()->route('admin.users.index')->with('success', 'User updated.');
@@ -196,14 +225,11 @@ class UserController extends Controller
 
         if ($request->hasFile('avatar')) {
             $account['avatar'] = $request->file('avatar')->store('avatars', 'public');
-            if ($user) {
-                delete_stored_media('public', $user->avatar);
+            if (! $account['avatar']) {
+                throw ValidationException::withMessages(['avatar' => 'The uploaded profile photo could not be stored. The existing photo has been kept.']);
             }
         } elseif ($request->filled('avatar_url')) {
             $account['avatar'] = $data['avatar_url'];
-            if ($user && $user->avatar !== $account['avatar']) {
-                delete_stored_media('public', $user->avatar);
-            }
         }
 
         return $account;

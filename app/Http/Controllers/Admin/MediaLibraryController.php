@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class MediaLibraryController extends Controller
 {
@@ -33,18 +34,26 @@ class MediaLibraryController extends Controller
 
         $file = $data['file'];
         $path = $file->store('media-library', 'public');
+        if (! $path) {
+            throw ValidationException::withMessages(['file' => 'The media file could not be stored.']);
+        }
 
-        MediaAsset::create([
-            'title' => $data['title'],
-            'alt_text' => $data['alt_text'] ?? null,
-            'source_type' => 'upload',
-            'disk' => 'public',
-            'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size_bytes' => $file->getSize(),
-            'uploaded_by' => $request->user()->id,
-        ]);
+        try {
+            MediaAsset::create([
+                'title' => $data['title'],
+                'alt_text' => $data['alt_text'] ?? null,
+                'source_type' => 'upload',
+                'disk' => 'public',
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'uploaded_by' => $request->user()->id,
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk('public')->delete($path);
+            throw $exception;
+        }
 
         return redirect()->route('admin.media.index')->with('success', 'Media uploaded to the library.');
     }
