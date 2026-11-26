@@ -71,7 +71,7 @@
         <div class="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-slate-600">@foreach($series as $item)<span class="inline-flex items-center gap-2"><i class="h-2.5 w-2.5 rounded-full" style="background:{{ $item['color'] }}"></i>{{ $item['label'] }}</span>@endforeach</div>
         <div class="mt-3 overflow-hidden">
             <svg viewBox="0 0 620 185" role="img" aria-label="Monthly students, enrollments and course views line chart" class="h-52 w-full">
-                @foreach([35,75,115,155] as $y)<line x1="40" y1="{{ $y }}" x2="578" y2="{{ $y }}" stroke="#e2e8f0" stroke-dasharray="4 5"/><text x="28" y="{{ $y+4 }}" text-anchor="end" fill="#94a3b8" font-size="9">{{ (int) round(($155-$y)/125*$chartMax) }}</text>@endforeach
+                @foreach([35,75,115,155] as $y)<line x1="40" y1="{{ $y }}" x2="578" y2="{{ $y }}" stroke="#e2e8f0" stroke-dasharray="4 5"/><text x="28" y="{{ $y+4 }}" text-anchor="end" fill="#94a3b8" font-size="9">{{ (int) round((158-$y)/125*$chartMax) }}</text>@endforeach
                 @foreach($series as $item)<polyline points="{{ $chartPoints($item['values']) }}" fill="none" stroke="{{ $item['color'] }}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>@foreach($item['values'] as $i => $value)<circle cx="{{ 42 + ($i * (536 / max(1, count($item['values']) - 1))) }}" cy="{{ 158 - (($value / $chartMax) * 125) }}" r="3.5" fill="{{ $item['color'] }}" stroke="white" stroke-width="1.5"/>@endforeach @endforeach
                 @foreach($analytics['labels'] as $i => $label)<text x="{{ 42 + ($i * (536 / max(1, count($analytics['labels']) - 1))) }}" y="179" text-anchor="middle" fill="#64748b" font-size="10">{{ $label }}</text>@endforeach
             </svg>
