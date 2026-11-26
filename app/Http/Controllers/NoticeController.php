@@ -83,18 +83,28 @@ class NoticeController extends Controller
 
             if ($user->isStudent()) {
                 $scope->orWhere(function ($target) use ($user) {
-                    $target->whereNotNull('batch_id')->whereHas('batch.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'));
+                    $target->whereNotNull('batch_id')->where(function ($q) use ($user) {
+                        $q->whereHas('batch.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'))
+                            ->orWhereHas('batch.onlineEnrollments', fn ($e) => $e->where('student_id', $user->id)->where('status', 'active'));
+                    });
                 })->orWhere(function ($target) use ($user) {
-                    $target->whereNotNull('course_id')->whereNull('batch_id')
-                        ->whereHas('course.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'));
+                    $target->whereNotNull('course_id')->whereNull('batch_id')->where(function ($q) use ($user) {
+                        $q->whereHas('course.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'))
+                            ->orWhereHas('course.batches.onlineEnrollments', fn ($e) => $e->where('student_id', $user->id)->where('status', 'active'));
+                    });
                 });
             } elseif ($user->isGuardian()) {
                 $childIds = $user->children()->select('users.id');
                 $scope->orWhere(function ($target) use ($childIds) {
-                    $target->whereNotNull('batch_id')->whereHas('batch.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'));
+                    $target->whereNotNull('batch_id')->where(function ($q) use ($childIds) {
+                        $q->whereHas('batch.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'))
+                            ->orWhereHas('batch.onlineEnrollments', fn ($e) => $e->whereIn('student_id', $childIds)->where('status', 'active'));
+                    });
                 })->orWhere(function ($target) use ($childIds) {
-                    $target->whereNotNull('course_id')->whereNull('batch_id')
-                        ->whereHas('course.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'));
+                    $target->whereNotNull('course_id')->whereNull('batch_id')->where(function ($q) use ($childIds) {
+                        $q->whereHas('course.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'))
+                            ->orWhereHas('course.batches.onlineEnrollments', fn ($e) => $e->whereIn('student_id', $childIds)->where('status', 'active'));
+                    });
                 });
             } elseif ($user->isInstructor()) {
                 $scope->orWhere(function ($target) use ($user) {
