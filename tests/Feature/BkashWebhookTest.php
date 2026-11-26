@@ -113,6 +113,51 @@ class BkashWebhookTest extends TestCase
         Http::assertSentCount(4);
     }
 
+    public function test_stale_failed_browser_callback_cannot_overwrite_webhook_settlement(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $order = Order::create([
+            'order_no' => 'AEC-CALLBACK-RACE-1',
+            'user_id' => $student->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'provider_payment_id' => 'BKASH-PAY-CALLBACK-RACE-1',
+            'amount' => 500,
+            'status' => 'pending',
+            'payload' => ['provider' => 'bkash'],
+        ]);
+
+        $this->mock(BkashCheckoutAdapter::class)
+            ->shouldReceive('verifyCallback')
+            ->once()
+            ->andReturnUsing(function () use ($payment) {
+                // Simulate a webhook settling the payment while the browser return is in flight.
+                Payment::whereKey($payment->id)->update([
+                    'transaction_id' => 'BKASH-WEBHOOK-RACE-TRX',
+                    'status' => 'verified',
+                    'verified_at' => now(),
+                ]);
+
+                return ['status' => 'failed', 'reason' => 'Stale browser response'];
+            });
+
+        $this->get(route('payments.bkash.callback', ['paymentID' => 'BKASH-PAY-CALLBACK-RACE-1']))
+            ->assertRedirect(route('checkout.success', $order->order_no));
+
+        $this->assertSame('verified', $payment->fresh()->status);
+        $this->assertSame('BKASH-WEBHOOK-RACE-TRX', $payment->fresh()->transaction_id);
+        $this->assertSame('pending', $order->fresh()->status);
+    }
+
     public function test_invalid_sns_signature_is_rejected_without_calling_payment_api(): void
     {
         Http::fake([$this->certificateUrl => Http::response($this->certificate, 200)]);
