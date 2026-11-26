@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Batch;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\AttendanceSession;
 use App\Models\LiveClass;
 use App\Models\User;
 use App\Notifications\LiveClassChanged;
@@ -242,6 +243,43 @@ class LiveClassSchedulingTest extends TestCase
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $this->actingAs($admin)->get(route('admin.live-classes.create'))->assertOk();
+    }
+
+
+    public function test_batch_live_class_can_create_one_linked_attendance_session(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        $batch = Batch::create([
+            'course_id' => $course->id,
+            'name' => 'Attendance Batch',
+            'code' => 'ATTEND-'.strtoupper(\Illuminate\Support\Str::random(5)),
+            'status' => 'active',
+        ]);
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'title' => 'Attendance-linked live class',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(15),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('teacher.live-classes.attendance', $liveClass))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('attendance_sessions', [
+            'live_class_id' => $liveClass->id,
+            'batch_id' => $batch->id,
+            'course_id' => $course->id,
+            'mode' => 'online',
+        ]);
+
+        $this->actingAs($admin)->post(route('teacher.live-classes.attendance', $liveClass))
+            ->assertRedirect();
+
+        $this->assertSame(1, AttendanceSession::where('live_class_id', $liveClass->id)->count());
     }
 
 }
