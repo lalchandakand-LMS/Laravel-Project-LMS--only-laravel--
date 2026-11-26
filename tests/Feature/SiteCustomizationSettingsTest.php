@@ -25,6 +25,10 @@ class SiteCustomizationSettingsTest extends TestCase
             'site_name' => "Alom's English Center",
             'homepage_learning_title' => 'Learning paths',
             'homepage_testimonial_title' => 'Student stories',
+            'homepage_learning_layout' => 'grid',
+            'homepage_featured_layout' => 'carousel',
+            'homepage_carousel_autoplay' => '1',
+            'homepage_carousel_speed' => '8',
             'homepage_learning_bg' => '#ffffff',
             'homepage_learning_text' => '#0f172a',
             'homepage_testimonial_bg' => '#f1f5f9',
@@ -52,6 +56,10 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->assertSame('Learning paths', Setting::get('homepage_learning_title'));
         $this->assertSame('Student stories', Setting::get('homepage_testimonial_title'));
+        $this->assertSame('grid', Setting::get('homepage_learning_layout'));
+        $this->assertSame('carousel', Setting::get('homepage_featured_layout'));
+        $this->assertSame('1', Setting::get('homepage_carousel_autoplay'));
+        $this->assertSame('8', Setting::get('homepage_carousel_speed'));
         $this->assertSame('Example Studio', Setting::get('developer_name'));
         $this->assertSame('1', Setting::get('developer_show'));
         $this->assertSame('1', Setting::get('brand_loader_enabled'));
