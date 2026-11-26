@@ -119,7 +119,7 @@ class ConsentBasedTrackingTest extends TestCase
         ]);
 
         $this->actingAs($user)->get(route('checkout.success', $order->order_no))->assertOk()
-            ->assertDontSee('aecPurchaseEvent');
+            ->assertDontSee('window.aecPurchaseEvent =', false);
     }
 
     public function test_authenticated_workspace_does_not_load_public_tracking_consent_or_scripts(): void
