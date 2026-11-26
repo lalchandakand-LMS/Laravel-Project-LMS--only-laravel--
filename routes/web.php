@@ -66,6 +66,8 @@ Route::get('/category/{category:slug}', [CourseController::class, 'category'])->
 Route::get('/ebooks', [EbookController::class, 'index'])->name('ebooks.index');
 Route::get('/ebooks/{ebook:slug}', [EbookController::class, 'show'])->name('ebooks.show');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->name('certificates.verify');
+Route::post('/payments/bkash/webhook', [BkashPaymentController::class, 'webhook'])
+    ->middleware('throttle:120,1')->name('payments.bkash.webhook');
 Route::get('/payments/bkash/callback/{order:order_no}', [BkashPaymentController::class, 'callback'])
     ->middleware('throttle:20,1')->name('payments.bkash.callback');
 Route::get('/id/verify/{token}', [Admin\IdentityCardController::class, 'verify'])->name('identity.verify');
