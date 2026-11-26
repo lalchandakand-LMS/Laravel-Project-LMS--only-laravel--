@@ -53,8 +53,8 @@
             <h4 class="font-bold text-slate-900">Public website brand colors</h4>
             <p class="mt-1 text-xs text-slate-600">These colors control public navigation, buttons, links, badges and accent highlights. Homepage section backgrounds can still be customized separately below.</p>
             <div class="mt-3 grid gap-4 sm:grid-cols-2">
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#06b6d4') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#0d9488') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', (($settings['site_primary_color'] ?? '#06b6d4') === '#ea580c' ? '#06b6d4' : ($settings['site_primary_color'] ?? '#06b6d4'))) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', (($settings['site_secondary_color'] ?? '#0d9488') === '#9a3412' ? '#0d9488' : ($settings['site_secondary_color'] ?? '#0d9488'))) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             </div>
         </div>
     </section>
@@ -237,7 +237,7 @@
                 'developer_bg' => ['Developer strip background', '#0f172a'],
                 'developer_text_color' => ['Developer strip text', '#ffffff'],
             ] as $key => [$label, $default])
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, (($settings[$key] ?? $default) === '#ea580c' ? '#06b6d4' : (($settings[$key] ?? $default) === '#ffffff' && $key === 'homepage_learning_bg' ? '#f1f3ff' : (($settings[$key] ?? $default) === '#f1f5f9' && $key === 'homepage_testimonial_bg' ? '#111827' : (($settings[$key] ?? $default) === '#ffffff' && $key === 'footer_bg' ? '#071b26' : ($settings[$key] ?? $default))))) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             @endforeach
         </div>
         <label class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="developer_show" value="1" @checked(($settings['developer_show'] ?? '0') === '1')> Show developer credit strip on website</label>
