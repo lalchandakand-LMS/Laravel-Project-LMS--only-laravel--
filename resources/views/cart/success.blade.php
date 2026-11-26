@@ -1,5 +1,17 @@
 @extends('layouts.app')
 @section('title', 'Order placed')
+@if($order->status === 'paid' && $order->amountPaid() >= $order->total)
+@push('scripts')
+<script>
+    window.aecPurchaseEvent = {
+        transaction_id: @json($order->order_no),
+        value: {{ number_format((float) $order->total, 2, '.', '') }},
+        currency: 'BDT'
+    };
+    window.dispatchEvent(new Event('aec:purchase-ready'));
+</script>
+@endpush
+@endif
 @section('content')
 <div class="mx-auto max-w-3xl px-4 py-12">
     <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
