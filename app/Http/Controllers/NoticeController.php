@@ -57,6 +57,16 @@ class NoticeController extends Controller
 
         if ($user->isAdmin()) return $query;
 
+        $query->where(function ($branch) use ($user) {
+            $branch->whereNull('branch_id');
+            if ($user->isGuardian()) {
+                $childIds = $user->children()->select('users.id');
+                $branch->orWhereIn('branch_id', User::whereIn('id', $childIds)->whereNotNull('branch_id')->select('branch_id'));
+            } elseif ($user->branch_id) {
+                $branch->orWhere('branch_id', $user->branch_id);
+            }
+        });
+
         return $query->where(function ($scope) use ($user) {
             $scope->where(function ($general) use ($user) {
                 $general->whereNull('course_id')->whereNull('batch_id')
