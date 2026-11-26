@@ -19,7 +19,9 @@ class OrderService
     {
         DB::transaction(function () use ($order) {
             $order = Order::with('items')->whereKey($order->id)->lockForUpdate()->firstOrFail();
-            if ($order->status === 'paid') {\n                return;\n            }
+            if ($order->status === 'paid') {
+                return;
+            }
 
             foreach ($order->items as $item) {
                 if ($item->item_type === 'course') {
