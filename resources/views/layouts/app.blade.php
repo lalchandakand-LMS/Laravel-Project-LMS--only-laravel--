@@ -215,12 +215,7 @@
     <div class="border-t border-white/10 px-4 py-3 text-center text-xs" style="background-color: {{ \App\Models\Setting::get('developer_bg', '#0f172a') }}; color: {{ \App\Models\Setting::get('developer_text_color', '#ffffff') }}">{{ \App\Models\Setting::get('developer_text', 'Developed by') }} @if ($developerUrl = \App\Models\Setting::get('developer_url'))<a href="{{ $developerUrl }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ \App\Models\Setting::get('developer_name') }}</a>@else <strong>{{ \App\Models\Setting::get('developer_name') }}</strong>@endif</div>
     @endif
 </footer>
-    @php
-        $trackingEnabled = filled(\App\Models\Setting::get('ga4_measurement_id'))
-            || filled(\App\Models\Setting::get('gtm_container_id'))
-            || filled(\App\Models\Setting::get('meta_pixel_id'));
-    @endphp
-    @if ($trackingEnabled && !$privateSeoRoute)
+    @if (!$privateSeoRoute && (filled(\App\Models\Setting::get('ga4_measurement_id')) || filled(\App\Models\Setting::get('gtm_container_id')) || filled(\App\Models\Setting::get('meta_pixel_id')))
         <section id="tracking-consent" aria-label="Cookie preferences" aria-live="polite" hidden class="fixed inset-x-4 bottom-4 z-[100] mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="max-w-xl">
