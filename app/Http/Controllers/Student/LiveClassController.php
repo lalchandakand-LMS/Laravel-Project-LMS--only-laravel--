@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\LiveClass;
-use App\Models\User;
 
 class LiveClassController extends Controller
 {
