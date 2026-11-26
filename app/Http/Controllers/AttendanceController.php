@@ -31,25 +31,79 @@ class AttendanceController extends Controller
             return CoachingEnrollment::query()
                 ->where('coaching_batch_id', $session->coaching_batch_id)
                 ->where('status', 'active')
+                ->whereNull('ended_at')
                 ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+                ->whereHas('batch', function ($batch) {
+                    $batch->where('status', '!=', 'cancelled')
+                        ->where(function ($branch) {
+                            $branch->whereNull('coaching_batches.branch_id')
+                                ->orWhereExists(function ($studentBranch) {
+                                    $studentBranch->selectRaw('1')
+                                        ->from('users')
+                                        ->whereColumn('users.id', 'coaching_enrollments.student_id')
+                                        ->whereColumn('users.branch_id', 'coaching_batches.branch_id');
+                                });
+                        });
+                })
                 ->pluck('student_id');
         }
 
         $legacy = Enrollment::query()
+            ->where('course_id', $session->course_id)
             ->where('status', 'active')
-            ->where(fn ($q) => $session->batch_id
-                ? $q->where('batch_id', $session->batch_id)
-                : $q->where('course_id', $session->course_id)
-                    ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now())))
-            ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->when($session->batch_id, fn ($query) => $query->where('batch_id', $session->batch_id))
+            ->whereHas('user', fn ($query) => $query->where('role', 'student')->where('is_active', true))
+            ->where(function ($snapshotBranch) {
+                $snapshotBranch->whereNull('enrollments.branch_id')
+                    ->orWhereExists(function ($studentBranch) {
+                        $studentBranch->selectRaw('1')
+                            ->from('users')
+                            ->whereColumn('users.id', 'enrollments.user_id')
+                            ->whereColumn('users.branch_id', 'enrollments.branch_id');
+                    });
+            })
+            ->where(function ($batchEligibility) use ($session) {
+                $eligibleBatch = function ($batch) {
+                    $batch->where('batches.status', '!=', 'cancelled')
+                        ->where(function ($branch) {
+                            $branch->whereNull('batches.branch_id')
+                                ->orWhereExists(function ($studentBranch) {
+                                    $studentBranch->selectRaw('1')
+                                        ->from('users')
+                                        ->whereColumn('users.id', 'enrollments.user_id')
+                                        ->whereColumn('users.branch_id', 'batches.branch_id');
+                                });
+                        });
+                };
+
+                if ($session->batch_id) {
+                    $batchEligibility->whereHas('batch', $eligibleBatch);
+                } else {
+                    $batchEligibility->whereNull('batch_id')
+                        ->orWhereHas('batch', $eligibleBatch);
+                }
+            })
             ->pluck('user_id');
+
         $online = OnlineBatchEnrollment::query()
+            ->where('course_id', $session->course_id)
             ->where('status', 'active')
             ->whereNull('ended_at')
-            ->where(fn ($q) => $session->batch_id
-                ? $q->where('batch_id', $session->batch_id)
-                : $q->where('course_id', $session->course_id))
-            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->when($session->batch_id, fn ($query) => $query->where('batch_id', $session->batch_id))
+            ->whereHas('student', fn ($query) => $query->where('role', 'student')->where('is_active', true))
+            ->whereHas('batch', function ($batch) {
+                $batch->where('status', '!=', 'cancelled')
+                    ->where(function ($branch) {
+                        $branch->whereNull('batches.branch_id')
+                            ->orWhereExists(function ($studentBranch) {
+                                $studentBranch->selectRaw('1')
+                                    ->from('users')
+                                    ->whereColumn('users.id', 'online_batch_enrollments.student_id')
+                                    ->whereColumn('users.branch_id', 'batches.branch_id');
+                            });
+                    });
+            })
             ->pluck('student_id');
 
         return $legacy->merge($online)->unique()->values();
@@ -290,18 +344,25 @@ class AttendanceController extends Controller
             'action' => ['required', Rule::in(['approve', 'return'])],
             'review_note' => ['nullable', 'string', 'max:2000'],
         ]);
-        abort_unless($session->status === 'submitted', 422, 'Only submitted attendance can be reviewed.');
         abort_if($data['action'] === 'return' && blank($data['review_note'] ?? null), 422, 'Add a note explaining what the teacher must correct.');
 
-        $session->update([
-            'status' => $data['action'] === 'approve' ? 'approved' : 'returned',
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-            'review_note' => $data['review_note'] ?? null,
-        ]);
+        DB::transaction(function () use ($request, $session, $data) {
+            // Teacher saves/submits and admin review all serialize on this row.
+            // A stale second reviewer cannot overwrite an approved/returned result
+            // or send duplicate attendance publication notifications.
+            $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            abort_unless($lockedSession->status === 'submitted', 422, 'Only submitted attendance can be reviewed.');
+
+            $lockedSession->update([
+                'status' => $data['action'] === 'approve' ? 'approved' : 'returned',
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+                'review_note' => $data['review_note'] ?? null,
+            ]);
+        });
 
         if ($data['action'] === 'approve') {
-            $session->load('records.student.guardians');
+            $session = AttendanceSession::with('records.student.guardians')->findOrFail($session->id);
             foreach ($session->records as $record) {
                 $notification = new AttendancePublishedNotification($session, $record);
                 $record->student?->notify($notification);
