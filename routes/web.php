@@ -160,6 +160,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
+        Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
         Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
         Route::post('certificates', [Admin\CertificateController::class, 'store'])->name('certificates.store');
         Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');
