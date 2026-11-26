@@ -657,6 +657,7 @@ class PaymentVerificationWorkflowTest extends TestCase
     public function test_rejecting_a_pending_payment_does_not_reopen_terminal_orders(): void
     {
         [$student, $admin, $branch, $cancelledOrder] = $this->orderForStudent();
+        $cancelledOrder->update(['status' => 'cancelled']);
         $failedOrder = Order::create([
             'user_id' => $student->id,
             'branch_id' => $branch->id,
