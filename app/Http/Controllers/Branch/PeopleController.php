@@ -129,6 +129,7 @@ class PeopleController extends Controller
             'joining_date' => [$student ? 'prohibited' : 'nullable', 'nullable', 'date'],
             'highest_qualification' => [$student ? 'prohibited' : 'nullable', 'nullable', 'string', 'max:180'],
             'employment_status' => [$student ? 'prohibited' : 'nullable', Rule::in(['active', 'on_leave', 'suspended', 'resigned', 'terminated'])],
+            'base_salary' => [$student ? 'prohibited' : 'nullable', 'numeric', 'min:0', 'max:99999999.99'],
         ]);
     }
 
@@ -155,6 +156,7 @@ class PeopleController extends Controller
             'joining_date' => $data['joining_date'] ?? null,
             'highest_qualification' => $data['highest_qualification'] ?? null,
             'employment_status' => $data['employment_status'] ?? $user->staffProfile?->employment_status ?? 'active',
+            'base_salary' => $data['base_salary'] ?? $user->staffProfile?->base_salary ?? 0,
         ]);
     }
 }
