@@ -131,10 +131,18 @@
 
     function applyConsent() {
         if (!consent) return;
-        if (consent.analytics) loadAnalytics();
-        else if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
-        if (consent.marketing) loadMarketing();
-        else if (window.fbq) window.fbq('consent', 'revoke');
+        if (consent.analytics) {
+            loadAnalytics();
+            if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'granted' });
+        } else if (window.gtag) {
+            window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+        }
+        if (consent.marketing) {
+            loadMarketing();
+            if (window.fbq && window.__aecMetaLoaded) window.fbq('consent', 'grant');
+        } else if (window.fbq) {
+            window.fbq('consent', 'revoke');
+        }
         window.setTimeout(sendPendingConversions, 0);
     }
 
