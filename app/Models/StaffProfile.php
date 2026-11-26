@@ -10,7 +10,7 @@ class StaffProfile extends Model
     protected $fillable = [
         'user_id', 'employee_code', 'department', 'designation', 'employment_type',
         'joining_date', 'confirmation_date', 'experience_years',
-        'highest_qualification', 'institution', 'employment_status', 'professional_bio',
+        'highest_qualification', 'institution', 'employment_status', 'professional_bio', 'base_salary',
     ];
 
     protected function casts(): array
@@ -19,6 +19,7 @@ class StaffProfile extends Model
             'joining_date' => 'date',
             'confirmation_date' => 'date',
             'experience_years' => 'integer',
+            'base_salary' => 'decimal:2',
         ];
     }
 
