@@ -20,23 +20,9 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         // Only current, eligible enrollments should drive learning shortcuts and exam discovery.
-        $enrollments = Enrollment::with(['course.instructor', 'course.category', 'batch'])
-            ->where('user_id', $user->id)
-            ->where('status', 'active')
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->latest()->get()
-            ->filter(function ($enrollment) use ($user) {
-                $batch = $enrollment->batch;
-                if (! $enrollment->batch_id) {
-                    return true;
-                }
-
-                if (! $batch || in_array($batch->status, ['upcoming', 'cancelled'], true)) {
-                    return false;
-                }
-
-                return ! $batch->branch_id || (int) $user->branch_id === (int) $batch->branch_id;
-            })->values();
+        $enrollments = \App\Services\EnrollmentEligibility::query($user)
+            ->with(['course.instructor', 'course.category', 'batch'])
+            ->latest()->get();
 
         $inProgress = $enrollments->filter(fn ($e) => $e->course && $e->course->progressFor($user) < 100);
         $completed = $enrollments->filter(fn ($e) => $e->course && $e->course->progressFor($user) >= 100);
@@ -78,7 +64,8 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         return view('student.courses', [
-            'enrollments' => Enrollment::with('course.instructor')->where('user_id', $user->id)->latest()->get(),
+            'enrollments' => \App\Services\EnrollmentEligibility::query($user)
+                ->with('course.instructor')->latest()->get(),
         ]);
     }
 
