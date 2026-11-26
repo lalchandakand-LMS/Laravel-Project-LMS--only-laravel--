@@ -280,6 +280,8 @@ class SiteCustomizationSettingsTest extends TestCase
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
 
+        $before = Slider::count();
+
         foreach (['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', '//evil.example/path'] as $unsafeUrl) {
             $this->actingAs($admin)->from(route('admin.sliders.create'))
                 ->post(route('admin.sliders.store'), [
@@ -292,12 +294,14 @@ class SiteCustomizationSettingsTest extends TestCase
                 ->assertSessionHasErrors('button_url');
         }
 
-        $this->assertSame(0, Slider::count());
+        $this->assertSame($before, Slider::count());
+        $this->assertDatabaseMissing('sliders', ['title' => 'Unsafe slide']);
     }
 
     public function test_non_admin_cannot_manage_homepage_sliders(): void
     {
         $student = User::where('role', 'student')->firstOrFail();
+        $before = Slider::count();
 
         $this->actingAs($student)->get(route('admin.sliders.index'))->assertForbidden();
         $this->actingAs($student)->post(route('admin.sliders.store'), [
@@ -307,7 +311,8 @@ class SiteCustomizationSettingsTest extends TestCase
             'is_active' => '1',
         ])->assertForbidden();
 
-        $this->assertSame(0, Slider::count());
+        $this->assertSame($before, Slider::count());
+        $this->assertDatabaseMissing('sliders', ['title' => 'Forbidden slide']);
     }
 
     public function test_homepage_and_dashboard_cta_settings_reject_unsafe_urls(): void
