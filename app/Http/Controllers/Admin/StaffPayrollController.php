@@ -8,6 +8,7 @@ use App\Models\StaffProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 
 class StaffPayrollController extends Controller
@@ -41,6 +42,10 @@ class StaffPayrollController extends Controller
 
         $profile = $staffUser->staffProfile()->firstOrCreate([], ['employment_status' => 'active']);
         abort_unless($profile->employment_status === 'active', 422, 'Only active staff can receive a new payroll entry.');
+
+        if (StaffPayroll::where('staff_profile_id', $profile->id)->where('payroll_month', $data['payroll_month'])->exists()) {
+            throw ValidationException::withMessages(['payroll_month' => 'Payroll for this staff member and month already exists.']);
+        }
 
         $basic = (float) $data['basic_salary'];
         $allowances = (float) ($data['allowances'] ?? 0);
