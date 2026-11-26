@@ -14,7 +14,7 @@
 @endif
 </div>
 @endforeach
-<label class="block text-sm font-semibold">Teacher feedback / notes</label><textarea name="feedback" rows="3" class="w-full rounded-lg border border-slate-300 p-3" placeholder="Feedback notes (optional)"></textarea>
+<label class="block text-sm font-semibold">Teacher feedback / notes</label><textarea name="feedback" rows="3" class="w-full rounded-lg border border-slate-300 p-3" placeholder="Feedback notes (optional)">{{ old('feedback', $attempt->manual_feedback) }}</textarea>
 <button class="rounded-lg bg-orange-600 px-5 py-2.5 font-bold text-white">Save manual marks & recalculate result</button>
 </form>
 @endsection
