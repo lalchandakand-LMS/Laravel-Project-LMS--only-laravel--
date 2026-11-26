@@ -190,7 +190,7 @@ class LiveClassSchedulingTest extends TestCase
             'price_paid' => 0,
             'enrolled_at' => now(),
         ]);
-        \\DB::table('guardian_students')->insert([
+        \DB::table('guardian_students')->insert([
             'guardian_id' => $guardian->id,
             'student_id' => $student->id,
             'relation' => 'mother',
