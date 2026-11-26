@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\StudentFeeInvoice;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class FinanceController extends Controller
 {
@@ -100,6 +101,12 @@ class FinanceController extends Controller
     {
         $branch = $this->branch();
         abort_unless((int) $invoice->branch_id === (int) $branch->id, 404);
+
+        if (! is_string($request->input('method')) || ! in_array($request->input('method'), $branch->payment_methods ?? [], true)) {
+            throw ValidationException::withMessages([
+                'method' => 'This payment method is not enabled for your branch.',
+            ]);
+        }
 
         return app(AdminStudentFeeController::class)->collectPayment($request, $invoice);
     }
