@@ -31,7 +31,16 @@ class BkashPaymentController extends Controller
             throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order.']);
         }
 
-        $session = $adapter->initiate($order);
+        try {
+            $session = $adapter->initiate($order);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            throw ValidationException::withMessages([
+                'gateway' => 'The bKash sandbox checkout could not be started. Check the Admin API configuration and try again.',
+            ]);
+        }
+
         try {
             Payment::create([
                 'order_id' => $order->id,
