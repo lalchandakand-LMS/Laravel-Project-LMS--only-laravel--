@@ -1,8 +1,8 @@
 # Payment gateway integration contract
 
-The LMS currently supports branch-configured manual payment submission and staff verification. No live provider is enabled by this layer.
+The LMS supports branch-configured manual payment submission and staff verification. The Admin → Payment Methods screen controls global method availability and stores future provider credentials encrypted with Laravel Crypt. Secret values are not rendered back into the form.
 
-When merchant credentials become available, add a provider adapter implementing App\\Contracts\\PaymentGatewayAdapter:
+When merchant credentials become available, add a provider adapter implementing App\\Contracts\\PaymentGatewayAdapter. The Admin screen currently stores credentials only; selecting Live mode does not activate payment processing:
 
 - initiate() creates a provider checkout session and returns provider reference / redirect data. It must not fulfill an order.
 - verifyCallback() validates the provider signature and normalizes the callback.
