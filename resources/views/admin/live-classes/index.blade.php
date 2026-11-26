@@ -25,7 +25,7 @@
         <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
                 <th class="px-5 py-3">Class</th>
-                <th class="px-5 py-3">Course</th>
+                <th class="px-5 py-3">Course / Batch</th>
                 <th class="px-5 py-3">Starts</th>
                 <th class="px-5 py-3">Status</th>
                 <th class="px-5 py-3 text-right">Actions</th>
@@ -40,7 +40,10 @@
                             @if ($class->meeting_password) · pass: {{ $class->meeting_password }} @endif
                         </p>
                     </td>
-                    <td class="px-5 py-3 text-slate-600">{{ \Illuminate\Support\Str::limit($class->course?->title, 40) }}</td>
+                    <td class="px-5 py-3 text-slate-600">
+                        {{ \Illuminate\Support\Str::limit($class->course?->title, 40) }}
+                        <p class="text-xs text-slate-500">{{ $class->batch ? $class->batch->name.' ('.$class->batch->code.')' : 'All eligible course students' }}</p>
+                    </td>
                     <td class="px-5 py-3">
                         <p class="font-semibold text-slate-700">{{ $class->starts_at?->format('d M Y') }}</p>
                         <p class="text-xs text-slate-500">{{ $class->starts_at?->format('h:i A') }}</p>
