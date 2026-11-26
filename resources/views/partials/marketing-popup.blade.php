@@ -47,7 +47,15 @@
         }).catch(function () {});
     }
 
-    track(popup.dataset.impressionUrl);
+    var impressionTracked = false;
+    function trackImpression() {
+        if (!impressionTracked && analyticsConsent()) {
+            track(popup.dataset.impressionUrl);
+            impressionTracked = true;
+        }
+    }
+    trackImpression();
+    window.addEventListener('aec:consent-updated', trackImpression);
     document.getElementById('aec-popup-close')?.addEventListener('click', function () { popup.remove(); });
     document.getElementById('aec-popup-cta')?.addEventListener('click', function () { track(popup.dataset.clickUrl); });
 })();
