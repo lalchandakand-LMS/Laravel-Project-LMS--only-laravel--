@@ -2,11 +2,20 @@
 @section('title', $user->exists ? 'Edit user' : 'New user')
 @section('heading', $user->exists ? 'Edit user · '.$user->name : 'Add a user')
 @section('content')
-<form method="POST" action="{{ $user->exists ? route('admin.users.update', $user) : route('admin.users.store') }}"
+<form method="POST" enctype="multipart/form-data" action="{{ $user->exists ? route('admin.users.update', $user) : route('admin.users.store') }}"
       class="max-w-2xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     @csrf
     @if ($user->exists) @method('PUT') @endif
 
+    <div class="flex items-center gap-4 rounded-xl bg-slate-50 p-3">
+        <img src="{{ $user->avatarUrl() }}" alt="User avatar" class="h-16 w-16 rounded-full object-cover">
+        <div class="min-w-0 flex-1">
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Profile photo upload</label>
+            <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
+            <label class="mb-1 mt-2 block text-xs font-semibold text-slate-600">Or photo URL (HTTPS)</label>
+            <input type="url" name="avatar_url" value="{{ old('avatar_url', str_starts_with((string) $user->avatar, 'https://') ? $user->avatar : '') }}" placeholder="https://example.com/profile.jpg" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        </div>
+    </div>
     <div class="grid gap-4 sm:grid-cols-2">
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Name</label>
