@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -34,6 +35,12 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('categories', 'public');
+        } elseif ($request->filled('image_url')) {
+            $data['image'] = $data['image_url'];
+        }
+        unset($data['image_url']);
         Category::create($data);
 
         return redirect()->route('admin.categories.index')->with('success', 'Category created.');
@@ -50,6 +57,20 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $data = $this->validated($request, $category);
+        if ($request->hasFile('image') || $request->filled('image_url') || $request->boolean('remove_image')) {
+            $oldImage = $category->image;
+            if ($request->hasFile('image')) {
+                $data['image'] = $request->file('image')->store('categories', 'public');
+            } elseif ($request->filled('image_url')) {
+                $data['image'] = $data['image_url'];
+            } else {
+                $data['image'] = null;
+            }
+            if ($oldImage && ! str_starts_with(strtolower($oldImage), 'http://') && ! str_starts_with(strtolower($oldImage), 'https://')) {
+                Storage::disk('public')->delete($oldImage);
+            }
+        }
+        unset($data['image_url']);
         $category->update($data);
 
         return redirect()->route('admin.categories.index')->with('success', 'Category updated.');
@@ -85,15 +106,14 @@ class CategoryController extends Controller
             }],
             'icon' => ['nullable', 'string', 'max:60'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'image' => ['nullable', 'image', 'max:4096'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
+            'image_url' => ['nullable', 'url:http,https', 'max:2048'],
             'meta_title' => ['nullable', 'string', 'max:180'],
             'meta_description' => ['nullable', 'string', 'max:300'],
             'position' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ]);
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('categories', 'public');
-        }
+        unset($data['image_url']);
         $data['slug'] = filled($data['slug'] ?? null) ? Str::slug($data['slug']) : null;
         $data['is_active'] = $request->boolean('is_active');
         $data['position'] = $data['position'] ?? 0;
