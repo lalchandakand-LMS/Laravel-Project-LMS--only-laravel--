@@ -65,7 +65,7 @@ class LiveClassController extends Controller
         if ($viewMode === 'calendar') {
             try {
                 $calendarMonth = Carbon::createFromFormat('!Y-m', (string) $request->get('month', now()->format('Y-m')));
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $calendarMonth = now()->startOfMonth();
             }
 
