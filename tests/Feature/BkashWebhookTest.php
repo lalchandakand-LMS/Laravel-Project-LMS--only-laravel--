@@ -18,8 +18,8 @@ class BkashWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $certificate;
-    private string $privateKey;
+    private string $certificate = '';
+    private string $privateKey = '';
     private string $topicArn = 'arn:aws:sns:ap-southeast-1:123456789012:aec-sandbox-topic';
     private string $certificateUrl = 'https://sns.ap-southeast-1.amazonaws.com/SimpleNotificationService-test.pem';
 
