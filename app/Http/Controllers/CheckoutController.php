@@ -139,28 +139,11 @@ class CheckoutController extends Controller
     /** Student submits a full or partial manual payment for branch-approved verification. */
     public function pay(Request $request, Order $order)
     {
-        abort_unless($order->user_id === auth()->id(), 403);
-        abort_unless(in_array($order->status, ['pending', 'partially_paid'], true), 403, 'This order is not awaiting payment.');
-
-        $branch = $order->branch;
-        abort_unless($branch && $branch->is_active, 403, 'The selected branch is no longer accepting payments.');
-
-        $enabledMethods = $branch->enabledStudentPaymentMethods();
-        if ($enabledMethods === []) {
-            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
-        }
-
-        if ($order->dueAmount() <= 0) {
-            return back()->with('info', 'This order has no outstanding balance.');
-        }
-
-        if ($order->payments()->where('status', 'pending')->exists()) {
-            throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order. Please wait for the branch to review it.']);
-        }
+        abort_unless($order->user_id === $request->user()->id, 403);
 
         $data = $request->validate([
-            'gateway' => ['required', 'string', 'in:'.implode(',', $enabledMethods)],
-            'amount' => ['required', 'numeric', 'min:1', 'max:'.$order->dueAmount()],
+            'gateway' => 'required|string|max:30',
+            'amount' => ['required', 'numeric', 'min:1'],
             'sender_number' => 'required|string|max:80',
             'transaction_id' => 'required|string|max:80',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf,webp|max:5120',
@@ -170,38 +153,71 @@ class CheckoutController extends Controller
             throw ValidationException::withMessages(['proof' => 'Please upload the bank deposit slip or transfer receipt.']);
         }
 
-        if (Payment::where('transaction_id', $data['transaction_id'])->whereNotNull('transaction_id')->exists()) {
-            throw ValidationException::withMessages(['transaction_id' => 'This transaction ID has already been submitted.']);
-        }
-
         $proofPath = $request->file('proof')?->store('payment-proofs', 'local');
 
         try {
-            Payment::create([
-                'order_id' => $order->id,
-                'gateway' => $data['gateway'],
-                'amount' => $data['amount'],
-                'sender_number' => $data['sender_number'],
-                'transaction_id' => $data['transaction_id'],
-                'proof_path' => $proofPath,
-                'status' => 'pending',
-            ]);
-        } catch (QueryException $exception) {
-            if (! $this->isTransactionReferenceConflict($exception)) {
-                throw $exception;
-            }
+            DB::transaction(function () use ($request, $order, $data, $proofPath) {
+                // Lock the order so concurrent submissions cannot create multiple pending instalments.
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
+                if ($lockedOrder->user_id !== $request->user()->id) {
+                    abort(403);
+                }
+
+                if (! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
+                    throw ValidationException::withMessages(['payment' => 'This order is no longer awaiting payment.']);
+                }
+
+                $branch = Branch::whereKey($lockedOrder->branch_id)->lockForUpdate()->first();
+                abort_unless($branch && $branch->is_active, 403, 'The selected branch is no longer accepting payments.');
+
+                if (! in_array($data['gateway'], $branch->enabledStudentPaymentMethods(), true)) {
+                    throw ValidationException::withMessages(['gateway' => 'This payment method is no longer enabled for the selected branch.']);
+                }
+
+                $due = $lockedOrder->dueAmount();
+                if ($due <= 0) {
+                    throw ValidationException::withMessages(['amount' => 'This order has no outstanding balance.']);
+                }
+
+                if ($lockedOrder->payments()->where('status', 'pending')->exists()) {
+                    throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order. Please wait for the branch to review it.']);
+                }
+
+                if (round((float) $data['amount'], 2) > $due) {
+                    throw ValidationException::withMessages(['amount' => 'The submitted amount exceeds the current outstanding balance.']);
+                }
+
+                Payment::create([
+                    'order_id' => $lockedOrder->id,
+                    'gateway' => $data['gateway'],
+                    'amount' => $data['amount'],
+                    'sender_number' => $data['sender_number'],
+                    'transaction_id' => trim($data['transaction_id']),
+                    'proof_path' => $proofPath,
+                    'status' => 'pending',
+                ]);
+            });
+        } catch (QueryException $exception) {
             if ($proofPath) {
                 Storage::disk('local')->delete($proofPath);
             }
-
+            if (! $this->isTransactionReferenceConflict($exception)) {
+                throw $exception;
+            }
             throw ValidationException::withMessages([
                 'transaction_id' => 'This transaction ID has already been submitted.',
             ]);
+        } catch (\Throwable $exception) {
+            if ($proofPath) {
+                Storage::disk('local')->delete($proofPath);
+            }
+            throw $exception;
         }
 
         return back()->with('success', 'Payment submitted for verification. Your remaining balance and course access will update after approval.');
     }
+
     private function isTransactionReferenceConflict(QueryException $exception): bool
     {
         $message = strtolower($exception->getMessage());
