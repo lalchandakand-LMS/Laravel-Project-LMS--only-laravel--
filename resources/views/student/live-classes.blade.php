@@ -38,8 +38,17 @@
                 </div>
             </div>
 
+            @if ($class->isCancelled())
+                <div class="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    This class has been cancelled.
+                    @if ($class->cancellation_reason) <span>{{ $class->cancellation_reason }}</span> @endif
+                </div>
+            @endif
+
             <div class="mt-4 flex flex-wrap items-center gap-2">
-                @if ($class->canJoin() && $class->meeting_url)
+                @if ($class->isCancelled())
+                    <p class="text-xs font-medium text-rose-700">The meeting link is no longer available.</p>
+                @elseif ($class->canJoin() && $class->meeting_url)
                     <a href="{{ $class->meeting_url }}" target="_blank" rel="noopener noreferrer"
                        class="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
                         Join live class ↗
