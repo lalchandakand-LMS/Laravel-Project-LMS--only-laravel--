@@ -54,7 +54,7 @@ class BkashWebhookTest extends TestCase
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/search' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/search/*' => Http::response([
                 'trxID' => 'BKASH-WEBHOOK-TRX-1',
                 'merchantInvoiceNumber' => 'AEC-WEBHOOK-ORDER-1',
                 'amount' => '500.00',
