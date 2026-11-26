@@ -13,9 +13,7 @@
                 <select name="difficulty" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select>
                 <input name="category" placeholder="Topic / category" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
             </div>
-            <div class="grid gap-2 sm:grid-cols-2">
-                @for($i=0;$i<4;$i++)<input name="options[]" placeholder="Option {{ chr(65+$i) }} (MCQ)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">@endfor
-            </div>
+            <div class="grid gap-2 sm:grid-cols-2">@for($i=0;$i<4;$i++)<input name="options[]" placeholder="Option {{ chr(65+$i) }} (MCQ)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">@endfor</div>
             <div class="grid gap-3 sm:grid-cols-2">
                 <select name="correct_option_index" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">Correct option (A–D)</option>@for($i=0;$i<4;$i++)<option value="{{ $i }}">{{ chr(65+$i) }}</option>@endfor</select>
                 <input type="number" name="marks" step="0.25" min="0.25" value="1" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
@@ -35,11 +33,13 @@
         </form>
     </section>
 </div>
+
 @if($exam)
-    <form method="POST" action="{{ route('admin.question-bank.attach', $exam) }}" class="mt-5 rounded-2xl border border-orange-200 bg-orange-50 p-4">
-        @csrf
-        <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
+<form id="attach-bank-items" method="POST" action="{{ route('admin.question-bank.attach', $exam) }}" class="mt-5 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+    @csrf
+    <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
 @endif
+
 <form method="GET" class="my-4 flex flex-wrap gap-2">
     @if($exam)<input type="hidden" name="exam_id" value="{{ $exam->id }}">@endif
     <input name="q" value="{{ request('q') }}" placeholder="Search questions" class="min-w-48 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">
@@ -55,6 +55,6 @@
     </tr>@empty<tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No bank questions found.</td></tr>@endforelse
     </tbody></table></div>
 </div>
-@if($exam)</form><script>document.currentScript.previousElementSibling?.setAttribute('id','attach-bank-items');</script>@endif
+@if($exam)</form>@endif
 <div class="mt-4">{{ $items->links() }}</div>
 @endsection
