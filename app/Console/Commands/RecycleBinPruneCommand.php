@@ -134,7 +134,8 @@ class RecycleBinPruneCommand extends Command
                 ['student_fee_invoices', 'branch_id'], ['fee_plans', 'branch_id'],
             ],
             'batches' => [['enrollments', 'batch_id'], ['online_batch_enrollments', 'batch_id'], ['live_classes', 'batch_id'], ['attendance_sessions', 'batch_id']],
-            'live-classes' => [['attendance_sessions', 'live_class_id']],\n            'levels' => [['courses', 'level_id'], ['batches', 'level_id'], ['coaching_batches', 'level_id']],
+            'live-classes' => [['attendance_sessions', 'live_class_id']],
+            'levels' => [['courses', 'level_id'], ['batches', 'level_id'], ['coaching_batches', 'level_id']],
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };
