@@ -160,7 +160,7 @@ class MediaUploadAndUrlFallbackTest extends TestCase
                 'attachment_url' => 'https://cdn.example.com/lesson-notes.pdf',
                 'is_published' => 1,
             ])
-            ->assertRedirect(route('admin.courses.edit', $course->id));
+            ->assertRedirect(route('admin.courses.edit', $course));
 
         $this->actingAs($this->student())
             ->get(route('student.learn.attachment', [$course->slug, $lesson->id]))
