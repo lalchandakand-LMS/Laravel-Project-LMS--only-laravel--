@@ -48,8 +48,9 @@ class AuthenticationRateLimitTest extends TestCase
             'email' => $user->email,
             'password' => 'correct-password',
         ])->assertRedirect(route('login'))
-            ->assertSessionHasErrors('email', 'Too many login attempts.');
+            ->assertSessionHasErrors('email');
 
+        $this->assertStringContainsString('Too many login attempts.', session('errors')->first('email'));
         $this->assertFalse(auth()->check());
         $this->assertSame(5, RateLimiter::attempts($this->throttleKey($user->email)));
     }
