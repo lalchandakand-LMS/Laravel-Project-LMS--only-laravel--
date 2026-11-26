@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
