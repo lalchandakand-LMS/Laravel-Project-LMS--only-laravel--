@@ -41,6 +41,12 @@ class RolesAndOrganisationTest extends TestCase
         ] as $email => $prefix) {
             $response = $this->actingAs($this->user($email))->get($user = $this->user($email)->dashboardRoute());
             $response->assertOk();
+            if ($prefix !== '/admin') {
+                $response->assertSee('role-dashboard')
+                    ->assertSee('role-sidebar')
+                    ->assertSee('role-topbar')
+                    ->assertSee('role-nav-link');
+            }
             $this->assertStringContainsString($prefix, $user);
             $this->forgetGuards();
         }
