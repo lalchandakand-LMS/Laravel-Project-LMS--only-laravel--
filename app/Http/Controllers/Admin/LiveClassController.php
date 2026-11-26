@@ -76,7 +76,7 @@ class LiveClassController extends Controller
         $this->authorizeOwner($liveClass);
         $previousStart = $liveClass->starts_at?->timestamp;
         $liveClass->update($this->validated($request));
-        if ($liveClass->is_published && $previousStart !== $liveClass->starts_at?->timestamp) {
+        if (! $liveClass->isCancelled() && $liveClass->is_published && $previousStart !== $liveClass->starts_at?->timestamp) {
             $this->notifyStudents($liveClass, 'rescheduled');
         }
 
