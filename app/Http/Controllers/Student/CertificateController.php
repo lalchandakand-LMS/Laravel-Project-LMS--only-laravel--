@@ -12,6 +12,7 @@ class CertificateController extends Controller
     {
         $user = auth()->user();
         $certificate = Certificate::where('user_id', $user->id)->where('course_id', $course->id)->first();
+        abort_unless($certificate || $course->has_certificate, 404, 'Certificates are not enabled for this course.');
 
         // Keep already-issued certificates available, but do not mint a new one
         // from an expired enrollment or an ineligible batch/branch assignment.
