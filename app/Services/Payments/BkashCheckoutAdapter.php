@@ -78,7 +78,7 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
         // Execute finalizes the provider-side session. If it reports an already
         // executed/uncertain result, the independent status query is authoritative.
         try {
-            $this->providerPost(self::EXECUTE_PATH.$paymentId, []);
+            $this->providerPost(self::EXECUTE_PATH.rawurlencode($paymentId), []);
         } catch (Throwable) {
             // A retry or delayed redirect can arrive after the provider executed it.
             // Never treat this exception as success; continue only to server-side query.
@@ -94,7 +94,7 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
             throw new RuntimeException('A valid bKash payment reference is required for status reconciliation.');
         }
 
-        $result = $this->providerGet(self::STATUS_PATH.$paymentId);
+        $result = $this->providerGet(self::STATUS_PATH.rawurlencode($paymentId));
         $providerStatus = strtolower((string) ($result['transactionStatus'] ?? ''));
         $completed = $providerStatus === 'completed';
         $failed = in_array($providerStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'expired'], true);
@@ -193,7 +193,7 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
             throw new RuntimeException('A valid bKash transaction ID is required.');
         }
 
-        $result = $this->providerGet(self::SEARCH_PATH.$transactionId);
+        $result = $this->providerGet(self::SEARCH_PATH.rawurlencode($transactionId));
         $providerStatus = strtolower((string) ($result['transactionStatus'] ?? ''));
         $completed = $providerStatus === 'completed';
 
@@ -385,6 +385,8 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
                 'checkout.sandbox.bka.sh',
                 'sandbox.payment.bkash.com',
             ], true)
-            && ! isset($parts['user']) && ! isset($parts['pass']);
+            && ! isset($parts['user']) && ! isset($parts['pass'])
+            && (! isset($parts['port']) || (int) $parts['port'] === 443)
+            && ! isset($parts['fragment']);
     }
 }
