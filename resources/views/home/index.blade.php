@@ -267,7 +267,7 @@
                             <blockquote class="mt-2 min-h-20 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
                             <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
                                 <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
-                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-teal-300">✓ Verified Student</p></div>
+                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-teal-300">@if ($review->course && \\App\\Services\\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
                             </figcaption>
                         </figure>
                     @endforeach
