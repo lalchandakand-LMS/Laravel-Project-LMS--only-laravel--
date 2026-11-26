@@ -68,6 +68,7 @@ class AdvancedCategoryCourseBuilderTest extends TestCase
             'level' => 'beginner',
             'language' => 'Bangla',
             'category_ids' => [$primary->id, $secondary->id],
+            'is_published' => 1,
         ])->assertRedirect(route('admin.courses.edit', $course));
 
         $this->assertEqualsCanonicalizing(
@@ -76,7 +77,6 @@ class AdvancedCategoryCourseBuilderTest extends TestCase
         );
         $this->assertSame($primary->id, (int) $course->fresh()->category_id);
 
-        $course->update(['is_published' => true]);
         $this->assertDatabaseHas('courses', ['id' => $course->id, 'is_published' => true]);
         $this->assertDatabaseHas('course_category', ['course_id' => $course->id, 'category_id' => $secondary->id]);
         $response = $this->get(route('categories.show', $secondary->slug))->assertOk();
