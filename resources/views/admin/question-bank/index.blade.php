@@ -49,10 +49,10 @@
     <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
 @endif
 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-    <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr>@if($exam)<th class="px-4 py-3">Select</th>@endif<th class="px-4 py-3">Question</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Topic</th><th class="px-4 py-3">Level</th><th class="px-4 py-3">Marks</th></tr></thead><tbody class="divide-y divide-slate-100">
+    <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr>@if($exam)<th class="px-4 py-3">Select</th>@endif<th class="px-4 py-3">Question</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Topic</th><th class="px-4 py-3">Level</th><th class="px-4 py-3">Marks</th><th class="px-4 py-3">Actions</th></tr></thead><tbody class="divide-y divide-slate-100">
     @forelse($items as $item)<tr>
         @if($exam)<td class="px-4 py-3"><input type="checkbox" name="item_ids[]" value="{{ $item->id }}" form="attach-bank-items"></td>@endif
-        <td class="max-w-xl px-4 py-3">{{ $item->question }}</td><td class="px-4 py-3 uppercase">{{ $item->type }}</td><td class="px-4 py-3">{{ $item->category ?: '—' }}</td><td class="px-4 py-3">{{ ucfirst($item->difficulty) }}</td><td class="px-4 py-3">{{ $item->marks }}</td>
+        <td class="max-w-xl px-4 py-3">{{ $item->question }}</td><td class="px-4 py-3 uppercase">{{ $item->type }}</td><td class="px-4 py-3">{{ $item->category ?: '—' }}</td><td class="px-4 py-3">{{ ucfirst($item->difficulty) }}</td><td class="px-4 py-3">{{ $item->marks }}</td><td class="px-4 py-3 whitespace-nowrap"><a href="{{ route('admin.question-bank.edit', $item) }}" class="font-semibold text-emerald-700">Edit</a><form method="POST" action="{{ route('admin.question-bank.destroy', $item) }}" class="ml-3 inline" onsubmit="return confirm('Delete this bank item? Questions already copied into exams will remain.')">@csrf @method('DELETE')<button class="font-semibold text-rose-600">Delete</button></form></td>
     </tr>@empty<tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No bank questions found.</td></tr>@endforelse
     </tbody></table></div>
 </div>
