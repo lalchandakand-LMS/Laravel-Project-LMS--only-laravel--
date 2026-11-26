@@ -25,6 +25,10 @@ class SiteCustomizationSettingsTest extends TestCase
             'site_name' => "Alom's English Center",
             'homepage_learning_title' => 'Learning paths',
             'homepage_testimonial_title' => 'Student stories',
+            'homepage_learning_layout' => 'grid',
+            'homepage_featured_layout' => 'carousel',
+            'homepage_carousel_autoplay' => '1',
+            'homepage_carousel_speed' => '8',
             'homepage_learning_bg' => '#ffffff',
             'homepage_learning_text' => '#0f172a',
             'homepage_testimonial_bg' => '#f1f5f9',
@@ -52,11 +56,46 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->assertSame('Learning paths', Setting::get('homepage_learning_title'));
         $this->assertSame('Student stories', Setting::get('homepage_testimonial_title'));
+        $this->assertSame('grid', Setting::get('homepage_learning_layout'));
+        $this->assertSame('carousel', Setting::get('homepage_featured_layout'));
+        $this->assertSame('1', Setting::get('homepage_carousel_autoplay'));
+        $this->assertSame('8', Setting::get('homepage_carousel_speed'));
         $this->assertSame('Example Studio', Setting::get('developer_name'));
         $this->assertSame('1', Setting::get('developer_show'));
         $this->assertSame('1', Setting::get('brand_loader_enabled'));
         $this->assertSame('dots', Setting::get('brand_loader_style'));
         $this->assertSame('Loading Alom LMS', Setting::get('brand_loader_message'));
+    }
+
+
+    public function test_homepage_sections_render_saved_carousel_preferences(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_learning_layout' => 'carousel',
+            'homepage_featured_layout' => 'grid',
+            'homepage_carousel_autoplay' => '1',
+            'homepage_carousel_speed' => '9',
+        ])->assertRedirect();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-carousel="categories"', false)
+            ->assertSee('data-home-carousel-layout="carousel"', false)
+            ->assertSee('data-home-carousel-autoplay="1"', false)
+            ->assertSee('data-home-carousel-speed="9"', false)
+            ->assertSee('data-home-carousel="categories"', false);
+    }
+
+    public function test_invalid_homepage_carousel_preferences_are_rejected(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
+            'homepage_learning_layout' => 'ticker',
+            'homepage_carousel_speed' => '99',
+        ])->assertSessionHasErrors(['homepage_learning_layout', 'homepage_carousel_speed']);
     }
 
     public function test_invalid_customization_color_is_rejected(): void

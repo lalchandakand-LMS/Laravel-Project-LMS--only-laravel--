@@ -139,7 +139,7 @@
 @endif
 
 {{-- CATEGORIES --}}
-<section class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
+<section data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
     <div class="flex items-end justify-between">
         <div>
             <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose your learning path' }}</h2>
@@ -164,7 +164,7 @@
 
 {{-- FEATURED --}}
 @if ($featured->count())
-<section class="bg-white py-16">
+<section data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Featured courses</h2>
         <p class="mt-1 text-slate-500">Hand-picked by our academic team.</p>
@@ -190,7 +190,7 @@
 </section>
 
 {{-- LATEST --}}
-<section class="mx-auto max-w-7xl px-4 py-16">
+<section data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Latest courses</h2>
         <a href="{{ route('courses.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">Browse all →</a>
@@ -204,7 +204,7 @@
 
 {{-- UPCOMING LIVE CLASSES --}}
 @if (($homepageSettings['homepage_show_live_classes'] ?? '1') === '1' && $upcomingLiveClasses->isNotEmpty())
-<section class="bg-white py-16">
+<section data-home-carousel="live_classes" data-home-carousel-layout="{{ $homepageSettings['homepage_live_classes_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Upcoming live classes</h2><p class="mt-1 text-slate-500">Join scheduled learning sessions with our instructors.</p></div>
@@ -227,7 +227,7 @@
 
 {{-- UPCOMING EXAMS --}}
 @if (($homepageSettings['homepage_show_exams'] ?? '1') === '1' && $upcomingExams->isNotEmpty())
-<section class="mx-auto max-w-7xl px-4 py-16">
+<section data-home-carousel="exams" data-home-carousel-layout="{{ $homepageSettings['homepage_exams_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Exams & assessments</h2><p class="mt-1 text-slate-500">Prepare, practise and track your progress.</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ($upcomingExams as $exam)
@@ -244,7 +244,7 @@
 
 {{-- TEACHER PROFILES --}}
 @if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
-<section id="teachers" class="bg-slate-50 py-16">
+<section data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Meet our teachers</h2><p class="mt-1 text-slate-500">Learn with experienced instructors and practical guidance.</p></div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -276,7 +276,7 @@
 
 {{-- REVIEWS --}}
 @if ($reviews->count())
-<section class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
+<section data-home-carousel="reviews" data-home-carousel-layout="{{ $homepageSettings['homepage_reviews_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2>
         <div class="mt-8 grid gap-5 md:grid-cols-3">
@@ -300,7 +300,7 @@
 
 {{-- EBOOKS --}}
 @if ($ebooks->count())
-<section class="mx-auto max-w-7xl px-4 py-16">
+<section data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">E-books & notes</h2>
         <a href="{{ route('ebooks.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">All e-books →</a>
@@ -331,4 +331,44 @@
     </div>
 </section>
 @endif
+
+@push('scripts')
+<style>
+.home-carousel-track{scrollbar-width:thin;scroll-behavior:smooth;scroll-snap-type:x mandatory}
+.home-carousel-track>*{scroll-snap-align:start;flex:0 0 84%;min-width:0}
+@media(min-width:640px){.home-carousel-track>*{flex-basis:48%}}
+@media(min-width:1024px){.home-carousel-track>*{flex-basis:31%}}
+.home-carousel-controls button:disabled{opacity:.35;cursor:not-allowed}
+@media(prefers-reduced-motion:reduce){.home-carousel-track{scroll-behavior:auto}}
+</style>
+<script>
+(() => {
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ document.querySelectorAll('[data-home-carousel]').forEach(section=>{
+  if(section.dataset.homeCarouselLayout!=='carousel')return;
+  const track=section.querySelector('.mt-8.grid');if(!track||track.children.length<2)return;
+  track.classList.remove('grid','sm:grid-cols-2','md:grid-cols-3','lg:grid-cols-3','lg:grid-cols-4','gap-4','gap-5','gap-6');
+  track.classList.add('home-carousel-track','flex','gap-5','overflow-x-auto','pb-3');
+  const controls=document.createElement('div');controls.className='home-carousel-controls ml-auto flex shrink-0 gap-2';
+  controls.innerHTML='<button type="button" aria-label="Previous items" class="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-white text-xl text-slate-700 shadow-sm">‹</button><button type="button" aria-label="Next items" class="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-white text-xl text-slate-700 shadow-sm">›</button>';
+  const heading=section.querySelector('.mx-auto.max-w-7xl>div.flex.items-end.justify-between, .mx-auto.max-w-7xl>div.flex.flex-wrap.items-end.justify-between');
+  if(heading){heading.classList.add('gap-4');heading.appendChild(controls);}else{section.querySelector('.mx-auto.max-w-7xl')?.prepend(controls);}
+  const [prev,next]=controls.querySelectorAll('button');
+  const step=()=>Math.max(track.clientWidth*.82,220);
+  const move=direction=>track.scrollBy({left:direction*step(),behavior:reduced.matches?'auto':'smooth'});
+  prev.addEventListener('click',()=>move(-1));next.addEventListener('click',()=>move(1));
+  const update=()=>{prev.disabled=track.scrollLeft<=2;next.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;};
+  track.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update);update();
+  track.setAttribute('aria-label',section.dataset.homeCarousel.replace('_',' ')+' carousel');
+  let timer=null;
+  const stop=()=>{if(timer)window.clearInterval(timer);timer=null;};
+  const start=()=>{stop();if(section.dataset.homeCarouselAutoplay!=='1'||reduced.matches||track.scrollWidth<=track.clientWidth+2)return;const delay=Math.min(20,Math.max(3,Number(section.dataset.homeCarouselSpeed)||6))*1000;timer=window.setInterval(()=>{if(section.matches(':hover')||section.contains(document.activeElement))return;move(track.scrollLeft+track.clientWidth>=track.scrollWidth-3?-1:1);},delay);};
+  section.addEventListener('mouseenter',stop);section.addEventListener('mouseleave',start);
+  section.addEventListener('focusin',stop);section.addEventListener('focusout',event=>{if(!section.contains(event.relatedTarget))start();});
+  reduced.addEventListener('change',start);start();
+ });
+})();
+</script>
+@endpush
+
 @endsection
