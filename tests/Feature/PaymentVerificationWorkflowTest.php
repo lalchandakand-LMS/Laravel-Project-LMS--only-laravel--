@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Branch;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Ebook;
+use App\Models\EbookPurchase;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -131,7 +133,125 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertNotNull($payment->proof_path);
         Storage::disk('local')->assertExists($payment->proof_path);
 
-        $this->actingAs($admin)->get(route('admin.payments.proof', $payment))->assertOk();
+        $this->actingAs($admin)->get(route('admin.payments.proof', $payment))
+            ->assertOk()
+            ->assertHeader('cache-control', 'private, no-store, max-age=0')
+            ->assertHeader('x-content-type-options', 'nosniff')
+            ->assertHeader('content-disposition');
+    }
+
+    public function test_payment_submission_rechecks_the_balance_under_the_order_lock(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'ALREADY-PAID-900',
+            'amount' => 900,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'partially_paid']);
+
+        $this->actingAs($student)->post(route('checkout.pay', $order->order_no), [
+            'gateway' => 'nagad',
+            'amount' => 200,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'OVER-DUE-200',
+        ])->assertSessionHasErrors('amount');
+
+        $this->assertDatabaseMissing('payments', ['transaction_id' => 'OVER-DUE-200']);
+        $this->assertSame(100.0, $order->fresh()->dueAmount());
+    }
+
+    public function test_duplicate_transaction_reference_is_rejected_and_uploaded_proof_is_removed(): void
+    {
+        Storage::fake('local');
+        [$firstStudent, $admin, $branch, $firstOrder] = $this->orderForStudent();
+        [$secondStudent, $secondAdmin, $secondBranch, $secondOrder] = $this->orderForStudent();
+
+        Payment::create([
+            'order_id' => $firstOrder->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'GLOBAL-DUPLICATE-TRX',
+            'amount' => 100,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($secondStudent)->post(route('checkout.pay', $secondOrder->order_no), [
+            'gateway' => 'bank',
+            'amount' => 500,
+            'sender_number' => 'Alom English Center',
+            'transaction_id' => 'GLOBAL-DUPLICATE-TRX',
+            'proof' => UploadedFile::fake()->create('duplicate-slip.pdf', 100, 'application/pdf'),
+        ])->assertSessionHasErrors('transaction_id');
+
+        $this->assertSame(1, Payment::where('transaction_id', 'GLOBAL-DUPLICATE-TRX')->count());
+        $this->assertSame([], Storage::disk('local')->allFiles('payment-proofs'));
+    }
+
+    public function test_ebook_refund_revokes_purchase_and_repayment_restores_access(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $ebook = Ebook::create([
+            'title' => 'Refundable eBook',
+            'slug' => 'refundable-ebook',
+            'price' => 1000,
+            'file' => 'ebooks/refundable.pdf',
+            'is_free' => false,
+            'is_published' => true,
+        ]);
+        $order->items()->create([
+            'item_type' => 'ebook',
+            'item_id' => $ebook->id,
+            'title' => $ebook->title,
+            'price' => 1000,
+            'qty' => 1,
+        ]);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'EBOOK-REFUND-TRX',
+            'amount' => 1000,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'paid']);
+        EbookPurchase::create([
+            'user_id' => $student->id,
+            'ebook_id' => $ebook->id,
+            'order_id' => $order->id,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'amount' => 1000,
+            'reference' => 'EBOOK-REFUND-1000',
+            'reason' => 'Full eBook refund.',
+        ])->assertRedirect();
+
+        $this->assertDatabaseMissing('ebook_purchases', [
+            'user_id' => $student->id,
+            'ebook_id' => $ebook->id,
+        ]);
+        $this->assertSame('refunded', $order->fresh()->status);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'pending',
+        ])->assertRedirect();
+        $this->actingAs($admin)->post(route('admin.orders.offline-payment', $order->order_no), [
+            'gateway' => 'cash',
+            'amount' => 1000,
+            'reference' => 'EBOOK-REPAY-1000',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('ebook_purchases', [
+            'user_id' => $student->id,
+            'ebook_id' => $ebook->id,
+            'order_id' => $order->id,
+        ]);
+        $this->assertSame('paid', $order->fresh()->status);
     }
 
     public function test_cash_and_office_collection_are_staff_recorded_as_verified_ledger_entries(): void
