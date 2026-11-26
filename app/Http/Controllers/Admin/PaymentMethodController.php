@@ -121,7 +121,7 @@ class PaymentMethodController extends Controller
         });
 
         return redirect()->route('admin.payment-methods.index')
-            ->with('success', 'Payment method settings saved. Gateway API processing remains inactive until its adapter and provider tests are completed.');
+            ->with('success', 'Payment settings saved. bKash Tokenized Checkout sandbox is available when its required credentials are complete; Live mode and other provider APIs remain locked pending their official integration and certification.');
     }
 
     private function credentials(string $provider): array
