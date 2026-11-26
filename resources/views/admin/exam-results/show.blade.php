@@ -2,7 +2,7 @@
 @section('title', 'Review Exam')
 @section('heading', 'Review · '.$attempt->user?->name)
 @section('content')
-<div class="mb-4 grid gap-3 sm:grid-cols-3"><div class="rounded-xl border bg-white p-4"><p class="text-xs text-slate-500">Current score</p><p class="text-2xl font-extrabold">{{ $attempt->score }} / {{ $exam->total_marks }}</p></div><div class="rounded-xl border bg-white p-4"><p class="text-xs text-slate-500">Submitted</p><p class="font-bold">{{ $attempt->submitted_at?->format('d M Y, h:i A') ?? '—' }}</p></div><div class="rounded-xl border bg-white p-4"><p class="text-xs text-slate-500">Manual review</p><p class="font-bold">{{ $attempt->manual_reviewed_at?->format('d M Y, h:i A') ?? 'Pending' }}</p></div></div>
+<div class="mb-4 grid gap-3 sm:grid-cols-3"><div class="rounded-xl border bg-white p-4"><p class="text-xs text-slate-500">Current score</p><p class="text-2xl font-extrabold">{{ $attempt->score }} / {{ $attempt->max_score ?? $exam->total_marks }}</p></div><div class="rounded-xl border bg-white p-4"><p class="text-xs text-slate-500">Submitted</p><p class="font-bold">{{ $attempt->submitted_at?->format('d M Y, h:i A') ?? '—' }}</p></div><div class="rounded-xl border bg-white p-4"><p class="text-xs text-slate-500">Manual review</p><p class="font-bold">{{ $attempt->manual_reviewed_at?->format('d M Y, h:i A') ?? 'Pending' }}</p></div></div>
 @if($attempt->answers->contains(fn ($answer) => in_array($answer->question?->type, ['cq','short'], true)))
 <form method="POST" action="{{ route('admin.exams.results.grade', [$exam,$attempt]) }}" class="space-y-4">@csrf
 @foreach($attempt->answers as $answer)
