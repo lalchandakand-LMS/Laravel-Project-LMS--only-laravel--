@@ -130,7 +130,7 @@ class User extends Authenticatable
     public function avatarUrl(): string
     {
         return $this->avatar
-            ? asset('storage/'.$this->avatar)
+            ? (str_starts_with($this->avatar, 'https://') ? $this->avatar : asset('storage/'.$this->avatar))
             : 'https://ui-avatars.com/api/?background=0f766e&color=fff&name='.urlencode($this->name);
     }
 
