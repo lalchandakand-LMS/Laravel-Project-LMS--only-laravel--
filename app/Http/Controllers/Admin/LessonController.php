@@ -62,6 +62,7 @@ class LessonController extends Controller
         $this->authorizeCourse($course);
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data, $lesson);
+        $this->assertLessonCourseChangeAllowed($lesson, $data);
         $oldAttachment = $lesson->attachment;
         $storedAttachment = $this->applyAttachment($request, $data);
         try {
@@ -102,6 +103,12 @@ class LessonController extends Controller
     public function destroy(Lesson $lesson)
     {
         $this->authorizeCourse($lesson->course);
+        abort_if(
+            $lesson->dependents()->exists(),
+            409,
+            'This lesson is a prerequisite for other lessons. Reassign those prerequisites before archiving it.'
+        );
+
         $course = $lesson->course;
         // Keep the private attachment while the lesson remains recoverable.
         $lesson->delete();
@@ -139,6 +146,29 @@ class LessonController extends Controller
     {
         if (! empty($data['section_id'])) {
             abort_unless(Section::whereKey($data['section_id'])->where('course_id', $data['course_id'])->exists(), 422);
+        }
+    }
+
+    /**
+     * A lesson with learning history or linked curriculum records cannot be
+     * moved to another course; that would orphan prerequisites and shift
+     * existing progress, exams, or assignments into a different course.
+     */
+    private function assertLessonCourseChangeAllowed(Lesson $lesson, array $data): void
+    {
+        if ((int) $data['course_id'] === (int) $lesson->course_id) {
+            return;
+        }
+
+        $hasLinkedRecords = DB::table('lessons')->where('prerequisite_lesson_id', $lesson->id)->exists()
+            || DB::table('lesson_progress')->where('lesson_id', $lesson->id)->exists()
+            || DB::table('exams')->where('lesson_id', $lesson->id)->exists()
+            || DB::table('assignments')->where('lesson_id', $lesson->id)->exists();
+
+        if ($hasLinkedRecords) {
+            throw ValidationException::withMessages([
+                'course_id' => 'This lesson has learning history or linked content. Remove or reassign those links before moving it to another course.',
+            ]);
         }
     }
 
