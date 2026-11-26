@@ -136,8 +136,10 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
         return Http::acceptJson()
             ->asJson()
             ->timeout(30)
-            ->withToken($this->token($configuration))
-            ->withHeaders(['X-App-Key' => $credentials['app_key']]);
+            ->withHeaders([
+                'Authorization' => $this->token($configuration),
+                'X-App-Key' => $credentials['app_key'],
+            ]);
     }
 
     private function token(array $configuration): string
