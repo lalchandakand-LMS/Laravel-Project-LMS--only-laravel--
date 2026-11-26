@@ -70,6 +70,92 @@ class LiveClassSchedulingTest extends TestCase
             ->assertRedirect(route('admin.live-classes.index'));
     }
 
+
+    public function test_admin_update_syncs_linked_draft_attendance_schedule_and_roster_context(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        $batch = Batch::create([
+            'course_id' => $course->id,
+            'name' => 'Sync attendance batch',
+            'code' => 'SYNC-ATT-'.strtoupper(\\Illuminate\\Support\\Str::random(4)),
+            'status' => 'ongoing',
+        ]);
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'batch_id' => null,
+            'title' => 'Original attendance topic',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(12),
+            'duration_minutes' => 45,
+            'is_published' => true,
+        ]);
+        $session = AttendanceSession::create([
+            'live_class_id' => $liveClass->id,
+            'course_id' => $course->id,
+            'topic' => $liveClass->title,
+            'starts_at' => $liveClass->starts_at,
+            'ends_at' => $liveClass->endsAt(),
+            'status' => 'draft',
+            'mode' => 'online',
+        ]);
+        $newStart = now()->addDays(14)->startOfHour();
+
+        $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), [
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'title' => 'Updated attendance topic',
+            'platform' => 'Google Meet',
+            'starts_at' => $newStart->format('Y-m-d H:i:s'),
+            'duration_minutes' => 90,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        $session->refresh();
+        $this->assertSame($batch->id, $session->batch_id);
+        $this->assertSame('Updated attendance topic', $session->topic);
+        $this->assertSame($newStart->timestamp, $session->starts_at->timestamp);
+        $this->assertSame(90, $session->starts_at->diffInMinutes($session->ends_at));
+    }
+
+    public function test_admin_cannot_change_live_class_schedule_after_attendance_is_approved(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Approved attendance class',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(16),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        AttendanceSession::create([
+            'live_class_id' => $liveClass->id,
+            'course_id' => $course->id,
+            'topic' => $liveClass->title,
+            'starts_at' => $liveClass->starts_at,
+            'ends_at' => $liveClass->endsAt(),
+            'status' => 'approved',
+            'mode' => 'online',
+        ]);
+        $oldStart = $liveClass->starts_at->timestamp;
+
+        $this->actingAs($admin)->from(route('admin.live-classes.edit', $liveClass))
+            ->put(route('admin.live-classes.update', $liveClass), [
+                'course_id' => $course->id,
+                'title' => $liveClass->title,
+                'platform' => 'Zoom',
+                'starts_at' => now()->addDays(18)->format('Y-m-d H:i:s'),
+                'duration_minutes' => 60,
+                'is_published' => 1,
+            ])
+            ->assertRedirect(route('admin.live-classes.edit', $liveClass))
+            ->assertSessionHasErrors('starts_at');
+
+        $this->assertSame($oldStart, $liveClass->fresh()->starts_at->timestamp);
+    }
+
     public function test_admin_cannot_schedule_overlapping_sessions_for_the_same_teacher(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
