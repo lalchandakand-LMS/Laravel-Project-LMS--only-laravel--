@@ -101,9 +101,8 @@ class LessonController extends Controller
     {
         $this->authorizeCourse($lesson->course);
         $course = $lesson->course;
-        $attachment = $lesson->attachment;
+        // Keep the attachment while the lesson is recoverable from the Recycle Bin.
         $lesson->delete();
-        delete_stored_media('local', $attachment);
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson deleted.');
     }
 
