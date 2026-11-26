@@ -31,4 +31,9 @@ class StaffProfile extends Model
     {
         return $this->morphMany(ProfileDocument::class, 'documentable')->latest();
     }
+
+    public function payrolls()
+    {
+        return $this->hasMany(StaffPayroll::class)->latest('payroll_month');
+    }
 }
