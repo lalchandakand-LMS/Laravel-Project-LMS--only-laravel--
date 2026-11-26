@@ -117,6 +117,7 @@ class OrderController extends Controller
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
             'products' => Product::published()->orderBy('title')->get(),
+            'products' => Product::published()->orderBy('title')->get(),
         ]);
     }
 
@@ -200,7 +201,7 @@ class OrderController extends Controller
             'email' => 'required|email|max:150', 'address' => 'nullable|string|max:2000',
             'note' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:course,ebook',
+            'items.*.type' => 'required|in:course,ebook,product',
             'items.*.id' => 'required|integer',
         ]);
         $this->assertUniqueOrderItems($data['items']);
