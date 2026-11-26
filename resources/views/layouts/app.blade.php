@@ -214,6 +214,77 @@
     @if (\App\Models\Setting::get('developer_show', '0') === '1' && \App\Models\Setting::get('developer_name'))
     <div class="border-t border-white/10 px-4 py-3 text-center text-xs" style="background-color: {{ \App\Models\Setting::get('developer_bg', '#0f172a') }}; color: {{ \App\Models\Setting::get('developer_text_color', '#ffffff') }}">{{ \App\Models\Setting::get('developer_text', 'Developed by') }} @if ($developerUrl = \App\Models\Setting::get('developer_url'))<a href="{{ $developerUrl }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ \App\Models\Setting::get('developer_name') }}</a>@else <strong>{{ \App\Models\Setting::get('developer_name') }}</strong>@endif</div>
     @endif
-</footer>@stack('scripts')
+</footer>
+    @php
+        $trackingEnabled = filled(\\App\\Models\\Setting::get('ga4_measurement_id'))
+            || filled(\\App\\Models\\Setting::get('gtm_container_id'))
+            || filled(\\App\\Models\\Setting::get('meta_pixel_id'));
+    @endphp
+    @if ($trackingEnabled && !$privateSeoRoute)
+        <section id="tracking-consent" aria-label="Cookie preferences" aria-live="polite" hidden class="fixed inset-x-4 bottom-4 z-[100] mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="max-w-xl">
+                    <h2 class="text-sm font-bold text-slate-900">Your privacy choices</h2>
+                    <p class="mt-1 text-xs leading-5 text-slate-600">We use optional analytics and marketing technologies to understand website visits and improve our campaigns. They remain off unless you accept. You can reject them and continue using the site.</p>
+                    <a href="{{ url('/privacy-policy') }}" class="mt-1 inline-block text-xs font-semibold text-orange-700 underline">Read our Privacy Policy</a>
+                </div>
+                <div class="flex shrink-0 flex-wrap gap-2">
+                    <button type="button" id="tracking-reject" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700">Reject optional</button>
+                    <button type="button" id="tracking-accept" class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white">Accept analytics & marketing</button>
+                </div>
+            </div>
+        </section>
+        <script>
+            (() => {
+                const banner = document.getElementById('tracking-consent');
+                const consentKey = 'aec_optional_tracking_consent_v1';
+                const ids = {
+                    ga4: @json(\\App\\Models\\Setting::get('ga4_measurement_id')),
+                    gtm: @json(\\App\\Models\\Setting::get('gtm_container_id')),
+                    meta: @json(\\App\\Models\\Setting::get('meta_pixel_id'))
+                };
+                const loadOptionalTracking = () => {
+                    if (ids.gtm && !document.querySelector('[data-aec-gtm]')) {
+                        window.dataLayer = window.dataLayer || [];
+                        window.dataLayer.push({'gtm.start': Date.now(), event: 'gtm.js'});
+                        const script = document.createElement('script');
+                        script.async = true;
+                        script.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(ids.gtm);
+                        script.dataset.aecGtm = '1';
+                        document.head.appendChild(script);
+                    }
+                    if (ids.ga4 && !ids.gtm && !document.querySelector('[data-aec-ga4]')) {
+                        window.dataLayer = window.dataLayer || [];
+                        window.gtag = function(){ window.dataLayer.push(arguments); };
+                        window.gtag('js', new Date());
+                        window.gtag('config', ids.ga4);
+                        const script = document.createElement('script');
+                        script.async = true;
+                        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ids.ga4);
+                        script.dataset.aecGa4 = '1';
+                        document.head.appendChild(script);
+                    }
+                    if (ids.meta && !window.fbq) {
+                        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=true;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=true;t.src=v;t.dataset.aecMeta='1';s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+                        window.fbq('init', ids.meta);
+                        window.fbq('track', 'PageView');
+                    }
+                };
+                const stored = localStorage.getItem(consentKey);
+                if (stored === 'accepted') loadOptionalTracking();
+                else if (stored !== 'rejected') banner.hidden = false;
+                document.getElementById('tracking-accept').addEventListener('click', () => {
+                    localStorage.setItem(consentKey, 'accepted');
+                    banner.hidden = true;
+                    loadOptionalTracking();
+                });
+                document.getElementById('tracking-reject').addEventListener('click', () => {
+                    localStorage.setItem(consentKey, 'rejected');
+                    banner.hidden = true;
+                });
+            })();
+        </script>
+    @endif
+    @stack('scripts')
 </body>
 </html>
