@@ -91,12 +91,12 @@ class AssignmentController extends Controller
         $this->assertLessonBelongsToCourse($data);
 
         if ($request->hasFile('attachment')) {
-            if ($assignment->attachment && ! preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
+            if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
                 Storage::disk('local')->delete($assignment->attachment);
             }
             $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
         } elseif ($request->filled('resource_url')) {
-            if ($assignment->attachment && ! preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
+            if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
                 Storage::disk('local')->delete($assignment->attachment);
             }
             $data['attachment'] = $data['resource_url'];
@@ -116,7 +116,7 @@ class AssignmentController extends Controller
         abort_if($assignment->submissions()->exists(), 409,
             'Assignments with student submissions cannot be deleted. Unpublish the assignment instead.');
 
-        if ($assignment->attachment && ! preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
+        if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
             Storage::disk('local')->delete($assignment->attachment);
         }
         $assignment->delete();
