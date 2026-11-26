@@ -77,6 +77,15 @@
                 </div>
 
                 @if (! $order->payments->where('status', 'pending')->count())
+                    @if(($bkashReady ?? false) && in_array('bkash', $enabledMethods, true))
+                        <form method="POST" action="{{ route('checkout.bkash', $order->order_no) }}" class="mt-4 rounded-xl border border-pink-200 bg-pink-50 p-4">
+                            @csrf
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div><p class="font-bold text-pink-950">Secure bKash checkout</p><p class="mt-1 text-xs text-pink-800">Sandbox test only — the provider confirms the payment before course access is granted.</p></div>
+                                <button class="rounded-lg bg-pink-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-pink-700">Pay with bKash</button>
+                            </div>
+                        </form>
+                    @endif
                     <form method="POST" enctype="multipart/form-data" action="{{ route('checkout.pay', $order->order_no) }}" class="mt-4 grid gap-3 rounded-xl border border-slate-200 p-5">
                         @csrf
                         <label class="text-sm font-semibold text-slate-700">Payment method</label>
