@@ -493,7 +493,7 @@ class OrderController extends Controller
     public function recordRefund(Request $request, Order $order)
     {
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:'.$order->amountPaid()],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:'.$order->refundableAmount()],
             'payment_id' => 'nullable|integer|exists:payments,id',
             'reference' => 'nullable|string|max:100',
             'reason' => 'required|string|max:2000',
@@ -502,10 +502,10 @@ class OrderController extends Controller
         try {
             $adjustment = DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
-                $netPaid = $lockedOrder->amountPaid();
+                $refundableAmount = $lockedOrder->refundableAmount();
                 $refundAmount = round((float) $data['amount'], 2);
-                if ($refundAmount > round($netPaid, 2)) {
-                    throw ValidationException::withMessages(['amount' => 'Refund cannot exceed the verified net amount received.']);
+                if ($refundAmount > round($refundableAmount, 2)) {
+                    throw ValidationException::withMessages(['amount' => 'Refund cannot exceed verified cash received after previous refunds. Internal credit transfers are not refundable cash.']);
                 }
 
                 $linkedPayment = null;
