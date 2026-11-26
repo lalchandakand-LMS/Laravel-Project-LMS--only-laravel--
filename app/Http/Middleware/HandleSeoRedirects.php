@@ -6,6 +6,7 @@ use App\Models\SeoRedirect;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class HandleSeoRedirects
 {
