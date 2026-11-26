@@ -37,7 +37,7 @@
         <div class="mt-5 flex flex-wrap gap-3">
             <a href="{{ route('admin.courses.create') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-extrabold text-blue-800 shadow-lg hover:bg-cyan-50">Create a Course <span aria-hidden="true">→</span></a>
             <a href="{{ route('admin.users.create') }}" class="rounded-xl border border-white/50 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/20">Add a Student</a>
-        <p class="mt-4 text-xs font-semibold text-cyan-100">Total collected revenue: <span class="font-black text-white">৳{{ number_format($stats['revenue'], 0) }}</span> · Pending orders: {{ number_format($stats['pending_orders']) }}</p>
+        <p class="mt-4 text-xs font-semibold text-cyan-100">Total Revenue: <span class="font-black text-white">৳{{ number_format($stats['revenue'], 0) }}</span> · Pending orders: {{ number_format($stats['pending_orders']) }}</p>
         </div>
     </div>
     <div class="relative hidden min-h-[220px] items-center justify-center p-5 lg:flex">
