@@ -40,7 +40,10 @@ class QuestionBankController extends Controller
             'correct_option_index' => 'nullable|integer|min:0|max:9',
         ]);
 
-        $options = array_values(array_filter($data['options'] ?? [], fn ($value) => filled($value)));
+        $rawOptions = $data['options'] ?? [];
+        $optionKeys = array_keys(array_filter($rawOptions, fn ($value) => filled($value)));
+        $options = array_values(array_intersect_key($rawOptions, array_flip($optionKeys)));
+        $correctIndex = null;
         if ($data['type'] === 'mcq') {
             validator([
                 'options' => $options,
@@ -49,7 +52,8 @@ class QuestionBankController extends Controller
                 'options' => 'required|array|min:2|max:10',
                 'correct_option_index' => 'required|integer|min:0',
             ])->validate();
-            abort_unless(isset($options[$data['correct_option_index']]), 422, 'Select a valid correct option.');
+            $correctIndex = array_search((int) $data['correct_option_index'], $optionKeys, true);
+            abort_if($correctIndex === false, 422, 'Select a valid correct option.');
         }
 
         QuestionBankItem::create([
@@ -59,7 +63,7 @@ class QuestionBankController extends Controller
             'type' => $data['type'],
             'question' => $data['question'],
             'options' => $data['type'] === 'mcq' ? $options : null,
-            'correct_option_index' => $data['type'] === 'mcq' ? $data['correct_option_index'] : null,
+            'correct_option_index' => $data['type'] === 'mcq' ? $correctIndex : null,
             'marks' => $data['marks'],
             'explanation' => $data['explanation'] ?? null,
         ]);
