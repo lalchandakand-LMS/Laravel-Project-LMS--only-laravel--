@@ -117,7 +117,6 @@ class OrderController extends Controller
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
             'products' => Product::published()->orderBy('title')->get(),
-            'products' => Product::published()->orderBy('title')->get(),
         ]);
     }
 
@@ -129,7 +128,7 @@ class OrderController extends Controller
             'name' => 'required|string|max:100',
             'phone' => 'required|string|max:30',
             'email' => 'required|email|max:150',
-            'address' => 'nullable|string|max:2000',
+            'address' => collect($request->input('items', []))->contains(fn ($line) => ($line['type'] ?? null) === 'product') ? 'required|string|max:2000' : 'nullable|string|max:2000',
             'note' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',
             'items.*.type' => 'required|in:course,ebook,product',
@@ -190,6 +189,10 @@ class OrderController extends Controller
             'students' => collect(), 'branches' => collect(),
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
+            'products' => Product::withTrashed()->where(function ($query) use ($order) {
+                $query->where(fn ($published) => $published->where('is_published', true)->where('stock_quantity', '>', 0))
+                    ->orWhereIn('id', $order->items->where('item_type', 'product')->pluck('item_id'));
+            })->orderBy('title')->get(),
         ]);
     }
 
