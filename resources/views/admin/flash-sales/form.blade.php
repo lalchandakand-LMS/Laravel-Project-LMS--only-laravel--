@@ -34,23 +34,31 @@
         </div>
     </section>
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="font-bold text-slate-900">Target courses and categories</h2>
-        <p class="mt-1 text-sm text-slate-500">A sale can target multiple courses, multiple categories, or both. At least one target is required. Categories match a course's primary or additional assigned category.</p>
+        <h2 class="font-bold text-slate-900">Target courses, categories and e-books</h2>
+        <p class="mt-1 text-sm text-slate-500">A sale can target multiple courses, categories and paid e-books. At least one target is required. Category targeting includes primary and additional course categories. Free or unpublished e-books cannot be discounted.</p>
         <div class="mt-5 grid gap-6 md:grid-cols-2">
             <div>
                 <h3 class="mb-2 text-sm font-bold text-slate-800">Courses</h3>
                 <div class="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-slate-200 p-3">
-                    @foreach($courses as $course)
+                    @forelse($courses as $course)
                         <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="course_ids[]" value="{{ $course->id }}" @checked(in_array($course->id, old('course_ids', $selectedCourseIds)))><span>{{ $course->title }}</span></label>
-                    @endforeach
+                    @empty <p class="text-xs text-slate-500">No courses available.</p> @endforelse
                 </div>
             </div>
             <div>
                 <h3 class="mb-2 text-sm font-bold text-slate-800">Categories</h3>
                 <div class="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-slate-200 p-3">
-                    @foreach($categories as $category)
+                    @forelse($categories as $category)
                         <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="category_ids[]" value="{{ $category->id }}" @checked(in_array($category->id, old('category_ids', $selectedCategoryIds)))><span>{{ $category->name }}</span></label>
-                    @endforeach
+                    @empty <p class="text-xs text-slate-500">No active categories available.</p> @endforelse
+                </div>
+            </div>
+            <div class="md:col-span-2">
+                <h3 class="mb-2 text-sm font-bold text-slate-800">Paid e-books</h3>
+                <div class="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-slate-200 p-3">
+                    @forelse($ebooks as $ebook)
+                        <label class="flex items-start gap-2 text-sm"><input type="checkbox" name="ebook_ids[]" value="{{ $ebook->id }}" @checked(in_array($ebook->id, old('ebook_ids', $selectedEbookIds)))><span>{{ $ebook->title }} <span class="text-slate-500">— ৳{{ number_format($ebook->price, 2) }}</span></span></label>
+                    @empty <p class="text-xs text-slate-500">No published paid e-books available.</p> @endforelse
                 </div>
             </div>
         </div>

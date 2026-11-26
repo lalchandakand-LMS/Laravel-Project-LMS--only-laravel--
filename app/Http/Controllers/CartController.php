@@ -29,9 +29,9 @@ class CartController extends Controller
             if ($type === 'ebook' && ($e = Ebook::find($id))) {
                 $rows[] = [
                     'key' => $key, 'type' => 'ebook', 'id' => $id, 'title' => $e->title,
-                    'price' => $e->is_free ? 0 : (float) $e->price, 'original_price' => $e->is_free ? 0 : (float) $e->price,
-                    'has_discount' => false, 'flash_sale_name' => null, 'image' => $e->coverUrl(),
-                    'url' => route('ebooks.show', $e->slug),
+                    'price' => $e->final_price, 'original_price' => (float) $e->price,
+                    'has_discount' => $e->has_discount, 'flash_sale_name' => $e->activeFlashSale()?->name,
+                    'image' => $e->coverUrl(), 'url' => route('ebooks.show', $e->slug),
                 ];
             }
         }
@@ -87,7 +87,7 @@ class CartController extends Controller
                 return redirect()->route('courses.enroll-free', $course->slug);
             }
         } else {
-            $ebook = Ebook::findOrFail($id);
+            $ebook = Ebook::where('is_published', true)->findOrFail($id);
             if ($ebook->ownedBy($request->user())) {
                 return back()->with('info', 'You already own this e-book.');
             }
