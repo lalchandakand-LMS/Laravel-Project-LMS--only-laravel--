@@ -10,6 +10,7 @@ use App\Models\LiveClass;
 use App\Models\User;
 use App\Notifications\LiveClassChanged;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -182,7 +183,16 @@ class LiveClassSchedulingTest extends TestCase
         Notification::fake();
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $guardian = User::factory()->create(['role' => 'guardian', 'is_active' => true]);
         $course = Course::firstOrFail();
+
+        DB::table('guardian_students')->insert([
+            'guardian_id' => $guardian->id,
+            'student_id' => $student->id,
+            'relation' => 'parent',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         Enrollment::create([
             'user_id' => $student->id,
@@ -208,6 +218,7 @@ class LiveClassSchedulingTest extends TestCase
         $this->assertNotNull($liveClass->fresh()->cancelled_at);
         $this->assertFalse($liveClass->fresh()->canJoin());
         Notification::assertSentTo($student, LiveClassChanged::class);
+        Notification::assertSentTo($guardian, LiveClassChanged::class);
     }
 
     public function test_cancelled_live_class_can_be_rescheduled_and_reactivated(): void
