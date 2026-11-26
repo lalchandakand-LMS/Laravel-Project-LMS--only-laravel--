@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Services\OrderService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -69,6 +70,23 @@ class CheckoutController extends Controller
                 throw ValidationException::withMessages(['cart' => 'Your cart is empty.']);
             }
 
+            foreach ($totals['items'] as $cartItem) {
+                if ($cartItem['type'] !== 'product') {
+                    continue;
+                }
+
+                $stockItem = Product::whereKey($cartItem['id'])
+                    ->where('is_published', true)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $stockItem || $stockItem->stock_quantity < (int) ($cartItem['qty'] ?? 1)) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'The available stock for '.$cartItem['title'].' has changed. Update your cart before placing the order.',
+                    ]);
+                }
+            }
+
             $order = Order::create($data + [
                 'user_id' => $request->user()->id,
                 'coupon_id' => $totals['coupon']?->id,
@@ -104,7 +122,7 @@ class CheckoutController extends Controller
             }
         }
 
-        session()->forget(['cart', 'coupon']);
+        session()->forget(['cart', 'cart_quantities', 'coupon']);
 
         return redirect()->route('checkout.success', $order->order_no);
     }
