@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\MarketingCampaign;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Models\MarketingCampaign;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class MarketingCampaignManagementTest extends TestCase
 {
@@ -69,7 +69,7 @@ class MarketingCampaignManagementTest extends TestCase
             'destination_url' => '/courses',
             'status' => 'draft',
         ]);
-        $lead = \\App\\Models\\MarketingLead::create([
+        $lead = \App\Models\MarketingLead::create([
             'name' => 'Amina',
             'email' => 'amina@example.test',
             'message' => 'Interested',
