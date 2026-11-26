@@ -129,13 +129,14 @@
             <h3 class="font-bold text-slate-900">Organisation</h3>
             <div class="mt-4 space-y-3 text-sm">
                 <div>
-                    <label class="mb-1 block font-semibold text-slate-700">Category</label>
-                    <select name="category_id" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
-                        <option value="">— none —</option>
+                    <label class="mb-1 block font-semibold text-slate-700">Course categories</label>
+                    <select name="category_ids[]" multiple size="7" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" @selected(old('category_id', $course->category_id) == $category->id)>{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected(in_array($category->id, old('category_ids', $selectedCategoryIds ?: ($course->category_id ? [$course->category_id] : []))))>{{ $category->parent?->name ? $category->parent->name.' / ' : '' }}{{ $category->name }}</option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-xs text-slate-500">Select one or more categories. The first selected category remains the primary category for older integrations.</p>
+                    <a href="{{ route('admin.categories.index') }}" class="mt-2 inline-block text-xs font-bold text-orange-700">Manage categories & subcategories →</a>
                 </div>
                 @if (auth()->user()->isAdmin())
                     <div>
