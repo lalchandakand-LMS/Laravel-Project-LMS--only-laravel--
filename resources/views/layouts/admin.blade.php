@@ -45,7 +45,7 @@
                 ['admin.attendance.index','Attendance','◷','admin.attendance.*'],
                 ['admin.orders.index','Payments','৳','admin.orders.*'],
                 ['admin.certificates.index','Certificates','✧','admin.certificates.*'],
-                ['admin.payment-reports.index','Reports','▥','admin.payment-reports.*'],
+                ['admin.reports.index','Reports','▥','admin.reports.*'],
                 ['messages.index','Messages','✉','messages.*'],
                 ['admin.settings.index','Settings','⚙','admin.settings.*'],
             ])
