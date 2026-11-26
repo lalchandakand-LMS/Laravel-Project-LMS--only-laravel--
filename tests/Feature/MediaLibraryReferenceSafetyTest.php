@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\MediaAsset;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -39,6 +40,67 @@ class MediaLibraryReferenceSafetyTest extends TestCase
             'name' => 'Media-linked category',
             'image' => $media->publicUrl(),
             'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.media.destroy', $media))
+            ->assertStatus(409);
+
+        Storage::disk('public')->assertExists($path);
+        $this->assertDatabaseHas('media_assets', ['id' => $media->id]);
+    }
+
+    public function test_media_library_asset_cannot_be_deleted_while_a_post_uses_its_thumbnail(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $path = 'media-library/post-thumbnail.webp';
+        Storage::disk('public')->put($path, 'fake image bytes');
+
+        $media = MediaAsset::create([
+            'title' => 'Blog post thumbnail',
+            'source_type' => 'upload',
+            'disk' => 'public',
+            'path' => $path,
+            'mime_type' => 'image/webp',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        Post::create([
+            'title' => 'Post using library artwork',
+            'content' => 'Post body.',
+            'thumbnail' => $media->publicUrl(),
+            'author_id' => $admin->id,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.media.destroy', $media))
+            ->assertStatus(409);
+
+        Storage::disk('public')->assertExists($path);
+        $this->assertDatabaseHas('media_assets', ['id' => $media->id]);
+    }
+
+    public function test_media_library_asset_cannot_be_deleted_while_a_post_body_embeds_its_url(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $path = 'media-library/post-inline-image.webp';
+        Storage::disk('public')->put($path, 'fake image bytes');
+
+        $media = MediaAsset::create([
+            'title' => 'Inline blog artwork',
+            'source_type' => 'upload',
+            'disk' => 'public',
+            'path' => $path,
+            'mime_type' => 'image/webp',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        Post::create([
+            'title' => 'Post body embeds library image',
+            'content' => '<p>Read the guide.</p><img src="'.$media->publicUrl().'" alt="Guide">',
+            'author_id' => $admin->id,
+            'is_published' => true,
         ]);
 
         $this->actingAs($admin)
