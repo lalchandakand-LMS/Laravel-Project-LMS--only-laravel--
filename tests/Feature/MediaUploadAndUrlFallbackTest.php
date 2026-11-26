@@ -160,9 +160,14 @@ class MediaUploadAndUrlFallbackTest extends TestCase
                 'attachment_url' => 'https://cdn.example.com/lesson-notes.pdf',
                 'is_published' => 1,
             ])
-            ->assertRedirect(route('admin.courses.edit', $course->id));
+            ->assertRedirect(route('admin.courses.edit', $course));
 
-        $this->actingAs($this->student())
+        $unentitledStudent = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($unentitledStudent)
             ->get(route('student.learn.attachment', [$course->slug, $lesson->id]))
             ->assertForbidden();
 
