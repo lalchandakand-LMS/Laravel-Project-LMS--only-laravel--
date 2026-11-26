@@ -192,6 +192,9 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
             Route::post('/loans/{loan}/return', [Admin\LibraryLoanController::class, 'returnBook'])->name('loans.return');
         });
 
+        Route::get('staff-attendance', [Admin\StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
+        Route::post('staff-attendance', [Admin\StaffAttendanceController::class, 'save'])->name('staff-attendance.save');
+
         Route::get('staff-payroll', [Admin\StaffPayrollController::class, 'index'])->name('staff-payroll.index');
         Route::post('staff-payroll', [Admin\StaffPayrollController::class, 'store'])->name('staff-payroll.store');
         Route::post('staff-payroll/{payroll}/approve', [Admin\StaffPayrollController::class, 'approve'])->name('staff-payroll.approve');
