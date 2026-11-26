@@ -205,15 +205,15 @@ class AttendanceWorkflowTest extends TestCase
             'submitted_at' => now(),
         ]);
 
-        $request = \Illuminate\\Http\\Request::create('/teacher/attendance/'.$session->id.'/save', 'POST', [
+        $request = \Illuminate\Http\\Request::create('/teacher/attendance/'.$session->id.'/save', 'POST', [
             'attendance' => [$student->id => ['status' => 'absent', 'note' => 'stale update']],
         ]);
         $request->setUserResolver(fn () => $teacher);
 
         try {
-            app(\App\\Http\\Controllers\\AttendanceController::class)->save($request, $staleSession);
+            app(\App\Http\Controllers\\AttendanceController::class)->save($request, $staleSession);
             $this->fail('A stale save must not modify a submitted attendance session.');
-        } catch (\Symfony\\Component\\HttpKernel\\Exception\\HttpException $exception) {
+        } catch (\Symfony\\Component\HttpKernel\Exception\HttpException $exception) {
             $this->assertSame(422, $exception->getStatusCode());
         }
 
