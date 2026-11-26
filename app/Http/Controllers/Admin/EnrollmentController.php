@@ -104,7 +104,7 @@ class EnrollmentController extends Controller
             'price_paid' => $data['price_paid'],
             'status' => $data['status'],
             'enrolled_at' => $data['enrolled_at'],
-            'expires_at' => $data['expires_at'] ?? null,
+            'expires_at' => ! empty($data['expires_at']) ? Carbon::parse($data['expires_at'])->endOfDay() : null,
             'completed_at' => $data['status'] === 'completed' ? ($enrollment->completed_at ?? now()) : null,
             'admin_note' => $data['admin_note'] ?? null,
         ]);
@@ -226,16 +226,24 @@ class EnrollmentController extends Controller
 
     private function validatedData(Request $request, bool $creating): array
     {
-        return $request->validate([
-            'user_id' => [$creating ? 'required' : 'prohibited', 'integer', 'exists:users,id'],
-            'course_id' => [$creating ? 'required' : 'prohibited', 'integer', 'exists:courses,id'],
+        $rules = [
             'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'price_paid' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'status' => ['required', Rule::in(self::STATUSES)],
             'enrolled_at' => ['required', 'date'],
             'expires_at' => ['nullable', 'date', 'after_or_equal:enrolled_at'],
             'admin_note' => ['nullable', 'string', 'max:5000'],
-        ]);
+        ];
+
+        if ($creating) {
+            $rules['user_id'] = ['required', 'integer', 'exists:users,id'];
+            $rules['course_id'] = ['required', 'integer', 'exists:courses,id'];
+        } else {
+            $rules['user_id'] = ['prohibited'];
+            $rules['course_id'] = ['prohibited'];
+        }
+
+        return $request->validate($rules);
     }
 
     private function validateBatch(array $data, User $student, Course $course, ?Enrollment $current = null): void
