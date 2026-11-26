@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Alom's English Center LMS - database, .env and uploaded media backup (no code changes).
+# Alom's English Center LMS - database, .env, public media and private uploads backup (no code changes).
 # Use this before any manual change, or from a daily cron job.
 #
 #   ./backup.sh
