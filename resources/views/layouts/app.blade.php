@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php($brandName = \App\Models\Setting::get('site_name', "Alom's English Center"))
-    @php($seoTitle = trim($__env->yieldContent('meta_title', \App\Models\Setting::get('seo_title', $brandName))))
+    @php($pageTitle = trim($__env->yieldContent('meta_title', $__env->yieldContent('title', ''))))
+    @php($seoTitle = $pageTitle !== '' ? $pageTitle.' — '.$brandName : \App\Models\Setting::get('seo_title', $brandName))
     @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('seo_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.'))))))
     @php($privateSeoRoute = auth()->check() || request()->is('admin', 'admin/*', 'my', 'my/*', 'teacher', 'teacher/*', 'guardian', 'guardian/*', 'branch', 'branch/*', 'cart', 'checkout', 'checkout/*', 'messages', 'messages/*', 'notifications', 'notifications/*'))
     @php($seoIndexEnabled = \App\Models\Setting::get('seo_robots_index', '1') === '1')
