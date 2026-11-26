@@ -878,4 +878,46 @@ class LiveClassSchedulingTest extends TestCase
         );
     }
 
+
+    public function test_changing_only_the_live_class_meeting_password_notifies_eligible_students(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        $startsAt = now()->addDays(33)->startOfHour();
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Password-only join update',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'meeting_password' => 'old-password',
+            'starts_at' => $startsAt,
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), [
+            'course_id' => $course->id,
+            'title' => $liveClass->title,
+            'platform' => 'Zoom',
+            'meeting_url' => $liveClass->meeting_url,
+            'meeting_password' => 'new-password',
+            'starts_at' => $startsAt->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        Notification::assertSentTo($student, LiveClassChanged::class, fn ($notification) =>
+            $notification->event() === 'updated'
+        );
+    }
+
+
 }
