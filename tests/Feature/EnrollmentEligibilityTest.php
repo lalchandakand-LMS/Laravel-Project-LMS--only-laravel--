@@ -89,6 +89,21 @@ class EnrollmentEligibilityTest extends TestCase
             'enrolled_at' => now(),
         ]);
 
+        $snapshotBranchCourse = Course::create([
+            'title' => 'Old Branch Unbatched Course',
+            'slug' => 'old-branch-unbatched-course',
+            'price' => 1000,
+            'is_published' => true,
+        ]);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $snapshotBranchCourse->id,
+            'branch_id' => $otherBranch->id,
+            'status' => 'active',
+            'price_paid' => 1000,
+            'enrolled_at' => now(),
+        ]);
+
         $wrongBranchBatch = Batch::create([
             'course_id' => $wrongBranchCourse->id,
             'branch_id' => $otherBranch->id,
@@ -111,7 +126,8 @@ class EnrollmentEligibilityTest extends TestCase
             ->assertSee('Current Course')
             ->assertDontSee('Expired Course')
             ->assertDontSee('Cancelled Batch Course')
-            ->assertDontSee('Wrong Branch Course');
+            ->assertDontSee('Wrong Branch Course')
+            ->assertDontSee('Old Branch Unbatched Course');
     }
 
     public function test_user_course_helpers_ignore_expired_enrollments(): void
