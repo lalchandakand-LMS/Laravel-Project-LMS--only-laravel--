@@ -259,6 +259,7 @@ class BranchManagerWorkflowsTest extends TestCase
             'amount' => 1500,
             'discount' => 0,
             'status' => 'unpaid',
+            'created_by' => $manager->id,
         ]);
 
         $this->actingAs($manager)->post(route('branch.finance.invoices.collect', $invoice), [
