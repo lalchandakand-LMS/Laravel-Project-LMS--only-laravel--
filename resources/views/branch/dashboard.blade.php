@@ -4,7 +4,7 @@
 @section('content')
 @include('partials.dashboard-banner')
 @include('partials.phone-verification')
-@if(auth()->user()->isBranchManager())<div class="mb-5"><a href="{{ route('branch.id-card') }}" class="inline-flex rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-700">Branch manager ID card</a></div>@endif
+@if(auth()->user()->isBranchManager())<div class="mb-5"><a href="{{ route('branch.id-card') }}" class="inline-flex rounded-xl border border-orange-600 px-4 py-2.5 text-sm font-bold text-orange-700">Branch manager ID card</a></div>@endif
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <p class="-mt-2 mb-4 text-sm text-slate-600">
@@ -68,7 +68,7 @@
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 <div class="mb-3 flex items-center justify-between">
             <h2 class="font-bold text-slate-800">New students</h2>
-            <a href="{{ route('branch.students') }}" class="text-sm font-bold text-emerald-700">All →</a>
+            <a href="{{ route('branch.students') }}" class="text-sm font-bold text-orange-700">All →</a>
         </div>
 
         <ul class="divide-y divide-slate-100 text-sm">
@@ -79,7 +79,7 @@
                         <p class="truncate font-semibold text-slate-800">{{ $student->name }}</p>
                         <p class="truncate text-xs text-slate-500">{{ $student->phone ?: $student->email }}</p>
                     </div>
-                    <a href="{{ route('branch.students.show', $student) }}" class="ml-auto text-xs font-bold text-emerald-700">View</a>
+                    <a href="{{ route('branch.students.show', $student) }}" class="ml-auto text-xs font-bold text-orange-700">View</a>
                 </li>
             @empty
                 <li class="py-3 text-slate-500">No students assigned to this branch.</li>
