@@ -27,7 +27,7 @@ class CourseController extends Controller
             if ($selectedCategory) {
                 $categoryIds = $selectedCategory->descendants()->pluck('id')->push($selectedCategory->id)->all();
                 $query->where(fn ($q) => $q->whereIn('category_id', $categoryIds)
-                    ->orWhereHas('categories', fn ($categories) => $categories->whereIn('categories.id', $categoryIds)));
+                    ->orWhereIn('id', DB::table('course_category')->select('course_id')->whereIn('category_id', $categoryIds)));
             } else {
                 $query->whereRaw('1 = 0');
             }
@@ -57,7 +57,7 @@ class CourseController extends Controller
         $categoryIds = $category->descendants()->pluck('id')->push($category->id)->all();
 
         return view('courses.index', [
-            'courses' => Course::published()->where(fn ($query) => $query->whereIn('category_id', $categoryIds)->orWhereHas('categories', fn ($categories) => $categories->whereIn('categories.id', $categoryIds)))
+            'courses' => Course::published()->where(fn ($query) => $query->whereIn('category_id', $categoryIds)->orWhereIn('id', DB::table('course_category')->select('course_id')->whereIn('category_id', $categoryIds)))
                 ->with(['instructor', 'category', 'categories'])->latest()->paginate(9),
             'categories' => Category::where('is_active', true)->withCount('publishedCourses')->orderBy('position')->orderBy('name')->get(),
             'filters' => ['category' => $category->slug],
