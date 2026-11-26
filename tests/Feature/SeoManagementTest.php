@@ -44,6 +44,53 @@ class SeoManagementTest extends TestCase
             ->assertSee('content="Practical English courses for learners in Bangladesh."', false);
     }
 
+    public function test_admin_can_save_valid_analytics_and_marketing_tracking_ids(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.seo.update'), [
+            'ga4_measurement_id' => 'G-ABC1234567',
+            'gtm_container_id' => 'GTM-A1B2C3D',
+            'meta_pixel_id' => '123456789012345',
+            'seo_robots_index' => '1',
+        ])->assertRedirect(route('admin.seo.index'))->assertSessionHasNoErrors();
+
+        $this->assertSame('G-ABC1234567', Setting::get('ga4_measurement_id'));
+        $this->assertSame('GTM-A1B2C3D', Setting::get('gtm_container_id'));
+        $this->assertSame('123456789012345', Setting::get('meta_pixel_id'));
+
+        auth()->logout();
+        $this->get('/contact')->assertOk()
+            ->assertSee('Your privacy choices')
+            ->assertSee('Accept analytics &amp; marketing', false)
+            ->assertSee('Reject optional');
+    }
+
+    public function test_invalid_tracking_ids_are_rejected_and_never_rendered(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->from('/admin/seo')->post(route('admin.seo.update'), [
+            'ga4_measurement_id' => 'javascript:alert(1)',
+            'gtm_container_id' => 'https://evil.test/container',
+            'meta_pixel_id' => '123<script>',
+        ])->assertSessionHasErrors(['ga4_measurement_id', 'gtm_container_id', 'meta_pixel_id']);
+
+        $this->assertNull(Setting::get('ga4_measurement_id'));
+        $this->assertNull(Setting::get('gtm_container_id'));
+        $this->assertNull(Setting::get('meta_pixel_id'));
+    }
+
+    public function test_authenticated_pages_do_not_render_optional_tracking_or_consent_banner(): void
+    {
+        Setting::set('ga4_measurement_id', 'G-ABC1234567');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->get('/')->assertOk()
+            ->assertDontSee('tracking-consent')
+            ->assertDontSee('googletagmanager.com/gtag/js');
+    }
+
     public function test_invalid_seo_urls_and_verification_tokens_are_rejected(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
