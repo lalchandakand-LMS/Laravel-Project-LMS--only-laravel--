@@ -65,6 +65,25 @@ class ProfileDocumentVerificationTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_upload_storage_failure_does_not_create_a_broken_document_record(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $disk = \\Mockery::mock(\\Illuminate\\Filesystem\\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->once()->with('local')->andReturn($disk);
+
+        $this->actingAs($admin)->from('/admin/users/'.$student->id.'/edit')
+            ->post(route('admin.users.documents.store', $student), [
+                'document_type' => 'nid',
+                'file' => UploadedFile::fake()->image('nid.png'),
+            ])
+            ->assertRedirect('/admin/users/'.$student->id.'/edit')
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('profile_documents', 0);
+    }
+
     public function test_non_admin_cannot_upload_or_review_profile_documents(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
