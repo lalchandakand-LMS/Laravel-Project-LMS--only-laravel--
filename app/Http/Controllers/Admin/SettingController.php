@@ -125,7 +125,7 @@ class SettingController extends Controller
                 $oldPath = Setting::get($key);
                 Setting::set($key, $request->input($field));
                 if ($oldPath && ! (str_starts_with(strtolower($oldPath), 'http://') || str_starts_with(strtolower($oldPath), 'https://'))) {
-                    Storage::disk('public')->delete($oldPath);
+                    delete_stored_media('public', $oldPath);
                 }
             }
         }
@@ -135,7 +135,7 @@ class SettingController extends Controller
                 $oldPath = Setting::get($key);
                 Setting::set($key, '');
                 if ($oldPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
-                    Storage::disk('public')->delete($oldPath);
+                    delete_stored_media('public', $oldPath);
                 }
             }
         }
