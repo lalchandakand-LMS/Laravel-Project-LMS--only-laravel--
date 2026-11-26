@@ -192,6 +192,12 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
             Route::post('/loans/{loan}/return', [Admin\LibraryLoanController::class, 'returnBook'])->name('loans.return');
         });
 
+        Route::get('staff-payroll', [Admin\StaffPayrollController::class, 'index'])->name('staff-payroll.index');
+        Route::post('staff-payroll', [Admin\StaffPayrollController::class, 'store'])->name('staff-payroll.store');
+        Route::post('staff-payroll/{payroll}/approve', [Admin\StaffPayrollController::class, 'approve'])->name('staff-payroll.approve');
+        Route::post('staff-payroll/{payroll}/paid', [Admin\StaffPayrollController::class, 'markPaid'])->name('staff-payroll.paid');
+        Route::delete('staff-payroll/{payroll}', [Admin\StaffPayrollController::class, 'destroy'])->name('staff-payroll.destroy');
+
         Route::get('staff-leave-requests', [Admin\LeaveRequestController::class, 'index'])->name('staff-leave-requests.index');
         Route::post('staff-leave-requests/{leaveRequest}/approve', [Admin\LeaveRequestController::class, 'approve'])->name('staff-leave-requests.approve');
         Route::post('staff-leave-requests/{leaveRequest}/reject', [Admin\LeaveRequestController::class, 'reject'])->name('staff-leave-requests.reject');
