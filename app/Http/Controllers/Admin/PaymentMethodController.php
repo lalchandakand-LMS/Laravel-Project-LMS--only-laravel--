@@ -101,6 +101,13 @@ class PaymentMethodController extends Controller
             ]);
         }
 
+        $bkashTopicArn = data_get($submittedProviders, 'bkash.credentials.webhook_topic_arn');
+        if (filled($bkashTopicArn) && ! preg_match('/^arn:aws:sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_-]+$/', $bkashTopicArn)) {
+            throw ValidationException::withMessages([
+                'providers.bkash.credentials.webhook_topic_arn' => 'Enter the exact AWS SNS Topic ARN supplied by bKash.',
+            ]);
+        }
+
         DB::transaction(function () use ($request, $submittedProviders) {
             $enabled = array_values(array_unique($request->input('methods', [])));
             Setting::set('payment_methods.global_enabled', json_encode($enabled, JSON_THROW_ON_ERROR));
