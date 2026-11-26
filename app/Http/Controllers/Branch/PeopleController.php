@@ -14,9 +14,15 @@ class PeopleController extends Controller
     private function branch(): Branch
     {
         $user = auth()->user();
-        $branch = $user->branch ?? Branch::where('manager_id', $user->id)->first();
+        $branch = $user->isBranchManager()
+            ? Branch::forManager($user)
+            : ($user->branch ?? Branch::where('manager_id', $user->id)->first());
 
         abort_unless($branch, 403, 'No branch is assigned to this account.');
+
+        if ($user->isBranchManager() && $user->branch_id && (int) $user->branch_id !== (int) $branch->id) {
+            abort(403, 'Your branch assignment is inconsistent. Please contact the admin.');
+        }
 
         return $branch;
     }
@@ -58,7 +64,7 @@ class PeopleController extends Controller
     public function edit(User $user)
     {
         $branch = $this->branch();
-        abort_unless($user->branch_id === $branch->id && in_array($user->role, ['student', 'instructor'], true), 404);
+        abort_unless((int) $user->branch_id === (int) $branch->id && in_array($user->role, ['student', 'instructor'], true), 404);
 
         return view('branch.people-form', [
             'branch' => $branch,

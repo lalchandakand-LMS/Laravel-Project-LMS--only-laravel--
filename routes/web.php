@@ -366,6 +366,23 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
     Route::get('/students', [Branch\DashboardController::class, 'students'])->name('students');
     Route::get('/students/{student}', [Branch\DashboardController::class, 'student'])->name('students.show');
     Route::get('/staff', [Branch\DashboardController::class, 'staff'])->name('staff');
+
+    Route::get('/admissions', [Branch\AdmissionController::class, 'index'])->name('admissions.index');
+    Route::post('/admissions/online/{application}/approve', [Branch\AdmissionController::class, 'approveOnline'])->name('admissions.online.approve');
+    Route::post('/admissions/online/{application}/reject', [Branch\AdmissionController::class, 'rejectOnline'])->name('admissions.online.reject');
+    Route::post('/admissions/coaching/{admission}/approve', [Branch\AdmissionController::class, 'approveCoaching'])->name('admissions.coaching.approve');
+    Route::post('/admissions/coaching/{admission}/reject', [Branch\AdmissionController::class, 'rejectCoaching'])->name('admissions.coaching.reject');
+
+    Route::get('/attendance', [Branch\AttendanceController::class, 'index'])->name('attendance');
+    Route::get('/attendance/{session}', [Branch\AttendanceController::class, 'show'])->name('attendance.show');
+    Route::post('/attendance/{session}/review', [Branch\AttendanceController::class, 'review'])->name('attendance.review');
+
+    Route::get('/finance', [Branch\FinanceController::class, 'index'])->name('finance');
+    Route::post('/finance/payments/{payment}/review', [Branch\FinanceController::class, 'verifyPayment'])->name('finance.payments.review');
+    Route::post('/finance/orders/{order}/offline-payment', [Branch\FinanceController::class, 'recordOfflinePayment'])->name('finance.orders.offline-payment');
+    Route::post('/finance/invoices', [Branch\FinanceController::class, 'createInvoice'])->name('finance.invoices.store');
+    Route::post('/finance/invoices/{invoice}/payments', [Branch\FinanceController::class, 'collectCoachingFee'])->name('finance.invoices.collect');
+
     Route::get('/revenue', [Branch\DashboardController::class, 'revenue'])->name('revenue');
 });
 

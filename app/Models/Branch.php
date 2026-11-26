@@ -22,6 +22,20 @@ class Branch extends Model
 
     protected $casts = ['is_active' => 'boolean', 'payment_methods' => 'array'];
 
+    public static function forManager(User $manager): ?self
+    {
+        $assigned = static::where('manager_id', $manager->id)->first();
+
+        if ($assigned) {
+            return $assigned;
+        }
+
+        // Backward-compatible only when the branch has no manager assigned.
+        return $manager->branch_id
+            ? static::whereKey($manager->branch_id)->whereNull('manager_id')->first()
+            : null;
+    }
+
     public function manager()  { return $this->belongsTo(User::class, 'manager_id'); }
     public function orders() { return $this->hasMany(Order::class); }
     public function students() { return $this->hasMany(User::class)->where('role', 'student'); }
