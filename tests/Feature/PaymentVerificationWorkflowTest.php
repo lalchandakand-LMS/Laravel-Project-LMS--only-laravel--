@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Ebook;
 use App\Models\EbookPurchase;
+use App\Models\FlashSale;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -487,5 +488,98 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame('cancelled', $order->fresh()->status);
         $this->assertSame('pending', $payment->fresh()->status);
         $this->assertSame(0.0, $order->fresh()->amountPaid());
+    }
+
+    public function test_cancelling_an_order_rejects_its_pending_payment(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'CANCEL-AND-CLOSE-PENDING',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'cancelled',
+        ])->assertRedirect();
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame('rejected', $payment->fresh()->status);
+        $this->assertSame($admin->id, $payment->fresh()->verified_by);
+        $this->assertStringContainsString('cancelled', $payment->fresh()->rejection_reason);
+    }
+
+    public function test_admin_order_create_and_edit_use_the_effective_ebook_flash_sale_price(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $branch = Branch::create([
+            'name' => 'Ebook Sale Order Branch',
+            'code' => 'EBOOK-SALE-'.Str::upper(Str::random(5)),
+            'is_active' => true,
+            'payment_methods' => ['nagad', 'cash'],
+        ]);
+        $ebook = Ebook::create([
+            'title' => 'Flash Sale eBook',
+            'price' => 1000,
+            'file' => 'ebook-files/flash-sale.pdf',
+            'is_free' => false,
+            'is_published' => true,
+        ]);
+        $sale = FlashSale::create([
+            'name' => 'eBook Admin Order Sale',
+            'type' => 'percent',
+            'value' => 20,
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addHour(),
+            'is_active' => true,
+        ]);
+        $sale->ebooks()->attach($ebook->id);
+
+        $payload = [
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'items' => [['type' => 'ebook', 'id' => $ebook->id]],
+        ];
+
+        $this->actingAs($admin)->post(route('admin.orders.store'), $payload)->assertRedirect();
+        $createdOrder = Order::where('user_id', $student->id)->latest('id')->firstOrFail();
+        $this->assertSame(800.0, (float) $createdOrder->subtotal);
+        $this->assertSame(800.0, (float) $createdOrder->items()->firstOrFail()->price);
+
+        $editableOrder = Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 1000,
+            'discount' => 0,
+            'total' => 1000,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+        ]);
+        $editableOrder->items()->create([
+            'item_type' => 'ebook',
+            'item_id' => $ebook->id,
+            'title' => $ebook->title,
+            'price' => 1000,
+            'qty' => 1,
+        ]);
+
+        $this->put(route('admin.orders.update', $editableOrder->order_no), [
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'items' => [['type' => 'ebook', 'id' => $ebook->id]],
+        ])->assertRedirect();
+
+        $this->assertSame(800.0, (float) $editableOrder->fresh()->total);
+        $this->assertSame(800.0, (float) $editableOrder->fresh()->items()->firstOrFail()->price);
     }
 }
