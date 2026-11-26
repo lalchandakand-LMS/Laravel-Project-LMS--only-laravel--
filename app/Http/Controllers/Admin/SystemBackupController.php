@@ -111,6 +111,7 @@ class SystemBackupController extends Controller
         DB::purge('sqlite');
         DB::connection('sqlite')->getPdo();
         DB::connection('sqlite')->select('select 1');
+        $this->verifyDatabase();
     }
 
     private function verifyDatabase(): void
