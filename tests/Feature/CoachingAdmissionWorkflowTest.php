@@ -111,4 +111,22 @@ class CoachingAdmissionWorkflowTest extends TestCase
         $this->actingAs($guardian)->get(route('guardian.child.coaching-fees', $child))->assertOk();
         $this->get(route('guardian.child.coaching-fees', $other))->assertForbidden();
     }
+    public function test_approval_links_an_existing_guardian_account_to_the_student_profile(): void
+    {
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
+        $guardian = User::create(['name' => 'Guardian', 'email' => 'parent@example.com', 'password' => 'password', 'role' => 'guardian', 'is_active' => true]);
+        [$branch, $course, $batch] = $this->setupCoaching();
+        $batch->update(['admission_fee' => 0]);
+        $application = CoachingAdmission::create([
+            'student_name' => 'Child Student', 'student_email' => 'child@example.com', 'student_phone' => '01700000000',
+            'guardian_name' => 'Guardian', 'guardian_email' => $guardian->email,
+            'branch_id' => $branch->id, 'course_id' => $course->id, 'coaching_batch_id' => $batch->id,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.coaching-admissions.approve', $application))->assertRedirect();
+
+        $student = User::where('email', 'child@example.com')->firstOrFail();
+        $this->assertTrue($guardian->children()->whereKey($student->id)->exists());
+    }
+
 }
