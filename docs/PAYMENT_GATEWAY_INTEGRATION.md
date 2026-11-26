@@ -30,14 +30,15 @@ The application now contains a sandbox-only `BkashTokenizedCheckoutAdapter` and 
 - Merchant credentials are read from the existing encrypted Admin payment settings. Required fields are app key, app secret, API username and API password. Access tokens are cached and API calls use a 30-second timeout.
 - The create-payment response only creates a pending local payment session and redirects the customer to the provider-hosted checkout.
 - The browser return is not trusted as proof of payment. The callback runs provider execute and an independent server-to-server payment-status query, then compares provider payment ID, invoice/order number, exact amount, BDT currency and transaction ID under order/payment row locks.
-- Provider payment IDs and transaction IDs are unique in the local ledger. Repeated callbacks are idempotent. Manual Admin approval is blocked for provider-initiated pending payments.
+- A separate `POST /payments/bkash/webhook` listener verifies the AWS SNS signature (version 1/SHA-1 or version 2/SHA-256), allowlists the regional SNS signing-certificate host/path, pins the exact merchant Topic ARN, handles subscription confirmation safely, and reconciles each signed notification through bKash Search Transaction API before settlement.
+- Provider payment IDs and transaction IDs are unique in the local ledger. Repeated callbacks/webhooks are idempotent. Manual Admin approval is blocked for provider-initiated pending payments.
 - The checkout button is exposed only outside the production environment and only when required sandbox credentials are complete and bKash is enabled for the order's branch.
 
-**Not yet certified:** no merchant sandbox credentials were provided in this repository task, so a real bKash sandbox wallet transaction could not be run. CI uses mocked provider responses. Obtain the merchant's own sandbox credentials and run create → customer PIN approval → execute/query → duplicate callback → failure/timeout reconciliation before any production rollout.
+**Not yet certified:** no merchant sandbox credentials or provisioned SNS Topic ARN were supplied in this repository task, so a real bKash sandbox wallet transaction and webhook subscription delivery could not be run. CI uses mocked provider responses and cryptographic signature fixtures. Obtain the merchant's own sandbox credentials and Topic ARN; test create → customer PIN approval → execute/query → duplicate callback → signed webhook → duplicate webhook → failure/timeout reconciliation before any production rollout.
 
 ### Not implemented / Live remains disabled
 
-- **bKash Webhook/IPN:** the browser callback is implemented with server-side execute/query verification. A separate provider webhook endpoint is not enabled until the merchant's current official webhook/SNS signature specification and certificate verification procedure are confirmed.
+- **Nagad:** obtain the current official merchant integration package, API endpoints, credentials and callback/signature rules. No guessed cryptographic behavior is accepted.
 - **Nagad:** obtain the current official merchant integration package, API endpoints, credentials and callback/signature rules. No guessed cryptographic behavior is accepted.
 - **Rocket:** obtain DBBL's approved merchant integration/API specification and credentials. Public merchant payment information is not enough to implement a server API.
 - **SSLCommerz:** the static website badge is not a gateway integration. No adapter or route is enabled.
