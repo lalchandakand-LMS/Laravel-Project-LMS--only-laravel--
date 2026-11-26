@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Ebook;
+use App\Models\EbookPurchase;
 use App\Models\MediaAsset;
 use App\Models\Setting;
 use App\Models\User;
