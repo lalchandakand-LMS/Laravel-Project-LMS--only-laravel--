@@ -72,11 +72,11 @@ class BkashCheckoutAdapterTest extends TestCase
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/execute' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/execute/*' => Http::response([
                 'paymentID' => 'BKASH-PAY-1002',
                 'transactionStatus' => 'Completed',
             ]),
-            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/query' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/query/*' => Http::response([
                 'paymentID' => 'BKASH-PAY-1002',
                 'trxID' => 'BKASH-TRX-2002',
                 'merchantInvoiceNumber' => 'AEC-ORDER-1002',
@@ -98,8 +98,8 @@ class BkashCheckoutAdapterTest extends TestCase
         $this->assertSame('BKASH-TRX-2002', $result['transaction_id']);
         $this->assertSame('AEC-ORDER-1002', $result['invoice']);
         $this->assertSame('850.00', $result['amount']);
-        Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/checkout/payment/execute'));
-        Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/checkout/payment/query'));
+        Http::assertSent(fn ($httpRequest) => str_contains($httpRequest->url(), '/checkout/payment/execute/BKASH-PAY-1002'));
+        Http::assertSent(fn ($httpRequest) => str_contains($httpRequest->url(), '/checkout/payment/query/BKASH-PAY-1002'));
     }
 
     public function test_callback_settles_the_order_only_after_provider_query_and_is_idempotent(): void
@@ -109,11 +109,11 @@ class BkashCheckoutAdapterTest extends TestCase
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/execute' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/execute/*' => Http::response([
                 'paymentID' => 'BKASH-PAY-1003',
                 'transactionStatus' => 'Completed',
             ]),
-            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/query' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/query/*' => Http::response([
                 'paymentID' => 'BKASH-PAY-1003',
                 'trxID' => 'BKASH-TRX-2003',
                 'merchantInvoiceNumber' => 'AEC-ORDER-1003',
