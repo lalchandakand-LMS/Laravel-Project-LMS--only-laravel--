@@ -178,6 +178,8 @@ class SiteCustomizationSettingsTest extends TestCase
         $order = ['hero', 'featured', 'categories', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
 
         $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_show_categories' => '1',
+            'homepage_show_featured' => '1',
             'homepage_section_order' => json_encode($order),
         ])->assertRedirect();
 
