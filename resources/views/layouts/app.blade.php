@@ -36,10 +36,10 @@
             [
                 '@type' => 'EducationalOrganization',
                 '@id' => rtrim(config('app.url'), '/').'#organization',
-                'name' => $brandName,
+                'name' => \App\Models\Setting::get('site_name', "Alom's English Center"),
                 'url' => config('app.url'),
-                'logo' => $socialImage,
-                'description' => $brandDescription,
+                'logo' => (\App\Models\Setting::get('seo_default_image') ?: media_url(setting('logo'), asset('images/aec-logo.svg'))),
+                'description' => trim(strip_tags(\App\Models\Setting::get('seo_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))),
                 'contactPoint' => array_filter([
                     '@type' => 'ContactPoint',
                     'telephone' => \App\Models\Setting::get('site_phone') ?: null,
@@ -56,7 +56,7 @@
                 '@type' => 'WebSite',
                 '@id' => rtrim(config('app.url'), '/').'#website',
                 'url' => config('app.url'),
-                'name' => $brandName,
+                'name' => \App\Models\Setting::get('site_name', "Alom's English Center"),
                 'publisher' => ['@id' => rtrim(config('app.url'), '/').'#organization'],
                 'potentialAction' => [
                     '@type' => 'SearchAction',
