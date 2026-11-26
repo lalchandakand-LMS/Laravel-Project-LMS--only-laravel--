@@ -48,7 +48,7 @@ if (! function_exists('delete_stored_media')) {
 
         $values = [$path];
         if ($disk === 'public') {
-            $values[] = \\Illuminate\\Support\\Facades\\Storage::disk('public')->url($path);
+            $values[] = \Illuminate\\Support\\Facades\\Storage::disk('public')->url($path);
             $values[] = asset('storage/'.ltrim($path, '/'));
         }
 
@@ -64,18 +64,18 @@ if (! function_exists('delete_stored_media')) {
         ];
 
         foreach ($references as $table => $columns) {
-            if (! \\Illuminate\\Support\\Facades\\Schema::hasTable($table)) {
+            if (! \Illuminate\\Support\\Facades\\Schema::hasTable($table)) {
                 continue;
             }
 
             foreach ($columns as $column) {
-                if (\\Illuminate\\Support\\Facades\\Schema::hasColumn($table, $column)
-                    && \\Illuminate\\Support\\Facades\\DB::table($table)->whereIn($column, $values)->exists()) {
+                if (\Illuminate\\Support\\Facades\\Schema::hasColumn($table, $column)
+                    && \Illuminate\\Support\\Facades\\DB::table($table)->whereIn($column, $values)->exists()) {
                     return;
                 }
             }
         }
 
-        \\Illuminate\\Support\\Facades\\Storage::disk($disk)->delete($path);
+        \Illuminate\\Support\\Facades\\Storage::disk($disk)->delete($path);
     }
 }
