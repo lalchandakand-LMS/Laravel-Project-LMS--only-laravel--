@@ -218,14 +218,21 @@ class ExamController extends Controller
      * IDs must belong to the question being answered; descriptive input is
      * bounded to keep oversized payloads out of the answer store.
      */
-    private function persistAnswers(Request $request, ExamAttempt $attempt, $questions): void
+    private function persistAnswers(Request $request, ExamAttempt $attempt, $questions): bool
     {
         $data = $request->validate([
             'answers' => ['sometimes', 'array', 'max:'.$questions->count()],
         ]);
         $answers = $data['answers'] ?? [];
 
-        DB::transaction(function () use ($answers, $questions, $attempt) {
+        return DB::transaction(function () use ($answers, $questions, $attempt) {
+            // Autosave and final submit share this lock with grading. A request
+            // that waited behind a completed submit must never overwrite answers.
+            $lockedAttempt = ExamAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+            if ($lockedAttempt->status !== 'in_progress' || $lockedAttempt->remainingSeconds() <= 0) {
+                return false;
+            }
+
             foreach ($questions as $question) {
                 if (! array_key_exists($question->id, $answers)) {
                     continue;
@@ -263,6 +270,8 @@ class ExamController extends Controller
                     'answer_text' => $validated['answer_text'],
                 ]);
             }
+
+            return true;
         });
     }
 
@@ -283,7 +292,15 @@ class ExamController extends Controller
         }
 
         $questions = $this->attemptQuestions($attempt);
-        $this->persistAnswers($request, $attempt, $questions);
+        $answersSaved = $this->persistAnswers($request, $attempt, $questions);
+        if (! $answersSaved) {
+            $this->grade($attempt);
+
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('student.attempts.result', $attempt),
+            ]);
+        }
 
         if ($request->boolean('submit')) {
             $this->grade($attempt);
@@ -309,6 +326,9 @@ class ExamController extends Controller
         $questions = $this->attemptQuestions($attempt);
         $this->persistAnswers($request, $attempt, $questions);
 
+        // The attempt may have been finalized by a concurrent request while
+        // this request was preparing its answer payload. grade() rechecks the
+        // locked status and is therefore safe to call more than once.
         $this->grade($attempt);
 
         return redirect()->route('student.attempts.result', $attempt);
@@ -334,11 +354,17 @@ class ExamController extends Controller
 
     private function grade(ExamAttempt $attempt): void
     {
-        if ($attempt->status !== 'in_progress') {
-            return;
-        }
+        DB::transaction(function () use ($attempt) {
+            // Final scoring, answer-row updates, status transition and awards
+            // are one atomic operation. Competing submit/timeout requests wait
+            // here and then observe the already-finalized attempt.
+            $lockedAttempt = ExamAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+            if ($lockedAttempt->status !== 'in_progress') {
+                return;
+            }
 
-        $score = 0.0;
+            $attempt = $lockedAttempt;
+            $score = 0.0;
         $correct = 0;
         $wrong = 0;
 
@@ -400,5 +426,6 @@ class ExamController extends Controller
                 );
             }
         }
+        });
     }
 }
