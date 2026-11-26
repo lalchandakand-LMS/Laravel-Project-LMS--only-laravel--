@@ -58,14 +58,55 @@ class Course extends Model
     public function scopeFeatured($q)  { return $q->where('is_featured', true); }
 
     /* Accessors */
+    /**
+     * Resolve the best currently running campaign for this course.
+     * A campaign is eligible when it targets the course directly or one of its assigned categories.
+     */
+    public function activeFlashSale(): ?FlashSale
+    {
+        if ($this->relationLoaded('effectiveFlashSale')) {
+            return $this->getRelation('effectiveFlashSale');
+        }
+
+        $categoryIds = $this->relationLoaded('categories')
+            ? $this->categories->pluck('id')->all()
+            : $this->categories()->pluck('categories.id')->all();
+        if ($this->category_id) {
+            $categoryIds[] = (int) $this->category_id;
+        }
+        $categoryIds = array_values(array_unique($categoryIds));
+
+        $regularDiscountedPrice = (float) ($this->discount_price ?? $this->price);
+        $sale = FlashSale::currentlyRunning()
+            ->where(function ($query) use ($categoryIds) {
+                $query->whereHas('courses', fn ($courses) => $courses->where('courses.id', $this->id));
+                if ($categoryIds !== []) {
+                    $query->orWhereHas('categories', fn ($categories) => $categories->whereIn('categories.id', $categoryIds));
+                }
+            })
+            ->get()
+            ->filter(fn (FlashSale $candidate) => $candidate->discountedPrice((float) $this->price) < $regularDiscountedPrice)
+            ->sortBy(fn (FlashSale $candidate) => $candidate->discountedPrice((float) $this->price))
+            ->first();
+
+        $this->setRelation('effectiveFlashSale', $sale);
+
+        return $sale;
+    }
+
     public function getFinalPriceAttribute(): float
     {
-        return (float) ($this->discount_price ?? $this->price);
+        $regularDiscountedPrice = (float) ($this->discount_price ?? $this->price);
+        $sale = $this->activeFlashSale();
+
+        return $sale
+            ? min($regularDiscountedPrice, $sale->discountedPrice((float) $this->price))
+            : $regularDiscountedPrice;
     }
 
     public function getHasDiscountAttribute(): bool
     {
-        return $this->discount_price !== null && $this->discount_price < $this->price;
+        return $this->final_price < (float) $this->price;
     }
 
     public function getDiscountPercentAttribute(): int
@@ -73,7 +114,7 @@ class Course extends Model
         if (! $this->has_discount || $this->price <= 0) {
             return 0;
         }
-        return (int) round((($this->price - $this->discount_price) / $this->price) * 100);
+        return (int) round(((float) $this->price - $this->final_price) / (float) $this->price * 100);
     }
 
     public function getThumbnailUrlAttribute(): string
