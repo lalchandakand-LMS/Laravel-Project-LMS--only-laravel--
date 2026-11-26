@@ -9,6 +9,8 @@ use App\Models\ExamAttempt;
 use App\Models\User;
 use App\Services\GamificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ExamController extends Controller
 {
@@ -189,6 +191,59 @@ class ExamController extends Controller
         return $attempt->questions()->with('options')->get();
     }
 
+    /**
+     * Persist only answers for this attempt's frozen question set. MCQ option
+     * IDs must belong to the question being answered; descriptive input is
+     * bounded to keep oversized payloads out of the answer store.
+     */
+    private function persistAnswers(Request $request, ExamAttempt $attempt, $questions): void
+    {
+        $data = $request->validate([
+            'answers' => ['sometimes', 'array', 'max:'.$questions->count()],
+        ]);
+        $answers = $data['answers'] ?? [];
+
+        DB::transaction(function () use ($answers, $questions, $attempt) {
+            foreach ($questions as $question) {
+                if (! array_key_exists($question->id, $answers)) {
+                    continue;
+                }
+
+                $value = $answers[$question->id];
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                $attributes = ['exam_attempt_id' => $attempt->id, 'question_id' => $question->id];
+
+                if ($question->type === 'mcq') {
+                    $validated = validator(['option_id' => $value], [
+                        'option_id' => [
+                            'required',
+                            'integer',
+                            Rule::exists('options', 'id')->where('question_id', $question->id),
+                        ],
+                    ])->validate();
+
+                    AttemptAnswer::updateOrCreate($attributes, [
+                        'option_id' => (int) $validated['option_id'],
+                        'answer_text' => null,
+                    ]);
+                    continue;
+                }
+
+                $validated = validator(['answer_text' => $value], [
+                    'answer_text' => ['required', 'string', 'max:20000'],
+                ])->validate();
+
+                AttemptAnswer::updateOrCreate($attributes, [
+                    'option_id' => null,
+                    'answer_text' => $validated['answer_text'],
+                ]);
+            }
+        });
+    }
+
     /** Store the answer sheet (called via fetch on autosave / final submit). */
     public function save(Request $request, ExamAttempt $attempt)
     {
@@ -205,24 +260,8 @@ class ExamController extends Controller
             ]);
         }
 
-        $answers = (array) $request->input('answers', []);
-        foreach ($this->attemptQuestions($attempt) as $question) {
-            $value = $answers[$question->id] ?? null;
-            if ($value === null || $value === '') {
-                continue;
-            }
-            if ($question->type === 'mcq') {
-                AttemptAnswer::updateOrCreate(
-                    ['exam_attempt_id' => $attempt->id, 'question_id' => $question->id],
-                    ['option_id' => (int) $value]
-                );
-            } else {
-                AttemptAnswer::updateOrCreate(
-                    ['exam_attempt_id' => $attempt->id, 'question_id' => $question->id],
-                    ['answer_text' => (string) $value]
-                );
-            }
-        }
+        $questions = $this->attemptQuestions($attempt);
+        $this->persistAnswers($request, $attempt, $questions);
 
         if ($request->boolean('submit')) {
             $this->grade($attempt);
@@ -245,24 +284,8 @@ class ExamController extends Controller
 
         abort_if($attempt->status !== 'in_progress', 403);
 
-        $answers = (array) $request->input('answers', []);
-        foreach ($this->attemptQuestions($attempt) as $question) {
-            $value = $answers[$question->id] ?? null;
-            if ($value === null || $value === '') {
-                continue;
-            }
-            if ($question->type === 'mcq') {
-                AttemptAnswer::updateOrCreate(
-                    ['exam_attempt_id' => $attempt->id, 'question_id' => $question->id],
-                    ['option_id' => (int) $value]
-                );
-            } else {
-                AttemptAnswer::updateOrCreate(
-                    ['exam_attempt_id' => $attempt->id, 'question_id' => $question->id],
-                    ['answer_text' => (string) $value]
-                );
-            }
-        }
+        $questions = $this->attemptQuestions($attempt);
+        $this->persistAnswers($request, $attempt, $questions);
 
         $this->grade($attempt);
 
