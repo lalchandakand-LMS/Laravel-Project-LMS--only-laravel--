@@ -45,6 +45,35 @@
             </section>
         @endif
 
+        @if (in_array($user->role, ['student', 'instructor', 'branch_manager'], true))
+            @php($profile = $user->studentProfile ?? $user->staffProfile)
+            <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <h3 class="border-b border-slate-100 px-5 py-4 font-bold">Identity & qualification documents</h3>
+                <form method="POST" enctype="multipart/form-data" action="{{ route('admin.users.documents.store', $user) }}" class="grid gap-3 p-5 sm:grid-cols-3">
+                    @csrf
+                    <div><label class="mb-1 block text-xs font-semibold">Document type</label><select name="document_type" required class="w-full rounded-lg border px-3 py-2 text-sm">@foreach (['birth_certificate'=>'Birth certificate','nid'=>'NID','passport'=>'Passport','photo'=>'Photo','certificate'=>'Academic certificate','cv'=>'CV','appointment_letter'=>'Appointment letter','other'=>'Other'] as $v=>$label)<option value="{{ $v }}">{{ $label }}</option>@endforeach</select></div>
+                    <div class="sm:col-span-2"><label class="mb-1 block text-xs font-semibold">File (PDF/JPG/PNG/WebP, max 10 MB)</label><input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png,.webp" class="w-full text-sm"></div>
+                    <div class="sm:col-span-3"><button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Upload for verification</button></div>
+                </form>
+                <div class="divide-y divide-slate-100">
+                    @forelse (($profile?->documents ?? collect()) as $document)
+                        <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                            <div><p class="font-semibold">{{ $document->original_name }}</p><p class="text-xs text-slate-500">{{ str_replace('_', ' ', ucfirst($document->document_type)) }} · {{ number_format($document->size_bytes / 1024, 1) }} KB · {{ $document->created_at->format('d M Y') }}</p><p class="text-xs {{ $document->status === 'approved' ? 'text-emerald-700' : ($document->status === 'rejected' ? 'text-rose-700' : 'text-amber-700') }}">Status: {{ ucfirst($document->status) }} {{ $document->review_note ? '— '.$document->review_note : '' }}</p></div>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('admin.users.documents.download', [$user, $document]) }}" class="font-semibold text-emerald-700">Download</a>
+                                @if ($document->status === 'pending')
+                                    <form method="POST" action="{{ route('admin.users.documents.review', [$user, $document]) }}" class="flex items-center gap-1">@csrf<input type="hidden" name="status" value="approved"><button class="rounded bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">Approve</button></form>
+                                    <form method="POST" action="{{ route('admin.users.documents.review', [$user, $document]) }}" class="flex items-center gap-1">@csrf<input type="hidden" name="status" value="rejected"><input name="review_note" placeholder="Reason" class="w-24 rounded border px-2 py-1 text-xs"><button class="rounded bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700">Reject</button></form>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <p class="px-5 py-4 text-sm text-slate-500">No documents uploaded yet.</p>
+                    @endforelse
+                </div>
+            </section>
+        @endif
+
         <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <h3 class="border-b border-slate-100 px-5 py-4 font-bold text-slate-900">Enrollments ({{ $user->enrollments->count() }})</h3>
             <ul class="divide-y divide-slate-100 text-sm">
