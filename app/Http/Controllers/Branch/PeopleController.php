@@ -113,6 +113,8 @@ class PeopleController extends Controller
             'designation' => 'nullable|string|max:120',
             'password' => [$user ? 'nullable' : 'required', 'string', Password::min(8)],
             'is_active' => 'sometimes|boolean',
+            'role' => 'prohibited',
+            'branch_id' => 'prohibited',
             'student_code' => [$student ? 'nullable' : 'prohibited', 'string', 'max:40', Rule::unique('student_profiles', 'student_code')->ignore($user?->studentProfile?->id)],
             'date_of_birth' => [$student ? 'nullable' : 'prohibited', 'nullable', 'date', 'before_or_equal:today'],
             'school_name' => [$student ? 'nullable' : 'prohibited', 'nullable', 'string', 'max:180'],
