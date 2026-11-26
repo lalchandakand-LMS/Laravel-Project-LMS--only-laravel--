@@ -62,7 +62,10 @@ class AssignmentController extends Controller
 
         if ($request->hasFile('attachment')) {
             $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
+        } elseif ($request->filled('resource_url')) {
+            $data['attachment'] = $data['resource_url'];
         }
+        unset($data['resource_url']);
 
         Assignment::create($data);
 
@@ -88,13 +91,19 @@ class AssignmentController extends Controller
         $this->assertLessonBelongsToCourse($data);
 
         if ($request->hasFile('attachment')) {
-            if ($assignment->attachment) {
+            if ($assignment->attachment && ! preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
                 Storage::disk('local')->delete($assignment->attachment);
             }
             $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
+        } elseif ($request->filled('resource_url')) {
+            if ($assignment->attachment && ! preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
+                Storage::disk('local')->delete($assignment->attachment);
+            }
+            $data['attachment'] = $data['resource_url'];
         } else {
             unset($data['attachment']);
         }
+        unset($data['resource_url']);
 
         $assignment->update($data);
 
@@ -107,7 +116,7 @@ class AssignmentController extends Controller
         abort_if($assignment->submissions()->exists(), 409,
             'Assignments with student submissions cannot be deleted. Unpublish the assignment instead.');
 
-        if ($assignment->attachment) {
+        if ($assignment->attachment && ! preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
             Storage::disk('local')->delete($assignment->attachment);
         }
         $assignment->delete();
@@ -189,6 +198,7 @@ class AssignmentController extends Controller
             'due_at' => 'nullable|date',
             'total_marks' => 'required|numeric|min:1|max:100000',
             'attachment' => 'nullable|file|max:20480',
+            'resource_url' => 'nullable|url:http,https|max:2048',
         ]);
 
         $data['is_published'] = $request->boolean('is_published');
