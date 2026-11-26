@@ -256,7 +256,7 @@ class AssignmentWorkflowTest extends TestCase
         ]);
 
         AssignmentSubmission::updating(function () {
-            throw new \\RuntimeException('Simulated database write failure.');
+            throw new \RuntimeException('Simulated database write failure.');
         });
 
         $this->withoutExceptionHandling();
@@ -266,15 +266,14 @@ class AssignmentWorkflowTest extends TestCase
                 'attachment' => UploadedFile::fake()->create('replacement.pdf', 60, 'application/pdf'),
             ]);
             $this->fail('The simulated submission update failure should be rethrown.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame('Simulated database write failure.', $exception->getMessage());
         }
 
         $submission->refresh();
         $this->assertSame($oldAttachment, $submission->attachment);
         Storage::disk('local')->assertExists($oldAttachment);
-        $this->assertSame([], Storage::disk('local')->allFiles('assignments/submissions') === [$oldAttachment]
-            ? [] : array_values(array_diff(Storage::disk('local')->allFiles('assignments/submissions'), [$oldAttachment])));
+        $this->assertSame([$oldAttachment], Storage::disk('local')->allFiles('assignments/submissions'));
     }
 
 }
