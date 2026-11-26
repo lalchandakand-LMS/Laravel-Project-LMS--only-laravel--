@@ -76,6 +76,10 @@ class ExamController extends Controller
         $user = $request->user();
         abort_unless($this->canAccessExam($user, $exam) && $exam->isOpen(), 403, 'This exam is not available to your account.');
 
+        if ($exam->random_question_count > $exam->questions()->count()) {
+            abort(422, 'This exam does not have enough questions for its configured random set.');
+        }
+
         $left = $exam->attemptsLeftFor($user);
         if ($left !== null && $left <= 0) {
             return redirect()->route('student.exams.show', $exam)->with('info', 'You have used all attempts.');
@@ -286,10 +290,9 @@ class ExamController extends Controller
                     $answer->update(['is_correct' => $isCorrect, 'marks_awarded' => $awarded]);
                 }
             } else {
-                // CQ / short answers need manual marking by the instructor.
-                if ($answer) {
-                    $answer->update(['is_correct' => false, 'marks_awarded' => 0]);
-                }
+                // Keep an explicit empty answer row so the marker can review unanswered CQ / short questions.
+                $answer ??= $attempt->answers()->create(['question_id' => $question->id, 'answer_text' => null]);
+                $answer->update(['is_correct' => false, 'marks_awarded' => 0]);
             }
         }
 
