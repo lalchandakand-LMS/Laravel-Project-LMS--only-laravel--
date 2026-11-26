@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
+    private const HOMEPAGE_SECTION_KEYS = ['hero', 'categories', 'featured', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
     public const KEYS = [
         'site_name', 'site_tagline', 'site_email', 'site_phone', 'site_address', 'site_primary_color', 'site_secondary_color',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
@@ -21,7 +22,7 @@ class SettingController extends Controller
         'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
         'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
         'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-        'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_learning_layout', 'homepage_featured_layout', 'homepage_latest_layout', 'homepage_live_classes_layout', 'homepage_exams_layout', 'homepage_teachers_layout', 'homepage_reviews_layout', 'homepage_ebooks_layout', 'homepage_carousel_autoplay', 'homepage_carousel_speed',
+        'homepage_section_order', 'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_learning_layout', 'homepage_featured_layout', 'homepage_latest_layout', 'homepage_live_classes_layout', 'homepage_exams_layout', 'homepage_teachers_layout', 'homepage_reviews_layout', 'homepage_ebooks_layout', 'homepage_carousel_autoplay', 'homepage_carousel_speed',
         'homepage_board_results_title', 'homepage_board_results_subtitle', 'homepage_board_results_body', 'homepage_board_results_year',
         'homepage_admission_title', 'homepage_admission_subtitle', 'homepage_admission_button_text', 'homepage_admission_button_url',
         'homepage_learning_title', 'homepage_learning_subtitle', 'homepage_testimonial_title',
@@ -68,6 +69,20 @@ class SettingController extends Controller
             'homepage_ebooks_layout' => ['sometimes', 'required', 'in:grid,carousel'],
             'homepage_carousel_autoplay' => ['sometimes', 'boolean'],
             'homepage_carousel_speed' => ['sometimes', 'required', 'integer', 'min:3', 'max:20'],
+            'homepage_section_order' => ['sometimes', 'required', 'json', function ($attribute, $value, $fail) {
+                $order = json_decode($value, true);
+                if (! is_array($order) || ! array_is_list($order) ||
+                    count($order) !== count(self::HOMEPAGE_SECTION_KEYS) ||
+                    count(array_filter($order, 'is_string')) !== count($order)) {
+                    $fail('Choose each homepage section exactly once in the display order.');
+                    return;
+                }
+
+                if (count(array_unique($order)) !== count($order) ||
+                    array_diff($order, self::HOMEPAGE_SECTION_KEYS)) {
+                    $fail('Choose each homepage section exactly once in the display order.');
+                }
+            }],
             'homepage_board_results_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'homepage_board_results_subtitle' => ['sometimes', 'nullable', 'string', 'max:255'],
             'homepage_board_results_body' => ['sometimes', 'nullable', 'string', 'max:3000'],

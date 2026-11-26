@@ -126,6 +126,22 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
         <h3 class="font-bold text-slate-900">Homepage sections & content</h3>
         <p class="mt-1 text-xs text-slate-500">Control which public homepage sections appear. Live classes, exams and teachers are populated from your LMS records. Board-result content is shown only when you publish verified information here.</p>
+        <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+            <h4 class="font-bold text-slate-900">Homepage section display order</h4>
+            <p class="mt-1 text-xs text-slate-600">Drag sections or use the up/down controls. Hidden sections keep their place and appear in this order when enabled again.</p>
+            <input type="hidden" id="homepage-section-order-value" name="homepage_section_order" value="{{ old('homepage_section_order', $settings['homepage_section_order'] ?? '[&quot;hero&quot;,&quot;categories&quot;,&quot;featured&quot;,&quot;online_batches&quot;,&quot;stats&quot;,&quot;latest&quot;,&quot;live_classes&quot;,&quot;exams&quot;,&quot;teachers&quot;,&quot;board_results&quot;,&quot;reviews&quot;,&quot;ebooks&quot;,&quot;admission&quot;]') }}">
+            <ol id="homepage-section-order-list" class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (['hero' => 'Hero slider / banner', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
+                    <li draggable="true" data-section-key="{{ $key }}" class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 text-sm">
+                        <span class="flex min-w-0 items-center gap-2"><span aria-hidden="true" class="cursor-grab text-slate-400">⠿</span><span>{{ $label }}</span></span>
+                        <span class="flex shrink-0 gap-1">
+                            <button type="button" data-move="up" aria-label="Move {{ $label }} up" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↑</button>
+                            <button type="button" data-move="down" aria-label="Move {{ $label }} down" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↓</button>
+                        </span>
+                    </li>
+                @endforeach
+            </ol>
+        </div>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @foreach (['hero' => 'Hero slider / banner', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
                 <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? '1') === '1')> {{ $label }}</label>
@@ -280,4 +296,50 @@
 })();
 </script>
 @endpush
-\n@endsection
+\n
+@push('scripts')
+<script>
+(() => {
+    const list = document.getElementById('homepage-section-order-list');
+    const field = document.getElementById('homepage-section-order-value');
+    if (!list || !field) return;
+    const sync = () => { field.value = JSON.stringify([...list.children].map(item => item.dataset.sectionKey)); };
+    const items = new Map([...list.children].map(item => [item.dataset.sectionKey, item]));
+    let saved = [];
+    try { saved = JSON.parse(field.value || '[]'); } catch (_) { saved = []; }
+    [...saved, ...items.keys()].forEach(key => {
+        const item = items.get(key);
+        if (item) { list.appendChild(item); items.delete(key); }
+    });
+    list.addEventListener('click', event => {
+        const button = event.target.closest('button[data-move]');
+        if (!button) return;
+        const item = button.closest('[data-section-key]');
+        if (button.dataset.move === 'up' && item.previousElementSibling) {
+            list.insertBefore(item, item.previousElementSibling);
+        } else if (button.dataset.move === 'down' && item.nextElementSibling) {
+            list.insertBefore(item.nextElementSibling, item);
+        }
+        sync();
+    });
+    let dragged = null;
+    list.addEventListener('dragstart', event => {
+        dragged = event.target.closest('[data-section-key]');
+        if (dragged) event.dataTransfer.effectAllowed = 'move';
+    });
+    list.addEventListener('dragover', event => {
+        if (!dragged) return;
+        event.preventDefault();
+        const target = event.target.closest('[data-section-key]');
+        if (!target || target === dragged) return;
+        const bounds = target.getBoundingClientRect();
+        list.insertBefore(dragged, event.clientY < bounds.top + bounds.height / 2 ? target : target.nextSibling);
+    });
+    list.addEventListener('drop', event => { event.preventDefault(); sync(); });
+    list.addEventListener('dragend', () => { dragged = null; sync(); });
+    sync();
+})();
+</script>
+@endpush
+
+@endsection

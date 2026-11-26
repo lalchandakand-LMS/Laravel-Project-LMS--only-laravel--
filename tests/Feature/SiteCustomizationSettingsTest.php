@@ -171,5 +171,34 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('--aec-primary: #ea580c', false)
             ->assertSee('--aec-primary-dark: #9a3412', false);
     }
+
+    public function test_admin_can_save_and_render_homepage_section_order(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $order = ['hero', 'featured', 'categories', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_show_categories' => '1',
+            'homepage_show_featured' => '1',
+            'homepage_section_order' => json_encode($order),
+        ])->assertRedirect();
+
+        $this->assertSame($order, json_decode(Setting::get('homepage_section_order'), true));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('const savedOrder = ["hero","featured","categories"', false)
+            ->assertSee('data-home-section="categories"', false)
+            ->assertSee('data-home-section="featured"', false);
+    }
+
+    public function test_invalid_homepage_section_order_is_rejected(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
+            'homepage_section_order' => json_encode(['hero', 'hero']),
+        ])->assertSessionHasErrors('homepage_section_order');
+    }
 }
 

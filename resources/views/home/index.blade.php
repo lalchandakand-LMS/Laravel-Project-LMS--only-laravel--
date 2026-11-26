@@ -2,13 +2,14 @@
 @section('title', 'English Courses, Spoken English & Grammar')
 @section('meta_description', 'Learn spoken English, grammar, vocabulary, writing and communication skills with guided courses at Alom\'s English Center.')
 @section('content')
+<div id="homepage-sections">
 
 {{-- HERO SLIDER --}}
 @php
     $slides = $sliders ?? collect();
 @endphp
 @if (($homepageSettings['homepage_show_hero'] ?? '1') === '1' && $slides->count())
-<section class="relative overflow-hidden bg-slate-900 text-white">
+<section data-home-section="hero" class="relative overflow-hidden bg-slate-900 text-white">
     <div id="heroSlides" class="hero-carousel relative" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
         @foreach ($slides as $i => $slide)
             @php
@@ -97,7 +98,7 @@
 @endpush
 @elseif (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
 {{-- HERO --}}
-<section class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white">
+<section data-home-section="hero" class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white">
     <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
     <div class="pointer-events-none absolute -bottom-32 left-1/3 h-96 w-96 rounded-full bg-teal-400/10 blur-3xl"></div>
     <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 lg:grid-cols-2">
@@ -140,7 +141,7 @@
 
 {{-- CATEGORIES --}}
 @if (($homepageSettings['homepage_show_categories'] ?? '1') === '1')
-<section data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
+<section data-home-section="categories" data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
     <div class="flex items-end justify-between">
         <div>
             <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose your learning path' }}</h2>
@@ -166,7 +167,7 @@
 
 {{-- FEATURED --}}
 @if (($homepageSettings['homepage_show_featured'] ?? '1') === '1' && $featured->count())
-<section data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
+<section data-home-section="featured" data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Featured courses</h2>
         <p class="mt-1 text-slate-500">Hand-picked by our academic team.</p>
@@ -182,7 +183,7 @@
 
 {{-- ONLINE BATCHES --}}
 @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1' && $onlineBatches->isNotEmpty())
-<section data-home-carousel="online_batches" data-home-carousel-layout="carousel" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="bg-orange-50 py-14">
+<section data-home-section="online_batches" data-home-carousel="online_batches" data-home-carousel-layout="carousel" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="bg-orange-50 py-14">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div><p class="text-sm font-bold uppercase tracking-wider text-orange-700">Online Course</p><h2 class="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Online batches are ongoing!</h2><p class="mt-1 text-slate-600">Book your seat in an upcoming live learning batch.</p></div>
@@ -206,7 +207,7 @@
 
 {{-- STATS BANNER --}}
 @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
-<section style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#ea580c' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
+<section data-home-section="stats" style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#ea580c' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
     <div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-center text-white sm:grid-cols-4">
         @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']], ['Lessons', $stats['lessons']]] as [$label, $value])
             <div>
@@ -220,7 +221,7 @@
 
 {{-- LATEST --}}
 @if (($homepageSettings['homepage_show_latest'] ?? '1') === '1')
-<section data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
+<section data-home-section="latest" data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Latest courses</h2>
         <a href="{{ route('courses.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">Browse all →</a>
@@ -235,7 +236,7 @@
 
 {{-- UPCOMING LIVE CLASSES --}}
 @if (($homepageSettings['homepage_show_live_classes'] ?? '1') === '1' && $upcomingLiveClasses->isNotEmpty())
-<section data-home-carousel="live_classes" data-home-carousel-layout="{{ $homepageSettings['homepage_live_classes_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
+<section data-home-section="live_classes" data-home-carousel="live_classes" data-home-carousel-layout="{{ $homepageSettings['homepage_live_classes_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Upcoming live classes</h2><p class="mt-1 text-slate-500">Join scheduled learning sessions with our instructors.</p></div>
@@ -258,7 +259,7 @@
 
 {{-- UPCOMING EXAMS --}}
 @if (($homepageSettings['homepage_show_exams'] ?? '1') === '1' && $upcomingExams->isNotEmpty())
-<section data-home-carousel="exams" data-home-carousel-layout="{{ $homepageSettings['homepage_exams_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
+<section data-home-section="exams" data-home-carousel="exams" data-home-carousel-layout="{{ $homepageSettings['homepage_exams_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Exams & assessments</h2><p class="mt-1 text-slate-500">Prepare, practise and track your progress.</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ($upcomingExams as $exam)
@@ -275,7 +276,7 @@
 
 {{-- TEACHER PROFILES --}}
 @if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
-<section data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
+<section data-home-section="teachers" data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Meet our teachers</h2><p class="mt-1 text-slate-500">Learn with experienced instructors and practical guidance.</p></div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -295,7 +296,7 @@
 
 {{-- VERIFIED BOARD RESULTS / ACHIEVEMENTS --}}
 @if (($homepageSettings['homepage_show_board_results'] ?? '1') === '1' && !empty($homepageSettings['homepage_board_results_body']))
-<section id="board-results" class="bg-emerald-950 py-16 text-white">
+<section data-home-section="board_results" id="board-results" class="bg-emerald-950 py-16 text-white">
     <div class="mx-auto max-w-5xl px-4 text-center">
         <span class="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">Student achievements {{ $homepageSettings['homepage_board_results_year'] ?? '' }}</span>
         <h2 class="mt-3 text-3xl font-extrabold">{{ $homepageSettings['homepage_board_results_title'] ?? 'Our students’ achievements' }}</h2>
@@ -307,7 +308,7 @@
 
 {{-- REVIEWS --}}
 @if (($homepageSettings['homepage_show_reviews'] ?? '1') === '1' && $reviews->count())
-<section data-home-carousel="reviews" data-home-carousel-layout="{{ $homepageSettings['homepage_reviews_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
+<section data-home-section="reviews" data-home-carousel="reviews" data-home-carousel-layout="{{ $homepageSettings['homepage_reviews_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2>
         <div class="mt-8 grid gap-5 md:grid-cols-3">
@@ -331,7 +332,7 @@
 
 {{-- EBOOKS --}}
 @if (($homepageSettings['homepage_show_ebooks'] ?? '1') === '1' && $ebooks->count())
-<section data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
+<section data-home-section="ebooks" data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">E-books & notes</h2>
         <a href="{{ route('ebooks.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">All e-books →</a>
@@ -352,7 +353,7 @@
 
 {{-- ONLINE / CLASSROOM ADMISSION --}}
 @if (($homepageSettings['homepage_show_admission'] ?? '1') === '1')
-<section class="mx-auto max-w-7xl px-4 pb-8 pt-4">
+<section data-home-section="admission" class="mx-auto max-w-7xl px-4 pb-8 pt-4">
     <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-14 text-center text-white sm:px-12">
         <div class="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
         <span class="relative inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">Admissions & enrolment</span>
@@ -362,6 +363,24 @@
     </div>
 </section>
 @endif
+
+
+</div>
+@push('scripts')
+<script>
+(() => {
+    const container = document.getElementById('homepage-sections');
+    if (!container) return;
+    const sections = new Map([...container.querySelectorAll(':scope > [data-home-section]')].map(section => [section.dataset.homeSection, section]));
+    const savedOrder = @json(json_decode($homepageSettings['homepage_section_order'] ?? '[]', true) ?: []);
+    [...savedOrder, ...sections.keys()].forEach(key => {
+        const section = sections.get(key);
+        if (section) { container.appendChild(section); sections.delete(key); }
+    });
+    for (const section of sections.values()) container.appendChild(section);
+})();
+</script>
+@endpush
 
 @push('scripts')
 <style>
