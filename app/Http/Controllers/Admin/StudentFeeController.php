@@ -69,7 +69,9 @@ class StudentFeeController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
-            $credits = StudentFeeCredit::query()->where('student_id', $admission->student_id)->orderBy('id')->lockForUpdate()->get();
+            $credits = StudentFeeCredit::query()->where('student_id', $admission->student_id)
+                ->whereHas('payment.invoice', fn ($query) => $query->where('branch_id', $admission->branch_id))
+                ->orderBy('id')->lockForUpdate()->get();
             foreach ($credits as $credit) {
                 $toApply = min($credit->remainingAmount(), $invoice->dueAmount());
                 if ($toApply <= 0) { continue; }
