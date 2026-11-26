@@ -20,11 +20,11 @@
         <nav aria-label="Main navigation" class="hidden min-w-0 flex-1 items-center justify-center gap-1 xl:flex">
             @foreach ($desktopMenu as $item)
                 <div class="group relative">
-                    <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="inline-flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-cyan-50 text-teal-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }} @if($item->children->isNotEmpty()) <span aria-hidden="true">⌄</span> @endif</a>
+                    <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="inline-flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }} @if($item->children->isNotEmpty()) <span aria-hidden="true">⌄</span> @endif</a>
                     @if($item->children->isNotEmpty())
                         <div class="invisible absolute left-0 top-full z-50 min-w-48 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                             @foreach($item->children as $child)
-                                <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-cyan-50">{{ $child->icon }} {{ $child->label }}</a>
+                                <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-orange-50">{{ $child->icon }} {{ $child->label }}</a>
                             @endforeach
                         </div>
                     @endif
@@ -33,9 +33,10 @@
         </nav>
         <div class="ml-auto flex shrink-0 items-center gap-2">
             @auth
-                <a href="{{ auth()->user()->dashboardRoute() }}" class="rounded-full bg-[#06b6d4] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#0d9488]">Dashboard</a>
+                <a href="{{ route('cart.index') }}" aria-label="Shopping cart" class="rounded-full border border-orange-200 px-4 py-2.5 text-sm font-bold text-orange-800 transition hover:bg-orange-50">Cart</a>
+                <a href="{{ auth()->user()->dashboardRoute() }}" class="rounded-full bg-orange-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-orange-700">Dashboard</a>
             @else
-                <a href="{{ route('login') }}" class="rounded-full bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0d9488]">Login</a>
+                <a href="{{ route('login') }}" class="rounded-full bg-orange-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-700">Login</a>
             @endauth
             <button id="mobile-menu-open" type="button" aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-800 transition hover:bg-slate-100 xl:hidden"><span aria-hidden="true">☰</span></button>
         </div>
@@ -48,14 +49,15 @@
     <div class="overflow-y-auto px-4 py-4">
         <nav aria-label="Mobile main navigation" class="grid gap-1">
             @foreach ($mobileMenu as $item)
-                <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-cyan-50 text-teal-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item->icon }} {{ $item->label }} <span aria-hidden="true" class="text-slate-400">›</span></a>
+                <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item->icon }} {{ $item->label }} <span aria-hidden="true" class="text-slate-400">›</span></a>
                 @foreach($item->children as $child)
                     <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="ml-5 block rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">{{ $child->icon }} {{ $child->label }}</a>
                 @endforeach
             @endforeach
         </nav>
         @auth
-            <a href="{{ auth()->user()->dashboardRoute() }}" class="mt-4 block rounded-xl bg-[#06b6d4] px-4 py-3 text-center text-sm font-bold text-white">Dashboard</a>
+            <a href="{{ route('cart.index') }}" class="mt-4 block rounded-xl border border-orange-200 px-4 py-3 text-center text-sm font-bold text-orange-800">Shopping cart</a>
+            <a href="{{ auth()->user()->dashboardRoute() }}" class="mt-2 block rounded-xl bg-orange-600 px-4 py-3 text-center text-sm font-bold text-white">Dashboard</a>
             <form method="POST" action="{{ route('logout') }}" class="mt-2">@csrf<button class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-rose-600">Log out</button></form>
         @endauth
     </div>
