@@ -32,6 +32,12 @@
             <div class="text-right text-sm"><a href="{{ route('password.request') }}" class="font-semibold text-blue-800 hover:underline">Forgot password?</a></div>
             <button type="submit" class="w-full rounded-lg bg-emerald-700 px-4 py-3 font-semibold text-white hover:bg-emerald-800">Log in</button>
         </form>
+        @if (config('services.google.client_id') && config('services.google.client_secret') && config('services.google.redirect'))
+            <div class="my-5 flex items-center gap-3 text-xs text-slate-400"><span class="h-px flex-1 bg-slate-200"></span>OR<span class="h-px flex-1 bg-slate-200"></span></div>
+            <a href="{{ route('auth.google.redirect') }}" class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                <span class="text-base font-black">G</span> Continue with Google
+            </a>
+        @endif
         <p class="mt-5 text-center text-sm text-slate-600">New here?
             <a href="{{ route('register') }}" class="font-semibold text-emerald-700 hover:underline">Create a free account</a>
         </p>
