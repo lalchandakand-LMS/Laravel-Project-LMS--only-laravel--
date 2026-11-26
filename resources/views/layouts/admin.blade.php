@@ -56,6 +56,7 @@
                 ['admin.certificates.index','Certificates','✧','admin.certificates.*'],
                 ['admin.reports.index','Reports','▥','admin.reports.*'],
                 ['messages.index','Messages','✉','messages.*'],
+                ['admin.marketing.leads.index','Marketing Leads','♧','admin.marketing.leads.*'],
                 ['admin.seo.index','SEO & Marketing','⌕','admin.seo.*'],
                 ['admin.settings.index','Settings','⚙','admin.settings.*'],
             ])
