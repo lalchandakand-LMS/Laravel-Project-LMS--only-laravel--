@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -34,13 +35,25 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $storedImage = null;
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('categories', 'public');
+            $storedImage = $request->file('image')->store('categories', 'public');
+            if (! $storedImage) {
+                throw ValidationException::withMessages(['image' => 'The category image could not be stored.']);
+            }
+            $data['image'] = $storedImage;
         } elseif ($request->filled('image_url')) {
             $data['image'] = $data['image_url'];
         }
         unset($data['image_url']);
-        Category::create($data);
+        try {
+            Category::create($data);
+        } catch (\Throwable $exception) {
+            if ($storedImage) {
+                delete_stored_media('public', $storedImage);
+            }
+            throw $exception;
+        }
 
         return redirect()->route('admin.categories.index')->with('success', 'Category created.');
     }
@@ -57,10 +70,15 @@ class CategoryController extends Controller
     {
         $data = $this->validated($request, $category);
         $oldImage = null;
+        $storedImage = null;
         if ($request->hasFile('image') || $request->filled('image_url') || $request->boolean('remove_image')) {
             $oldImage = $category->image;
             if ($request->hasFile('image')) {
-                $data['image'] = $request->file('image')->store('categories', 'public');
+                $storedImage = $request->file('image')->store('categories', 'public');
+                if (! $storedImage) {
+                    throw ValidationException::withMessages(['image' => 'The new category image could not be stored. The previous image has been kept.']);
+                }
+                $data['image'] = $storedImage;
             } elseif ($request->boolean('remove_image')) {
                 $data['image'] = null;
             } elseif ($request->filled('image_url')) {
@@ -70,8 +88,15 @@ class CategoryController extends Controller
             }
         }
         unset($data['image_url']);
-        $category->update($data);
-        if ($oldImage) {
+        try {
+            $category->update($data);
+        } catch (\Throwable $exception) {
+            if ($storedImage) {
+                delete_stored_media('public', $storedImage);
+            }
+            throw $exception;
+        }
+        if ($oldImage && array_key_exists('image', $data) && $oldImage !== $data['image']) {
             delete_stored_media('public', $oldImage);
         }
 
