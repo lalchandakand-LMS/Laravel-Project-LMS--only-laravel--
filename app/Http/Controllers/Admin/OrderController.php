@@ -165,7 +165,12 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         abort_if($order->payments()->exists(), 403, 'Orders with payment records cannot be edited. Use the payment/refund ledger.');
-        return view('admin.orders.form', ['order' => $order, 'students' => collect(), 'branches' => collect(), 'courses' => collect(), 'ebooks' => collect()]);
+        return view('admin.orders.form', [
+            'order' => $order->load('items'),
+            'students' => collect(), 'branches' => collect(),
+            'courses' => Course::where('is_published', true)->orderBy('title')->get(),
+            'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
+        ]);
     }
 
     public function update(Request $request, Order $order)
@@ -175,9 +180,37 @@ class OrderController extends Controller
             'name' => 'required|string|max:100', 'phone' => 'required|string|max:30',
             'email' => 'required|email|max:150', 'address' => 'nullable|string|max:2000',
             'note' => 'nullable|string|max:1000',
+            'items' => 'required|array|min:1',
+            'items.*.type' => 'required|in:course,ebook',
+            'items.*.id' => 'required|integer',
         ]);
-        $order->update($data);
-        return redirect()->route('admin.orders.show', $order)->with('success', 'Order customer details updated.');
+        $lines = [];
+        foreach ($data['items'] as $line) {
+            $product = $line['type'] === 'course'
+                ? Course::where('is_published', true)->findOrFail($line['id'])
+                : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
+            $price = $line['type'] === 'course' ? $product->final_price : (float) $product->price;
+            if ($price <= 0) {
+                throw ValidationException::withMessages(['items' => 'Free items cannot be added to a paid order.']);
+            }
+            $lines[] = ['type' => $line['type'], 'id' => $product->id, 'title' => $product->title, 'price' => $price];
+        }
+        $subtotal = round(array_sum(array_column($lines, 'price')), 2);
+        DB::transaction(function () use ($order, $data, $lines, $subtotal) {
+            $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($locked->payments()->exists()) {
+                abort(403, 'Orders with payment records cannot be edited.');
+            }
+            $locked->items()->delete();
+            foreach ($lines as $line) {
+                $locked->items()->create([
+                    'item_type' => $line['type'], 'item_id' => $line['id'],
+                    'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
+                ]);
+            }
+            $locked->update($data + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
+        });
+        return redirect()->route('admin.orders.show', $order)->with('success', 'Order details and items updated.');
     }
 
     public function show(Order $order)
