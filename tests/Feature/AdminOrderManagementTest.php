@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Ebook;
 use App\Models\FlashSale;
 use App\Models\Order;
+use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -169,6 +170,41 @@ class AdminOrderManagementTest extends TestCase
         $order = Order::with('items')->latest('id')->firstOrFail();
         $this->assertSame(1000.0, (float) $order->total);
         $this->assertSame(1000.0, (float) $order->items->first()->price);
+    }
+
+
+    public function test_admin_cannot_create_duplicate_or_already_owned_course_lines(): void
+    {
+        [$admin, $student, $branch] = $this->setupAdminAndStudent();
+        $course = Course::create([
+            'title' => 'Already Owned Course', 'slug' => 'already-owned-course',
+            'price' => 900, 'is_published' => true,
+        ]);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'price_paid' => 900,
+            'enrolled_at' => now(),
+        ]);
+
+        $payload = [
+            'user_id' => $student->id, 'branch_id' => $branch->id,
+            'name' => $student->name, 'phone' => '01700000000',
+            'email' => $student->email,
+            'items' => [['type' => 'course', 'id' => $course->id]],
+        ];
+
+        $this->actingAs($admin)->post(route('admin.orders.store'), $payload)
+            ->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('orders', 0);
+
+        Enrollment::where('user_id', $student->id)->where('course_id', $course->id)->delete();
+        $payload['items'][] = ['type' => 'course', 'id' => $course->id];
+
+        $this->actingAs($admin)->post(route('admin.orders.store'), $payload)
+            ->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('orders', 0);
     }
 
 }
