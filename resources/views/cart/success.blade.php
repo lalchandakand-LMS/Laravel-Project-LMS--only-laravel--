@@ -15,7 +15,7 @@
         <ul class="mt-6 divide-y divide-slate-100 border-y border-slate-100">
             @foreach ($order->items as $item)
                 <li class="flex justify-between py-3 text-sm">
-                    <span><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }}</span>
+                    <span><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }} @if($item->qty > 1)<span class="text-xs text-slate-500">× {{ $item->qty }}</span>@endif</span>
                     <span class="font-semibold">৳{{ number_format($item->price, 2) }}</span>
                 </li>
             @endforeach
@@ -31,8 +31,15 @@
         @endif
 
         @if ($order->status === 'paid')
-            <div class="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Payment fully confirmed — your course and e-book access is active.</div>
+            <div class="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Payment fully confirmed. Your digital access is active and physical products are ready for order processing.</div>
             <a href="{{ route('student.courses') }}" class="mt-4 inline-block rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white">Go to my courses</a>
+            @if($order->items->contains('item_type', 'product'))
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+                    <b>Delivery address</b>
+                    <p class="mt-1 whitespace-pre-line">{{ $order->address }}</p>
+                    <p class="mt-2 text-xs text-slate-500">The branch will process and dispatch your physical items.</p>
+                </div>
+            @endif
         @else
             @if (count($enabledMethods) && $order->dueAmount() > 0)
                 <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
