@@ -217,6 +217,9 @@
                     <input type="file" name="thumbnail" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full text-xs">
                     <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste a thumbnail URL</label>
                     <input type="url" name="thumbnail_url" value="{{ old('thumbnail_url', str_starts_with((string) $course->thumbnail, 'http') ? $course->thumbnail : '') }}" placeholder="https://example.com/course-thumbnail.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy an image URL →</a>
+                    @endif
                     <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy an image URL →</a>
                 </div>
                 <div>
