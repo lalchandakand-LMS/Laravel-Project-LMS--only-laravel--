@@ -30,7 +30,7 @@
 <section class="mt-6 rounded-2xl border border-orange-200 bg-orange-50 p-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div><h3 class="font-bold text-orange-950">সরাসরি কোচিং — আপনার Learning Path</h3><p class="mt-1 text-sm text-orange-900">একই শিক্ষার্থী অ্যাকাউন্টে অনলাইন কোর্স ও শাখাভিত্তিক কোচিংয়ের অগ্রগতি।</p></div>
-        <div class="text-right"><p class="text-xs text-orange-800">Coaching fee due</p><p class="text-xl font-black text-emerald-950">৳{{ number_format($coachingDue,2) }}</p></div>
+        <div class="text-right"><p class="text-xs text-orange-800">Coaching fee due</p><p class="text-xl font-black text-slate-950">৳{{ number_format($coachingDue,2) }}</p></div>
     </div>
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
         @foreach($coachingEnrollments as $coachingEnrollment)
@@ -116,7 +116,7 @@
                                 <span class="text-xs text-slate-500">{{ $progress }}%</span>
                             </div>
                         </div>
-                        <span class="text-emerald-700">→</span>
+                        <span class="text-orange-700">→</span>
                     </a>
                 @endif
             @empty
