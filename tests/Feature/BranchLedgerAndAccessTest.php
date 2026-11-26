@@ -277,4 +277,72 @@ class BranchLedgerAndAccessTest extends TestCase
 
         $this->assertNotSame($profileBranch->id, $managedBranch->id);
     }
+
+    public function test_branch_dashboard_pending_balance_uses_ledger_adjustments_and_branch_scope(): void
+    {
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $branch = $this->branch('PENDING-DHK', $manager);
+        $manager->update(['branch_id' => $branch->id]);
+        $otherBranch = $this->branch('PENDING-CTG');
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $branch->id]);
+        $otherStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $otherBranch->id]);
+
+        $adjustedOrder = Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 1000,
+            'discount' => 0,
+            'total' => 1000,
+            'status' => 'partially_paid',
+            'name' => $student->name,
+            'phone' => '01700000000',
+            'email' => $student->email,
+        ]);
+        Payment::create([
+            'order_id' => $adjustedOrder->id,
+            'gateway' => 'bkash',
+            'amount' => 400,
+            'status' => 'verified',
+        ]);
+        PaymentAdjustment::create([
+            'order_id' => $adjustedOrder->id,
+            'type' => 'refund',
+            'amount' => 50,
+            'reason' => 'Partial refund',
+        ]);
+        PaymentAdjustment::create([
+            'order_id' => $adjustedOrder->id,
+            'type' => 'credit',
+            'amount' => 25,
+            'reason' => 'Approved credit',
+        ]);
+
+        Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 200,
+            'discount' => 0,
+            'total' => 200,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01700000000',
+            'email' => $student->email,
+        ]);
+        Order::create([
+            'user_id' => $otherStudent->id,
+            'branch_id' => $otherBranch->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'pending',
+            'name' => $otherStudent->name,
+            'phone' => '01700000000',
+            'email' => $otherStudent->email,
+        ]);
+
+        $this->actingAs($manager)->get(route('branch.dashboard'))
+            ->assertOk()
+            ->assertViewHas('stats', fn (array $stats) => $stats['students'] === 1
+                && $stats['pending'] === 825.0);
+    }
 }
