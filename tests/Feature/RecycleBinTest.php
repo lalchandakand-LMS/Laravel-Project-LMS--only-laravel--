@@ -286,4 +286,103 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+
+    public function test_prerequisite_lesson_cannot_be_permanently_purged_while_a_dependent_lesson_references_it(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Retained Prerequisite Course', 'slug' => 'retained-prerequisite-course']);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Archived prerequisite lesson',
+            'type' => 'text',
+            'position' => 1,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Dependent lesson',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+
+        // Simulate a legacy archived prerequisite that predates the controller guard.
+        $prerequisite->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'lessons', 'id' => $prerequisite->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('lessons', ['id' => $prerequisite->id]);
+        $this->assertDatabaseHas('lessons', [
+            'id' => $dependent->id,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+    }
+
+
+    public function test_prerequisite_lesson_with_dependent_record_is_not_pruned(): void
+    {
+        $course = Course::create(['title' => 'Prerequisite Prune Course', 'slug' => 'prerequisite-prune-course']);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Expired archived prerequisite',
+            'type' => 'text',
+            'position' => 1,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Current dependent lesson',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+        $prerequisite->delete();
+        DB::table('lessons')->where('id', $prerequisite->id)->update(['deleted_at' => now()->subDays(31)]);
+
+        Artisan::call('recycle-bin:prune', ['--days' => 30]);
+
+        $this->assertSoftDeleted('lessons', ['id' => $prerequisite->id]);
+        $this->assertDatabaseHas('lessons', [
+            'id' => $dependent->id,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+    }
+
+
+    public function test_dependent_lesson_must_be_restored_after_its_prerequisite(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Restore Prerequisite Course', 'slug' => 'restore-prerequisite-course']);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Restore prerequisite first',
+            'type' => 'text',
+            'position' => 1,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Restore dependent second',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.lessons.destroy', $dependent))->assertRedirect();
+        $this->delete(route('admin.lessons.destroy', $prerequisite))->assertRedirect();
+
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $dependent->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('lessons', ['id' => $dependent->id]);
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $prerequisite->id]))
+            ->assertRedirect();
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $dependent->id]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('lessons', ['id' => $prerequisite->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('lessons', ['id' => $dependent->id, 'deleted_at' => null]);
+    }
+
 }
