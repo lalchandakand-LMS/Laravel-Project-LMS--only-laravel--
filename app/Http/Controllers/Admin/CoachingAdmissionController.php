@@ -14,7 +14,7 @@ class CoachingAdmissionController extends Controller
 {
     public function index(Request $request)
     {
-        $admissions = CoachingAdmission::with(['branch', 'course', 'coachingBatch', 'student', 'invoices'])
+        $admissions = CoachingAdmission::with(['branch', 'course', 'coachingBatch', 'student', 'invoices', 'documents'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('q'), fn ($q) => $q->where(fn ($s) => $s
                 ->where('student_name', 'like', '%'.$request->input('q').'%')
@@ -32,6 +32,7 @@ class CoachingAdmissionController extends Controller
         DB::transaction(function () use ($admission, $data) {
             $admission = CoachingAdmission::query()->lockForUpdate()->findOrFail($admission->id);
             abort_unless($admission->status === 'pending', 422, 'এই আবেদনটি আর pending অবস্থায় নেই।');
+            abort_if($admission->documents()->where('status', '!=', 'approved')->exists(), 422, 'সব ভর্তি ডকুমেন্ট Admin দ্বারা যাচাই ও অনুমোদন করতে হবে।');
 
             $batch = $admission->coachingBatch()->lockForUpdate()->firstOrFail();
             abort_unless(in_array($batch->status, ['upcoming', 'ongoing'], true), 422, 'এই কোচিং ব্যাচে ভর্তি বন্ধ।');
