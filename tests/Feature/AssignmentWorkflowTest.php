@@ -238,4 +238,43 @@ class AssignmentWorkflowTest extends TestCase
         Storage::disk('local')->assertExists($submission->attachment);
     }
 
+
+    public function test_failed_resubmission_keeps_the_previous_private_file_and_cleans_the_new_upload(): void
+    {
+        Storage::fake('local');
+        [, $student, , , $assignment] = $this->assignmentFixture();
+        $oldAttachment = 'assignments/submissions/original-homework.pdf';
+        Storage::disk('local')->put($oldAttachment, 'original-private-file');
+
+        $submission = AssignmentSubmission::create([
+            'assignment_id' => $assignment->id,
+            'student_id' => $student->id,
+            'answer_text' => 'Please review this version',
+            'attachment' => $oldAttachment,
+            'submitted_at' => now(),
+            'status' => 'returned',
+        ]);
+
+        AssignmentSubmission::updating(function () {
+            throw new \\RuntimeException('Simulated database write failure.');
+        });
+
+        $this->withoutExceptionHandling();
+        try {
+            $this->actingAs($student)->post(route('student.assignments.submit', $assignment), [
+                'answer_text' => 'Updated work',
+                'attachment' => UploadedFile::fake()->create('replacement.pdf', 60, 'application/pdf'),
+            ]);
+            $this->fail('The simulated submission update failure should be rethrown.');
+        } catch (\\RuntimeException $exception) {
+            $this->assertSame('Simulated database write failure.', $exception->getMessage());
+        }
+
+        $submission->refresh();
+        $this->assertSame($oldAttachment, $submission->attachment);
+        Storage::disk('local')->assertExists($oldAttachment);
+        $this->assertSame([], Storage::disk('local')->allFiles('assignments/submissions') === [$oldAttachment]
+            ? [] : array_values(array_diff(Storage::disk('local')->allFiles('assignments/submissions'), [$oldAttachment])));
+    }
+
 }
