@@ -39,6 +39,7 @@ class Course extends Model
 
     /* Relations */
     public function category()    { return $this->belongsTo(Category::class); }
+    public function categories() { return $this->belongsToMany(Category::class, 'course_category')->withTimestamps(); }
     public function courseLevel() { return $this->belongsTo(Level::class, 'level_id'); }
     public function batches() { return $this->hasMany(Batch::class); }
     public function instructor()  { return $this->belongsTo(User::class, 'instructor_id'); }
