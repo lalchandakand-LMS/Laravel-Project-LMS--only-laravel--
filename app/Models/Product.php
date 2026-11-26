@@ -42,7 +42,7 @@ class Product extends Model
 
     public function imageUrl(): string
     {
-        return $this->image ? media_url($this->image) : asset('images/course-placeholder.svg');
+        return $this->image ? media_url($this->image) : asset('images/aec-logo.svg');
     }
 
     private static function uniqueSlug(string $value, ?int $ignoreId = null): string
