@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\\Http\\Controllers\\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Branch;
-use App\Models\Payment;
-use App\Models\PaymentAdjustment;
-use Illuminate\Http\Request;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\Branch;
+use App\\Models\\Payment;
+use App\\Models\\PaymentAdjustment;
+use Illuminate\\Http\\Request;
 
 class PaymentReportController extends Controller
 {
@@ -84,7 +84,7 @@ class PaymentReportController extends Controller
     {
         $value = (string) ($value ?? '');
 
-        return preg_match('/^[\\x00-\\x20]*[=+\\-@]/u', $value) === 1
+        return preg_match('/^[\\\\x00-\\\\x20]*[=+\\\\-@]/u', $value) === 1
             ? "'".$value
             : $value;
     }
@@ -113,6 +113,7 @@ class PaymentReportController extends Controller
     private function adjustmentsQuery(Request $request)
     {
         return PaymentAdjustment::with(['order.user', 'order.branch', 'creator'])
+            ->when($request->filled('gateway'), fn ($q) => $q->whereHas('payment', fn ($payment) => $payment->where('gateway', $request->input('gateway'))))
             ->when($request->filled('branch_id'), fn ($q) => $q->whereHas('order', fn ($order) => $order->where('branch_id', $request->integer('branch_id'))))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')));
