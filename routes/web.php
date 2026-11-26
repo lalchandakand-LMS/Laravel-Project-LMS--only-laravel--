@@ -182,6 +182,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::delete('batches/{batch}/students/{enrollment}', [Admin\BatchController::class, 'removeStudent'])->name('batches.students.destroy');
         Route::resource('ebooks', Admin\EbookController::class)->except('show');
         Route::resource('coupons', Admin\CouponController::class)->except('show');
+        Route::patch('flash-sales/{flashSale}/toggle', [Admin\FlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
         Route::resource('flash-sales', Admin\FlashSaleController::class)->except('show');
         Route::resource('announcements', Admin\AnnouncementController::class)->except('show');
         Route::get('complaints', [Admin\ComplaintController::class, 'index'])->name('complaints.index');
