@@ -162,6 +162,196 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertNotNull($order->fresh()->delivered_at);
     }
 
+    public function test_reserved_stock_is_hidden_from_other_buyers_and_released_on_cancellation(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Limited Stock Book',
+            'price' => 250,
+            'stock_quantity' => 3,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 750,
+            'discount' => 0,
+            'total' => 750,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 250,
+            'qty' => 3,
+        ]);
+
+        OrderService::reserveProducts($order);
+
+        $this->assertSame(3, $product->fresh()->reserved_quantity);
+        $this->assertSame(0, $product->fresh()->availableQuantity());
+        $this->assertNull(Product::published()->find($product->id));
+
+        $anotherOrder = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 250,
+            'discount' => 0,
+            'total' => 250,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $anotherOrder->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 250,
+            'qty' => 1,
+        ]);
+
+        try {
+            OrderService::reserveProducts($anotherOrder);
+            $this->fail('A second order must not reserve already-held stock.');
+        } catch (\\Illuminate\\Validation\\ValidationException) {
+            $this->assertSame(3, $product->fresh()->reserved_quantity);
+        }
+
+        OrderService::releaseReservations($order);
+        $this->assertSame(0, $product->fresh()->reserved_quantity);
+        $this->assertSame(3, $product->fresh()->availableQuantity());
+        $this->assertFalse($order->items()->first()->fresh()->stock_reserved);
+    }
+
+    public function test_reserved_stock_is_consumed_when_order_is_paid_and_never_twice(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Reserved Grammar Book',
+            'price' => 450,
+            'stock_quantity' => 8,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 900,
+            'discount' => 0,
+            'total' => 900,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $item = $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 450,
+            'qty' => 2,
+        ]);
+
+        OrderService::reserveProducts($order);
+        $this->assertSame(2, $product->fresh()->reserved_quantity);
+
+        OrderService::fulfill($order);
+        OrderService::fulfill($order);
+
+        $this->assertSame(6, $product->fresh()->stock_quantity);
+        $this->assertSame(0, $product->fresh()->reserved_quantity);
+        $this->assertFalse($item->fresh()->stock_reserved);
+        $this->assertSame('paid', $order->fresh()->status);
+    }
+
+    public function test_stale_unpaid_order_expiry_cancels_order_and_releases_reserved_stock(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Expiry Test Book',
+            'price' => 300,
+            'stock_quantity' => 4,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 300,
+            'discount' => 0,
+            'total' => 300,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+            'created_at' => now()->subHours(25),
+            'updated_at' => now()->subHours(25),
+        ]);
+        $item = $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 300,
+            'qty' => 1,
+        ]);
+        OrderService::reserveProducts($order);
+
+        $expired = OrderService::expireUnpaidOrders(24);
+
+        $this->assertSame(1, $expired);
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame(0, $product->fresh()->reserved_quantity);
+        $this->assertFalse($item->fresh()->stock_reserved);
+    }
+
+    public function test_admin_cannot_reduce_total_stock_below_reserved_quantity(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Reserved Admin Stock',
+            'price' => 250,
+            'stock_quantity' => 5,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 250,
+            'qty' => 2,
+        ]);
+        OrderService::reserveProducts($order);
+
+        $this->actingAs($admin)
+            ->put(route('admin.products.update', $product), [
+                'title' => $product->title,
+                'slug' => $product->slug,
+                'sku' => $product->sku,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock_quantity' => 1,
+                'is_published' => 1,
+            ])->assertSessionHasErrors('stock_quantity');
+
+        $this->assertSame(5, $product->fresh()->stock_quantity);
+        $this->assertSame(2, $product->fresh()->reserved_quantity);
+    }
+
     public function test_fulfillment_refuses_to_oversell_and_rolls_back_order_status(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
