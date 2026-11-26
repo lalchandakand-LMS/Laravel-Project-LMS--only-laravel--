@@ -54,7 +54,7 @@ class BkashCheckoutAdapterTest extends TestCase
         $result = app(BkashCheckoutAdapter::class)->initiate($order);
 
         $this->assertSame('BKASH-PAY-1001', $result['payment_id']);
-        $this->assertSame('https://merchantdemo.sandbox.bka.sh/checkout/BKASH-PAY-1001', $result['redirect_url']);
+        $this->assertSame('https://sandbox.payment.bkash.com/redirect/tokenized/?paymentID=BKASH-PAY-1001&hash=test', $result['redirect_url']);
         $this->assertSame('1200.00', $result['amount']);
         $this->assertSame('pending', $order->fresh()->status);
         $this->assertSame(0, $order->payments()->count());
