@@ -80,6 +80,7 @@ class User extends Authenticatable
     public function certificates()     { return $this->hasMany(Certificate::class); }
     public function examAttempts()     { return $this->hasMany(ExamAttempt::class); }
     public function lessonProgress()   { return $this->hasMany(LessonProgress::class); }
+    public function gamificationEvents() { return $this->hasMany(GamificationEvent::class); }
 
     public function branch()           { return $this->belongsTo(Branch::class); }
     public function managedBranches()  { return $this->hasMany(Branch::class, 'manager_id'); }
