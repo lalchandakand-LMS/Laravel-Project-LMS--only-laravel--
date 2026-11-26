@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Coupon;
+use App\Models\Enrollment;
 use App\Models\Course;
 use App\Models\Order;
 use App\Models\User;
@@ -151,10 +152,16 @@ class AdvancedCouponManagementTest extends TestCase
             'status' => 'pending',
         ]);
 
+        $student->update(['name' => '=HYPERLINK("https://example.test","Open")']);
+        $branch->update(['name' => '+CMD|/C calc!A0']);
+
         $this->actingAs($admin)->get(route('admin.coupons.usage'))
             ->assertOk()->assertSee($order->order_no)->assertSee('REPORT');
-        $this->get(route('admin.coupons.usage.export'))
+        $export = $this->get(route('admin.coupons.usage.export'))
             ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $this->assertStringContainsString("'=HYPERLINK", $export->streamedContent());
+        $this->assertStringContainsString("'+CMD|/C calc!A0", $export->streamedContent());
 
         $this->post(route('admin.coupons.store'), [
             'code' => 'TOOMUCH',
@@ -181,5 +188,95 @@ class AdvancedCouponManagementTest extends TestCase
         $this->actingAs($admin)->delete(route('admin.coupons.destroy', $coupon))
             ->assertRedirect()->assertSessionHas('error');
         $this->assertDatabaseHas('coupons', ['id' => $coupon->id]);
+    }
+
+    public function test_coupon_discount_terms_cannot_be_changed_after_order_history_but_admin_can_deactivate(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $coupon = Coupon::create([
+            'code' => 'HISTORYLOCK',
+            'type' => 'percent',
+            'value' => 20,
+            'min_amount' => 100,
+            'is_active' => true,
+        ]);
+        Order::create([
+            'user_id' => $student->id,
+            'coupon_id' => $coupon->id,
+            'subtotal' => 1000,
+            'discount' => 200,
+            'total' => 800,
+            'status' => 'paid',
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.coupons.update', $coupon), [
+            'code' => 'CHANGEDCODE',
+            'type' => 'percent',
+            'value' => 50,
+            'min_amount' => 100,
+            'is_active' => 1,
+        ])->assertSessionHasErrors('coupon');
+
+        $this->assertSame('HISTORYLOCK', $coupon->fresh()->code);
+        $this->assertSame(20.0, (float) $coupon->fresh()->value);
+
+        $this->put(route('admin.coupons.update', $coupon), [
+            'code' => 'HISTORYLOCK',
+            'type' => 'percent',
+            'value' => 20,
+            'min_amount' => 100,
+            'is_active' => 0,
+        ])->assertRedirect();
+
+        $this->assertFalse($coupon->fresh()->is_active);
+    }
+
+    public function test_failed_free_order_releases_its_coupon_usage_reservation(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $alreadyEnrolled = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $branch = $this->makeBranch();
+        $course = Course::create([
+            'title' => 'Seat Limited Coupon Course',
+            'slug' => 'seat-limited-coupon-course',
+            'price' => 1000,
+            'seat_limit' => 1,
+            'is_published' => true,
+        ]);
+        Enrollment::create([
+            'user_id' => $alreadyEnrolled->id,
+            'course_id' => $course->id,
+            'branch_id' => $branch->id,
+            'price_paid' => 1000,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        $coupon = Coupon::create([
+            'code' => 'FREESEAT',
+            'type' => 'percent',
+            'value' => 100,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($student)->withSession(['cart' => ['course:'.$course->id]])
+            ->post(route('cart.coupon'), ['code' => 'FREESEAT'])
+            ->assertSessionHasNoErrors();
+
+        $this->post(route('checkout.store'), [
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'branch_id' => $branch->id,
+        ])->assertRedirect(route('cart.index'));
+
+        $order = Order::where('user_id', $student->id)->firstOrFail();
+        $this->assertSame('failed', $order->status);
+        $this->assertSame(0, $coupon->fresh()->reservedUsageCount());
+        $this->assertDatabaseMissing('enrollments', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+        ]);
     }
 }

@@ -95,6 +95,9 @@ class CheckoutController extends Controller
             try {
                 OrderService::fulfill($order);
             } catch (ValidationException $exception) {
+                // A free order that cannot be fulfilled must release its coupon reservation.
+                $order->update(['status' => 'failed']);
+
                 return redirect()->route('cart.index')
                     ->withErrors($exception->errors())
                     ->with('error', 'A course has reached its seat limit. Your order was not charged; please review your cart.');

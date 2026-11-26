@@ -44,7 +44,43 @@ class CouponController extends Controller
 
     public function update(Request $request, Coupon $coupon)
     {
-        $coupon->update($this->validated($request, $coupon));
+        $data = $this->validated($request, $coupon);
+
+        if ($coupon->orders()->exists()) {
+            $protectedFields = ['code', 'type', 'value', 'min_amount', 'max_discount', 'branch_id', 'course_ids', 'category_ids', 'ebook_ids'];
+            $hasChangedTerms = collect($protectedFields)->contains(function (string $field) use ($coupon, $data): bool {
+                $current = $coupon->getAttribute($field);
+                $next = $data[$field] ?? null;
+
+                if (in_array($field, ['course_ids', 'category_ids', 'ebook_ids'], true)) {
+                    $current = array_map('intval', $current ?? []);
+                    $next = array_map('intval', $next ?? []);
+                    sort($current);
+                    sort($next);
+
+                    return $current !== $next;
+                }
+
+                if (in_array($field, ['value', 'min_amount', 'max_discount'], true)) {
+                    return ($current === null ? null : (float) $current) !== ($next === null ? null : (float) $next);
+                }
+
+                if ($field === 'branch_id') {
+                    return ($current === null ? null : (int) $current) !== ($next === null ? null : (int) $next);
+                }
+
+                return (string) $current !== (string) $next;
+            });
+
+            if ($hasChangedTerms) {
+                return back()->withErrors([
+                    'coupon' => 'Discount terms and targeting cannot be changed after the coupon has order history. Deactivate it and create a new coupon instead.',
+                ])->withInput();
+            }
+        }
+
+        $coupon->update($data);
+
         return redirect()->route('admin.coupons.index')->with('success', 'Coupon updated.');
     }
 
@@ -88,18 +124,29 @@ class CouponController extends Controller
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
 
-        $orders = $this->usageQuery($request)->with(['coupon', 'user', 'branch'])->get();
+        $orders = $this->usageQuery($request)
+            ->with(['coupon', 'user', 'branch'])
+            ->reorder('id');
 
         return response()->streamDownload(function () use ($orders) {
             $out = fopen('php://output', 'w');
             fputcsv($out, ['Order', 'Coupon', 'Date', 'Student', 'Email', 'Branch', 'Subtotal', 'Discount', 'Total', 'Status']);
-            foreach ($orders as $order) {
+
+            foreach ($orders->lazyById(500) as $order) {
                 fputcsv($out, [
-                    $order->order_no, $order->coupon?->code, optional($order->created_at)->toDateTimeString(),
-                    $order->user?->name, $order->user?->email, $order->branch?->name,
-                    $order->subtotal, $order->discount, $order->total, $order->status,
+                    $this->safeCsvCell($order->order_no),
+                    $this->safeCsvCell($order->coupon?->code),
+                    $this->safeCsvCell($order->created_at?->toDateTimeString()),
+                    $this->safeCsvCell($order->user?->name),
+                    $this->safeCsvCell($order->user?->email),
+                    $this->safeCsvCell($order->branch?->name),
+                    $order->subtotal,
+                    $order->discount,
+                    $order->total,
+                    $this->safeCsvCell($order->status),
                 ]);
             }
+
             fclose($out);
         }, 'coupon-usage-'.now()->format('Ymd-His').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
@@ -169,4 +216,13 @@ class CouponController extends Controller
 
         return $data;
     }
+    private function safeCsvCell(mixed $value): string
+    {
+        $value = (string) ($value ?? '');
+
+        return preg_match('/^[\\x00-\\x20]*[=+\\-@]/u', $value) === 1
+            ? "'".$value
+            : $value;
+    }
+
 }
