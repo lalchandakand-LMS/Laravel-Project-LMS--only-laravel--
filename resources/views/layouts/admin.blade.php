@@ -52,7 +52,7 @@
             @foreach($menu as $item)
                 @php($routeName = $item[0])
                 @php($routePattern = $item[3])
-                @php($isActive = request()->routeIs($routePattern) || ($routeName === 'admin.users.index' && request()->routeIs('admin.users.*') && request('role') === ($item[4] ?? '')))
+                @php($isActive = request()->routeIs($routePattern) || ($routeName === 'admin.users.index' && request()->routeIs('admin.users.*') && request('role') === str_replace('role=', '', ($item[4] ?? ''))))
                 <a href="{{ route($routeName, isset($item[4]) ? ['role' => str_replace('role=', '', $item[4])] : []) }}" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 font-semibold {{ $isActive ? 'text-white' : 'text-blue-100' }}" @if($isActive) aria-current="page" @endif>
                     <span class="nav-icon grid h-6 w-6 shrink-0 place-items-center text-lg">{{ $item[2] }}</span>
                     <span class="sidebar-label flex-1">{{ $item[1] }}</span>
