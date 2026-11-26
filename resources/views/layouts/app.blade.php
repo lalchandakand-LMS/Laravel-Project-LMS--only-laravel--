@@ -96,7 +96,7 @@
     @yield('content')
 </main>
 
-<footer class="mt-0 border-t border-slate-800" style="background-color: {{ strtolower((string) \App\Models\Setting::get('footer_bg', '#071b26')) === '#ffffff' ? '#071b26' : \App\Models\Setting::get('footer_bg', '#071b26') }}; color: {{ strtolower((string) \App\Models\Setting::get('footer_text', '#cbd5e1')) === '#475569' ? '#cbd5e1' : \App\Models\Setting::get('footer_text', '#cbd5e1') }}">
+<footer class="mt-0 border-t border-slate-800" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#071b26') }}; color: {{ \App\Models\Setting::get('footer_text', '#cbd5e1') }}">
     <div class="mx-auto grid max-w-7xl gap-9 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
             <div class="flex items-center gap-2"><img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-10 w-10 rounded-lg object-contain"><span class="font-extrabold text-white">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span></div>
