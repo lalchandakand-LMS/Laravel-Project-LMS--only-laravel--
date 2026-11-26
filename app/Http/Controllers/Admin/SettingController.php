@@ -37,9 +37,9 @@ class SettingController extends Controller
      * Public CTA links are restricted to same-site root paths, anchors, and
      * absolute HTTP(S) URLs to prevent javascript:/data: navigation injection.
      */
-    private function safeNavigationTarget(): \\Closure
+    private function safeNavigationTarget(): \Closure
     {
-        return function (string $attribute, mixed $value, \\Closure $fail): void {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
             if ($value === null || trim((string) $value) === '') {
                 return;
             }
@@ -48,8 +48,8 @@ class SettingController extends Controller
 
             if (str_starts_with($url, '#')
                 || (str_starts_with($url, '/') && ! str_starts_with($url, '//')
-                    && ! str_contains($url, '\\\\')
-                    && preg_match('/[\\x00-\\x20]/', $url) !== 1)) {
+                    && ! str_contains($url, '\\')
+                    && preg_match('/[\x00-\x20]/', $url) !== 1)) {
                 return;
             }
 
