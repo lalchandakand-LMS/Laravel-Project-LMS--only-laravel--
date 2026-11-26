@@ -35,7 +35,6 @@ class BkashPaymentController extends Controller
             $session = $adapter->initiate($order);
         } catch (Throwable $exception) {
             report($exception);
-
             throw ValidationException::withMessages([
                 'gateway' => 'The bKash sandbox checkout could not be started. Check the Admin API configuration and try again.',
             ]);
@@ -55,15 +54,14 @@ class BkashPaymentController extends Controller
                     'initiated_at' => now()->toIso8601String(),
                 ],
             ]);
-        } catch (QueryException $exception) {
-            // Do not start another session if this provider reference was already stored.
+        } catch (QueryException) {
             throw ValidationException::withMessages(['payment' => 'This bKash payment session already exists. Refresh the order before trying again.']);
         }
 
         return redirect()->away($session['redirect_url']);
     }
 
-    /** Provider redirect endpoint. Payment is confirmed only by server-side execute + status query. */
+    /** Browser return. Browser-supplied status is ignored; bKash is queried server-to-server. */
     public function callback(Request $request, Order $order, BkashTokenizedCheckoutAdapter $adapter)
     {
         $paymentId = trim((string) ($request->input('paymentID') ?: $request->query('paymentID')));
@@ -76,8 +74,6 @@ class BkashPaymentController extends Controller
             return redirect()->route('checkout.success', $order->order_no)
                 ->with('success', 'Your bKash payment was already confirmed.');
         }
-
-        // Browser redirect status is informational only; the adapter always asks bKash.
 
         try {
             $result = $adapter->verifyCallback($request);
@@ -95,6 +91,7 @@ class BkashPaymentController extends Controller
                     'rejection_reason' => $result['reason'] ?? 'bKash reported an unsuccessful transaction.',
                     'payload' => array_merge($payment->payload ?? [], ['provider_status' => $result['provider_status'] ?? 'Failed']),
                 ]);
+
                 return redirect()->route('checkout.success', $order->order_no)
                     ->with('error', 'bKash did not complete the payment. You may try again.');
             }
@@ -104,71 +101,163 @@ class BkashPaymentController extends Controller
         }
 
         try {
-            $settled = DB::transaction(function () use ($order, $payment, $result) {
-                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
-                $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
-
-                if ($lockedPayment->status === 'verified') {
-                    return true;
-                }
-
-                if ($lockedPayment->status !== 'pending'
-                    || ! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
-                    throw ValidationException::withMessages(['payment' => 'This order is no longer eligible for automatic settlement.']);
-                }
-
-                $valid = ($result['payment_id'] ?? '') === $lockedPayment->provider_payment_id
-                    && ($result['invoice'] ?? '') === $lockedOrder->order_no
-                    && strtoupper((string) ($result['currency'] ?? '')) === 'BDT'
-                    && round((float) ($result['amount'] ?? 0), 2) === round((float) $lockedPayment->amount, 2)
-                    && filled($result['transaction_id'] ?? null);
-
-                if (! $valid) {
-                    $lockedPayment->update([
-                        'status' => 'rejected',
-                        'rejection_reason' => 'Provider status query did not match the order reference, amount, currency or transaction ID.',
-                        'payload' => array_merge($lockedPayment->payload ?? [], ['provider_result' => $result]),
-                    ]);
-                    return false;
-                }
-
-                if (Payment::where('transaction_id', $result['transaction_id'])
-                    ->whereKeyNot($lockedPayment->id)->exists()) {
-                    throw ValidationException::withMessages(['payment' => 'This bKash transaction ID has already been recorded.']);
-                }
-
-                $alreadyPaid = $lockedOrder->amountPaid();
-                if (round($alreadyPaid + $lockedPayment->amount, 2) > round($lockedOrder->total, 2)) {
-                    throw ValidationException::withMessages(['payment' => 'The bKash payment would exceed the outstanding order balance.']);
-                }
-
-                $lockedPayment->update([
-                    'transaction_id' => $result['transaction_id'],
-                    'sender_number' => $result['customer_msisdn'] ?: null,
-                    'status' => 'verified',
-                    'verified_at' => now(),
-                    'payload' => array_merge($lockedPayment->payload ?? [], ['provider_result' => $result]),
-                ]);
-
-                if (round($alreadyPaid + $lockedPayment->amount, 2) >= round($lockedOrder->total, 2)) {
-                    OrderService::fulfill($lockedOrder);
-                } else {
-                    $lockedOrder->update(['status' => 'partially_paid']);
-                }
-
-                return true;
-            });
-
-            if (! $settled) {
-                return redirect()->route('checkout.success', $order->order_no)
-                    ->withErrors(['payment' => 'The bKash transaction did not match this order. Contact the office before retrying.']);
-            }
+            $settled = $this->settle($order, $payment, $result, true);
         } catch (ValidationException $exception) {
             return redirect()->route('checkout.success', $order->order_no)
                 ->withErrors($exception->errors());
         }
 
+        if (! $settled) {
+            return redirect()->route('checkout.success', $order->order_no)
+                ->withErrors(['payment' => 'The bKash transaction did not match this order. Contact the office before retrying.']);
+        }
+
         return redirect()->route('checkout.success', $order->order_no)
             ->with('success', 'bKash payment was verified directly with the provider.');
+    }
+
+    /** Signed bKash/AWS SNS webhook listener. */
+    public function webhook(Request $request, BkashTokenizedCheckoutAdapter $adapter)
+    {
+        try {
+            $event = $adapter->verifyWebhook($request);
+        } catch (ValidationException $exception) {
+            return response()->json(['received' => false, 'message' => 'Invalid webhook signature or topic.'], 403);
+        } catch (Throwable $exception) {
+            report($exception);
+            return response()->json(['received' => false], 503);
+        }
+
+        if (($event['Type'] ?? '') === 'SubscriptionConfirmation') {
+            try {
+                $adapter->confirmWebhookSubscription($event);
+                return response()->noContent();
+            } catch (Throwable $exception) {
+                report($exception);
+                return response()->json(['received' => false], 503);
+            }
+        }
+
+        if (($event['Type'] ?? '') !== 'Notification') {
+            return response()->noContent();
+        }
+
+        $notification = json_decode((string) ($event['Message'] ?? ''), true);
+        if (! is_array($notification)
+            || strcasecmp((string) ($notification['transactionStatus'] ?? ''), 'Completed') !== 0
+            || blank($notification['trxID'] ?? null)
+            || blank($notification['merchantInvoiceNumber'] ?? null)) {
+            return response()->noContent();
+        }
+
+        try {
+            // A signed notification is still reconciled with bKash Search Transaction API.
+            $result = $adapter->searchTransaction((string) $notification['trxID']);
+        } catch (Throwable $exception) {
+            report($exception);
+            return response()->json(['received' => false], 503);
+        }
+
+        $sameEvent = ($result['status'] ?? null) === 'success'
+            && ($result['transaction_id'] ?? '') === (string) $notification['trxID']
+            && ($result['invoice'] ?? '') === (string) $notification['merchantInvoiceNumber']
+            && strtoupper((string) ($result['currency'] ?? '')) === 'BDT'
+            && round((float) ($result['amount'] ?? 0), 2) === round((float) ($notification['amount'] ?? 0), 2);
+
+        if (! $sameEvent) {
+            return response()->noContent();
+        }
+
+        $order = Order::where('order_no', $result['invoice'])->first();
+        if (! $order) {
+            return response()->noContent();
+        }
+
+        $payment = Payment::where('order_id', $order->id)
+            ->where('gateway', 'bkash')
+            ->where('status', 'pending')
+            ->whereNotNull('provider_payment_id')
+            ->latest('id')
+            ->first();
+
+        if (! $payment) {
+            // The same SNS event may arrive after the browser callback settled it.
+            return response()->noContent();
+        }
+
+        try {
+            $this->settle($order, $payment, $result, false);
+        } catch (ValidationException $exception) {
+            report($exception);
+            return response()->noContent();
+        } catch (Throwable $exception) {
+            report($exception);
+            return response()->json(['received' => false], 503);
+        }
+
+        return response()->noContent();
+    }
+
+    private function settle(Order $order, Payment $payment, array $result, bool $requirePaymentId): bool
+    {
+        return DB::transaction(function () use ($order, $payment, $result, $requirePaymentId) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedPayment->status === 'verified') {
+                return true;
+            }
+
+            if ($lockedPayment->status !== 'pending'
+                || ! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
+                throw ValidationException::withMessages(['payment' => 'This order is no longer eligible for automatic settlement.']);
+            }
+
+            $paymentIdMatches = $requirePaymentId
+                ? ($result['payment_id'] ?? '') === $lockedPayment->provider_payment_id
+                : (blank($result['payment_id'] ?? null) || $result['payment_id'] === $lockedPayment->provider_payment_id);
+
+            $valid = $paymentIdMatches
+                && ($result['invoice'] ?? '') === $lockedOrder->order_no
+                && strtoupper((string) ($result['currency'] ?? '')) === 'BDT'
+                && round((float) ($result['amount'] ?? 0), 2) === round((float) $lockedPayment->amount, 2)
+                && filled($result['transaction_id'] ?? null);
+
+            if (! $valid) {
+                $lockedPayment->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => 'Provider status query did not match the order reference, amount, currency or transaction ID.',
+                    'payload' => array_merge($lockedPayment->payload ?? [], ['provider_result' => $result]),
+                ]);
+
+                return false;
+            }
+
+            if (Payment::where('transaction_id', $result['transaction_id'])
+                ->whereKeyNot($lockedPayment->id)->exists()) {
+                throw ValidationException::withMessages(['payment' => 'This bKash transaction ID has already been recorded.']);
+            }
+
+            $alreadyPaid = $lockedOrder->amountPaid();
+            if (round($alreadyPaid + $lockedPayment->amount, 2) > round($lockedOrder->total, 2)) {
+                throw ValidationException::withMessages(['payment' => 'The bKash payment would exceed the outstanding order balance.']);
+            }
+
+            $lockedPayment->update([
+                'transaction_id' => $result['transaction_id'],
+                'sender_number' => $result['customer_msisdn'] ?: null,
+                'status' => 'verified',
+                'verified_at' => now(),
+                'payload' => array_merge($lockedPayment->payload ?? [], ['provider_result' => $result]),
+            ]);
+
+            if (round($alreadyPaid + $lockedPayment->amount, 2) >= round($lockedOrder->total, 2)) {
+                OrderService::fulfill($lockedOrder);
+            } else {
+                $lockedOrder->update(['status' => 'partially_paid']);
+            }
+
+            return true;
+        });
     }
 }
