@@ -41,6 +41,7 @@ class MarketingCampaign extends Model
 
     public function creator() { return $this->belongsTo(User::class, 'created_by'); }
     public function leads() { return $this->hasMany(MarketingLead::class, 'utm_campaign', 'slug'); }
+    public function orders() { return $this->hasMany(Order::class, 'utm_campaign', 'slug'); }
 
     public function trackingUrl(): string
     {
