@@ -10,6 +10,7 @@ use App\Models\CoachingEnrollment;
 use App\Models\Enrollment;
 use App\Models\OnlineBatchEnrollment;
 use App\Models\User;
+use App\Notifications\AttendancePublishedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -238,6 +239,17 @@ class AttendanceController extends Controller
             'reviewed_at' => now(),
             'review_note' => $data['review_note'] ?? null,
         ]);
+
+        if ($data['action'] === 'approve') {
+            $session->load('records.student.guardians');
+            foreach ($session->records as $record) {
+                $notification = new AttendancePublishedNotification($session, $record);
+                $record->student?->notify($notification);
+                foreach ($record->student?->guardians ?? [] as $guardian) {
+                    $guardian->notify($notification);
+                }
+            }
+        }
 
         return back()->with('success', $data['action'] === 'approve' ? 'Attendance approved and published to student/guardian reports.' : 'Attendance returned to the teacher for correction.');
     }
