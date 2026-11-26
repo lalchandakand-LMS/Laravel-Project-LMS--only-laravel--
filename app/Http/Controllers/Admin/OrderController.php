@@ -136,11 +136,18 @@ class OrderController extends Controller
             throw ValidationException::withMessages(['branch_id' => 'Select the student’s assigned branch.']);
         }
 
+        $this->assertUniqueOrderItems($data['items']);
         $lines = [];
         foreach ($data['items'] as $line) {
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
+            if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($student, $product)) {
+                throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
+            }
+            if ($line['type'] === 'ebook' && $product->ownedBy($student)) {
+                throw ValidationException::withMessages(['items' => 'The student already owns this e-book.']);
+            }
             $price = $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items should be enrolled or granted through the free access workflow, not an unpaid order.']);
@@ -190,11 +197,18 @@ class OrderController extends Controller
             'items.*.type' => 'required|in:course,ebook',
             'items.*.id' => 'required|integer',
         ]);
+        $this->assertUniqueOrderItems($data['items']);
         $lines = [];
         foreach ($data['items'] as $line) {
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
+            if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($order->user, $product)) {
+                throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
+            }
+            if ($line['type'] === 'ebook' && $product->ownedBy($order->user)) {
+                throw ValidationException::withMessages(['items' => 'The student already owns this e-book.']);
+            }
             $price = (float) $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items cannot be added to a paid order.']);
@@ -218,6 +232,21 @@ class OrderController extends Controller
             $locked->update($customerData + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
         });
         return redirect()->route('admin.orders.show', $order)->with('success', 'Order details and items updated.');
+    }
+
+
+    private function assertUniqueOrderItems(array $items): void
+    {
+        $seen = [];
+        foreach ($items as $item) {
+            $key = $item['type'].':'.(int) $item['id'];
+            if (isset($seen[$key])) {
+                throw ValidationException::withMessages([
+                    'items' => 'The same course or e-book cannot be added to an order more than once.',
+                ]);
+            }
+            $seen[$key] = true;
+        }
     }
 
     public function show(Order $order)
