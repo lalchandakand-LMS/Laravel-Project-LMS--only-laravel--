@@ -26,11 +26,10 @@ class CertificateController extends Controller
             'Finish the course to unlock your certificate.'
         );
 
-        $certificate ??= Certificate::create([
-            'user_id' => $user->id,
-            'course_id' => $course->id,
-            'issued_at' => now(),
-        ]);
+        $certificate = Certificate::firstOrCreate(
+            ['user_id' => $user->id, 'course_id' => $course->id],
+            ['issued_at' => now()]
+        );
 
         return view('student.certificate', compact('certificate', 'course'));
     }
