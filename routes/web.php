@@ -52,7 +52,7 @@ Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Condit
 Route::view('/privacy-policy', 'legal.policy', ['title' => 'Privacy Policy', 'policy' => 'privacy'])->name('legal.privacy');
 Route::view('/refund-policy', 'legal.policy', ['title' => 'Refund Policy', 'policy' => 'refund'])->name('legal.refunds');
 
-Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');\nRoute::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');\n\nRoute::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/coaching-admission', [CoachingAdmissionController::class, 'create'])->name('coaching-admission.create');
 Route::post('/coaching-admission', [CoachingAdmissionController::class, 'store'])->middleware('throttle:5,10')->name('coaching-admission.store');
 Route::get('/courses/{course:slug}', [CourseController::class, 'show'])->name('courses.show');
