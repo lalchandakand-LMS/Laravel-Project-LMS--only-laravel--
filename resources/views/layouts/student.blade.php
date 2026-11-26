@@ -26,6 +26,9 @@
       .role-nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(249,115,22,.28),rgba(59,130,246,.15));color:#fff;border-color:rgba(251,146,60,.18);box-shadow:inset 3px 0 #fb923c}
       .role-topbar{background:rgba(255,255,255,.88)!important;backdrop-filter:blur(18px);box-shadow:0 8px 28px rgba(15,23,42,.05)}
       .role-main{max-width:1680px;width:100%;margin-inline:auto}
+      .role-mobile-nav{box-shadow:0 12px 24px rgba(15,23,42,.06)}
+      .role-mobile-nav a{border-radius:10px}
+      .role-sidebar .text-rose-400{color:#fda4af}
       .role-main .rounded-2xl.border,.role-main .rounded-xl.border{box-shadow:0 8px 26px rgba(15,23,42,.045);transition:box-shadow .18s ease,border-color .18s ease}
       .role-main .rounded-2xl.border:hover{box-shadow:0 12px 30px rgba(15,23,42,.075)}
       .role-main a:focus-visible,.role-sidebar a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid rgba(249,115,22,.55);outline-offset:2px}
@@ -38,7 +41,7 @@
 <body class="role-dashboard bg-slate-100 text-slate-800 antialiased">
 <div class="flex min-h-screen">
     {{-- SIDEBAR --}}
-    <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 p-4 text-slate-300 lg:flex">
+    <aside class="role-sidebar sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/10 p-4 text-slate-300 lg:flex">
         <a href="{{ route('home') }}" class="role-brand flex items-center gap-3 px-2 py-3">
             <img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain">
             <span class="font-extrabold text-white">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
@@ -103,7 +106,7 @@
             </div>
         </header>
 
-        <nav id="mobile-portal-nav" class="hidden border-b border-slate-200 bg-white p-3 lg:hidden">
+        <nav id="mobile-portal-nav" class="role-mobile-nav hidden border-b border-slate-200 bg-white p-3 lg:hidden">
             @foreach ($nav as [$route, $label, $icon])
                 <a href="{{ route($route) }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ $icon }} {{ $label }}</a>
             @endforeach
