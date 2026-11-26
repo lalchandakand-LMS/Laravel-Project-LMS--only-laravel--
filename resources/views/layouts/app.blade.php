@@ -29,6 +29,15 @@
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
         .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
         .bg-emerald-50,[class~="bg-emerald-400/10"] { background-color: color-mix(in srgb, var(--aec-primary) 9%, white) !important; }
+        .bg-orange-700,.bg-orange-600,.bg-orange-500 { background-color: var(--aec-primary) !important; }
+        .bg-orange-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
+        .bg-orange-50,.bg-orange-100 { background-color: color-mix(in srgb, var(--aec-primary) 10%, white) !important; }
+        .text-orange-800,.text-orange-700,.text-orange-600,.text-orange-500 { color: var(--aec-primary-dark) !important; }
+        .text-orange-400,.text-orange-300,.text-orange-200 { color: color-mix(in srgb, var(--aec-primary) 65%, white) !important; }
+        .border-orange-100,.border-orange-200,.border-orange-400 { border-color: color-mix(in srgb, var(--aec-primary) 22%, transparent) !important; }
+        [class~="hover:bg-orange-800"]:hover,[class~="hover:bg-orange-700"]:hover,[class~="hover:bg-orange-400"]:hover { background-color: var(--aec-primary-dark) !important; }
+        [class~="hover:text-orange-700"]:hover,[class~="hover:text-orange-800"]:hover { color: var(--aec-primary-dark) !important; }
+        .to-orange-950 { --tw-gradient-to: var(--aec-primary-dark) var(--tw-gradient-to-position) !important; }
         .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500 { color: var(--aec-primary-dark) !important; }
         .text-emerald-400,.text-emerald-300,.text-emerald-200 { color: color-mix(in srgb, var(--aec-primary) 65%, white) !important; }
         .border-emerald-400,[class~="border-emerald-400/30"],.border-emerald-500 { border-color: color-mix(in srgb, var(--aec-primary) 42%, transparent) !important; }
