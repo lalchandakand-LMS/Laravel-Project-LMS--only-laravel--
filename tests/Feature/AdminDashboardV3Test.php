@@ -126,7 +126,7 @@ class AdminDashboardV3Test extends TestCase
         $this->actingAs($admin)->post(route('admin.certificates.store'), [
             'user_id' => $student->id,
             'course_id' => $course->id,
-        ])->assertForbidden();
+        ])->assertUnprocessable();
 
         $this->assertDatabaseMissing('certificates', ['user_id' => $student->id, 'course_id' => $course->id]);
 
