@@ -308,4 +308,36 @@ class LiveClassSchedulingTest extends TestCase
         ])->assertStatus(422);
     }
 
+
+    public function test_course_wide_live_class_creates_attendance_for_course_enrollments(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'batch_id' => null,
+            'title' => 'Course-wide attendance class',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(25),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('teacher.live-classes.attendance', $liveClass))
+            ->assertRedirect();
+
+        $session = AttendanceSession::where('live_class_id', $liveClass->id)->firstOrFail();
+        $this->assertNull($session->batch_id);
+        $this->actingAs($admin)->get(route('teacher.attendance.show', $session))
+            ->assertOk()
+            ->assertSee($student->name);
+    }
+
 }
