@@ -84,6 +84,7 @@
             <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Learn</h4>
             <ul class="mt-3 space-y-2 text-sm text-slate-600">
                 <li><a class="hover:text-emerald-700" href="{{ route('courses.index') }}">All Courses</a></li>
+                <li><a class="hover:text-emerald-700" href="{{ route('blog.index') }}">Blog & News</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('ebooks.index') }}">E-Books</a></li>
                 <li><a class="hover:text-emerald-700" href="{{ route('student.exams.index') }}">Exams</a></li>
