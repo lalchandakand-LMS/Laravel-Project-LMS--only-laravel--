@@ -43,7 +43,7 @@ class CategoryController extends Controller
     {
         return view('admin.categories.form', [
             'category' => $category,
-            'parents' => Category::whereKeyNot($category->id)->orderBy('position')->orderBy('name')->get(),
+            'parents' => Category::where('id', '!=', $category->id)->orderBy('position')->orderBy('name')->get(),
         ]);
     }
 
