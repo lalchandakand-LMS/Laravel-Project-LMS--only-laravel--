@@ -4,11 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Slider;
 use App\Models\Course;
+use App\Models\Branch;
+use App\Models\CoachingBatch;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RecycleBinTest extends TestCase
