@@ -30,6 +30,7 @@
             ['teacher.students',     'My students',  '👩‍🎓'],
             ['teacher.live-classes', 'Live classes', '🎥'],
             ['teacher.assignments.index', 'Assignments', '📄'],
+            ['ai-agent.index', 'AI Agents', '✨'],
             ['teacher.earnings',     'Earnings',     '💳'],
             ['notices.index', 'Notice board', '📣'],
             ['complaints.index', 'Complaints', '🛟']

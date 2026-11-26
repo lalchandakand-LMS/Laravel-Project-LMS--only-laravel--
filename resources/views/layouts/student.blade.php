@@ -34,6 +34,7 @@
                 ['student.courses', 'My courses', '📚'],
                 ['student.live-classes', 'Live classes', '🎥'],
                 ['student.assignments.index', 'Assignments', '📄'],
+                ['ai-agent.index', 'AI Study Assistant', '✨'],
                 ['student.online-batches', 'Online live batches', '💻'],
                 ['coaching-fees.student', 'Coaching fees', '💰'],
                 ['student.exams.index', 'Exams', '📝'],

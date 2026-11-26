@@ -22,6 +22,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Student;
+use App\Http\Controllers\AiAgentController;
 use Illuminate\Support\Facades\Route;
 
 /* ------------------------------------------------------------------
@@ -292,4 +293,14 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
     Route::get('/students/{student}', [Branch\DashboardController::class, 'student'])->name('students.show');
     Route::get('/staff', [Branch\DashboardController::class, 'staff'])->name('staff');
     Route::get('/revenue', [Branch\DashboardController::class, 'revenue'])->name('revenue');
+});
+
+/* ------------------------------------------------------------------
+ |  AI AGENT WORKSPACE
+ |------------------------------------------------------------------*/
+Route::middleware('auth')->prefix('ai-agent')->name('ai-agent.')->group(function () {
+    Route::get('/', [AiAgentController::class, 'index'])->name('index');
+    Route::post('/', [AiAgentController::class, 'ask'])->middleware('throttle:10,1')->name('ask');
+    Route::post('/actions/{proposal}/approve', [AiAgentController::class, 'approve'])->name('approve');
+    Route::post('/actions/{proposal}/reject', [AiAgentController::class, 'reject'])->name('reject');
 });
