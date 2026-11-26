@@ -58,6 +58,9 @@
                     @if ($discount > 0)
                         <div class="flex justify-between text-emerald-700"><dt>Discount</dt><dd class="font-semibold">−৳{{ number_format($discount, 2) }}</dd></div>
                     @endif
+                    @if (collect($items)->contains('type', 'product'))
+                        <div class="flex justify-between"><dt class="text-slate-500">Delivery fee</dt><dd class="font-semibold">{{ $shipping_fee > 0 ? '৳'.number_format($shipping_fee, 2) : 'Free' }}</dd></div>
+                    @endif
                     <div class="flex justify-between border-t border-slate-100 pt-2 text-base"><dt class="font-bold">Total</dt><dd class="font-extrabold">৳{{ number_format($total, 2) }}</dd></div>
                 </dl>
 
