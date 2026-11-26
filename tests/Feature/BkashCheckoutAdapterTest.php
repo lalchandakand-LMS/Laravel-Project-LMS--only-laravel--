@@ -65,6 +65,59 @@ class BkashCheckoutAdapterTest extends TestCase
             && $request['amount'] === '1200.00');
     }
 
+    public function test_checkout_initiation_persists_one_pending_session_before_another_request_can_start(): void
+    {
+        $student = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+        $branch = Branch::create([
+            'name' => 'bKash Checkout Branch',
+            'code' => 'BKASH-CHECKOUT-TEST',
+            'is_active' => true,
+            'payment_methods' => ['bkash'],
+        ]);
+        $order = Order::create([
+            'order_no' => 'AEC-BKASH-LOCK-01',
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 600,
+            'discount' => 0,
+            'total' => 600,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+        ]);
+
+        $this->mock(BkashCheckoutAdapter::class)
+            ->shouldReceive('initiate')
+            ->once()
+            ->andReturn([
+                'payment_id' => 'BKASH-PAY-LOCK-01',
+                'redirect_url' => 'https://sandbox.payment.bkash.com/redirect/tokenized/?paymentID=BKASH-PAY-LOCK-01',
+                'amount' => '600.00',
+                'currency' => 'BDT',
+                'invoice' => $order->order_no,
+            ]);
+
+        $this->actingAs($student)
+            ->post(route('checkout.bkash', $order->order_no))
+            ->assertRedirect('https://sandbox.payment.bkash.com/redirect/tokenized/?paymentID=BKASH-PAY-LOCK-01');
+
+        $this->assertSame(1, $order->payments()->where('status', 'pending')->count());
+        $this->assertSame('BKASH-PAY-LOCK-01', $order->payments()->first()->provider_payment_id);
+
+        $this->actingAs($student)
+            ->from(route('checkout.success', $order->order_no))
+            ->post(route('checkout.bkash', $order->order_no))
+            ->assertRedirect(route('checkout.success', $order->order_no))
+            ->assertSessionHasErrors('payment');
+
+        $this->assertSame(1, $order->payments()->where('status', 'pending')->count());
+    }
+
     public function test_callback_verification_executes_and_queries_provider_before_returning_success(): void
     {
         Http::fake([
