@@ -171,4 +171,62 @@ class LiveClassSchedulingTest extends TestCase
             ->assertDontSee('Private batch revision');
     }
 
+    public function test_live_class_lifecycle_notifies_only_enrolled_students_guardians_and_teacher(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $teacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $guardian = User::factory()->create(['role' => 'guardian', 'is_active' => true]);
+        $outsider = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::create([
+            'title' => 'Live notice course',
+            'slug' => 'live-notice-course',
+            'instructor_id' => $teacher->id,
+        ]);
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'price_paid' => 0,
+            'enrolled_at' => now(),
+        ]);
+        \\DB::table('guardian_students')->insert([
+            'guardian_id' => $guardian->id,
+            'student_id' => $student->id,
+            'relation' => 'mother',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $payload = [
+            'course_id' => $course->id,
+            'title' => 'Live notice session',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'starts_at' => now()->addDays(4)->startOfHour()->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 1,
+        ];
+
+        $this->actingAs($admin)->post(route('admin.live-classes.store'), $payload)
+            ->assertRedirect(route('admin.live-classes.index'));
+        $liveClass = LiveClass::where('title', 'Live notice session')->firstOrFail();
+
+        $this->assertDatabaseCount('notifications', 3);
+        $this->assertSame('scheduled', $student->notifications()->firstOrFail()->data['event']);
+        $this->assertSame(0, $outsider->notifications()->count());
+
+        $payload['starts_at'] = now()->addDays(5)->startOfHour()->format('Y-m-d H:i:s');
+        $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), $payload)
+            ->assertRedirect(route('admin.live-classes.index'));
+        $this->assertSame(2, $student->notifications()->count());
+        $this->assertSame('rescheduled', $student->notifications()->latest()->first()->data['event']);
+
+        $this->actingAs($admin)->delete(route('admin.live-classes.destroy', $liveClass))
+            ->assertRedirect(route('admin.live-classes.index'));
+        $this->assertSame(3, $student->notifications()->count());
+        $this->assertSame('cancelled', $student->notifications()->latest()->first()->data['event']);
+        $this->assertSame(0, $outsider->notifications()->count());
+    }
+
 }
