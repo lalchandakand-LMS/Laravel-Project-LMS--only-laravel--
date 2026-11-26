@@ -409,6 +409,7 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
     Route::post('/attendance/{session}/review', [Branch\AttendanceController::class, 'review'])->name('attendance.review');
 
     Route::get('/finance', [Branch\FinanceController::class, 'index'])->name('finance');
+    Route::get('/finance/payments/{payment}/proof', [Branch\FinanceController::class, 'paymentProof'])->name('finance.payments.proof');
     Route::post('/finance/payments/{payment}/review', [Branch\FinanceController::class, 'verifyPayment'])->name('finance.payments.review');
     Route::post('/finance/orders/{order}/offline-payment', [Branch\FinanceController::class, 'recordOfflinePayment'])->name('finance.orders.offline-payment');
     Route::post('/finance/invoices', [Branch\FinanceController::class, 'createInvoice'])->name('finance.invoices.store');
