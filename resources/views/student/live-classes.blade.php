@@ -47,7 +47,9 @@
                     @if ($class->meeting_password)
                         <span class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">Password: <strong>{{ $class->meeting_password }}</strong></span>
                     @endif
-                @elseif (! $class->isUpcoming() && ! $class->canJoin() && $class->recording_url)
+                @elseif ($class->canJoin())
+                    <p class="text-xs font-medium text-amber-700">Meeting details are not available yet. Please contact your teacher.</p>
+                @elseif (! $class->isUpcoming() && $class->recording_url)
                     <a href="{{ $class->recording_url }}" target="_blank" rel="noopener noreferrer"
                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-800">
                         Watch recording ↗
