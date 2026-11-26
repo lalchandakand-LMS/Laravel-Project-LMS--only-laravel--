@@ -34,7 +34,16 @@ class EbookController extends Controller
     public function file(Request $request, Ebook $ebook)
     {
         abort_unless($ebook->is_published && $ebook->ownedBy($request->user()), 403, 'Please purchase this e-book first.');
-        abort_unless($ebook->file && Storage::disk('local')->exists($ebook->file), 404, 'E-book file not found.');
+        abort_unless($ebook->file, 404, 'E-book file not found.');
+
+        if (preg_match('/^https?:\\/\\//i', $ebook->file)) {
+            return redirect()->away($ebook->file)->withHeaders([
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Referrer-Policy' => 'no-referrer',
+            ]);
+        }
+
+        abort_unless(Storage::disk('local')->exists($ebook->file), 404, 'E-book file not found.');
 
         if ($request->boolean('download')) {
             return Storage::disk('local')->download($ebook->file);
