@@ -152,6 +152,7 @@ class BranchLedgerAndAccessTest extends TestCase
         $ownBranch = $this->branch('DHK', $manager);
         $manager->update(['branch_id' => $ownBranch->id]);
         $otherBranch = $this->branch('CTG');
+        $ownStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $ownBranch->id]);
         $otherStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $otherBranch->id]);
 
         $ownOrder = $this->order($ownStudent, $ownBranch, 1000);
