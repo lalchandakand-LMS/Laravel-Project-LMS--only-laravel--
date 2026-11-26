@@ -67,6 +67,38 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->assertSame('Loading Alom LMS', Setting::get('brand_loader_message'));
     }
 
+
+    public function test_homepage_sections_render_saved_carousel_preferences(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_learning_layout' => 'carousel',
+            'homepage_featured_layout' => 'grid',
+            'homepage_carousel_autoplay' => '1',
+            'homepage_carousel_speed' => '9',
+        ])->assertRedirect();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-carousel="categories"', false)
+            ->assertSee('data-home-carousel-layout="carousel"', false)
+            ->assertSee('data-home-carousel-autoplay="1"', false)
+            ->assertSee('data-home-carousel-speed="9"', false)
+            ->assertSee('data-home-carousel="featured"', false)
+            ->assertSee('data-home-carousel-layout="grid"', false);
+    }
+
+    public function test_invalid_homepage_carousel_preferences_are_rejected(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
+            'homepage_learning_layout' => 'ticker',
+            'homepage_carousel_speed' => '99',
+        ])->assertSessionHasErrors(['homepage_learning_layout', 'homepage_carousel_speed']);
+    }
+
     public function test_invalid_customization_color_is_rejected(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
