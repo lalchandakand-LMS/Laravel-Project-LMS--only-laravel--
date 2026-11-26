@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CourseController extends Controller
 {
@@ -129,11 +130,11 @@ class CourseController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:180',
             'subtitle' => 'nullable|string|max:255',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where(fn ($query) => $query->where('is_active', true))],
             'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|distinct|exists:categories,id',
-            'level_id' => 'nullable|exists:levels,id',
-            'instructor_id' => 'nullable|exists:users,id',
+            'category_ids.*' => ['integer', 'distinct', Rule::exists('categories', 'id')->where(fn ($query) => $query->where('is_active', true))],
+            'level_id' => ['nullable', Rule::exists('levels', 'id')->where(fn ($query) => $query->where('is_active', true))],
+            'instructor_id' => ['nullable', Rule::exists('users', 'id')->where(fn ($query) => $query->whereIn('role', ['instructor', 'admin'])->where('is_active', true))],
             'description' => 'nullable|string',
             'requirements' => 'nullable|string',
             'outcomes' => 'nullable|string',
