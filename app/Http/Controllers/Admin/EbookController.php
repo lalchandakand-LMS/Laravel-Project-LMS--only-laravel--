@@ -126,7 +126,13 @@ class EbookController extends Controller
 
     private function validated(Request $request, ?Ebook $ebook = null): array
     {
-        return $request->validate([
+        // HTML checkboxes are omitted when unchecked; persist their false state explicitly.
+        $request->merge([
+            'is_free' => $request->boolean('is_free'),
+            'is_published' => $request->boolean('is_published'),
+        ]);
+
+        $data = $request->validate([
             'title' => 'required|string|max:180',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -134,7 +140,17 @@ class EbookController extends Controller
             'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:4096',
             'cover_url' => 'nullable|url:http,https|max:2048',
             'file' => 'nullable|file|mimes:pdf,epub|max:51200',
-            'file_url' => 'nullable|url:http,https|max:2048',
+            'file_url' => 'nullable|url:https|max:2048',
+            'is_free' => 'required|boolean',
+            'is_published' => 'required|boolean',
         ]);
+
+        if (! $data['is_free'] && ! empty($data['file_url']) && $data['file_url'] !== ($ebook?->file)) {
+            throw ValidationException::withMessages([
+                'file_url' => 'Paid e-books must use a privately stored PDF/EPUB upload. Public hosted URLs cannot be protected by purchase access.',
+            ]);
+        }
+
+        return $data;
     }
 }
