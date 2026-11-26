@@ -137,6 +137,20 @@ class LiveClassSchedulingTest extends TestCase
             'enrolled_at' => now(),
         ]);
 
+        $otherBatch = Batch::create([
+            'course_id' => $course->id,
+            'name' => 'Morning Batch',
+            'code' => 'MORNING-'.strtoupper(\Illuminate\Support\Str::random(5)),
+            'status' => 'active',
+        ]);
+        Enrollment::create([
+            'user_id' => $otherStudent->id,
+            'course_id' => $course->id,
+            'batch_id' => $otherBatch->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+
         LiveClass::create([
             'course_id' => $course->id,
             'batch_id' => $batch->id,
