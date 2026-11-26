@@ -40,6 +40,8 @@ class LiveClassSchedulingTest extends TestCase
 
         $liveClass = LiveClass::where('title', 'Admin managed live session')->firstOrFail();
 
+        $this->actingAs($admin)->get(route('admin.live-classes.edit', $liveClass))->assertOk();
+
         $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), [
             'course_id' => $course->id,
             'title' => 'Updated live session',
