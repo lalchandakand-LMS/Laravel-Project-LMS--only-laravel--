@@ -19,6 +19,7 @@ class Product extends Model
     protected $casts = [
         'price' => 'float',
         'stock_quantity' => 'integer',
+        'reserved_quantity' => 'integer',
         'is_published' => 'boolean',
     ];
 
@@ -37,7 +38,12 @@ class Product extends Model
 
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('is_published', true)->where('stock_quantity', '>', 0);
+        return $query->where('is_published', true)->whereColumn('stock_quantity', '>', 'reserved_quantity');
+    }
+
+    public function availableQuantity(): int
+    {
+        return max(0, (int) $this->stock_quantity - (int) $this->reserved_quantity);
     }
 
     public function imageUrl(): string
