@@ -12,8 +12,8 @@ return new class extends Migration {
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('course_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name', 160);
-            $table->string('type', 20)->default('course');
-            $table->string('billing_cycle', 20)->default('once');
+            $table->string('type', 20)->default('recurring');
+            $table->string('billing_cycle', 20)->default('monthly');
             $table->decimal('amount', 12, 2);
             $table->unsignedSmallInteger('due_day')->nullable();
             $table->boolean('is_active')->default(true);
@@ -27,8 +27,8 @@ return new class extends Migration {
             $table->foreignId('student_id')->constrained('users')->restrictOnDelete();
             $table->foreignId('fee_plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('course_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('batch_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('invoice_type', 20)->default('recurring');
             $table->string('description', 180);
             $table->date('issued_at');
             $table->date('due_at')->nullable();
@@ -39,6 +39,7 @@ return new class extends Migration {
             $table->timestamps();
             $table->index(['student_id', 'status', 'due_at']);
             $table->index(['branch_id', 'issued_at']);
+            $table->index(['invoice_type', 'status']);
         });
 
         Schema::create('student_fee_payments', function (Blueprint $table) {

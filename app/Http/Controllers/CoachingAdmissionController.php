@@ -2,21 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Batch;
-use App\Models\Branch;
 use App\Models\CoachingAdmission;
-use App\Models\Course;
+use App\Models\CoachingBatch;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CoachingAdmissionController extends Controller
 {
     public function create()
     {
         return view('admissions.coaching', [
-            'branches' => Branch::active()->orderBy('name')->get(),
-            'courses' => Course::published()->orderBy('title')->get(),
-            'batches' => Batch::whereIn('status', ['upcoming', 'ongoing'])->with(['branch', 'course'])->orderBy('starts_at')->get(),
+            'coachingBatches' => CoachingBatch::with(['branch', 'course'])
+                ->whereIn('status', ['upcoming', 'ongoing'])
+                ->orderBy('branch_id')->orderBy('starts_at')->get(),
         ]);
     }
 
@@ -31,21 +28,19 @@ class CoachingAdmissionController extends Controller
             'guardian_email' => ['nullable', 'email', 'max:255'],
             'student_sms_consent' => ['sometimes', 'accepted'],
             'guardian_sms_consent' => ['sometimes', 'accepted'],
-            'batch_id' => ['required', 'integer', Rule::exists('batches', 'id')->where(fn ($q) => $q->whereIn('status', ['upcoming', 'ongoing']))],
+            'coaching_batch_id' => ['required', 'integer', 'exists:coaching_batches,id'],
             'applicant_note' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $batch = Batch::with(['branch', 'course'])->findOrFail($data['batch_id']);
-        if (! $batch->branch_id || ! $batch->course_id || ! $batch->branch?->is_active || ! $batch->course?->is_published) {
-            return back()->withInput()->withErrors(['batch_id' => 'এই ব্যাচে বর্তমানে অনলাইন ভর্তি নেওয়া হচ্ছে না।']);
-        }
-        if ($batch->capacity && $batch->activeStudentCount() >= $batch->capacity) {
-            return back()->withInput()->withErrors(['batch_id' => 'এই ব্যাচে আসন পূর্ণ হয়ে গেছে।']);
-        }
-        $pending = CoachingAdmission::where('student_email', $data['student_email'])->where('batch_id', $batch->id)->where('status', 'pending')->exists();
-        if ($pending) {
-            return back()->withInput()->withErrors(['student_email' => 'এই ইমেইল দিয়ে এই ব্যাচে একটি আবেদন ইতিমধ্যে জমা হয়েছে।']);
-        }
+        $batch = CoachingBatch::with(['branch', 'course'])->findOrFail($data['coaching_batch_id']);
+        abort_unless(in_array($batch->status, ['upcoming', 'ongoing'], true), 422, 'এই কোচিং ব্যাচে আবেদন বন্ধ।');
+        abort_unless($batch->branch?->is_active && $batch->course?->is_published, 422, 'এই শাখা বা কোর্সে বর্তমানে ভর্তি নেওয়া হচ্ছে না।');
+        abort_unless($batch->hasAvailableSeat(), 422, 'এই কোচিং ব্যাচে আসন পূর্ণ হয়ে গেছে।');
+
+        $duplicate = CoachingAdmission::where('student_email', $data['student_email'])
+            ->where('coaching_batch_id', $batch->id)
+            ->whereIn('status', ['pending', 'awaiting_payment', 'admitted'])->exists();
+        abort_if($duplicate, 422, 'এই শিক্ষার্থীর এই কোচিং ব্যাচে আবেদন বা ভর্তি ইতিমধ্যে রয়েছে।');
 
         CoachingAdmission::create($data + [
             'branch_id' => $batch->branch_id,
@@ -55,6 +50,6 @@ class CoachingAdmissionController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('coaching-admission.create')->with('success', 'আপনার ভর্তি আবেদন জমা হয়েছে। যাচাই শেষে SMS/ফোনে জানানো হবে।');
+        return redirect()->route('coaching-admission.create')->with('success', 'আপনার সরাসরি কোচিংয়ের ভর্তি আবেদন জমা হয়েছে। যাচাই শেষে জানানো হবে।');
     }
 }

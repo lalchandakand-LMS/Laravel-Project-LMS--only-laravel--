@@ -9,6 +9,7 @@ return new class extends Migration {
     {
         Schema::table('student_fee_invoices', function (Blueprint $table) {
             $table->foreignId('coaching_admission_id')->after('student_id')->constrained('coaching_admissions')->restrictOnDelete();
+            $table->foreignId('coaching_batch_id')->nullable()->after('coaching_admission_id')->constrained('coaching_batches')->nullOnDelete();
             $table->index(['coaching_admission_id', 'status']);
         });
     }
@@ -16,6 +17,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('student_fee_invoices', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('coaching_batch_id');
             $table->dropConstrainedForeignId('coaching_admission_id');
         });
     }
