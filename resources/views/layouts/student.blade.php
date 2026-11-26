@@ -17,13 +17,29 @@
       html[data-theme="dark"] main .border-slate-100,html[data-theme="dark"] main .border-slate-200{border-color:#263449!important}
       html[data-theme="dark"] main .bg-slate-50,html[data-theme="dark"] main .bg-slate-100{background:#1e293b!important}
       html[data-theme="dark"] main .divide-slate-100>*+*{border-color:#263449!important}
+
+      body{background:radial-gradient(ellipse at 8% 0%,rgba(219,234,254,.72),transparent 34%),#f1f5f9!important}
+      .role-sidebar{background:linear-gradient(165deg,#071b3d 0%,#0a2d5a 48%,#07172f 100%);box-shadow:12px 0 40px rgba(2,12,34,.16)}
+      .role-brand{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);border-radius:16px;padding:10px}
+      .role-nav-link{display:flex;align-items:center;gap:.8rem;border:1px solid transparent;border-radius:13px;padding:.72rem .85rem;color:#cbdcf2;font-size:.84rem;font-weight:700;transition:all .18s ease}
+      .role-nav-link:hover{background:rgba(125,211,252,.12);color:#fff;transform:translateX(2px)}
+      .role-nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(249,115,22,.28),rgba(59,130,246,.15));color:#fff;border-color:rgba(251,146,60,.18);box-shadow:inset 3px 0 #fb923c}
+      .role-topbar{background:rgba(255,255,255,.88)!important;backdrop-filter:blur(18px);box-shadow:0 8px 28px rgba(15,23,42,.05)}
+      .role-main{max-width:1680px;width:100%;margin-inline:auto}
+      .role-main .rounded-2xl.border,.role-main .rounded-xl.border{box-shadow:0 8px 26px rgba(15,23,42,.045);transition:box-shadow .18s ease,border-color .18s ease}
+      .role-main .rounded-2xl.border:hover{box-shadow:0 12px 30px rgba(15,23,42,.075)}
+      .role-main a:focus-visible,.role-sidebar a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid rgba(249,115,22,.55);outline-offset:2px}
+      html[data-theme="dark"] body{background:radial-gradient(ellipse at 8% 0%,rgba(30,64,115,.25),transparent 35%),#071326!important}
+      html[data-theme="dark"] .role-topbar{background:rgba(16,31,53,.9)!important;border-color:#263b57!important}
+      html[data-theme="dark"] .role-main .rounded-2xl.border,html[data-theme="dark"] .role-main .rounded-xl.border{box-shadow:0 8px 26px rgba(0,0,0,.12)}
+      @media(max-width:1023px){.role-main{padding:1rem!important}}
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased">
+<body class="role-dashboard bg-slate-100 text-slate-800 antialiased">
 <div class="flex min-h-screen">
     {{-- SIDEBAR --}}
     <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 p-4 text-slate-300 lg:flex">
-        <a href="{{ route('home') }}" class="flex items-center gap-2 px-2 py-2">
+        <a href="{{ route('home') }}" class="role-brand flex items-center gap-3 px-2 py-3">
             <img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain">
             <span class="font-extrabold text-white">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
@@ -48,10 +64,10 @@
             ];
         @endphp
 
-        <nav class="mt-6 space-y-1 text-sm font-medium">
+        <nav class="mt-6 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm font-medium">
             @foreach ($nav as [$route, $label, $icon])
                 <a href="{{ route($route) }}"
-                   class="flex items-center gap-3 rounded-lg px-3 py-2.5 {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-emerald-500 text-slate-900' : 'text-slate-300 hover:bg-white/10' }}">
+                   class="flex items-center gap-3 role-nav-link {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-blue-500/20 text-white ring-1 ring-orange-300/30' : 'text-slate-300 hover:bg-white/10' }}">
                     <span>{{ $icon }}</span> {{ $label }}
                 </a>
             @endforeach
@@ -59,7 +75,7 @@
 
         <div class="mt-auto space-y-1 border-t border-slate-100 pt-4 text-sm">
             @if (auth()->user()->isAdmin() || auth()->user()->isInstructor())
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-semibold text-slate-300 hover:bg-white/10">⚙️ Admin panel</a>
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 role-nav-link text-slate-300 hover:bg-white/10">⚙️ Admin panel</a>
             @endif
             <a href="{{ route('courses.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-white/10">🔎 Browse courses</a>
             <form method="POST" action="{{ route('logout') }}">
@@ -70,7 +86,7 @@
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">
-        <header class="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+        <header class="role-topbar sticky top-0 z-30 flex min-h-[68px] items-center gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
             <button type="button" id="mobile-nav-toggle" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 lg:hidden" aria-controls="mobile-portal-nav" aria-expanded="false">☰ <span class="sr-only">Open navigation</span></button>
             <a href="{{ route('student.dashboard') }}" class="font-extrabold text-slate-900 lg:hidden">AEC</a>
             <h1 class="text-lg font-bold text-slate-900">@yield('heading', 'Dashboard')</h1>
@@ -94,7 +110,7 @@
             <a href="{{ route('courses.index') }}" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700">🔎 Browse courses</a>
             <form method="POST" action="{{ route('logout') }}">@csrf<button class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-rose-600">🚪 Log out</button></form>
         </nav>
-        <main class="flex-1 p-4 sm:p-6">
+        <main class="role-main flex-1 p-4 sm:p-6 lg:p-7">
             @include('partials.flash')
             @yield('content')
         </main>
