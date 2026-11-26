@@ -70,6 +70,56 @@ class ConsentBasedTrackingTest extends TestCase
             ->assertSee('withdraw optional consent');
     }
 
+    public function test_paid_checkout_confirmation_emits_purchase_event_only_with_consent_manager_available(): void
+    {
+        $user = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        Setting::set('ga_measurement_id', 'G-ABC1234567');
+        Setting::set('meta_pixel_id', '123456789012345');
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'paid',
+            'name' => 'Test Student',
+            'phone' => '01700000000',
+            'email' => 'student@example.test',
+        ]);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bank',
+            'amount' => 500,
+            'transaction_id' => 'CONSENT-PURCHASE-1',
+            'status' => 'verified',
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($user)->get(route('checkout.success', $order->order_no))->assertOk()
+            ->assertSee('data-disable-pageview="1"', false)
+            ->assertSee('aecPurchaseEvent')
+            ->assertSee('CONSENT-PURCHASE-1', false)
+            ->assertSee('Cookie settings');
+    }
+
+    public function test_pending_checkout_confirmation_does_not_emit_purchase_event(): void
+    {
+        $user = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $order = Order::create([
+            'user_id' => $user->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'pending',
+            'name' => 'Test Student',
+            'phone' => '01700000000',
+            'email' => 'student@example.test',
+        ]);
+
+        $this->actingAs($user)->get(route('checkout.success', $order->order_no))->assertOk()
+            ->assertDontSee('aecPurchaseEvent');
+    }
+
     public function test_authenticated_workspace_does_not_load_public_tracking_consent_or_scripts(): void
     {
         Setting::set('ga_measurement_id', 'G-ABC1234567');
