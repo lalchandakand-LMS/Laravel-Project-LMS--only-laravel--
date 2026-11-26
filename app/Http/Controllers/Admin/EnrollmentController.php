@@ -8,6 +8,8 @@ use App\Models\Branch;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\EnrollmentHistory;
+use App\Models\OnlineBatchEnrollment;
+use App\Models\CoachingEnrollment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
