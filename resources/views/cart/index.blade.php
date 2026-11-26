@@ -21,8 +21,15 @@
                             <p class="text-xs uppercase tracking-wide text-slate-500">{{ $item['type'] }}</p>
                             @if(!empty($item['flash_sale_name']))<p class="mt-1 text-xs font-bold text-orange-700">⚡ {{ $item['flash_sale_name'] }}</p>@endif
                         </div>
-                        <div class="text-right"><p class="font-bold text-slate-900">{{ $item['price'] <= 0 ? 'Free' : '৳'.number_format($item['price']) }}</p>
-                            @if(!empty($item['has_discount']))<p class="text-xs text-slate-400 line-through">৳{{ number_format($item['original_price']) }}</p>@endif</div>
+                        <div class="min-w-24 text-right"><p class="font-bold text-slate-900">{{ $item['price'] <= 0 ? 'Free' : '৳'.number_format($item['price'] * ($item['qty'] ?? 1), 2) }}</p>
+                            @if(!empty($item['has_discount']))<p class="text-xs text-slate-400 line-through">৳{{ number_format($item['original_price'], 2) }}</p>@endif
+                            @if($item['type'] === 'product')
+                                <form method="POST" action="{{ route('cart.quantity', $item['key']) }}" class="mt-2 flex items-center justify-end gap-1">@csrf
+                                    <label class="sr-only" for="qty-{{ $item['id'] }}">Quantity</label><input id="qty-{{ $item['id'] }}" type="number" name="quantity" min="1" max="20" value="{{ $item['qty'] }}" class="w-16 rounded-md border border-slate-300 px-2 py-1 text-xs">
+                                    <button class="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">Update</button>
+                                </form>
+                            @endif
+                        </div>
                         <form method="POST" action="{{ route('cart.remove', $item['key']) }}">
                             @csrf
                             <button class="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Remove">✕</button>
