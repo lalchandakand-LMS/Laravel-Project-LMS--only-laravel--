@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Setting;
 use App\Models\Concerns\TracksDeletionActor;
 
 class Branch extends Model
@@ -45,7 +46,17 @@ class Branch extends Model
 
     public function enabledStudentPaymentMethods(): array
     {
-        return array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank'], $this->payment_methods ?? []));
+        $branchMethods = array_values(array_intersect(['bkash', 'nagad', 'rocket', 'bank'], $this->payment_methods ?? []));
+        $globalSetting = Setting::get('payment_methods.global_enabled');
+
+        // Preserve existing branch behavior until the global setting is first saved.
+        if ($globalSetting === null) {
+            return $branchMethods;
+        }
+
+        $globallyEnabled = json_decode((string) $globalSetting, true);
+
+        return array_values(array_intersect($branchMethods, is_array($globallyEnabled) ? $globallyEnabled : []));
     }
 
     /**
