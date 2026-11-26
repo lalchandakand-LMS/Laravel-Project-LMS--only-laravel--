@@ -79,7 +79,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:5,1')->name('password.update');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::get('/email/verify', fn () => auth()->user()->hasVerifiedEmail()
         ? redirect()->intended(auth()->user()->dashboardRoute())
         : view('auth.verify-email'))->name('verification.notice');
@@ -137,7 +137,7 @@ Route::middleware('auth')->group(function () {
 /* ------------------------------------------------------------------
  |  STUDENT
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name('student.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:student,instructor,admin'])->prefix('my')->name('student.')->group(function () {
     Route::get('/', [Student\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-courses', [Student\DashboardController::class, 'courses'])->name('courses');
     Route::get('/live-classes', [Student\LiveClassController::class, 'index'])->name('live-classes');
