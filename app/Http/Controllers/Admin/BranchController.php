@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class BranchController extends Controller
 {
@@ -21,7 +22,9 @@ class BranchController extends Controller
 
         return view('admin.branches.index', [
             'branches' => $branches,
-            'totalRevenue' => (float) \App\Models\Order::where('status', 'paid')->sum('total'),
+            'totalRevenue' => max(0, (float) \App\Models\Payment::where('status', 'verified')->sum('amount')
+                - (float) \App\Models\PaymentAdjustment::where('type', 'refund')->sum('amount')
+                + (float) \App\Models\PaymentAdjustment::where('type', 'credit')->sum('amount')),
         ]);
     }
 
@@ -36,7 +39,11 @@ class BranchController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validated($request);\n        DB::transaction(function () use ($data) {\n            $branch = Branch::create($data);\n            $this->syncManagerAssignment($branch, null);\n        });
+        $data = $this->validated($request);
+        DB::transaction(function () use ($data) {
+            $branch = Branch::create($data);
+            $this->syncManagerAssignment($branch, null);
+        });
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch created.');
     }
@@ -52,7 +59,12 @@ class BranchController extends Controller
 
     public function update(Request $request, Branch $branch)
     {
-        $data = $this->validated($request, $branch);\n        DB::transaction(function () use ($branch, $data) {\n            $oldManagerId = $branch->manager_id;\n            $branch->update($data);\n            $this->syncManagerAssignment($branch, $oldManagerId);\n        });
+        $data = $this->validated($request, $branch);
+        DB::transaction(function () use ($branch, $data) {
+            $oldManagerId = $branch->manager_id;
+            $branch->update($data);
+            $this->syncManagerAssignment($branch, $oldManagerId);
+        });
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch updated.');
     }
