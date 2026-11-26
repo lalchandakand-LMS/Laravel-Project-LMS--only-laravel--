@@ -26,11 +26,13 @@ class ConsentBasedTrackingTest extends TestCase
         $this->actingAs($admin)->post(route('admin.seo.update'), [
             'ga_measurement_id' => 'G-ABC1234567',
             'meta_pixel_id' => '123456789012345',
+            'gtm_container_id' => 'GTM-A1B2C3D',
             'seo_robots_index' => '1',
         ])->assertRedirect(route('admin.seo.index'))->assertSessionHasNoErrors();
 
         $this->assertSame('G-ABC1234567', Setting::get('ga_measurement_id'));
         $this->assertSame('123456789012345', Setting::get('meta_pixel_id'));
+        $this->assertSame('GTM-A1B2C3D', Setting::get('gtm_container_id'));
     }
 
     public function test_invalid_tracking_ids_are_rejected_and_not_saved(): void
@@ -40,16 +42,19 @@ class ConsentBasedTrackingTest extends TestCase
         $this->actingAs($admin)->from('/admin/seo')->post(route('admin.seo.update'), [
             'ga_measurement_id' => 'javascript:alert(1)',
             'meta_pixel_id' => '<script>alert(1)</script>',
-        ])->assertSessionHasErrors(['ga_measurement_id', 'meta_pixel_id']);
+            'gtm_container_id' => 'https://evil.test/gtm',
+        ])->assertSessionHasErrors(['ga_measurement_id', 'meta_pixel_id', 'gtm_container_id']);
 
         $this->assertNull(Setting::get('ga_measurement_id'));
         $this->assertNull(Setting::get('meta_pixel_id'));
+        $this->assertNull(Setting::get('gtm_container_id'));
     }
 
     public function test_public_pages_show_optional_consent_before_loading_configured_trackers(): void
     {
         Setting::set('ga_measurement_id', 'G-ABC1234567');
         Setting::set('meta_pixel_id', '123456789012345');
+        Setting::set('gtm_container_id', 'GTM-A1B2C3D');
 
         $this->get('/')->assertOk()
             ->assertSee('Your privacy choices')
@@ -58,8 +63,21 @@ class ConsentBasedTrackingTest extends TestCase
             ->assertSee('Customize')
             ->assertSee('data-ga-id="G-ABC1234567"', false)
             ->assertSee('data-meta-pixel-id="123456789012345"', false)
+            ->assertSee('data-gtm-id="GTM-A1B2C3D"', false)
+            ->assertSee('googletagmanager.com/gtm.js?id=', false)
             ->assertSee("document.createElement('script')", false)
             ->assertDontSee('<script async src="https://www.googletagmanager.com/gtag/js', false);
+    }
+
+    public function test_gtm_container_alone_enables_the_existing_consent_manager(): void
+    {
+        Setting::set('gtm_container_id', 'GTM-A1B2C3D');
+
+        $this->get('/')->assertOk()
+            ->assertSee('Your privacy choices')
+            ->assertSee('data-gtm-id="GTM-A1B2C3D"', false)
+            ->assertSee("window.dataLayer.push({ 'gtm.start'", false)
+            ->assertSee('180 * 24 * 60 * 60 * 1000', false);
     }
 
     public function test_privacy_policy_explains_optional_tracking_and_withdrawal(): void
@@ -125,10 +143,12 @@ class ConsentBasedTrackingTest extends TestCase
     public function test_authenticated_workspace_does_not_load_public_tracking_consent_or_scripts(): void
     {
         Setting::set('ga_measurement_id', 'G-ABC1234567');
+        Setting::set('gtm_container_id', 'GTM-A1B2C3D');
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
 
         $this->actingAs($student)->get(route('student.dashboard'))->assertOk()
             ->assertDontSee('aec-cookie-consent')
-            ->assertDontSee('googletagmanager.com/gtag/js');
+            ->assertDontSee('googletagmanager.com/gtag/js')
+            ->assertDontSee('googletagmanager.com/gtm.js');
     }
 }
