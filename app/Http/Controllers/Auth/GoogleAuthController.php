@@ -75,7 +75,7 @@ class GoogleAuthController extends Controller
         $user = User::where('provider', 'google')->where('provider_id', $profile['sub'])->first();
 
         if (! $user) {
-            $user = User::where('email', Str::lower($profile['email']))->first();
+            $user = User::whereRaw('LOWER(email) = ?', [Str::lower($profile['email'])])->first();
 
             if ($user && filled($user->provider) && ($user->provider !== 'google' || $user->provider_id !== $profile['sub'])) {
                 return redirect()->route('login')->withErrors(['email' => 'This email is already connected to another sign-in provider.']);
@@ -97,6 +97,7 @@ class GoogleAuthController extends Controller
                     'provider' => 'google',
                     'provider_id' => $profile['sub'],
                     'email_verified_at' => $user->email_verified_at ?: now(),
+                    'email_verification_required' => false,
                 ])->save();
             }
         }
