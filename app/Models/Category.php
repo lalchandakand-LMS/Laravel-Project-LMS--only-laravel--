@@ -27,4 +27,13 @@ class Category extends Model
     public function children() { return $this->hasMany(Category::class, 'parent_id'); }
 
     public function publishedCourses() { return $this->courses()->where('is_published', true); }
+
+    public function imageUrl(): ?string
+    {
+        if (! $this->image) {
+            return null;
+        }
+
+        return str_starts_with($this->image, 'https://') ? $this->image : asset('storage/'.$this->image);
+    }
 }
