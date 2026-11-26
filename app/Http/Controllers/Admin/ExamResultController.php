@@ -45,8 +45,15 @@ class ExamResultController extends Controller
             'feedback' => 'nullable|string|max:5000',
         ]);
 
-        DB::transaction(function () use ($data, $attempt) {
-            $answers = $attempt->answers()->with('question')->get();
+        DB::transaction(function () use ($data, $attempt, $exam) {
+            $lockedAttempt = ExamAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+            abort_unless(
+                (int) $lockedAttempt->exam_id === (int) $exam->id
+                    && in_array($lockedAttempt->status, ['submitted', 'expired'], true),
+                404
+            );
+
+            $answers = $lockedAttempt->answers()->with('question')->lockForUpdate()->get();
             foreach ($answers as $answer) {
                 if (! in_array($answer->question->type, ['cq', 'short'], true)) {
                     continue;
@@ -59,21 +66,21 @@ class ExamResultController extends Controller
                 ]);
             }
 
-            $score = (float) $attempt->answers()->sum('marks_awarded');
-            $attempt->update([
+            $score = (float) $lockedAttempt->answers()->sum('marks_awarded');
+            $lockedAttempt->update([
                 'score' => max(0, round($score, 2)),
                 'manual_reviewed_at' => now(),
                 'manual_feedback' => $data['feedback'] ?? null,
             ]);
-            $attempt->refresh();
-            $student = $attempt->user;
-            if ($student && $student->isStudent() && $attempt->isPassed()) {
+            $lockedAttempt->refresh();
+            $student = $lockedAttempt->user;
+            if ($student && $student->isStudent() && $lockedAttempt->isPassed()) {
                 GamificationService::award(
                     $student,
                     'exam_passed',
-                    'exam_passed:'.$attempt->id,
+                    'exam_passed:'.$lockedAttempt->id,
                     5,
-                    ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
+                    ['exam_id' => $lockedAttempt->exam_id, 'attempt_id' => $lockedAttempt->id]
                 );
             }
         });
