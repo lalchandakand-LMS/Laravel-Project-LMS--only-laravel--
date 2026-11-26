@@ -493,8 +493,10 @@ class OrderController extends Controller
             throw ValidationException::withMessages(['reference' => 'This receipt/reference number is already recorded.']);
         }
 
+        $recordedPayment = null;
+
         try {
-            DB::transaction(function () use ($request, $order, $data) {
+            DB::transaction(function () use ($request, $order, $data, &$recordedPayment) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
                 if (! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
@@ -508,7 +510,7 @@ class OrderController extends Controller
                     throw ValidationException::withMessages(['amount' => 'The amount exceeds the outstanding balance.']);
                 }
 
-                Payment::create([
+                $recordedPayment = Payment::create([
                     'order_id' => $lockedOrder->id,
                     'gateway' => $data['gateway'],
                     'transaction_id' => $data['reference'] ?: 'OFFLINE-'.Str::upper(Str::random(12)),
@@ -536,8 +538,9 @@ class OrderController extends Controller
             return back()->withErrors(['reference' => 'This receipt/reference number is already recorded.']);
         }
 
-        $order->user?->notify(new PaymentStatusNotification(
-            $order->payments()->latest()->first()->load('order'),
+        $recordedPayment?->load('order');
+        $recordedPayment?->order?->user?->notify(new PaymentStatusNotification(
+            $recordedPayment,
             'verified'
         ));
 

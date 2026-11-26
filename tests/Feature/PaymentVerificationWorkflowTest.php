@@ -16,6 +16,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PaymentStatusNotification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -259,6 +261,7 @@ class PaymentVerificationWorkflowTest extends TestCase
 
     public function test_cash_and_office_collection_are_staff_recorded_as_verified_ledger_entries(): void
     {
+        Notification::fake();
         [$student, $admin, $branch, $order] = $this->orderForStudent();
 
         $this->actingAs($student)->get(route('checkout.success', $order->order_no))
@@ -278,6 +281,7 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame($admin->id, $payment->verified_by);
         $this->assertSame('partially_paid', $order->fresh()->status);
         $this->assertSame(750.0, $order->fresh()->dueAmount());
+        Notification::assertSentTo($student, PaymentStatusNotification::class, fn (PaymentStatusNotification $notification) => $notification->payment->is($payment) && $notification->result === 'verified');
     }
 
     public function test_ebook_refund_revokes_purchase_and_repayment_restores_access(): void
