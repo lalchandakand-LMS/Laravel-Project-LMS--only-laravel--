@@ -49,6 +49,10 @@ class PaymentMethodController extends Controller
                 'mode' => 'sandbox',
                 'configured_mode' => $credentials['mode'] ?? 'sandbox',
                 'saved' => collect($credentials['credentials'] ?? [])->filter(fn ($value) => filled($value))->isNotEmpty(),
+                'ready' => $key === 'bkash'
+                    && ($credentials['mode'] ?? 'sandbox') === 'sandbox'
+                    && collect(['app_key', 'app_secret', 'username', 'password'])
+                        ->every(fn ($field) => filled(data_get($credentials, 'credentials.'.$field))),
             ];
         }
 
