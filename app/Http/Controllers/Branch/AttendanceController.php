@@ -13,7 +13,7 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
         $branch = $user->isBranchManager()
-            ? BranchModel::where('manager_id', $user->id)->first()
+            ? BranchModel::forManager($user)
             : ($user->branch ?? null);
 
         abort_unless($branch, 403, 'No branch is assigned to this account.');
