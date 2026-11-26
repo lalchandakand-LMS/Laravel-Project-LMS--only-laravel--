@@ -60,13 +60,18 @@ class LibraryLoanController extends Controller
     public function reject(Request $request, LibraryLoan $loan)
     {
         $data = $request->validate(['notes' => 'nullable|string|max:2000']);
-        abort_if($loan->status !== 'requested', 409, 'Only pending requests can be rejected.');
 
-        $loan->update([
-            'status' => 'rejected',
-            'issued_by' => auth()->id(),
-            'notes' => $data['notes'] ?? null,
-        ]);
+        DB::transaction(function () use ($loan, $data) {
+            $lockedLoan = LibraryLoan::whereKey($loan->id)->lockForUpdate()->firstOrFail();
+            abort_if($lockedLoan->status !== 'requested', 409, 'Only pending requests can be rejected.');
+
+            $lockedLoan->update([
+                'status' => 'rejected',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'notes' => $data['notes'] ?? null,
+            ]);
+        });
 
         return back()->with('success', 'Library request rejected.');
     }
