@@ -40,7 +40,7 @@ class SeoController extends Controller
     {
         $lines = [
             'User-agent: *',
-            'Disallow: /admin/',
+            'Disallow: /admin',
             'Disallow: /my/',
             'Disallow: /teacher/',
             'Disallow: /guardian/',
@@ -49,6 +49,9 @@ class SeoController extends Controller
             'Disallow: /checkout',
             'Disallow: /messages',
             'Disallow: /notifications',
+            'Disallow: /login',
+            'Disallow: /register',
+            'Disallow: /reset-password',
         ];
 
         if (Setting::get('seo_robots_index', '1') !== '1') {
