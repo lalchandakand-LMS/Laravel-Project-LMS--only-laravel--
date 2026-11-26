@@ -92,9 +92,9 @@ case "$DB_CONNECTION" in
     if command -v mysqldump >/dev/null 2>&1; then
       # shellcheck disable=SC2046
       if [ "$DRY_RUN" -eq 0 ]; then
-        mysqldump --single-transaction --quick --no-tablespaces \
+        MYSQL_PWD="$(ENV_VAL DB_PASSWORD)" mysqldump --single-transaction --quick --no-tablespaces \
           -h"$(ENV_VAL DB_HOST)" -P"$(ENV_VAL DB_PORT)" \
-          -u"$(ENV_VAL DB_USERNAME)" -p"$(ENV_VAL DB_PASSWORD)" \
+          -u"$(ENV_VAL DB_USERNAME)" \
           "${DB_DATABASE:-laravel}" > "$BACKUP_DIR/mysql-$STAMP.sql" 2>/dev/null \
           && ok "database -> $BACKUP_DIR/mysql-$STAMP.sql" \
           || warn "mysqldump failed (is it installed / are the credentials right?) - stopping safely"
