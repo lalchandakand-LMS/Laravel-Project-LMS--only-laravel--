@@ -2,7 +2,7 @@
 @section('title', $course->meta_title ?: $course->title)
 @section('meta_description', $course->meta_description ?: $course->subtitle)
 @push('structured_data')
-<script type="application/ld+json">@json([
+<script type="application/ld+json"><?php echo json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'Course',
     'name' => $course->title,
@@ -13,7 +13,7 @@
     'inLanguage' => $course->language ?: 'en',
     'educationalLevel' => $course->level,
     'offers' => ['@type' => 'Offer', 'priceCurrency' => 'BDT', 'price' => number_format((float) $course->final_price, 2, '.', ''), 'availability' => 'https://schema.org/InStock', 'url' => route('courses.show', $course)],
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
 @endpush
 
 @section('content')
