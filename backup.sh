@@ -9,6 +9,7 @@
 # Backups land in storage/backups/ and the 30 newest are kept.
 #
 set -uo pipefail
+umask 077
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$APP_DIR" || exit 1
 
@@ -16,9 +17,11 @@ PHP_BIN="${PHP_BIN:-php}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="storage/backups"
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
 
 [ -f .env ] || { echo "no .env here - run from the Laravel project root"; exit 1; }
 cp -p .env "$BACKUP_DIR/env-$STAMP.bak" || { echo ".env backup failed"; exit 1; }
+chmod 600 "$BACKUP_DIR/env-$STAMP.bak"
 [ -s "$BACKUP_DIR/env-$STAMP.bak" ] || { echo ".env backup is empty"; exit 1; }
 echo ".env    -> $BACKUP_DIR/env-$STAMP.bak"
 
@@ -30,6 +33,7 @@ case "$DB_CONNECTION" in
     DB_FILE="${DB_DATABASE:-$(ENV_VAL DB_DATABASE)}"; DB_FILE="${DB_FILE:-database/database.sqlite}"
     [ -f "$DB_FILE" ] || { echo "missing sqlite database at $DB_FILE"; exit 1; }
     cp -p "$DB_FILE" "$BACKUP_DIR/sqlite-$STAMP.sqlite" && [ -s "$BACKUP_DIR/sqlite-$STAMP.sqlite" ] || { echo "sqlite backup failed"; exit 1; }
+    chmod 600 "$BACKUP_DIR/sqlite-$STAMP.sqlite"
     echo "database -> $BACKUP_DIR/sqlite-$STAMP.sqlite"
     ;;
   mysql)
@@ -54,6 +58,15 @@ if [ -d storage/app/public ] && find storage/app/public -type f -print -quit | g
   tar -czf "$BACKUP_DIR/uploads-$STAMP.tar.gz" -C storage/app public || { echo "uploaded files backup failed"; exit 1; }
   tar -tzf "$BACKUP_DIR/uploads-$STAMP.tar.gz" >/dev/null 2>&1 || { echo "uploaded files backup verification failed"; exit 1; }
   echo "uploads -> $BACKUP_DIR/uploads-$STAMP.tar.gz"
+fi
+
+# Private submissions and learning files must be included without recursively
+# copying the Admin database-backup directory into every archive.
+if [ -d storage/app/private ] && find storage/app/private -mindepth 1 -maxdepth 1 ! -name system-backups -print -quit | grep -q .; then
+  tar -czf "$BACKUP_DIR/private-$STAMP.tar.gz" --exclude='private/system-backups' -C storage/app private || { echo "private uploads backup failed"; exit 1; }
+  tar -tzf "$BACKUP_DIR/private-$STAMP.tar.gz" >/dev/null 2>&1 || { echo "private uploads backup verification failed"; exit 1; }
+  chmod 600 "$BACKUP_DIR/private-$STAMP.tar.gz"
+  echo "private uploads -> $BACKUP_DIR/private-$STAMP.tar.gz"
 fi
 
 ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +31 | while read -r old; do rm -f "${BACKUP_DIR:?}/$old"; done
