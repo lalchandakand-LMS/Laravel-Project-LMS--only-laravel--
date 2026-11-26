@@ -92,24 +92,24 @@ class SystemBackupController extends Controller
     private function verifySqliteBackupFile(string $source): void
     {
         try {
-            $pdo = new \\PDO('sqlite:'.$source);
+            $pdo = new \PDO('sqlite:'.$source);
             $integrity = $pdo->query('PRAGMA quick_check')->fetchColumn();
             if ($integrity !== 'ok') {
-                throw new \\RuntimeException('The SQLite backup failed its integrity check.');
+                throw new \RuntimeException('The SQLite backup failed its integrity check.');
             }
 
-            $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(\\PDO::FETCH_COLUMN);
+            $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(\PDO::FETCH_COLUMN);
             foreach (['migrations', 'users', 'courses', 'orders'] as $table) {
                 if (! in_array($table, $tables, true)) {
-                    throw new \\RuntimeException('The SQLite backup is missing required LMS table: '.$table);
+                    throw new \RuntimeException('The SQLite backup is missing required LMS table: '.$table);
                 }
             }
         } catch (Throwable $exception) {
-            if ($exception instanceof \\RuntimeException) {
+            if ($exception instanceof \RuntimeException) {
                 throw $exception;
             }
 
-            throw new \\RuntimeException('The uploaded SQLite backup is invalid or unreadable.', 0, $exception);
+            throw new \RuntimeException('The uploaded SQLite backup is invalid or unreadable.', 0, $exception);
         }
     }
 
