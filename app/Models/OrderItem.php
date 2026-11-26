@@ -9,6 +9,7 @@ class OrderItem extends Model
     protected $fillable = ['order_id','item_type','item_id','title','price','qty','stock_reserved'];
     protected $casts = ['price' => 'float', 'stock_reserved' => 'boolean'];
 
+    public function returnRequests() { return $this->hasMany(ProductReturnRequest::class, 'order_item_id'); }
     public function order() { return $this->belongsTo(Order::class); }
 
     public function item()
