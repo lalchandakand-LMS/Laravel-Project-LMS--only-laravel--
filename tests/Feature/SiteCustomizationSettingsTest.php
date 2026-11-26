@@ -226,6 +226,117 @@ class SiteCustomizationSettingsTest extends TestCase
         ])->assertSessionHasErrors('homepage_section_order');
     }
 
+
+    public function test_admin_slider_crud_toggle_and_archive_preserve_recoverable_media(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        Storage::fake('public');
+
+        $this->actingAs($admin)->post(route('admin.sliders.store'), [
+            'title' => 'Safe slider creation',
+            'subtitle' => 'A slide with managed artwork',
+            'button_text' => 'Browse courses',
+            'button_url' => '/courses',
+            'theme' => 'amber',
+            'sort_order' => 1,
+            'is_active' => '1',
+            'image' => UploadedFile::fake()->image('first-slide.webp'),
+        ])->assertRedirect(route('admin.sliders.index'));
+
+        $slider = Slider::where('title', 'Safe slider creation')->firstOrFail();
+        $oldImage = $slider->image;
+        Storage::disk('public')->assertExists($oldImage);
+
+        $this->actingAs($admin)->put(route('admin.sliders.update', $slider), [
+            'title' => 'Updated safe slider',
+            'subtitle' => 'Updated slide',
+            'button_text' => 'Visit center',
+            'button_url' => 'https://example.com/admissions',
+            'theme' => 'indigo',
+            'sort_order' => 2,
+            'is_active' => '1',
+            'image' => UploadedFile::fake()->image('replacement-slide.webp'),
+        ])->assertRedirect(route('admin.sliders.index'));
+
+        $slider->refresh();
+        $newImage = $slider->image;
+        $this->assertNotSame($oldImage, $newImage);
+        Storage::disk('public')->assertMissing($oldImage);
+        Storage::disk('public')->assertExists($newImage);
+        $this->assertSame('https://example.com/admissions', $slider->button_url);
+
+        $this->post(route('admin.sliders.toggle', $slider))
+            ->assertRedirect();
+        $this->assertFalse($slider->fresh()->is_active);
+
+        $this->delete(route('admin.sliders.destroy', $slider))
+            ->assertRedirect();
+        $this->assertSoftDeleted('sliders', ['id' => $slider->id]);
+        Storage::disk('public')->assertExists($newImage);
+    }
+
+    public function test_slider_button_rejects_unsafe_and_protocol_relative_urls(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        foreach (['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', '//evil.example/path'] as $unsafeUrl) {
+            $this->actingAs($admin)->from(route('admin.sliders.create'))
+                ->post(route('admin.sliders.store'), [
+                    'title' => 'Unsafe slide',
+                    'button_url' => $unsafeUrl,
+                    'theme' => 'emerald',
+                    'is_active' => '1',
+                ])
+                ->assertRedirect(route('admin.sliders.create'))
+                ->assertSessionHasErrors('button_url');
+        }
+
+        $this->assertSame(0, Slider::count());
+    }
+
+    public function test_non_admin_cannot_manage_homepage_sliders(): void
+    {
+        $student = User::where('role', 'student')->firstOrFail();
+
+        $this->actingAs($student)->get(route('admin.sliders.index'))->assertForbidden();
+        $this->actingAs($student)->post(route('admin.sliders.store'), [
+            'title' => 'Forbidden slide',
+            'button_url' => '/courses',
+            'theme' => 'emerald',
+            'is_active' => '1',
+        ])->assertForbidden();
+
+        $this->assertSame(0, Slider::count());
+    }
+
+    public function test_homepage_and_dashboard_cta_settings_reject_unsafe_urls(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        foreach ([
+            'homepage_admission_button_url' => 'javascript:alert(1)',
+            'dashboard_banner_button_url' => 'data:text/html,unsafe',
+        ] as $field => $unsafeUrl) {
+            $this->actingAs($admin)->from('/admin/settings')
+                ->post(route('admin.settings.update'), [$field => $unsafeUrl])
+                ->assertRedirect('/admin/settings')
+                ->assertSessionHasErrors($field);
+        }
+    }
+
+    public function test_homepage_cta_settings_accept_safe_internal_and_https_destinations(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_admission_button_url' => '/coaching-admission',
+            'dashboard_banner_button_url' => 'https://example.com/student-help',
+        ])->assertRedirect();
+
+        $this->assertSame('/coaching-admission', Setting::get('homepage_admission_button_url'));
+        $this->assertSame('https://example.com/student-help', Setting::get('dashboard_banner_button_url'));
+    }
+
     public function test_admin_configured_homepage_section_copy_is_rendered(): void
     {
         Setting::set('homepage_latest_title', 'New learning courses this month');
