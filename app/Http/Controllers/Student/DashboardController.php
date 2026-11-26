@@ -107,6 +107,7 @@ class DashboardController extends Controller
             'avatar_url' => 'nullable|url:http,https|max:2048',
         ]);
 
+        $oldPhone = $user->phone;
         $oldAvatar = $user->avatar;
         $replaceAvatar = false;
         if ($request->hasFile('avatar')) {
@@ -117,6 +118,10 @@ class DashboardController extends Controller
             $replaceAvatar = true;
         }
         unset($data['avatar_url']);
+
+        if (array_key_exists('phone', $data) && $data['phone'] !== $oldPhone) {
+            $data['phone_verified_at'] = null;
+        }
 
         $user->update($data);
         if ($replaceAvatar) {
