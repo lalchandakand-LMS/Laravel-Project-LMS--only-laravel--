@@ -133,7 +133,7 @@ class LiveClassController extends Controller
                     'course_id' => $lockedClass->course_id,
                     'batch_id' => $lockedClass->batch_id,
                     'branch_id' => $lockedClass->batch?->branch_id,
-                    'instructor_id' => $lockedClass->course?->instructor_id,
+                    'instructor_id' => $lockedClass->course?->instructor_id ?: $attendanceSession->instructor_id,
                     'topic' => $lockedClass->title,
                     'starts_at' => $lockedClass->starts_at,
                     'ends_at' => $lockedClass->endsAt(),
