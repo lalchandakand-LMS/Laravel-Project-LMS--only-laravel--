@@ -114,6 +114,11 @@ class LiveClassController extends Controller
     {
         $this->authorizeOwner($liveClass);
         abort_unless($liveClass->isCancelled(), 422, 'Only a cancelled class can be rescheduled.');
+        abort_if(
+            $liveClass->attendanceSession()->whereIn('status', ['submitted', 'approved'])->exists(),
+            422,
+            'This class attendance has already been submitted or approved and cannot be rescheduled.'
+        );
 
         $data = $request->validate([
             'starts_at' => ['required', 'date', 'after:now'],
