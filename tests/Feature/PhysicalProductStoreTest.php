@@ -283,7 +283,7 @@ class PhysicalProductStoreTest extends TestCase
         try {
             OrderService::reserveProducts($anotherOrder);
             $this->fail('A second order must not reserve already-held stock.');
-        } catch (\\Illuminate\\Validation\\ValidationException) {
+        } catch (\Illuminate\Validation\ValidationException) {
             $this->assertSame(3, $product->fresh()->reserved_quantity);
         }
 
