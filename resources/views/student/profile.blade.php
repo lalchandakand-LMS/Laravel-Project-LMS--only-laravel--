@@ -8,7 +8,12 @@
         <h3 class="font-bold text-slate-900">Personal information</h3>
         <div class="mt-4 flex items-center gap-4">
             <img src="{{ $user->avatarUrl() }}" class="h-16 w-16 rounded-full object-cover" alt="">
-            <input type="file" name="avatar" class="text-sm">
+            <div class="min-w-0 flex-1">
+                <label class="mb-1 block text-xs font-semibold text-slate-600">Upload profile photo</label>
+                <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="w-full text-sm">
+                <label class="mb-1 mt-2 block text-xs font-semibold text-slate-600">Or photo URL (HTTPS)</label>
+                <input type="url" name="avatar_url" value="{{ old('avatar_url', str_starts_with((string) $user->avatar, 'https://') ? $user->avatar : '') }}" placeholder="https://example.com/profile.jpg" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
         </div>
         <div class="mt-4 space-y-3">
             <div>
