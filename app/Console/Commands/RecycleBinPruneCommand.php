@@ -42,7 +42,11 @@ class RecycleBinPruneCommand extends Command
         'sliders' => Slider::class,
         'menu-items' => MenuItem::class,
         'coupons' => Coupon::class,
+        'posts' => Post::class,
+        'flash-sales' => FlashSale::class,
         'branches' => Branch::class,
+        'batches' => Batch::class,
+        'levels' => Level::class,
     ];
 
     public function handle(): int
@@ -64,6 +68,7 @@ class RecycleBinPruneCommand extends Command
 
                     try {
                         $record->forceDelete();
+                        $this->deleteRecordMedia($record);
                         $deleted++;
                     } catch (Throwable $exception) {
                         report($exception);
@@ -76,6 +81,24 @@ class RecycleBinPruneCommand extends Command
         $this->info("Recycle Bin retention: {$days} days. Permanently removed: {$deleted}. Protected and retained: {$protected}. Failed safely: {$failed}.");
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    private function deleteRecordMedia($record): void
+    {
+        $media = match (true) {
+            $record instanceof User => [['public', $record->avatar]],
+            $record instanceof Course => [['public', $record->thumbnail]],
+            $record instanceof Category => [['public', $record->image]],
+            $record instanceof Lesson => [['local', $record->attachment]],
+            $record instanceof Slider => [['public', $record->image]],
+            $record instanceof Ebook => [['public', $record->cover], ['local', $record->file]],
+            $record instanceof Post => [['public', $record->thumbnail]],
+            default => [],
+        };
+
+        foreach ($media as [$disk, $path]) {
+            delete_stored_media($disk, $path);
+        }
     }
 
     /** Never cascade-delete accounts, financial records, learning history or exam attempts. */
@@ -101,7 +124,9 @@ class RecycleBinPruneCommand extends Command
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
             'coupons' => [['orders', 'coupon_id']],
-            'branches' => [['users', 'branch_id']],
+            'branches' => [['users', 'branch_id'], ['orders', 'branch_id'], ['batches', 'branch_id']],
+            'batches' => [['enrollments', 'batch_id'], ['online_batch_enrollments', 'batch_id'], ['live_classes', 'batch_id']],
+            'levels' => [['courses', 'level_id'], ['batches', 'level_id']],
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };
