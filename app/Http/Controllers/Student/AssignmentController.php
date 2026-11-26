@@ -106,7 +106,7 @@ class AssignmentController extends Controller
         $user = auth()->user();
         abort_unless($this->canAccess($user, $assignment), 404);
         abort_unless($assignment->attachment, 404);
-        if (preg_match('/^https?:\\/\\//i', $assignment->attachment)) {
+        if ((str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
             return redirect()->away($assignment->attachment)->withHeaders([
                 'Cache-Control' => 'private, no-store, max-age=0',
                 'Referrer-Policy' => 'no-referrer',
