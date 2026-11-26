@@ -63,8 +63,15 @@ class EnrollmentController extends Controller
             return $enrollment;
         });
 
+        $onlineEnrollments = $this->onlineBatchQuery($request)->paginate(10, ['*'], 'online_page')->withQueryString();
+        $coachingEnrollments = $this->coachingQuery($request)->paginate(10, ['*'], 'coaching_page')->withQueryString();
+
         return view('admin.enrollments.index', [
             'enrollments' => $enrollments,
+            'onlineEnrollments' => $onlineEnrollments,
+            'coachingEnrollments' => $coachingEnrollments,
+            'onlinePending' => \\App\\Models\\OnlineBatchApplication::where('status', 'pending')->count(),
+            'coachingPending' => \\App\\Models\\CoachingAdmission::where('status', 'pending')->count(),
             'courses' => Course::orderBy('title')->get(['id', 'title']),
             'students' => User::where('role', 'student')->orderBy('name')->get(['id', 'name', 'email', 'branch_id']),
             'batches' => Batch::with('course')->whereNotIn('status', ['cancelled'])->orderBy('name')->get(),
@@ -72,10 +79,15 @@ class EnrollmentController extends Controller
             'statuses' => self::STATUSES,
             'filters' => $request->only(['q', 'status', 'course_id', 'branch_id', 'from', 'to']),
             'stats' => [
-                'total' => Enrollment::count(),
-                'active' => Enrollment::where('status', 'active')->count(),
+                'total' => Enrollment::count() + OnlineBatchEnrollment::count() + CoachingEnrollment::count(),
+                'active' => Enrollment::where('status', 'active')->count()
+                    + OnlineBatchEnrollment::where('status', 'active')->count()
+                    + CoachingEnrollment::where('status', 'active')->count(),
                 'completed' => Enrollment::where('status', 'completed')->count(),
                 'suspended' => Enrollment::where('status', 'suspended')->count(),
+                'course' => Enrollment::count(),
+                'online' => OnlineBatchEnrollment::count(),
+                'coaching' => CoachingEnrollment::count(),
             ],
         ]);
     }
@@ -223,6 +235,42 @@ class EnrollmentController extends Controller
         $this->recordHistory($enrollment, 'cancelled', $before, ['status' => 'cancelled']);
 
         return back()->with('success', 'Enrollment cancelled. Its payment and learning history have been preserved.');
+    }
+
+    private function onlineBatchQuery(Request $request): Builder
+    {
+        return OnlineBatchEnrollment::query()->with(['student.branch', 'course', 'batch.branch', 'application'])
+            ->when($request->filled('q'), function (Builder $query) use ($request) {
+                $term = trim($request->string('q')->toString());
+                $query->where(fn (Builder $search) => $search
+                    ->whereHas('student', fn ($student) => $student->where('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%"))
+                    ->orWhereHas('course', fn ($course) => $course->where('title', 'like', "%{$term}%"))
+                    ->orWhereHas('batch', fn ($batch) => $batch->where('name', 'like', "%{$term}%")));
+            })
+            ->when($request->filled('status'), fn (Builder $query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('course_id'), fn (Builder $query) => $query->where('course_id', $request->integer('course_id')))
+            ->when($request->filled('branch_id'), fn (Builder $query) => $query->whereHas('batch', fn ($batch) => $batch->where('branch_id', $request->integer('branch_id'))))
+            ->when($request->filled('from'), fn (Builder $query) => $query->whereDate('admitted_at', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn (Builder $query) => $query->whereDate('admitted_at', '<=', $request->date('to')))
+            ->latest('admitted_at')->latest('id');
+    }
+
+    private function coachingQuery(Request $request): Builder
+    {
+        return CoachingEnrollment::query()->with(['student.branch', 'course', 'batch.branch', 'admission'])
+            ->when($request->filled('q'), function (Builder $query) use ($request) {
+                $term = trim($request->string('q')->toString());
+                $query->where(fn (Builder $search) => $search
+                    ->whereHas('student', fn ($student) => $student->where('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%"))
+                    ->orWhereHas('course', fn ($course) => $course->where('title', 'like', "%{$term}%"))
+                    ->orWhereHas('batch', fn ($batch) => $batch->where('name', 'like', "%{$term}%")));
+            })
+            ->when($request->filled('status'), fn (Builder $query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('course_id'), fn (Builder $query) => $query->where('course_id', $request->integer('course_id')))
+            ->when($request->filled('branch_id'), fn (Builder $query) => $query->whereHas('batch', fn ($batch) => $batch->where('branch_id', $request->integer('branch_id'))))
+            ->when($request->filled('from'), fn (Builder $query) => $query->whereDate('admitted_at', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn (Builder $query) => $query->whereDate('admitted_at', '<=', $request->date('to')))
+            ->latest('admitted_at')->latest('id');
     }
 
     private function validatedData(Request $request, bool $creating): array
