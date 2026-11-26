@@ -3,7 +3,7 @@
     <a href="{{ route('courses.show', $c->slug) }}" class="relative block aspect-[16/10] overflow-hidden bg-slate-100">
         <img src="{{ $c->thumbnail_url }}" alt="{{ $c->title }}" class="h-full w-full object-cover transition group-hover:scale-105">
         @if($c->has_discount)
-            <span class="absolute left-3 top-3 rounded-md bg-rose-600 px-2 py-1 text-xs font-bold text-white">-{{ $c->discount_percent }}%</span>
+            <span class="absolute left-3 top-3 rounded-md {{ $c->activeFlashSale() ? 'bg-orange-600' : 'bg-rose-600' }} px-2 py-1 text-xs font-bold text-white">{{ $c->activeFlashSale() ? 'FLASH SALE' : '-'.$c->discount_percent.'%' }}</span>
         @endif
         <span class="absolute right-3 top-3 rounded-md bg-white/90 px-2 py-1 text-xs font-semibold capitalize text-slate-700">{{ $c->level }}</span>
     </a>
