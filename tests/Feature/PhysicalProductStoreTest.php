@@ -287,9 +287,11 @@ class PhysicalProductStoreTest extends TestCase
             'phone' => '01712345678',
             'email' => $student->email,
             'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->forceFill([
             'created_at' => now()->subHours(25),
             'updated_at' => now()->subHours(25),
-        ]);
+        ])->save();
         $item = $order->items()->create([
             'item_type' => 'product',
             'item_id' => $product->id,
