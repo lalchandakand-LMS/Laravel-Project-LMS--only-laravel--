@@ -5,7 +5,7 @@
     <div class="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-10">
         <p class="text-xs font-extrabold uppercase tracking-[.2em] text-teal-600">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</p>
         <h1 class="mt-3 text-3xl font-extrabold text-slate-900">{{ $title }}</h1>
-        <p class="mt-3 text-sm text-slate-500">Last reviewed: {{ now()->format('F Y') }}</p>
+        <p class="mt-3 text-sm text-slate-500">Information for learners, parents and website visitors.</p>
         @if ($policy === 'terms')
             <div class="prose prose-slate mt-8 max-w-none">
                 <h2>Using this website and learning platform</h2><p>By accessing this website or using an account, you agree to use the platform lawfully and to provide accurate account information. Keep your login credentials secure and notify the center if you suspect unauthorized access.</p>
