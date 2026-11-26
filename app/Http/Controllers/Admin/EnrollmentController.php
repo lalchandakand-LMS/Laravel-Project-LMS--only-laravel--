@@ -267,7 +267,7 @@ class EnrollmentController extends Controller
             $occupied = $batch->enrollments()->where('status', 'active')
                 ->when($current, fn ($query) => $query->where('id', '!=', $current->id))
                 ->count();
-            if ($occupied >= $batch->capacity && (! $current || (int) $current->batch_id !== (int) $batch->id)) {
+            if ($occupied >= $batch->capacity) {
                 abort(422, 'This batch has reached its capacity.');
             }
         }
