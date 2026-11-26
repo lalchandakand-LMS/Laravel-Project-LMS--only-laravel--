@@ -47,7 +47,7 @@ class BlogPostManagementTest extends TestCase
         $this->assertFalse($post->fresh()->is_published);
         $this->get(route('blog.show', $post->fresh()))->assertNotFound();
 
-        $this->actingAs($admin)->delete(route('admin.posts.destroy', $post))->assertRedirect();
+        $this->actingAs($admin)->delete(route('admin.posts.destroy', $post->fresh()))->assertRedirect();
         $this->assertSoftDeleted('posts', ['id' => $post->id]);
     }
 
