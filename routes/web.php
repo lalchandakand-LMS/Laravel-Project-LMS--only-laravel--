@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Branch;
 use App\Http\Controllers\Guardian;
@@ -60,6 +64,21 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:5,1')->name('password.update');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', fn () => auth()->user()->hasVerifiedEmail()
+        ? redirect()->intended(auth()->user()->dashboardRoute())
+        : view('auth.verify-email'))->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')->name('verification.send');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 Route::middleware('auth')->group(function () {
