@@ -299,10 +299,8 @@ class OrderController extends Controller
     {
         $data = $request->validate(['status' => 'required|in:pending,paid,failed,cancelled']);
 
-        $recordedPayment = null;
-
         try {
-            DB::transaction(function () use ($request, $order, $data, &$recordedPayment) {
+            DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
                 if (in_array($data['status'], ['paid', 'failed', 'cancelled'], true)
@@ -495,8 +493,10 @@ class OrderController extends Controller
             throw ValidationException::withMessages(['reference' => 'This receipt/reference number is already recorded.']);
         }
 
+        $recordedPayment = null;
+
         try {
-            DB::transaction(function () use ($request, $order, $data) {
+            DB::transaction(function () use ($request, $order, $data, &$recordedPayment) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
                 if (! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
