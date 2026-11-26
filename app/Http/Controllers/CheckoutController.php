@@ -8,7 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Services\OrderService;
-use App\Services\Payments\BkashTokenizedCheckoutAdapter;
+use App\Services\Payments\BkashCheckoutAdapter;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,7 +139,7 @@ class CheckoutController extends Controller
             'order' => $order->load('items', 'payments'),
             'branch' => $branch,
             'enabledMethods' => $enabledMethods,
-            'bkashReady' => $order->user_id === auth()->id() && ! app()->environment('production') && app(BkashTokenizedCheckoutAdapter::class)->isConfigured(),
+            'bkashReady' => $order->user_id === auth()->id() && ! app()->environment('production') && app(BkashCheckoutAdapter::class)->isConfigured(),
             'paymentNumbers' => [
                 'bkash' => \App\Models\Setting::get('bkash_number', ''),
                 'nagad' => \App\Models\Setting::get('nagad_number', ''),
