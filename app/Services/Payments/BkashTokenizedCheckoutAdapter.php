@@ -75,10 +75,7 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
             throw ValidationException::withMessages(['payment' => 'The bKash callback did not include a valid payment reference.']);
         }
 
-        $callbackStatus = strtolower((string) ($request->input('status') ?: $request->query('status')));
-        if ($callbackStatus !== '' && ! in_array($callbackStatus, ['success', 'completed'], true)) {
-            return ['status' => 'failed', 'payment_id' => $paymentId, 'reason' => 'The customer did not complete the bKash checkout.'];
-        }
+        // Ignore browser-supplied status. The provider-side execute/query result is authoritative.
 
         // Execute finalizes the provider-side session. If it reports an already
         // executed/uncertain result, the independent status query is authoritative.
