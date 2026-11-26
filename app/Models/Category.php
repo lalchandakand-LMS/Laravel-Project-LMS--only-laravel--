@@ -32,12 +32,14 @@ class Category extends Model
     public function descendants()
     {
         $ids = collect();
-        $frontier = collect([$this->id]);
+        $visited = collect([$this->id]);
+        $frontier = $visited;
         while ($frontier->isNotEmpty()) {
             $next = self::whereIn('parent_id', $frontier)
-                ->whereNotIn('id', $ids->push($this->id))
+                ->whereNotIn('id', $visited)
                 ->pluck('id');
             $ids = $ids->merge($next);
+            $visited = $visited->merge($next);
             $frontier = $next;
         }
         return self::whereIn('id', $ids);
