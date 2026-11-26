@@ -76,6 +76,7 @@ class Course extends Model
         }
         $categoryIds = array_values(array_unique($categoryIds));
 
+        $regularDiscountedPrice = (float) ($this->discount_price ?? $this->price);
         $sale = FlashSale::currentlyRunning()
             ->where(function ($query) use ($categoryIds) {
                 $query->whereHas('courses', fn ($courses) => $courses->where('courses.id', $this->id));
@@ -84,6 +85,7 @@ class Course extends Model
                 }
             })
             ->get()
+            ->filter(fn (FlashSale $candidate) => $candidate->discountedPrice((float) $this->price) < $regularDiscountedPrice)
             ->sortBy(fn (FlashSale $candidate) => $candidate->discountedPrice((float) $this->price))
             ->first();
 
