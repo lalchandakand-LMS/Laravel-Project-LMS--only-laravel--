@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Notifications\Channels\MiMSmsChannel;
+use App\Notifications\Channels\QueuedMailChannel;
 
 class LiveClassChanged extends Notification
 {
@@ -25,7 +26,7 @@ class LiveClassChanged extends Notification
         if (config('live_classes.email_notifications')
             && ! in_array($mailer, ['log', 'array'], true)
             && filled($notifiable->routeNotificationFor('mail'))) {
-            $channels[] = 'mail';
+            $channels[] = QueuedMailChannel::class;
         }
 
         if (config('live_classes.sms_notifications') && filled($notifiable->phone)) {
