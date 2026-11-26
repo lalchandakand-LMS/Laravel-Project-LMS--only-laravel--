@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\StudentFeeInvoice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class FinanceController extends Controller
@@ -47,14 +48,44 @@ class FinanceController extends Controller
             ->with(['student', 'coachingBatch'])
             ->latest()->get();
 
-        $invoiceTotals = StudentFeeInvoice::with(['payments', 'creditApplications'])
-            ->where('branch_id', $branch->id)->get();
+        // Aggregate financial totals in SQL instead of loading every invoice/order
+        // and its ledger rows into PHP. This keeps the dashboard bounded as branches grow.
+        $invoicePayments = DB::table('student_fee_payments')
+            ->select('invoice_id')
+            ->selectRaw('SUM(applied_amount) as paid_total')
+            ->groupBy('invoice_id');
+        $invoiceCredits = DB::table('student_fee_credit_applications')
+            ->select('invoice_id')
+            ->selectRaw('SUM(amount) as credit_total')
+            ->groupBy('invoice_id');
+        $invoiceTotals = DB::table('student_fee_invoices as invoices')
+            ->leftJoinSub($invoicePayments, 'fee_payments', fn ($join) => $join->on('fee_payments.invoice_id', '=', 'invoices.id'))
+            ->leftJoinSub($invoiceCredits, 'fee_credits', fn ($join) => $join->on('fee_credits.invoice_id', '=', 'invoices.id'))
+            ->where('invoices.branch_id', $branch->id)
+            ->selectRaw('COALESCE(SUM(COALESCE(fee_payments.paid_total, 0) + COALESCE(fee_credits.credit_total, 0)), 0) as collected')
+            ->selectRaw('COALESCE(SUM(CASE WHEN invoices.amount - invoices.discount - COALESCE(fee_payments.paid_total, 0) - COALESCE(fee_credits.credit_total, 0) > 0 THEN invoices.amount - invoices.discount - COALESCE(fee_payments.paid_total, 0) - COALESCE(fee_credits.credit_total, 0) ELSE 0 END), 0) as due')
+            ->first();
 
-        $coachingCollected = $invoiceTotals->sum(fn ($invoice) => $invoice->paidAmount());
-        $coachingDue = $invoiceTotals->sum(fn ($invoice) => $invoice->dueAmount());
-        $orderDue = Order::where('branch_id', $branch->id)
-            ->whereIn('status', ['pending', 'partially_paid'])
-            ->get()->sum(fn (Order $order) => $order->dueAmount());
+        $coachingCollected = (float) ($invoiceTotals->collected ?? 0);
+        $coachingDue = (float) ($invoiceTotals->due ?? 0);
+
+        $verifiedPayments = DB::table('payments')
+            ->select('order_id')
+            ->where('status', 'verified')
+            ->selectRaw('SUM(amount) as received_total')
+            ->groupBy('order_id');
+        $orderAdjustments = DB::table('payment_adjustments')
+            ->select('order_id')
+            ->selectRaw("SUM(CASE WHEN type = 'refund' THEN amount ELSE 0 END) as refund_total")
+            ->selectRaw("SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as credit_total")
+            ->groupBy('order_id');
+        $orderDue = DB::table('orders')
+            ->leftJoinSub($verifiedPayments, 'verified_payments', fn ($join) => $join->on('verified_payments.order_id', '=', 'orders.id'))
+            ->leftJoinSub($orderAdjustments, 'order_adjustments', fn ($join) => $join->on('order_adjustments.order_id', '=', 'orders.id'))
+            ->where('orders.branch_id', $branch->id)
+            ->whereIn('orders.status', ['pending', 'partially_paid'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN orders.total - COALESCE(verified_payments.received_total, 0) + COALESCE(order_adjustments.refund_total, 0) - COALESCE(order_adjustments.credit_total, 0) > 0 THEN orders.total - COALESCE(verified_payments.received_total, 0) + COALESCE(order_adjustments.refund_total, 0) - COALESCE(order_adjustments.credit_total, 0) ELSE 0 END), 0) as due')
+            ->value('due');
 
         $totals = [
             'collected' => $branch->revenue(),
