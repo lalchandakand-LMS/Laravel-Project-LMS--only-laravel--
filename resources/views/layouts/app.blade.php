@@ -23,7 +23,7 @@
     @include('partials.assets')
     <style>
         :root {
-            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) && strtolower((string) setting('site_primary_color')) !== '#06b6d4' ? setting('site_primary_color') : '#06b6d4' }};
+            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) && strtolower((string) setting('site_primary_color')) !== '#ea580c' ? setting('site_primary_color') : '#06b6d4' }};
             --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) && strtolower((string) setting('site_secondary_color')) !== '#9a3412' ? setting('site_secondary_color') : '#0d9488' }};
         }
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
