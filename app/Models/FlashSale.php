@@ -29,6 +29,11 @@ class FlashSale extends Model
         return $this->belongsToMany(Category::class, 'flash_sale_categories');
     }
 
+    public function ebooks()
+    {
+        return $this->belongsToMany(Ebook::class, 'flash_sale_ebooks');
+    }
+
     public function scopeCurrentlyRunning(Builder $query): Builder
     {
         return $query->where('is_active', true)
