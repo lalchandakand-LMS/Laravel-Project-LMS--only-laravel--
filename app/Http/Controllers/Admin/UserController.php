@@ -74,7 +74,8 @@ class UserController extends Controller
     {
         return view('admin.users.show', [
             'user' => $user->load([
-                'branch', 'studentProfile', 'staffProfile', 'enrollments.course',
+                'branch', 'studentProfile.documents', 'studentProfile.attendanceRecords.session',
+                'staffProfile.documents', 'staffProfile.payrolls.paidBy', 'staffProfile.attendances', 'enrollments.course',
                 'orders.items', 'examAttempts.exam', 'certificates.course',
                 'children', 'guardians', 'courses',
             ]),
