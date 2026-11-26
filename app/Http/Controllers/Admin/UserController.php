@@ -186,6 +186,10 @@ class UserController extends Controller
             'is_active' => $request->boolean('is_active'),
         ];
 
+        if ($user && array_key_exists('phone', $data) && $data['phone'] !== $user->phone) {
+            $account['phone_verified_at'] = null;
+        }
+
         if (filled($data['password'] ?? null)) {
             $account['password'] = $data['password'];
         }
