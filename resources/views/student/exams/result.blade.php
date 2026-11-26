@@ -16,14 +16,14 @@
                     <p class="mt-2 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">AWAITING MANUAL REVIEW · provisional MCQ score</p>
                 @else
                     <p class="mt-2 inline-block rounded-full px-3 py-1 text-xs font-bold {{ $passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                        {{ $passed ? 'PASSED' : 'FAILED' }} · pass marks {{ $exam->pass_marks }}
+                        {{ $passed ? 'PASSED' : 'FAILED' }} · pass marks {{ $attempt->passMarksRequired() }}
                     </p>
                 @endif
             </div>
             <a href="{{ route('student.exams.show', $exam) }}" class="ml-auto rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Back to exam</a>
         </div>
         <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            @foreach ([['Score', $attempt->score], ['Correct', $attempt->correct_count], ['Wrong', $attempt->wrong_count], ['Total marks', $exam->total_marks]] as [$l, $v])
+            @foreach ([['Score', $attempt->score], ['Correct', $attempt->correct_count], ['Wrong', $attempt->wrong_count], ['Total marks', $attempt->max_score ?? $exam->total_marks]] as [$l, $v])
                 <div class="rounded-xl bg-slate-50 p-3 text-center">
                     <p class="text-lg font-extrabold text-slate-900">{{ $v }}</p>
                     <p class="text-xs text-slate-500">{{ $l }}</p>
