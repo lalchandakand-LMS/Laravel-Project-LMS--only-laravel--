@@ -1,20 +1,20 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\Certificate;
-use App\\Models\\Course;
-use App\\Models\\Enrollment;
-use App\\Models\\Lesson;
-use App\\Models\\LessonProgress;
-use App\\Models\\Order;
-use App\\Models\\Section;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Http\\UploadedFile;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Storage;
-use Tests\\TestCase;
+use App\Models\Certificate;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Lesson;
+use App\Models\LessonProgress;
+use App\Models\Order;
+use App\Models\Section;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class CourseArchiveRestoreTest extends TestCase
 {
