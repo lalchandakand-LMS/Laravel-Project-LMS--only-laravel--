@@ -258,6 +258,17 @@ class OrderController extends Controller
                     }
 
                     OrderService::fulfill($lockedOrder);
+                }
+
+                if ($data['status'] === 'paid') {
+                    $lockedOrder->payments()
+                        ->where('status', 'pending')
+                        ->update([
+                            'status' => 'rejected',
+                            'verified_by' => $request->user()->id,
+                            'verified_at' => now(),
+                            'rejection_reason' => 'Automatically closed because the order was marked paid.',
+                        ]);
 
                     return;
                 }
