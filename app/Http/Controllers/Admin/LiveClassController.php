@@ -101,6 +101,14 @@ class LiveClassController extends Controller
         $previousDuration = (int) $liveClass->duration_minutes;
         $previousCourseId = (int) $liveClass->course_id;
         $previousBatchId = $liveClass->batch_id ? (int) $liveClass->batch_id : null;
+        $previousPublished = (bool) $liveClass->is_published;
+        $previousDetails = [
+            'title' => $liveClass->title,
+            'platform' => $liveClass->platform,
+            'meeting_url' => $liveClass->meeting_url,
+            'description' => $liveClass->description,
+            'recording_url' => $liveClass->recording_url,
+        ];
 
         $updated = DB::transaction(function () use ($request, $liveClass, $data) {
             $lockedClass = LiveClass::query()->lockForUpdate()->findOrFail($liveClass->id);
@@ -150,8 +158,24 @@ class LiveClassController extends Controller
             || $previousCourseId !== (int) $updated->course_id
             || $previousBatchId !== ($updated->batch_id ? (int) $updated->batch_id : null);
 
-        if (! $updated->isCancelled() && $updated->is_published && $scheduleOrAudienceChanged) {
-            $this->notifyStudents($updated, 'rescheduled');
+        $detailsChanged = $previousDetails !== [
+            'title' => $updated->title,
+            'platform' => $updated->platform,
+            'meeting_url' => $updated->meeting_url,
+            'description' => $updated->description,
+            'recording_url' => $updated->recording_url,
+        ];
+
+        $notificationEvent = match (true) {
+            $previousPublished && ! $updated->is_published => 'unpublished',
+            ! $previousPublished && $updated->is_published => 'scheduled',
+            $updated->is_published && $scheduleOrAudienceChanged => 'rescheduled',
+            $updated->is_published && $detailsChanged => 'updated',
+            default => null,
+        };
+
+        if (! $updated->isCancelled() && $notificationEvent !== null) {
+            $this->notifyStudents($updated, $notificationEvent);
         }
 
         return redirect()->route('admin.live-classes.index')->with('success', 'Live class updated.');
