@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\OrderService;
-use App\Services\Payments\BkashTokenizedCheckoutAdapter;
+use App\Services\Payments\BkashCheckoutAdapter;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ use Throwable;
 
 class BkashPaymentController extends Controller
 {
-    public function initiate(Request $request, Order $order, BkashTokenizedCheckoutAdapter $adapter)
+    public function initiate(Request $request, Order $order, BkashCheckoutAdapter $adapter)
     {
         abort_unless($order->user_id === $request->user()->id, 403);
         abort_unless($order->branch && $order->branch->is_active, 403);
@@ -160,7 +160,7 @@ class BkashPaymentController extends Controller
 
         $sameEvent = ($result['status'] ?? null) === 'success'
             && ($result['transaction_id'] ?? '') === (string) $notification['trxID']
-            && ($result['invoice'] ?? '') === (string) $notification['merchantInvoiceNumber']
+            && (blank($result['invoice'] ?? null) || ($result['invoice'] ?? '') === (string) $notification['merchantInvoiceNumber'])
             && strtoupper((string) ($result['currency'] ?? '')) === 'BDT'
             && strtoupper((string) ($notification['currency'] ?? '')) === 'BDT'
             && round((float) ($result['amount'] ?? 0), 2) === round((float) ($notification['amount'] ?? 0), 2);
@@ -168,6 +168,7 @@ class BkashPaymentController extends Controller
         if (! $sameEvent) {
             return response()->noContent();
         }
+        $result['invoice'] = (string) $notification['merchantInvoiceNumber'];
 
         $order = Order::where('order_no', $result['invoice'])->first();
         if (! $order) {
