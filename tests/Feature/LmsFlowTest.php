@@ -39,8 +39,8 @@ class LmsFlowTest extends TestCase
             ->assertOk()
             ->assertSee("Alom's English Center")
             ->assertSee('Choose your learning path')
-            ->assertSee('Featured courses')
-            ->assertSee('Latest courses')
+            ->assertSee('Online Batches are ongoing!')
+            ->assertSee('See the stats!')
             ->assertSee('Main navigation')
             ->assertSee('Learn')
             ->assertSee('Instructors')
@@ -112,7 +112,12 @@ class LmsFlowTest extends TestCase
             'starts_at' => now()->addDays(2),
             'is_published' => true,
         ]);
-        Setting::set('homepage_board_results_body', 'Verified board result: 10 students achieved GPA 5.');
+        Setting::set('homepage_show_live_classes', '1');
+        Setting::set('homepage_show_exams', '1');
+        Setting::set('homepage_show_teachers', '1');
+        Setting::set('homepage_show_board_results', '1');
+        Setting::set('homepage_show_admission', '1');
+                Setting::set('homepage_board_results_body', 'Verified board result: 10 students achieved GPA 5.');
         Setting::set('homepage_board_results_year', '2026');
 
         $this->get('/')
