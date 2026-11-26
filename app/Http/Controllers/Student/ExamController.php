@@ -244,6 +244,7 @@ class ExamController extends Controller
     public function result(ExamAttempt $attempt)
     {
         $this->authorizeAttempt($attempt);
+        $this->prepareAttemptQuestions($attempt);
 
         return view('student.exams.result', [
             'attempt' => $attempt->load('exam.course', 'questions.options'),
