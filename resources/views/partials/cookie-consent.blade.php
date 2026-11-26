@@ -1,6 +1,7 @@
 @php
     $gaMeasurementId = \App\Models\Setting::get('ga_measurement_id');
     $metaPixelId = \App\Models\Setting::get('meta_pixel_id');
+    $gtmContainerId = \App\Models\Setting::get('gtm_container_id');
 @endphp
 <div id="aec-cookie-consent"
      class="fixed inset-x-3 bottom-3 z-[10000] mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
