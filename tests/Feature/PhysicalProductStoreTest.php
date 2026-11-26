@@ -372,6 +372,48 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertFalse($item->fresh()->stock_reserved);
     }
 
+    public function test_admin_cancellation_releases_reservations_and_reopening_reserves_again(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Reopen Stock Book',
+            'price' => 300,
+            'stock_quantity' => 3,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 300,
+            'discount' => 0,
+            'total' => 300,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 300,
+            'qty' => 1,
+        ]);
+        OrderService::reserveProducts($order);
+
+        $this->actingAs($admin)
+            ->post(route('admin.orders.status', $order->order_no), ['status' => 'cancelled'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame(0, $product->fresh()->reserved_quantity);
+        $this->assertSame('cancelled', $order->fresh()->status);
+
+        $this->post(route('admin.orders.status', $order->order_no), ['status' => 'pending'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame(1, $product->fresh()->reserved_quantity);
+        $this->assertSame('pending', $order->fresh()->status);
+    }
+
     public function test_admin_cannot_reduce_total_stock_below_reserved_quantity(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
