@@ -19,7 +19,7 @@
 
 @if ($viewMode === 'calendar')
     <div class="space-y-3">
-        @foreach (\\Carbon\\CarbonPeriod::create($calendarMonth->copy()->startOfMonth(), $calendarMonth->copy()->endOfMonth()) as $day)
+        @foreach (\Carbon\CarbonPeriod::create($calendarMonth->copy()->startOfMonth(), $calendarMonth->copy()->endOfMonth()) as $day)
             @php($dayClasses = $calendarClasses->get($day->toDateString(), collect()))
             <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
                 <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
