@@ -136,7 +136,7 @@ class DashboardController extends Controller
 
         try {
             DB::transaction(fn () => $user->update($data));
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($storedAvatar) {
                 delete_stored_media('public', $storedAvatar);
             }
