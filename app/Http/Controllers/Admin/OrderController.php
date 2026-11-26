@@ -458,7 +458,22 @@ class OrderController extends Controller
     public function paymentProof(Payment $payment): BinaryFileResponse
     {
         abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
-        return response()->file(Storage::disk('local')->path($payment->proof_path));
+
+        // Treat user-supplied proof as an untrusted attachment, never inline active content.
+        $response = response()->download(
+            Storage::disk('local')->path($payment->proof_path),
+            basename($payment->proof_path),
+            [
+                'X-Content-Type-Options' => 'nosniff',
+                'Referrer-Policy' => 'no-referrer',
+            ]
+        );
+
+        $response->setPrivate();
+        $response->setMaxAge(0);
+        $response->headers->addCacheControlDirective('no-store');
+
+        return $response;
     }
 
     private function isTransactionReferenceConflict(QueryException $exception): bool
