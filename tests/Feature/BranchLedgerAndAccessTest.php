@@ -20,6 +20,7 @@ use App\Models\StudentFeeCredit;
 use App\Models\StudentFeeCreditApplication;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class BranchLedgerAndAccessTest extends TestCase
@@ -69,7 +70,7 @@ class BranchLedgerAndAccessTest extends TestCase
 
         $student->update(['branch_id' => $secondBranch->id]);
 
-        $this->assertSame(950.0, $firstBranch->fresh()->revenue());
+        $this->assertSame(900.0, $firstBranch->fresh()->revenue());
         $this->assertSame(500.0, $secondBranch->fresh()->revenue());
     }
 
@@ -433,4 +434,73 @@ class BranchLedgerAndAccessTest extends TestCase
             ->assertViewHas('stats', fn (array $stats) => $stats['students'] === 1
                 && $stats['pending'] === 825.0);
     }
+
+    public function test_branch_finance_revenue_excludes_internal_credit_transfers(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $branch = $this->branch('CASH-NET');
+        $order = $this->order($student, $branch, 1000);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'amount' => 1000,
+            'status' => 'verified',
+        ]);
+        PaymentAdjustment::create([
+            'order_id' => $order->id,
+            'payment_id' => $payment->id,
+            'type' => 'refund',
+            'amount' => 100,
+            'reason' => 'Refund reduces cash collected.',
+        ]);
+        PaymentAdjustment::create([
+            'order_id' => $order->id,
+            'type' => 'credit',
+            'amount' => 200,
+            'reason' => 'Internal transfer; not new cash received.',
+        ]);
+
+        $this->assertSame(900.0, $branch->fresh()->revenue());
+    }
+
+    public function test_branch_manager_can_view_only_payment_proofs_for_their_own_branch(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('payment-proofs/own-branch.pdf', 'own branch proof');
+        Storage::disk('local')->put('payment-proofs/other-branch.pdf', 'other branch proof');
+
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $ownBranch = $this->branch('PROOF-OWN', $manager);
+        $manager->update(['branch_id' => $ownBranch->id]);
+        $otherBranch = $this->branch('PROOF-OTHER');
+        $ownStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $ownBranch->id]);
+        $otherStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $otherBranch->id]);
+
+        $ownPayment = Payment::create([
+            'order_id' => $this->order($ownStudent, $ownBranch)->id,
+            'gateway' => 'bank',
+            'transaction_id' => 'OWN-BRANCH-PROOF',
+            'amount' => 500,
+            'status' => 'pending',
+            'proof_path' => 'payment-proofs/own-branch.pdf',
+        ]);
+        $otherPayment = Payment::create([
+            'order_id' => $this->order($otherStudent, $otherBranch)->id,
+            'gateway' => 'bank',
+            'transaction_id' => 'OTHER-BRANCH-PROOF',
+            'amount' => 500,
+            'status' => 'pending',
+            'proof_path' => 'payment-proofs/other-branch.pdf',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('branch.finance.payments.proof', $ownPayment))
+            ->assertOk()
+            ->assertDownload('own-branch.pdf');
+
+        $this->actingAs($manager)
+            ->get(route('branch.finance.payments.proof', $otherPayment))
+            ->assertNotFound();
+    }
+
 }

@@ -77,12 +77,9 @@ class Branch extends Model
             ->whereHas('order', $branchOrders)
             ->sum('amount');
 
-        $credits = PaymentAdjustment::query()
-            ->where('type', 'credit')
-            ->whereHas('order', $branchOrders)
-            ->sum('amount');
-
-        return max(0, round((float) $received - (float) $refunds + (float) $credits, 2));
+        // Credit adjustments move existing value between balances; they are
+        // not new cash receipts and must not inflate branch revenue.
+        return max(0, round((float) $received - (float) $refunds, 2));
     }
 
     public function studentCount(): int
