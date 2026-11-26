@@ -126,4 +126,26 @@ class AdminPaymentMethodManagementTest extends TestCase
 
         $this->assertNull(Setting::get('payment_gateway_credentials.bkash'));
     }
+    public function test_live_gateway_mode_is_rejected_until_provider_adapter_is_certified(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        $this->actingAs($admin)->post(route('admin.payment-methods.update'), [
+            'methods' => ['bkash'],
+            'providers' => [
+                'bkash' => [
+                    'mode' => 'live',
+                    'credentials' => [
+                        'app_key' => 'live-key-must-not-save',
+                        'app_secret' => 'live-secret-must-not-save',
+                    ],
+                ],
+            ],
+        ])->assertSessionHasErrors('providers.bkash.mode');
+
+        $this->assertNull(Setting::get('payment_gateway_credentials.bkash'));
+        $this->assertNull(Setting::get('payment_methods.global_enabled'));
+    }
+
+
 }
