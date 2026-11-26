@@ -83,6 +83,7 @@ class ExamResultController extends Controller
             );
         });
         $finalizedAttempts = (clone $finalized)->get();
+        $reviewedTotal = $finalizedAttempts->count();
         $passed = $finalizedAttempts->filter(fn ($attempt) => $attempt->isPassed())->count();
         $average = (float) $finalizedAttempts->avg('score');
         $uniqueStudents = (clone $attempts)->distinct('user_id')->count('user_id');
@@ -113,7 +114,7 @@ class ExamResultController extends Controller
         }
 
         return view('admin.exam-results.analytics', compact(
-            'exam', 'total', 'passed', 'pendingReview', 'average', 'uniqueStudents', 'questionStats', 'distribution'
+            'exam', 'total', 'reviewedTotal', 'passed', 'pendingReview', 'average', 'uniqueStudents', 'questionStats', 'distribution'
         ));
     }
 
