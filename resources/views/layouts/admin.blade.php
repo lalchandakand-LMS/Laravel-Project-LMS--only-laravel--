@@ -57,6 +57,7 @@
                 ['admin.reports.index','Reports','▥','admin.reports.*'],
                 ['messages.index','Messages','✉','messages.*'],
                 ['admin.marketing.dashboard','Marketing Dashboard','▦','admin.marketing.dashboard'],
+                ['admin.marketing.dashboard','Marketing Dashboard','◉','admin.marketing.dashboard'],
                 ['admin.marketing.leads.index','Marketing Leads','♧','admin.marketing.leads.*'],
                 ['admin.marketing.campaigns.index','Campaigns','◉','admin.marketing.campaigns.*'],
                 ['admin.seo.index','SEO & Marketing','⌕','admin.seo.*'],
