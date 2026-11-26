@@ -83,6 +83,7 @@
         <h2 class="font-bold text-slate-900">Marketing workspace</h2>
         <p class="mt-1 text-sm text-slate-500">Manage campaign tracking links and follow up with website inquiries.</p>
         <div class="mt-4 flex flex-wrap gap-3">
+            <a href="{{ route('admin.marketing.dashboard') }}" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white">Marketing Dashboard</a>
             <a href="{{ route('admin.marketing.campaigns.index') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Manage Campaigns</a>
             <a href="{{ route('admin.marketing.leads.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">View Leads</a>
         </div>
