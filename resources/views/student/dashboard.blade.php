@@ -5,6 +5,45 @@
 <div class="mb-5"><a href="{{ route('student.attendance') }}" class="inline-flex rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">My attendance report</a></div>
 @include('partials.dashboard-banner')
 
+<div class="mt-6 flex flex-wrap gap-2">
+    <a href="{{ route('student.online-batches') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">💻 Online live batches</a>
+    <a href="{{ route('coaching-fees.student') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">💰 Coaching fee ledger</a>
+    <a href="{{ route('student.attendance') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">📋 Attendance report</a>
+</div>
+
+@if($onlineBatchEnrollments->isNotEmpty())
+<section class="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5">
+    <h3 class="font-bold text-sky-950">Online live-class batches</h3>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        @foreach($onlineBatchEnrollments as $onlineEnrollment)
+        <article class="rounded-xl border border-sky-100 bg-white p-4">
+            <p class="font-bold text-slate-900">{{ $onlineEnrollment->course?->title }}</p>
+            <p class="mt-1 text-sm text-slate-600">{{ $onlineEnrollment->batch?->name }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ $onlineEnrollment->batch?->schedule_days }} {{ $onlineEnrollment->batch?->schedule_time }}</p>
+        </article>
+        @endforeach
+    </div>
+</section>
+@endif
+
+@if($coachingEnrollments->isNotEmpty() || $coachingDue > 0)
+<section class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><h3 class="font-bold text-emerald-950">সরাসরি কোচিং — আপনার Learning Path</h3><p class="mt-1 text-sm text-emerald-900">একই শিক্ষার্থী অ্যাকাউন্টে অনলাইন কোর্স ও শাখাভিত্তিক কোচিংয়ের অগ্রগতি।</p></div>
+        <div class="text-right"><p class="text-xs text-emerald-800">Coaching fee due</p><p class="text-xl font-black text-emerald-950">৳{{ number_format($coachingDue,2) }}</p></div>
+    </div>
+    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        @foreach($coachingEnrollments as $coachingEnrollment)
+        <article class="rounded-xl border border-emerald-100 bg-white p-4">
+            <p class="font-bold text-slate-900">{{ $coachingEnrollment->course?->title }}</p>
+            <p class="mt-1 text-sm text-slate-600">{{ $coachingEnrollment->batch?->name }} · {{ $coachingEnrollment->batch?->branch?->name }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ $coachingEnrollment->batch?->schedule_days }} {{ $coachingEnrollment->batch?->schedule_time }}</p>
+        </article>
+        @endforeach
+    </div>
+</section>
+@endif
+
 <div class="rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-900 p-6 text-white">
     <h2 class="text-2xl font-extrabold">Hello, {{ auth()->user()->name }} 👋</h2>
     <p class="mt-1 text-slate-300">Keep going — you're {{ $stats['in_progress'] }} course(s) in progress.</p>

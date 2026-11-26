@@ -34,13 +34,22 @@
                 <div class="rounded-lg bg-slate-50 py-2"><p class="text-base font-black text-slate-800">{{ $row['avg_score'] }}%</p><p class="text-slate-500">Avg. score</p></div>
                 <div class="rounded-lg bg-slate-50 py-2"><p class="text-base font-black text-slate-800">{{ $row['exams'] }}</p><p class="text-slate-500">Exams taken</p></div>
                 <div class="rounded-lg bg-slate-50 py-2"><p class="text-base font-black text-slate-800">{{ $row['certificates'] }}</p><p class="text-slate-500">Certificates</p></div>
+                <div class="rounded-lg bg-slate-50 py-2"><p class="text-base font-black text-slate-800">{{ $row['coaching_batches'] }}</p><p class="text-slate-500">Coaching batches</p></div>
             </div>
+
+            @if ($row['coaching_due'] > 0)
+                <p class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Coaching fee due: {{ $cur }}{{ number_format($row['coaching_due'],2) }}</p>
+            @endif
 
             @if ($row['due'] > 0)
                 <p class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Due payment: {{ $cur }}{{ number_format($row['due']) }}</p>
             @endif
 
             <a href="{{ route('guardian.child', $child) }}" class="mt-4 block rounded-lg bg-emerald-700 px-4 py-2 text-center text-sm font-bold text-white">Full report card</a>
+            <div class="mt-2 grid grid-cols-2 gap-2">
+                <a href="{{ route('guardian.child.attendance',$child) }}" class="rounded-lg border px-2 py-2 text-center text-xs font-bold">Attendance</a>
+                <a href="{{ route('guardian.child.coaching-fees',$child) }}" class="rounded-lg border px-2 py-2 text-center text-xs font-bold">Coaching fees</a>
+            </div>
         </div>
     @empty
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 md:col-span-2 xl:col-span-3">

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Guardian;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\CoachingEnrollment;
+use App\Models\StudentFeeInvoice;
 use App\Models\User;
 
 class DashboardController extends Controller
@@ -16,6 +18,8 @@ class DashboardController extends Controller
         $summary = $children->map(fn (User $child) => [
             'child' => $child,
             'courses' => $child->enrollments()->count(),
+            'coaching_batches' => CoachingEnrollment::where('student_id', $child->id)->where('status', 'active')->count(),
+            'coaching_due' => StudentFeeInvoice::with(['payments', 'creditApplications'])->where('student_id', $child->id)->whereIn('status', ['unpaid', 'partial'])->get()->sum(fn ($invoice) => $invoice->dueAmount()),
             'progress' => $child->overallProgress(),
             'avg_score' => round((float) $child->examAttempts()->avg('score'), 1),
             'exams' => $child->examAttempts()->count(),

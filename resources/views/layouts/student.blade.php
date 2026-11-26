@@ -32,6 +32,8 @@
             $nav = [
                 ['student.dashboard', 'Dashboard', '🏠'],
                 ['student.courses', 'My courses', '📚'],
+                ['student.online-batches', 'Online live batches', '💻'],
+                ['coaching-fees.student', 'Coaching fees', '💰'],
                 ['student.exams.index', 'Exams', '📝'],
                 ['student.ebooks', 'E-books', '📖'],
                 ['student.certificates', 'Certificates', '🏅'],

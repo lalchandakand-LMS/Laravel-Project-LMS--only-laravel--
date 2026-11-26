@@ -1,0 +1,9 @@
+@extends('layouts.admin')
+@section('title','Online Batch Applications')
+@section('heading','Online Live Class Applications')
+@section('content')
+<div class="mb-4"><p class="text-sm text-slate-600">অনলাইন ব্যাচের আবেদন। সরাসরি কোচিং ভর্তি ও ভর্তি ফি আলাদা থাকবে।</p></div>
+<div class="overflow-x-auto rounded-2xl border bg-white"><table class="min-w-full text-left text-sm"><thead class="bg-slate-50"><tr><th class="p-3">শিক্ষার্থী</th><th class="p-3">ব্যাচ / কোর্স</th><th class="p-3">আবেদন</th><th class="p-3">স্ট্যাটাস</th><th class="p-3">Action</th></tr></thead><tbody>
+@forelse($applications as $application)<tr class="border-t"><td class="p-3">{{ $application->student?->name }}<div class="text-xs text-slate-500">{{ $application->student?->email }}</div></td><td class="p-3">{{ $application->batch?->name }}<div class="text-xs text-slate-500">{{ $application->course?->title }}</div></td><td class="p-3">{{ $application->created_at->format('d M Y') }}</td><td class="p-3">{{ ucfirst($application->status) }}</td><td class="p-3">@if($application->status==='pending')<form method="POST" action="{{ route('admin.online-batch-applications.approve',$application) }}" class="inline">@csrf<button class="rounded bg-emerald-700 px-3 py-1.5 text-white">Approve</button></form><form method="POST" action="{{ route('admin.online-batch-applications.reject',$application) }}" class="mt-1 inline">@csrf<input name="review_note" required placeholder="কারণ" class="w-24 rounded border-slate-300 text-xs"><button class="rounded bg-rose-700 px-2 py-1.5 text-white">Reject</button></form>@else<span class="text-xs text-slate-500">{{ $application->review_note }}</span>@endif</td></tr>@empty<tr><td colspan="5" class="p-8 text-center text-slate-500">কোনো আবেদন নেই।</td></tr>@endforelse
+</tbody></table></div><div class="mt-4">{{ $applications->links() }}</div>
+@endsection

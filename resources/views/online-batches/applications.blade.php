@@ -1,0 +1,9 @@
+@extends('layouts.app')
+@section('title','অনলাইন লাইভ ক্লাসে আবেদন')
+@section('content')
+<section class="mx-auto max-w-5xl px-4 py-10"><h1 class="text-2xl font-black">অনলাইন লাইভ ক্লাসের ব্যাচে আবেদন</h1><p class="mt-1 text-sm text-slate-600">একই অ্যাকাউন্টে সরাসরি কোচিং ও অনলাইন লাইভ ক্লাস—দুই পথেই যুক্ত হতে পারবেন।</p>
+@if(session('success'))<div class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{{ session('success') }}</div>@endif
+@if($errors->any())<div class="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+<form method="POST" action="{{ route('student.online-batches.apply') }}" class="mt-6 rounded-2xl border bg-white p-5">@csrf<label class="block text-sm font-semibold">অনলাইন ব্যাচ<select name="batch_id" required class="mt-2 w-full rounded-lg border-slate-300"><option value="">ব্যাচ নির্বাচন করুন</option>@foreach($batches as $batch)<option value="{{ $batch->id }}">{{ $batch->name }} — {{ $batch->course?->title }}</option>@endforeach</select></label><label class="mt-4 block text-sm font-semibold">নোট<textarea name="student_note" rows="3" class="mt-1 w-full rounded-lg border-slate-300"></textarea></label><button class="mt-4 rounded-lg bg-emerald-700 px-5 py-2.5 font-bold text-white">আবেদন জমা দিন</button></form>
+<h2 class="mt-8 text-lg font-bold">আমার আবেদন</h2><div class="mt-3 space-y-3">@forelse($applications as $application)<article class="rounded-xl border bg-white p-4"><strong>{{ $application->batch?->name }} — {{ $application->course?->title }}</strong><span class="float-right text-sm">{{ ucfirst($application->status) }}</span>@if($application->review_note)<p class="mt-2 text-xs text-slate-500">{{ $application->review_note }}</p>@endif</article>@empty<p class="text-sm text-slate-500">এখনো আবেদন করেননি।</p>@endforelse</div></section>
+@endsection

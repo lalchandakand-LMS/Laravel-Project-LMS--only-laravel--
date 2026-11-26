@@ -25,10 +25,14 @@ class Batch extends Model
     public function branch() { return $this->belongsTo(Branch::class); }
     public function instructor() { return $this->belongsTo(User::class, 'instructor_id'); }
     public function enrollments() { return $this->hasMany(Enrollment::class); }
+    public function onlineEnrollments() { return $this->hasMany(OnlineBatchEnrollment::class); }
     public function students() { return $this->hasManyThrough(User::class, Enrollment::class, 'batch_id', 'id', 'id', 'user_id'); }
 
     public function activeStudentCount(): int
     {
-        return $this->enrollments()->where('status', 'active')->count();
+        $legacy = $this->enrollments()->where('status', 'active')->pluck('user_id');
+        $online = $this->onlineEnrollments()->where('status', 'active')->pluck('student_id');
+
+        return $legacy->merge($online)->unique()->count();
     }
 }

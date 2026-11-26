@@ -1,0 +1,9 @@
+@extends('layouts.admin')
+@section('title','Coaching Batches')
+@section('heading','সরাসরি কোচিং ব্যাচ')
+@section('content')
+<div class="mb-5 flex justify-between gap-3"><p class="text-sm text-slate-600">শাখাভিত্তিক সরাসরি ক্লাসের ব্যাচ। অনলাইন ব্যাচ থেকে আলাদা।</p><a href="{{ route('admin.coaching-batches.create') }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">নতুন কোচিং ব্যাচ</a></div>
+<div class="overflow-x-auto rounded-2xl border bg-white"><table class="min-w-full text-left text-sm"><thead class="bg-slate-50"><tr><th class="p-3">ব্যাচ</th><th class="p-3">শাখা / কোর্স</th><th class="p-3">ফি</th><th class="p-3">শিক্ষার্থী</th><th class="p-3">স্ট্যাটাস</th><th class="p-3">Action</th></tr></thead><tbody>
+@forelse($batches as $batch)<tr class="border-t"><td class="p-3"><strong>{{ $batch->name }}</strong><div class="text-xs text-slate-500">{{ $batch->code }}</div></td><td class="p-3">{{ $batch->branch?->name }}<div class="text-xs text-slate-500">{{ $batch->course?->title }}</div></td><td class="p-3">ভর্তি ৳{{ number_format($batch->admission_fee,2) }}<div class="text-xs text-slate-500">মাসিক ৳{{ number_format($batch->monthly_fee,2) }}</div></td><td class="p-3">{{ $batch->active_students }} @if($batch->capacity)/ {{ $batch->capacity }}@endif</td><td class="p-3">{{ ucfirst($batch->status) }}</td><td class="p-3"><a class="font-semibold text-emerald-700" href="{{ route('admin.coaching-batches.edit',$batch) }}">Edit</a><form method="POST" action="{{ route('admin.coaching-batches.destroy',$batch) }}" class="inline" onsubmit="return confirm('এই কোচিং ব্যাচটি মুছবেন?')">@csrf @method('DELETE')<button class="ml-3 text-rose-600">Delete</button></form></td></tr>@empty<tr><td colspan="6" class="p-8 text-center text-slate-500">কোনো কোচিং ব্যাচ নেই।</td></tr>@endforelse
+</tbody></table></div><div class="mt-4">{{ $batches->links() }}</div>
+@endsection

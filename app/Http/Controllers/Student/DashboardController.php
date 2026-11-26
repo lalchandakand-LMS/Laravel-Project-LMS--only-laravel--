@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CoachingEnrollment;
+use App\Models\StudentFeeInvoice;
+use App\Models\OnlineBatchEnrollment;
 use App\Models\EbookPurchase;
 use App\Models\Enrollment;
 use App\Models\Exam;
@@ -21,9 +24,20 @@ class DashboardController extends Controller
 
         $inProgress = $enrollments->filter(fn ($e) => $e->course && $e->course->progressFor($user) < 100);
         $completed = $enrollments->filter(fn ($e) => $e->course && $e->course->progressFor($user) >= 100);
+        $onlineBatchEnrollments = OnlineBatchEnrollment::with(['batch', 'course'])
+            ->where('student_id', $user->id)->where('status', 'active')->latest()->get();
+        $coachingEnrollments = CoachingEnrollment::with(['batch.branch', 'course'])
+            ->where('student_id', $user->id)->where('status', 'active')->latest()->get();
+        $coachingInvoices = StudentFeeInvoice::with(['payments', 'creditApplications'])
+            ->where('student_id', $user->id)->whereIn('status', ['unpaid', 'partial'])->latest('issued_at')->get();
+        $coachingDue = round($coachingInvoices->sum(fn ($invoice) => $invoice->dueAmount()), 2);
 
         return view('student.dashboard', [
             'enrollments' => $enrollments->take(6),
+            'onlineBatchEnrollments' => $onlineBatchEnrollments,
+            'coachingEnrollments' => $coachingEnrollments,
+            'coachingInvoices' => $coachingInvoices,
+            'coachingDue' => $coachingDue,
             'continueCourse' => $inProgress->first(),
             'stats' => [
                 'enrolled' => $enrollments->count(),
