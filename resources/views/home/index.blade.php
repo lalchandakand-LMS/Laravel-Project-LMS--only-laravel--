@@ -206,7 +206,7 @@
 
 {{-- STATS BANNER --}}
 @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
-<section style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#047857' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
+<section style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#ea580c' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
     <div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-center text-white sm:grid-cols-4">
         @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']], ['Lessons', $stats['lessons']]] as [$label, $value])
             <div>
