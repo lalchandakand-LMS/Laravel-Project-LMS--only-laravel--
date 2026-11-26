@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class StudentFeeInvoice extends Model
 {
-    protected $fillable = ['invoice_no', 'student_id', 'fee_plan_id', 'course_id', 'batch_id', 'branch_id', 'description', 'issued_at', 'due_at', 'amount', 'discount', 'status', 'created_by'];
+    protected $fillable = ['invoice_no', 'student_id', 'coaching_admission_id', 'fee_plan_id', 'course_id', 'batch_id', 'branch_id', 'description', 'issued_at', 'due_at', 'amount', 'discount', 'status', 'created_by'];
 
     protected $casts = ['issued_at' => 'date', 'due_at' => 'date', 'amount' => 'decimal:2', 'discount' => 'decimal:2'];
 
@@ -18,7 +18,7 @@ class StudentFeeInvoice extends Model
         });
     }
 
-    public function student() { return $this->belongsTo(User::class, 'student_id'); }
+    public function student() { return $this->belongsTo(User::class, 'student_id'); }\n    public function coachingAdmission() { return $this->belongsTo(CoachingAdmission::class, 'coaching_admission_id'); }
     public function plan() { return $this->belongsTo(FeePlan::class, 'fee_plan_id'); }
     public function course() { return $this->belongsTo(Course::class); }
     public function batch() { return $this->belongsTo(Batch::class); }
