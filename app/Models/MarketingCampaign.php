@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Models;
+namespace App\Models;
 
-use Illuminate\\Database\\Eloquent\\Model;
-use Illuminate\\Database\\Eloquent\\SoftDeletes;
-use Illuminate\\Support\\Str;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class MarketingCampaign extends Model
 {
@@ -44,7 +44,7 @@ class MarketingCampaign extends Model
 
     public function trackingUrl(): string
     {
-        $destination = preg_match('/^https?:\\/\\//i', $this->destination_url)
+        $destination = preg_match('/^https?:\/\//i', $this->destination_url)
             ? $this->destination_url
             : url($this->destination_url);
 
