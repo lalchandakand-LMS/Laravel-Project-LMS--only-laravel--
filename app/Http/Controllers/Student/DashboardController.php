@@ -8,7 +8,6 @@ use App\Models\CoachingEnrollment;
 use App\Models\StudentFeeInvoice;
 use App\Models\OnlineBatchEnrollment;
 use App\Models\EbookPurchase;
-use App\Models\Enrollment;
 use App\Models\Exam;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
