@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class SettingController extends Controller
 {
     public const KEYS = [
-        'site_name', 'site_tagline', 'site_email', 'site_phone', 'site_address',
+        'site_name', 'site_tagline', 'site_email', 'site_phone', 'site_address', 'site_primary_color', 'site_secondary_color',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
         'currency', 'certificate_signature', 'about_text',
         'dashboard_banner_title', 'dashboard_banner_subtitle',
@@ -42,6 +42,8 @@ class SettingController extends Controller
             'site_name' => ['sometimes', 'required', 'string', 'max:120'],
             'site_tagline' => ['sometimes', 'nullable', 'string', 'max:255'],
             'site_email' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'site_primary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'site_secondary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'facebook' => ['sometimes', 'nullable', 'url', 'max:2048'],
             'youtube' => ['sometimes', 'nullable', 'url', 'max:2048'],
             'instagram' => ['sometimes', 'nullable', 'url', 'max:2048'],
