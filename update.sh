@@ -3,7 +3,7 @@
 # Alom's English Center LMS - safe update script
 #
 # What it does, in order:
-#   1. makes verified timestamped backups of the database + .env + uploaded files (storage/backups/)
+#   1. makes verified timestamped backups of the database + .env + public and private uploads (storage/backups/)
 #   2. puts the site into maintenance mode
 #   3. installs composer dependencies (skippable)
 #   4. runs ONLY new migrations (php artisan migrate --force) - never a fresh wipe
