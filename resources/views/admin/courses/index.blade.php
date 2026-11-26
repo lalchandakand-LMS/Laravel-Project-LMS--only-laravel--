@@ -46,9 +46,9 @@
                     <td class="px-5 py-3 text-right">
                         <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="text-sm text-slate-600">View</a>
                         <a href="{{ route('admin.courses.edit', $course) }}" class="ml-3 text-sm font-semibold text-emerald-700">Edit</a>
-                        <form method="POST" action="{{ route('admin.courses.destroy', $course) }}" class="inline" onsubmit="return confirm('Delete course and all its lessons?')">
+                        <form method="POST" action="{{ route('admin.courses.destroy', $course) }}" class="inline" onsubmit="return confirm('Archive this course? Student enrollments, payments, progress, certificates and uploaded files will be preserved. You can restore it from the Recycle Bin.')">
                             @csrf @method('DELETE')
-                            <button class="ml-3 text-sm font-semibold text-rose-600">Delete</button>
+                            <button class="ml-3 text-sm font-semibold text-amber-700">Archive</button>
                         </form>
                     </td>
                 </tr>
