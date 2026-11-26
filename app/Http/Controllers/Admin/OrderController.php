@@ -326,12 +326,17 @@ class OrderController extends Controller
                         'verified_at' => now(),
                         'rejection_reason' => $data['rejection_reason'] ?? 'Payment could not be verified.',
                     ]);
-                    $netPaid = $order->amountPaid();
-                    $order->update([
-                        'status' => $netPaid >= $order->total
-                            ? 'paid'
-                            : ($netPaid > 0 ? 'partially_paid' : 'pending'),
-                    ]);
+                    // A rejected submission must not reopen an order that has
+                    // already reached a terminal state (paid, failed, cancelled, refunded).
+                    // Only recalculate status while the order is awaiting settlement.
+                    if (in_array($order->status, ['pending', 'partially_paid'], true)) {
+                        $netPaid = $order->amountPaid();
+                        $order->update([
+                            'status' => $netPaid >= $order->total
+                                ? 'paid'
+                                : ($netPaid > 0 ? 'partially_paid' : 'pending'),
+                        ]);
+                    }
                     return;
                 }
 
