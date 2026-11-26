@@ -1,18 +1,18 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Batch;
-use App\\Models\\Course;
-use App\\Models\\Enrollment;
-use App\\Models\\ExamAttempt;
-use App\\Models\\LiveClass;
-use App\\Models\\Message;
-use App\\Models\\Order;
-use App\\Models\\User;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\DB;
+use App\Http\Controllers\Controller;
+use App\Models\Batch;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\ExamAttempt;
+use App\Models\LiveClass;
+use App\Models\Message;
+use App\Models\Order;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -119,7 +119,7 @@ class DashboardController extends Controller
             return response()->json(['results' => []]);
         }
 
-        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $term).'%';
+        $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $term).'%';
         $results = collect();
 
         User::whereIn('role', ['student', 'instructor'])->where(function ($query) use ($like) {
