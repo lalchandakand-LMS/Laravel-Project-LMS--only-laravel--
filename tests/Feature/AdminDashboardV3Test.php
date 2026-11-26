@@ -159,4 +159,19 @@ class AdminDashboardV3Test extends TestCase
         ]);
     }
 
+    public function test_admin_reports_center_is_available_only_to_admins(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+
+        $this->actingAs($admin)->get(route('admin.reports.index'))
+            ->assertOk()
+            ->assertSee('Academy Reports Center')
+            ->assertSee('Detailed reports')
+            ->assertSee('Payment & Revenue Reports')
+            ->assertSee('Attendance Reports');
+
+        $this->actingAs($student)->get(route('admin.reports.index'))->assertForbidden();
+    }
+
 }
