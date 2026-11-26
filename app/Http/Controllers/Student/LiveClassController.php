@@ -16,6 +16,7 @@ class LiveClassController extends Controller
         $classes = LiveClass::query()
             ->with('course')
             ->where('is_published', true)
+            ->whereNotNull('starts_at')
             ->whereHas('course', function ($course) use ($user) {
                 $course->where('is_published', true);
 
