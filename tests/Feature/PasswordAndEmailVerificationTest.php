@@ -16,6 +16,25 @@ class PasswordAndEmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_new_registration_requires_email_verification_before_entering_the_student_portal(): void
+    {
+        Notification::fake();
+
+        $this->post(route('register'), [
+            'name' => 'New Learner',
+            'email' => 'new.learner@example.com',
+            'password' => 'StrongPass123',
+            'password_confirmation' => 'StrongPass123',
+        ])->assertRedirect(route('verification.notice'));
+
+        $user = User::where('email', 'new.learner@example.com')->firstOrFail();
+        $this->assertTrue($user->email_verification_required);
+        Notification::assertSentTo($user, VerifyEmail::class);
+
+        $this->actingAs($user)->get(route('student.dashboard'))
+            ->assertRedirect(route('verification.notice'));
+    }
+
     public function test_guest_can_request_a_password_reset_link(): void
     {
         Notification::fake();
