@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -52,10 +55,26 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        // Limit failed password attempts per normalized email + client IP. This
+        // avoids a single noisy account blocking every learner behind a shared IP.
+        $throttleKey = Str::transliterate(Str::lower($credentials['email']).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => 'Too many login attempts. Please try again in '.$seconds.' seconds.',
+            ]);
+        }
+
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::hit($throttleKey, 60);
+
             return back()->withErrors(['email' => 'These credentials do not match our records.'])
                 ->onlyInput('email');
         }
+
+        RateLimiter::clear($throttleKey);
 
         if (! Auth::user()->is_active) {
             Auth::logout();
