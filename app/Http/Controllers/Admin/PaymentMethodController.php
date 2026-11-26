@@ -91,6 +91,16 @@ class PaymentMethodController extends Controller
             }
         }
 
+        $bkashBaseUrl = data_get($submittedProviders, 'bkash.credentials.base_url');
+        if (filled($bkashBaseUrl) && ! in_array(rtrim($bkashBaseUrl, '/'), [
+            'https://tokenized.sandbox.bka.sh',
+            'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+        ], true)) {
+            throw ValidationException::withMessages([
+                'providers.bkash.credentials.base_url' => 'Only the official bKash Tokenized Checkout sandbox base URL is accepted.',
+            ]);
+        }
+
         DB::transaction(function () use ($request, $submittedProviders) {
             $enabled = array_values(array_unique($request->input('methods', [])));
             Setting::set('payment_methods.global_enabled', json_encode($enabled, JSON_THROW_ON_ERROR));
