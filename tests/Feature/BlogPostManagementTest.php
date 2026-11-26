@@ -74,6 +74,8 @@ class BlogPostManagementTest extends TestCase
             'price' => 1000,
             'is_published' => true,
         ]);
+        // Public category pages use the course_category many-to-many relation.
+        $publishedCourse->categories()->attach($category->id);
         Course::create([
             'category_id' => $hiddenCategory->id,
             'title' => 'Unpublished Sitemap Course',
