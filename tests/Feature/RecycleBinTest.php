@@ -6,6 +6,8 @@ use App\Models\Slider;
 use App\Models\Course;
 use App\Models\Branch;
 use App\Models\CoachingBatch;
+use App\Models\AttendanceSession;
+use App\Models\LiveClass;
 use App\Models\Lesson;
 use App\Models\Enrollment;
 use App\Models\User;
