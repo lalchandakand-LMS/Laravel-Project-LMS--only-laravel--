@@ -89,7 +89,7 @@ Route::middleware(['auth', 'required.email.verified'])->group(function () {
         ->middleware('throttle:6,1')->name('verification.send');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::post('/account/phone-verification/send', [App\Http\Controllers\PhoneVerificationController::class, 'send'])->middleware('throttle:3,10')->name('account.phone.send');
     Route::post('/account/phone-verification/verify', [App\Http\Controllers\PhoneVerificationController::class, 'verify'])->middleware('throttle:10,10')->name('account.phone.verify');
 });
@@ -97,7 +97,7 @@ Route::middleware('auth')->group(function () {
 /* ------------------------------------------------------------------
  |  AUTHENTICATED (cart / checkout / reviews)
  |------------------------------------------------------------------*/
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add/{type}/{id}', [CartController::class, 'add'])->name('cart.add');
     Route::post('/cart/remove/{key}', [CartController::class, 'remove'])->name('cart.remove');
@@ -185,7 +185,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:student,instructor,a
 /* ------------------------------------------------------------------
  |  ADMIN / INSTRUCTOR PANEL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])->prefix('admin')->name('admin.')->group(function () {
     // Instructors may use the teaching workspace only. The admin dashboard and
     // all organisation, account, finance, and site-wide management stay admin-only.
     Route::middleware('role:admin')->group(function () {
@@ -374,7 +374,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
 /* ------------------------------------------------------------------
  |  TEACHER PORTAL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('teacher.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:instructor,admin'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/', [Teacher\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/courses', [Teacher\DashboardController::class, 'courses'])->name('courses');
@@ -406,7 +406,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
 /* ------------------------------------------------------------------
  |  GUARDIAN PORTAL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('guardian.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:guardian,admin'])->prefix('guardian')->name('guardian.')->group(function () {
     Route::get('/', [Guardian\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/children/{child}', [Guardian\DashboardController::class, 'child'])->name('child');
     Route::get('/children/{child}/attendance', [AttendanceController::class, 'guardianReport'])->name('child.attendance');
@@ -416,7 +416,7 @@ Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('gu
 /* ------------------------------------------------------------------
  |  BRANCH MANAGER PORTAL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/', [Branch\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/people/{type}/create', [Branch\PeopleController::class, 'create'])->whereIn('type', ['student', 'staff'])->name('people.create');
@@ -452,7 +452,7 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
 /* ------------------------------------------------------------------
  |  AI AGENT WORKSPACE
  |------------------------------------------------------------------*/
-Route::middleware('auth')->prefix('ai-agent')->name('ai-agent.')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->prefix('ai-agent')->name('ai-agent.')->group(function () {
     Route::get('/', [AiAgentController::class, 'index'])->name('index');
     Route::post('/', [AiAgentController::class, 'ask'])->middleware('throttle:10,1')->name('ask');
     Route::post('/actions/{proposal}/approve', [AiAgentController::class, 'approve'])->name('approve');
