@@ -258,7 +258,7 @@
             @foreach ($reviewRows as $row)
                 <div class="testimonial-track flex gap-4 overflow-x-auto pb-3">
                     @foreach ($row as $review)
-                        <figure class="testimonial-card min-w-[ min(88vw,340px) ] max-w-[340px] flex-1 rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
+                        <figure class="testimonial-card min-w-[min(88vw,340px)] max-w-[340px] flex-1 rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
                             <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
                             <blockquote class="mt-2 min-h-20 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
                             <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
