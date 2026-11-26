@@ -11,6 +11,21 @@
     <a href="{{ route('student.attendance') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">📋 Attendance report</a>
 </div>
 
+@if($onlineBatchEnrollments->isNotEmpty())
+<section class="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5">
+    <h3 class="font-bold text-sky-950">Online live-class batches</h3>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        @foreach($onlineBatchEnrollments as $onlineEnrollment)
+        <article class="rounded-xl border border-sky-100 bg-white p-4">
+            <p class="font-bold text-slate-900">{{ $onlineEnrollment->course?->title }}</p>
+            <p class="mt-1 text-sm text-slate-600">{{ $onlineEnrollment->batch?->name }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ $onlineEnrollment->batch?->schedule_days }} {{ $onlineEnrollment->batch?->schedule_time }}</p>
+        </article>
+        @endforeach
+    </div>
+</section>
+@endif
+
 @if($coachingEnrollments->isNotEmpty() || $coachingDue > 0)
 <section class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
