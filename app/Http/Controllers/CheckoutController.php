@@ -141,8 +141,17 @@ class CheckoutController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
+        // Preserve clear branch/payment errors before validating the submitted amount;
+        // all of these conditions are rechecked under the order lock below.
+        $preflightBranch = $order->branch;
+        abort_unless($preflightBranch && $preflightBranch->is_active, 403, 'The selected branch is no longer accepting payments.');
+        $preflightMethods = $preflightBranch->enabledStudentPaymentMethods();
+        if ($preflightMethods === []) {
+            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
+        }
+
         $data = $request->validate([
-            'gateway' => ['required', 'string', 'max:30'],
+            'gateway' => ['required', 'string', 'in:'.implode(',', $preflightMethods)],
             'amount' => ['required', 'numeric', 'min:1'],
             'sender_number' => 'required|string|max:80',
             'transaction_id' => 'required|string|max:80',
