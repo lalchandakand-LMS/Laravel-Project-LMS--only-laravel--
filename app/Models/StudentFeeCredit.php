@@ -11,4 +11,6 @@ class StudentFeeCredit extends Model
 
     public function student() { return $this->belongsTo(User::class, 'student_id'); }
     public function payment() { return $this->belongsTo(StudentFeePayment::class, 'payment_id'); }
+    public function applications() { return $this->hasMany(StudentFeeCreditApplication::class, 'credit_id'); }
+    public function remainingAmount(): float { return max(0, round((float) $this->amount - (float) $this->applications()->sum('amount'), 2)); }
 }
