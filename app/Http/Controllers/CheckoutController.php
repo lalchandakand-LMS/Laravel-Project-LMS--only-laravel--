@@ -81,11 +81,12 @@ class CheckoutController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (! $stockItem || $stockItem->stock_quantity < (int) ($cartItem['qty'] ?? 1)) {
+                if (! $stockItem || $stockItem->availableQuantity() < (int) ($cartItem['qty'] ?? 1)) {
                     throw ValidationException::withMessages([
                         'cart' => 'The available stock for '.$cartItem['title'].' has changed. Update your cart before placing the order.',
                     ]);
                 }
+                $stockItem->increment('reserved_quantity', (int) ($cartItem['qty'] ?? 1));
             }
 
             $order = Order::create($data + [
@@ -104,6 +105,7 @@ class CheckoutController extends Controller
                     'title' => $item['title'],
                     'price' => $item['price'],
                     'qty' => (int) ($item['qty'] ?? 1),
+                    'stock_reserved' => $item['type'] === 'product',
                 ]);
             }
 
@@ -115,6 +117,7 @@ class CheckoutController extends Controller
                 OrderService::fulfill($order);
             } catch (ValidationException $exception) {
                 // A free order that cannot be fulfilled must release its coupon reservation.
+                OrderService::releaseReservations($order);
                 $order->update(['status' => 'failed']);
 
                 return redirect()->route('cart.index')
