@@ -124,20 +124,21 @@ class UserController extends Controller
             unset($data['password']);
         }
 
+        $oldAvatar = $user->avatar;
+        $replaceAvatar = false;
         if ($request->hasFile('avatar')) {
-            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
-                delete_stored_media('public', $user->avatar);
-            }
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $replaceAvatar = true;
         } elseif ($request->filled('avatar_url')) {
-            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
-                delete_stored_media('public', $user->avatar);
-            }
             $data['avatar'] = $data['avatar_url'];
+            $replaceAvatar = true;
         }
         unset($data['avatar_url']);
         $data['is_active'] = $request->boolean('is_active');
         $user->update($data);
+        if ($replaceAvatar) {
+            delete_stored_media('public', $oldAvatar);
+        }
 
         if ($user->isGuardian()) {
             $user->children()->sync($request->input('children', []));
