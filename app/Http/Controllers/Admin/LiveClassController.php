@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceSession;
 use App\Models\Batch;
 use App\Models\Course;
 use App\Models\LiveClass;
