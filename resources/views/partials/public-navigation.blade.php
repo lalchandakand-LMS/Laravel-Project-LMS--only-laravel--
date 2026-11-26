@@ -33,9 +33,9 @@
         </nav>
         <div class="ml-auto flex shrink-0 items-center gap-2">
             @auth
-                <a href="{{ auth()->user()->dashboardRoute() }}" class="rounded-full bg-cyan-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700">Dashboard</a>
+                <a href="{{ auth()->user()->dashboardRoute() }}" class="rounded-full bg-[#06b6d4] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#0d9488]">Dashboard</a>
             @else
-                <a href="{{ route('login') }}" class="rounded-full bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-teal-700">Login</a>
+                <a href="{{ route('login') }}" class="rounded-full bg-[#06b6d4] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0d9488]">Login</a>
             @endauth
             <button id="mobile-menu-open" type="button" aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-800 transition hover:bg-slate-100 xl:hidden"><span aria-hidden="true">☰</span></button>
         </div>
@@ -55,7 +55,7 @@
             @endforeach
         </nav>
         @auth
-            <a href="{{ auth()->user()->dashboardRoute() }}" class="mt-4 block rounded-xl bg-cyan-600 px-4 py-3 text-center text-sm font-bold text-white">Dashboard</a>
+            <a href="{{ auth()->user()->dashboardRoute() }}" class="mt-4 block rounded-xl bg-[#06b6d4] px-4 py-3 text-center text-sm font-bold text-white">Dashboard</a>
             <form method="POST" action="{{ route('logout') }}" class="mt-2">@csrf<button class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-rose-600">Log out</button></form>
         @endauth
     </div>
