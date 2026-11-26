@@ -446,16 +446,35 @@ class OrderController extends Controller
             'reason' => 'required|string|max:2000',
         ]);
 
-        if (! empty($data['payment_id']) && ! $order->payments()->whereKey($data['payment_id'])->where('status', 'verified')->exists()) {
-            throw ValidationException::withMessages(['payment_id' => 'Select a verified payment belonging to this order.']);
-        }
-
         try {
             $adjustment = DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
                 $netPaid = $lockedOrder->amountPaid();
-                if ((float) $data['amount'] > $netPaid) {
+                $refundAmount = round((float) $data['amount'], 2);
+                if ($refundAmount > round($netPaid, 2)) {
                     throw ValidationException::withMessages(['amount' => 'Refund cannot exceed the verified net amount received.']);
+                }
+
+                $linkedPayment = null;
+                if (! empty($data['payment_id'])) {
+                    $linkedPayment = Payment::whereKey($data['payment_id'])
+                        ->where('order_id', $lockedOrder->id)
+                        ->where('status', 'verified')
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $linkedPayment) {
+                        throw ValidationException::withMessages(['payment_id' => 'Select a verified payment belonging to this order.']);
+                    }
+
+                    $alreadyRefunded = (float) PaymentAdjustment::where('payment_id', $linkedPayment->id)
+                        ->where('type', 'refund')
+                        ->sum('amount');
+                    $refundableBalance = max(0, round((float) $linkedPayment->amount - $alreadyRefunded, 2));
+
+                    if ($refundAmount > $refundableBalance) {
+                        throw ValidationException::withMessages(['amount' => 'The refund exceeds the remaining refundable amount for the selected payment.']);
+                    }
                 }
 
                 if (! empty($data['reference']) && PaymentAdjustment::where('reference', $data['reference'])->exists()) {
@@ -488,6 +507,12 @@ class OrderController extends Controller
             });
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors());
+        } catch (QueryException $exception) {
+            if (! $this->isRefundReferenceConflict($exception)) {
+                throw $exception;
+            }
+
+            return back()->withErrors(['reference' => 'This refund reference has already been recorded.']);
         }
 
         $adjustment->load('order.user');
@@ -524,6 +549,14 @@ class OrderController extends Controller
         return preg_match('/^[\\x00-\\x20]*[=+\\-@]/u', $value) === 1
             ? "'".$value
             : $value;
+    }
+
+    private function isRefundReferenceConflict(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'payment_adjustments_reference_unique')
+            || str_contains($message, 'payment_adjustments.reference');
     }
 
     private function isTransactionReferenceConflict(QueryException $exception): bool
