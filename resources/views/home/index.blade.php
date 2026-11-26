@@ -38,13 +38,13 @@
             @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
             <section class="home-glass-card">
                 <div class="flex items-center justify-between gap-3">
-                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">Online Course</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
-                    <a href="{{ route('courses.index') }}" class="shrink-0 text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a>
+                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-orange-200">Online Course</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
+                    <a href="{{ route('courses.index') }}" class="shrink-0 text-sm font-bold text-orange-200 hover:text-white">See All Courses →</a>
                 </div>
                 <div class="mt-5 grid gap-3 sm:grid-cols-2">
                     @forelse ($onlineBatches->take(4) as $batch)
                         <a href="{{ route('courses.index') }}" class="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[.045] px-3 py-3 transition hover:bg-white/10">
-                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-400/15 text-lg text-cyan-200">▣</span>
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-400/15 text-lg text-orange-200">▣</span>
                             <span class="min-w-0"><strong class="block truncate text-sm text-white">{{ $batch->name }}</strong><small class="block truncate text-xs text-slate-300">{{ $batch->course?->title ?: 'Online learning batch' }}</small></span>
                         </a>
                     @empty
@@ -55,10 +55,10 @@
             @endif
             @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
             <section class="home-glass-card">
-                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">See the stats!</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
+                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">See the stats!</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-orange-200 hover:text-white">See All Courses →</a></div>
                 <div class="mt-5 grid grid-cols-2 gap-3">
                     @foreach ([['Students', $stats['students'], '♙'], ['Courses', $stats['courses'], '▤'], ['Teachers', $stats['instructors'], '♧'], ['Videos / Lessons', $stats['lessons'], '▷']] as [$label, $value, $icon])
-                        <div class="rounded-xl border border-white/10 bg-white/[.045] p-4"><div class="flex items-center justify-between"><span class="text-xl text-cyan-300">{{ $icon }}</span><strong class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</strong></div><p class="mt-1 text-xs font-semibold text-slate-300">{{ $label }}</p></div>
+                        <div class="rounded-xl border border-white/10 bg-white/[.045] p-4"><div class="flex items-center justify-between"><span class="text-xl text-orange-300">{{ $icon }}</span><strong class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</strong></div><p class="mt-1 text-xs font-semibold text-slate-300">{{ $label }}</p></div>
                     @endforeach
                 </div>
             </section>
@@ -69,7 +69,7 @@
 
 @push('scripts')
 <style>
-.home-hero-shell{background:linear-gradient(125deg,#062c30 0%,#041c24 100%)}
+.home-hero-shell{background:linear-gradient(125deg,#26130b 0%,#0d0f18 100%)}
 .home-glass-card{border:1px solid rgba(255,255,255,.12);border-radius:1.35rem;background:rgba(255,255,255,.075);padding:1.35rem;box-shadow:0 18px 55px rgba(0,0,0,.16);backdrop-filter:blur(16px)}
 .coverflow-carousel{max-width:1120px;padding:0 0 3.25rem}
 .coverflow-stage{height:clamp(230px,43vw,490px);overflow:visible;perspective:1200px}
@@ -81,7 +81,7 @@
 .coverflow-arrow{position:absolute;bottom:3.5rem;z-index:5;display:grid;width:2.65rem;height:2.65rem;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.13);color:white;font-size:1.8rem;line-height:1;backdrop-filter:blur(12px)}
 .coverflow-dots{position:absolute;bottom:3.8rem;left:50%;z-index:6;display:flex;gap:.5rem;transform:translateX(-50%)}
 .coverflow-dots button{width:.48rem;height:.48rem;border-radius:999px;background:rgba(255,255,255,.35);transition:all .2s}
-.coverflow-dots button[aria-current=true]{width:1.5rem;background:#22d3ee}
+.coverflow-dots button[aria-current=true]{width:1.5rem;background:#f97316}
 @media(max-width:639px){.coverflow-slide{left:2%;width:96%}.coverflow-slide.is-prev{transform:translateX(-84%) scale(.84)}.coverflow-slide.is-next{transform:translateX(84%) scale(.84)}}
 @media(prefers-reduced-motion:reduce){.coverflow-slide{transition:none}}
 </style>
@@ -119,8 +119,8 @@
 <section data-home-section="categories" class="learning-path-section py-16" style="background:{{ (($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') === '#ffffff') ? '#f1f3ff' : ($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') }}">
     <div class="mx-auto max-w-7xl px-4">
         <div class="mx-auto max-w-2xl text-center">
-            <p class="text-xs font-extrabold uppercase tracking-[.22em] text-teal-600">Explore your interests</p>
-            <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-cyan-800 sm:text-4xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose Your Learning Path' }}</h2>
+            <p class="text-xs font-extrabold uppercase tracking-[.22em] text-orange-600">Explore your interests</p>
+            <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-orange-800 sm:text-4xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose Your Learning Path' }}</h2>
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ $homepageSettings['homepage_learning_subtitle'] ?? 'Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.' }}</p>
         </div>
         @php($categoryPalettes = [['from-sky-100 to-blue-50','bg-sky-500'],['from-emerald-100 to-green-50','bg-emerald-500'],['from-violet-100 to-purple-50','bg-violet-500'],['from-orange-100 to-amber-50','bg-[#22d3ee]'],['from-pink-100 to-rose-50','bg-pink-500']])
@@ -252,7 +252,7 @@
 <section data-home-section="reviews" class="student-testimonials py-16 text-white">
     <div class="mx-auto max-w-7xl px-4">
         <div class="text-center">
-            <p class="text-xs font-extrabold uppercase tracking-[.22em] text-cyan-300">Student stories</p>
+            <p class="text-xs font-extrabold uppercase tracking-[.22em] text-orange-300">Student stories</p>
             <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What Our Students Say' }}</h2>
             <p class="mt-3 text-sm text-slate-300">{{ $homepageSettings['homepage_reviews_subtitle'] ?? 'Real feedback from our learning community.' }}</p>
             <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-bold text-amber-200"><span>★★★★★</span><strong>{{ number_format((float) $reviews->avg('rating'), 1) }}</strong><span class="text-slate-300">Average rating</span></div>
@@ -263,11 +263,11 @@
                 <div class="testimonial-track flex gap-4 overflow-x-auto pb-3">
                     @foreach ($row as $review)
                         <figure class="testimonial-card min-w-[min(88vw,340px)] max-w-[340px] flex-1 rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
-                            <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
+                            <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-orange-300/70">“</span></div>
                             <blockquote class="mt-2 min-h-20 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
                             <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
                                 <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
-                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
+                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-orange-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
                             </figcaption>
                         </figure>
                     @endforeach
