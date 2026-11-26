@@ -1,7 +1,7 @@
 # Alom's English Center — Custom LMS (Laravel 12)
 
-A complete, production-ready Learning Management System built for Alom's English Center, with courses, curriculum builder, video player, MCQ/CQ exams,
-e-books, cart + bKash/Nagad checkout, certificates, reviews and a full admin panel.
+A full-featured Learning Management System foundation for Alom's English Center, with courses, curriculum builder, video player, MCQ/CQ exams,
+e-books, cart and manual bKash/Nagad payment verification, certificates, reviews and role-based management. Live payment-gateway activation and production deployment remain separate release tasks.
 
 Built with **Laravel 12 + Blade + Tailwind CSS**. The compiled Vite bundle is
 already shipped in `public/build`, so it runs without `npm` (Tailwind falls back
@@ -43,9 +43,10 @@ php artisan serve
 
 Open <http://127.0.0.1:8000>.
 
-> **Verified fresh install:** a clean unzip of this release (no `vendor`, no
-> `node_modules`) installs with the six steps above and runs the full suite
-> green — 16 tests / 141 assertions. The writable directories
+> **CI verification:** the current GitHub Actions run on 26 November 2026 passed
+> the full Laravel suite with 256 tests / 1,383 assertions (4 tests marked risky).
+> CI validates the application in a clean SQLite test environment; still run a
+> staging install and acceptance test before production. The writable directories
 > (`storage/framework/{cache,sessions,views}`, `storage/logs`,
 > `storage/app/public`, `bootstrap/cache`) ship with `.gitignore` placeholders;
 > if your unzip/mover drops empty folders, recreate them with
@@ -69,7 +70,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 
 ### Demo accounts (created by the seeder)
 
-| Role | Email | Password | Lands on |
+| Role | Email | Password (demo only) | Lands on |
 |---|---|---|---|
 | Admin | `admin@lms.test` | `password` | `/admin` |
 | Instructor / teacher | `teacher1@lms.test` | `password` | `/teacher` |
@@ -77,15 +78,15 @@ lives in **[UPDATE.md](UPDATE.md)**.
 | Guardian | `guardian1@lms.test` | `password` | `/guardian` |
 | Branch manager | `manager1@lms.test` | `password` | `/branch` |
 
-> Every account uses the password `password`. Change them before going live
-> (`/admin/students`). Each role is redirected to its own dashboard automatically
+> These are demo credentials only. Delete or rotate every seeded account before
+> exposing the site publicly; never leave the shared `password` password in production.
+> Each role is redirected to its own dashboard automatically
 > and blocked from the others by `RoleMiddleware`; disabled users are logged out.
 
 ## 3. What's included
 
 ### Public site
-- **Home** – hero, live stats, learning paths, featured & latest courses, student
-  reviews, e-book strip, CTA (all DB driven).
+- **Home** – admin-controlled visibility for hero, learning paths, featured courses, online batches, stats, latest courses, live classes, exams, teachers, board results, reviews, e-books and admission CTA; hero slides and content records are database-driven.
 - **Course catalogue** – search, category filter, level filter, sort by
   newest / popular / rating / price, pagination.
 - **Course landing page** – outcomes, description, expandable curriculum with
@@ -120,7 +121,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 - **Branches** (`/admin/branches`) – CRUD, activate/close, per-branch student &
   user counts, revenue roll-up, branch-level student roster.
 - **Home slider** (`/admin/sliders`) – CRUD, image upload or URL, ordering,
-  show/hide; the public hero renders active slides with autoplay dots/arrows.
+  show/hide; the public hero renders active slides with autoplay dots/arrows. Homepage section visibility and carousel/grid preferences are managed in Site Settings.
 - **Live classes** (`/admin/live-classes`) – schedule per course/branch, meeting
   link, start/end time, join button inside the student dashboard.
 - **Teacher portal** (`/teacher`) – my courses, my students, upcoming live
@@ -132,7 +133,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 
 ### Admin / instructor panel (`/admin`)
 - Dashboard: revenue, students, enrollments, pending orders, 6-month revenue
-  chart, top courses, recent orders/enrollments, pending-review queue.
+  chart, top courses, recent orders/enrollments, pending-review queue. Admin also manages branch admissions, attendance review, branch finance, staff payroll, backups, activity logs, notifications, media, menus and site customization.
 - **Courses** – full CRUD, thumbnail upload, outcomes, pricing/discount,
   publish & feature flags, certificate toggle, SEO fields.
 - **Curriculum builder** – sections and lessons inline (video, text, PDF, live,
@@ -165,33 +166,20 @@ app/
 │   ├── Guardian/                        guardian portal (linked children)
 │   ├── Branch/                          branch-scoped manager portal
 │   └── Admin/                           full back-office (20+ controllers)
-├── Models/                              21 Eloquent models
+├── Models/                              Eloquent domain models (see app/Models/)
 ├── Services/OrderService.php            fulfilment + certificate issuing
 └── Http/Middleware/RoleMiddleware.php   role:admin,instructor guard
 ```
 
-Database (5 migrations): `categories, courses, sections, lessons, enrollments,
-lesson_progress, exams, questions, options, exam_attempts, attempt_answers,
-coupons, orders, order_items, payments, ebooks, ebook_purchases, reviews,
-certificates, announcements, live_classes, settings` (+ `users` extended with
-`role, phone, avatar, bio, designation, is_active`).
+Database schema is maintained in the ordered migration files under `database/migrations/`. It now covers the LMS core, commerce and payment verification, branches, batches, attendance, admissions, assignments, notifications/messages, profile documents, payroll, media, blog, AI-agent audit records and supporting workflows. Do not rely on a fixed migration count; apply new migrations with `php artisan migrate --force` during a backed-up deployment.
 
 ## 4. Tests
 
 ```bash
-php artisan test --filter=LmsFlowTest
+php artisan test            # full Unit + Feature suite
 ```
 
-16 feature tests / 141 assertions cover: public pages, student dashboard & player,
-enrolment authorisation, cart → coupon → checkout → admin payment verification →
-access granted, exam auto-grading, admin CRUD (courses, sections, lessons, exams,
-questions), role protection, each role's dashboard + auto-redirect, teacher and
-guardian portals, branch scoping, and the organisation modules (branches,
-sliders, live classes) - including toggle/delete flows.
-
-```bash
-php artisan test            # full suite
-```
+The current GitHub Actions validation (26 November 2026) passed 256 tests / 1,383 assertions, with 4 tests reported as risky. Coverage includes course and curriculum workflows, payments and refunds, eligibility/access control, exams, assignments, live classes, admissions, branches, attendance, finance, notifications, media, recycle-bin recovery, profile documents, payroll, AI-agent approval/audit, site settings and homepage behavior. Automated CI is necessary but not sufficient: complete browser-based responsive, accessibility, payment-provider sandbox and cPanel staging checks before launch.
 
 The suite is written to be deterministic: the seeder randomises enrollments and
 branch assignment, so tests resolve their fixtures through explicit queries
@@ -204,11 +192,7 @@ students outside the manager's branch) instead of relying on seed order.
    `@vite()` is used out of the box. To restyle, edit the Blade files and run
    `npm install && npm run build`. Delete `public/build` and the layout falls
    back to the Tailwind CDN (`resources/views/partials/assets.blade.php`).
-2. **Payments**: the checkout currently uses manual bKash/Nagad verification
-   (set the numbers in *Admin → Settings*). To plug in a gateway (SSLCommerz,
-   bKash PGW, Stripe), create the payment in `CheckoutController::store`, then
-   call `OrderService::fulfill($order)` from the gateway callback — that single
-   call grants course/e-book access.
+2. **Payments**: the live application currently supports manual payment submission and staff verification; it does not yet have a live bKash/Nagad provider adapter. See [Payment gateway integration contract](docs/PAYMENT_GATEWAY_INTEGRATION.md). Provider credentials, signature verification, idempotent callbacks, reconciliation and sandbox tests are required before enabling a real gateway. Do not treat a browser redirect or transaction screenshot as settlement proof.
 3. **Media**: use a CDN or S3 by changing `FILESYSTEM_DISK` and the `->store(..., 'public')`
    calls to your disk; YouTube/Vimeo URLs are already supported for videos.
 4. Set `APP_ENV=production`, `APP_DEBUG=false`, run `php artisan config:cache`
@@ -216,9 +200,9 @@ students outside the manager's branch) instead of relying on seed order.
 5. Seed data uses Unsplash course photos, Unsplash slider images and
    `ui-avatars.com` avatars; upload real thumbnails in the admin panel to
    replace them.
-6. Routes: 130+ named routes; run `php artisan route:list` for the full map.
+6. Routes: run `php artisan route:list` for the current named route map; route count changes as modules evolve.
 
-## 4. Recycle Bin & safe system upgrades
+## 6. Recycle Bin & safe system upgrades
 
 - Admins can recover deleted users, courses, categories, curriculum sections/lessons, exams/questions, e-books, live classes, announcements, reviews, sliders, menu items, coupons and branches from Admin → System → Recycle Bin.
 - Deletion is soft-delete based; the original record ID and linked learning history remain intact. The audit field records who deleted an item and when.
