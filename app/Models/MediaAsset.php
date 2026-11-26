@@ -47,6 +47,7 @@ class MediaAsset extends Model
 
         $references = [
             'settings' => ['value'],
+            'categories' => ['image'],
             'courses' => ['thumbnail'],
             'categories' => ['image'],
             'sliders' => ['image'],
