@@ -21,10 +21,16 @@
     <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     <meta name="description" content="{{ $brandDescription }}">
     @include('partials.assets')
+    @php
+        $publicPrimaryColor = setting('site_primary_color', '#ea580c');
+        $publicSecondaryColor = setting('site_secondary_color', '#9a3412');
+        $publicPrimaryColor = is_string($publicPrimaryColor) && preg_match('/^#[0-9A-Fa-f]{6}$/', $publicPrimaryColor) ? $publicPrimaryColor : '#ea580c';
+        $publicSecondaryColor = is_string($publicSecondaryColor) && preg_match('/^#[0-9A-Fa-f]{6}$/', $publicSecondaryColor) ? $publicSecondaryColor : '#9a3412';
+    @endphp
     <style>
         :root {
-            --aec-primary: {{ setting('site_primary_color', '#ea580c') }};
-            --aec-primary-dark: {{ setting('site_secondary_color', '#9a3412') }};
+            --aec-primary: {{ $publicPrimaryColor }};
+            --aec-primary-dark: {{ $publicSecondaryColor }};
         }
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
         .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
@@ -48,7 +54,7 @@
     #brand-page-loader .brand-loader-logo{width:76px;height:76px;object-fit:contain;border-radius:16px}
     #brand-page-loader .brand-loader-name{font-weight:800;font-size:1.15rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
     #brand-page-loader .brand-loader-message{font-size:.9rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
-    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
+    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
     #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
     #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-pulse 1s ease-in-out infinite}
     @keyframes brand-loader-spin{to{transform:rotate(360deg)}}
