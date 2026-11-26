@@ -41,17 +41,18 @@ class StaffAttendanceController extends Controller
             $user = User::whereKey($record['user_id'])->whereIn('role', ['instructor', 'branch_manager'])->firstOrFail();
             $profile = $user->staffProfile()->firstOrCreate([], ['employment_status' => 'active']);
 
-            StaffAttendance::updateOrCreate(
-                ['staff_profile_id' => $profile->id, 'attendance_date' => $data['attendance_date']],
-                [
-                    'branch_id' => $user->branch_id,
-                    'status' => $record['status'],
-                    'check_in' => $record['check_in'] ?? null,
-                    'check_out' => $record['check_out'] ?? null,
-                    'notes' => $record['notes'] ?? null,
-                    'marked_by' => $request->user()->id,
-                ]
-            );
+            $attendance = StaffAttendance::where('staff_profile_id', $profile->id)
+                ->whereDate('attendance_date', $data['attendance_date'])->first()
+                ?? new StaffAttendance(['staff_profile_id' => $profile->id, 'attendance_date' => $data['attendance_date']]);
+
+            $attendance->fill([
+                'branch_id' => $user->branch_id,
+                'status' => $record['status'],
+                'check_in' => $record['check_in'] ?? null,
+                'check_out' => $record['check_out'] ?? null,
+                'notes' => $record['notes'] ?? null,
+                'marked_by' => $request->user()->id,
+            ])->save();
         }
 
         return redirect()->route('admin.staff-attendance.index', ['date' => $data['attendance_date']])
