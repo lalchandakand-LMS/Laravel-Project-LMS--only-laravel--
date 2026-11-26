@@ -27,6 +27,9 @@ class SiteCustomizationSettingsTest extends TestCase
             'site_secondary_color' => '#9a3412',
             'homepage_learning_title' => 'Learning paths',
             'homepage_testimonial_title' => 'Student stories',
+            'homepage_featured_title' => 'Popular English courses',
+            'homepage_latest_title' => 'Recently added courses',
+            'homepage_latest_subtitle' => 'Fresh learning materials this week.',
             'homepage_learning_layout' => 'grid',
             'homepage_featured_layout' => 'carousel',
             'homepage_carousel_autoplay' => '1',
@@ -60,6 +63,9 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->assertSame('#9a3412', Setting::get('site_secondary_color'));
         $this->assertSame('Learning paths', Setting::get('homepage_learning_title'));
         $this->assertSame('Student stories', Setting::get('homepage_testimonial_title'));
+        $this->assertSame('Popular English courses', Setting::get('homepage_featured_title'));
+        $this->assertSame('Recently added courses', Setting::get('homepage_latest_title'));
+        $this->assertSame('Fresh learning materials this week.', Setting::get('homepage_latest_subtitle'));
         $this->assertSame('grid', Setting::get('homepage_learning_layout'));
         $this->assertSame('carousel', Setting::get('homepage_featured_layout'));
         $this->assertSame('1', Setting::get('homepage_carousel_autoplay'));
@@ -199,6 +205,17 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
             'homepage_section_order' => json_encode(['hero', 'hero']),
         ])->assertSessionHasErrors('homepage_section_order');
+    }
+
+    public function test_admin_configured_homepage_section_copy_is_rendered(): void
+    {
+        Setting::set('homepage_latest_title', 'New learning courses this month');
+        Setting::set('homepage_latest_subtitle', 'Fresh courses for every learner.');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('New learning courses this month')
+            ->assertSee('Fresh courses for every learner.');
     }
 }
 
