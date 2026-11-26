@@ -53,7 +53,7 @@
     @forelse($items as $item)<tr>
         @if($exam)<td class="px-4 py-3"><input type="checkbox" name="item_ids[]" value="{{ $item->id }}" form="attach-bank-items"></td>@endif
         <td class="max-w-xl px-4 py-3">{{ $item->question }}</td><td class="px-4 py-3 uppercase">{{ $item->type }}</td><td class="px-4 py-3">{{ $item->category ?: '—' }}</td><td class="px-4 py-3">{{ ucfirst($item->difficulty) }}</td><td class="px-4 py-3">{{ $item->marks }}</td><td class="px-4 py-3 whitespace-nowrap"><a href="{{ route('admin.question-bank.edit', $item) }}" class="font-semibold text-emerald-700">Edit</a><form method="POST" action="{{ route('admin.question-bank.destroy', $item) }}" class="ml-3 inline" onsubmit="return confirm('Delete this bank item? Questions already copied into exams will remain.')">@csrf @method('DELETE')<button class="font-semibold text-rose-600">Delete</button></form></td>
-    </tr>@empty<tr><td colspan="6" class="px-4 py-10 text-center text-slate-500">No bank questions found.</td></tr>@endforelse
+    </tr>@empty<tr><td colspan="{{ $exam ? 7 : 6 }}" class="px-4 py-10 text-center text-slate-500">No bank questions found.</td></tr>@endforelse
     </tbody></table></div>
 </div>
 @if($exam)</form>@endif
