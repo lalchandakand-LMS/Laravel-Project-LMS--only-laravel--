@@ -29,8 +29,8 @@
                 @endif
             </div>
         @else
-            <div class="mx-auto grid min-h-64 max-w-5xl place-items-center rounded-[1.6rem] border border-white/10 bg-white/5 px-6 py-16 text-center shadow-2xl backdrop-blur">
-                <div><p class="text-sm font-semibold uppercase tracking-[.22em] text-cyan-200">Alom’s English Center</p><h1 class="mt-3 text-3xl font-extrabold sm:text-5xl">Learn. Practise. Progress.</h1><a href="{{ route('courses.index') }}" class="mt-6 inline-flex rounded-full bg-cyan-500 px-6 py-3 font-bold text-slate-950">Explore courses</a></div>
+            <div class="coverflow-stage relative mx-auto max-w-5xl overflow-hidden rounded-[1.6rem] border border-white/10 bg-white/5 shadow-2xl">
+                <div class="grid h-full min-h-64 place-items-center"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ $brandName }} banner placeholder" class="h-32 w-32 object-contain opacity-80"></div>
             </div>
         @endif
 
