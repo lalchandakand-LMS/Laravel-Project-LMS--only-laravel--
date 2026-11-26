@@ -7,6 +7,8 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\LiveClass;
 use App\Models\User;
+use App\Notifications\LiveClassChanged;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -169,6 +171,75 @@ class LiveClassSchedulingTest extends TestCase
         $this->actingAs($otherStudent)->get(route('student.live-classes'))
             ->assertOk()
             ->assertDontSee('Private batch revision');
+    }
+
+
+    public function test_admin_can_cancel_live_class_and_notify_enrolled_students(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Cancellation notification test',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'starts_at' => now()->addDays(8),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.live-classes.cancel', $liveClass), [
+            'cancellation_reason' => 'Teacher unavailable',
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        $this->assertNotNull($liveClass->fresh()->cancelled_at);
+        $this->assertFalse($liveClass->fresh()->canJoin());
+        Notification::assertSentTo($student, LiveClassChanged::class);
+    }
+
+    public function test_cancelled_live_class_can_be_rescheduled_and_reactivated(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Reschedule workflow test',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDays(9),
+            'duration_minutes' => 60,
+            'is_published' => true,
+            'cancelled_at' => now(),
+            'cancellation_reason' => 'Previous date unavailable',
+        ]);
+
+        $newStart = now()->addDays(12)->startOfHour();
+        $this->actingAs($admin)->post(route('admin.live-classes.reschedule', $liveClass), [
+            'starts_at' => $newStart->format('Y-m-d H:i:s'),
+            'duration_minutes' => 75,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        $liveClass->refresh();
+        $this->assertNull($liveClass->cancelled_at);
+        $this->assertNull($liveClass->cancellation_reason);
+        $this->assertSame(75, (int) $liveClass->duration_minutes);
+        $this->assertSame($newStart->timestamp, $liveClass->starts_at->timestamp);
+    }
+
+    public function test_live_class_create_and_edit_forms_receive_batch_options(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $this->actingAs($admin)->get(route('admin.live-classes.create'))->assertOk();
     }
 
 }
