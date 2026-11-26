@@ -54,6 +54,7 @@ if (! function_exists('delete_stored_media')) {
         $references = [
             'settings' => ['value'],
             'courses' => ['thumbnail'],
+            'categories' => ['image'],
             'sliders' => ['image'],
             'ebooks' => ['cover', 'file'],
             'lessons' => ['attachment'],
