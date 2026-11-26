@@ -158,6 +158,9 @@
                         <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-extrabold {{ $method === 'bkash' ? 'text-pink-600' : ($method === 'nagad' ? 'text-orange-600' : 'text-slate-800') }}">{{ $label }}</span>
                     @endif
                 @endforeach
+                <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-black italic text-blue-900">VISA <small class="ml-1 font-medium not-italic text-slate-500">Coming soon</small></span>
+                <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-black text-slate-800">Mastercard <small class="ml-1 font-medium text-slate-500">Coming soon</small></span>
+                <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-black text-emerald-700">SSLCommerz <small class="ml-1 font-medium text-slate-500">Coming soon</small></span>
             </div>
         </div>
     </div>
