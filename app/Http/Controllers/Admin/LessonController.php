@@ -31,6 +31,12 @@ class LessonController extends Controller
         $this->authorizeCourse($course);
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data);
+        if ($request->hasFile('attachment')) {
+            $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
+            if (! $data['attachment']) {
+                throw ValidationException::withMessages(['attachment' => 'The lesson attachment could not be stored.']);
+            }
+        }
         try {
             Lesson::create($data);
         } catch (\Throwable $exception) {
@@ -62,6 +68,14 @@ class LessonController extends Controller
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data, $lesson);
         $oldAttachment = $lesson->attachment;
+        if ($request->hasFile('attachment')) {
+            $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
+            if (! $data['attachment']) {
+                throw ValidationException::withMessages(['attachment' => 'The new lesson attachment could not be stored. The previous file has been kept.']);
+            }
+        } elseif (! $request->filled('attachment_url')) {
+            unset($data['attachment']);
+        }
         try {
             $lesson->update($data);
         } catch (\Throwable $exception) {
@@ -161,12 +175,7 @@ class LessonController extends Controller
             'prerequisite_lesson_id' => 'nullable|integer|exists:lessons,id',
         ]);
 
-        if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
-            if (! $data['attachment']) {
-                throw ValidationException::withMessages(['attachment' => 'The lesson attachment could not be stored.']);
-            }
-        } elseif ($request->filled('attachment_url')) {
+        if ($request->filled('attachment_url')) {
             $data['attachment'] = $data['attachment_url'];
         }
         unset($data['attachment_url']);
