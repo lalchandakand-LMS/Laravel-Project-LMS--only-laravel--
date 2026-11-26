@@ -34,7 +34,9 @@ class Category extends Model
         $ids = collect();
         $frontier = collect([$this->id]);
         while ($frontier->isNotEmpty()) {
-            $next = self::whereIn('parent_id', $frontier)->pluck('id');
+            $next = self::whereIn('parent_id', $frontier)
+                ->whereNotIn('id', $ids->push($this->id))
+                ->pluck('id');
             $ids = $ids->merge($next);
             $frontier = $next;
         }
