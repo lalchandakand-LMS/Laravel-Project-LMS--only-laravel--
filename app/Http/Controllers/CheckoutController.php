@@ -89,7 +89,17 @@ class CheckoutController extends Controller
                 $stockItem->increment('reserved_quantity', (int) ($cartItem['qty'] ?? 1));
             }
 
+            $attribution = $request->session()->get('marketing_attribution', []);
+            $attribution = is_array($attribution) ? $attribution : [];
+
             $order = Order::create($data + [
+                'utm_source' => $attribution['utm_source'] ?? null,
+                'utm_medium' => $attribution['utm_medium'] ?? null,
+                'utm_campaign' => $attribution['utm_campaign'] ?? null,
+                'utm_term' => $attribution['utm_term'] ?? null,
+                'utm_content' => $attribution['utm_content'] ?? null,
+                'landing_page' => $attribution['landing_page'] ?? null,
+                'referrer_host' => $attribution['referrer_host'] ?? null,
                 'user_id' => $request->user()->id,
                 'coupon_id' => $totals['coupon']?->id,
                 'subtotal' => $totals['subtotal'],
