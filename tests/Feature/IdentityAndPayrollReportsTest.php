@@ -141,9 +141,11 @@ class IdentityAndPayrollReportsTest extends TestCase
         $this->actingAs($admin)->get(route('admin.staff-payroll.report', $query))
             ->assertOk()->assertSee('33,000.00')->assertSee('AEC-RPT-001')->assertDontSee('AEC-RPT-002');
 
-        $this->get(route('admin.staff-payroll.report.export', $query))
-            ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8')
-            ->assertSee('AEC-RPT-001')->assertDontSee('AEC-RPT-002');
+        $export = $this->get(route('admin.staff-payroll.report.export', $query));
+        $export->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $csv = $export->streamedContent();
+        $this->assertStringContainsString('AEC-RPT-001', $csv);
+        $this->assertStringNotContainsString('AEC-RPT-002', $csv);
     }
 
     public function test_non_admin_cannot_access_payroll_reports(): void
