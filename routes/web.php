@@ -9,7 +9,7 @@ use App\Http\Controllers\Teacher;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CourseController;\nuse App\Http\Controllers\CoachingAdmissionController;
 use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
