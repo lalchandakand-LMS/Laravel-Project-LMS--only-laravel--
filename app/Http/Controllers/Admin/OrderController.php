@@ -655,6 +655,7 @@ class OrderController extends Controller
                     ]);
 
                     if ($netAfterRefund <= 0) {
+                        OrderService::releaseReservations($lockedOrder);
                         $lockedOrder->payments()
                             ->where('status', 'pending')
                             ->update([
