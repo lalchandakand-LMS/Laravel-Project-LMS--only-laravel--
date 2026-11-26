@@ -361,16 +361,16 @@ class AttendanceWorkflowTest extends TestCase
             'reviewed_at' => now(),
         ]);
 
-        $request = \Illuminate\\Http\\Request::create('/admin/attendance/'.$session->id.'/review', 'POST', [
+        $request = \Illuminate\Http\Request::create('/admin/attendance/'.$session->id.'/review', 'POST', [
             'action' => 'return',
             'review_note' => 'This stale review must not reverse the approval.',
         ]);
         $request->setUserResolver(fn () => $admin);
 
         try {
-            app(\App\\Http\\Controllers\\AttendanceController::class)->review($request, $staleSession);
+            app(\App\Http\Controllers\AttendanceController::class)->review($request, $staleSession);
             $this->fail('A stale review must not overwrite an already approved attendance session.');
-        } catch (\Symfony\\Component\\HttpKernel\\Exception\\HttpException $exception) {
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
             $this->assertSame(422, $exception->getStatusCode());
         }
 
