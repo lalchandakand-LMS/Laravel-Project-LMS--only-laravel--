@@ -499,6 +499,57 @@ class OrderController extends Controller
         return back()->with('success', 'Offline payment recorded in the ledger.');
     }
 
+    /** Update fulfillment progress for a paid physical-product order. */
+    public function updateShipping(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'shipping_status' => 'required|in:processing,packed,shipped,delivered,returned',
+            'shipping_carrier' => 'nullable|string|max:100',
+            'tracking_number' => 'nullable|string|max:120',
+        ]);
+
+        DB::transaction(function () use ($request, $order, $data) {
+            $locked = Order::with('items')->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'paid' || ! $locked->items->contains('item_type', 'product')) {
+                throw ValidationException::withMessages([
+                    'shipping_status' => 'Only paid orders containing physical products can enter fulfillment.',
+                ]);
+            }
+
+            $current = $locked->shipping_status ?: 'processing';
+            $transitions = [
+                'processing' => ['processing', 'packed'],
+                'packed' => ['packed', 'shipped'],
+                'shipped' => ['shipped', 'delivered'],
+                'delivered' => ['delivered', 'returned'],
+                'returned' => ['returned'],
+            ];
+
+            if (! in_array($data['shipping_status'], $transitions[$current] ?? [], true)) {
+                throw ValidationException::withMessages([
+                    'shipping_status' => 'Invalid fulfillment transition. Orders cannot move backwards in the delivery lifecycle.',
+                ]);
+            }
+
+            if ($data['shipping_status'] === 'shipped'
+                && (blank($data['shipping_carrier'] ?? null) || blank($data['tracking_number'] ?? null))) {
+                throw ValidationException::withMessages([
+                    'tracking_number' => 'Carrier and tracking number are required before marking an order as shipped.',
+                ]);
+            }
+
+            $locked->update([
+                'shipping_status' => $data['shipping_status'],
+                'shipping_carrier' => $data['shipping_carrier'] ?? $locked->shipping_carrier,
+                'tracking_number' => $data['tracking_number'] ?? $locked->tracking_number,
+                'shipped_at' => $data['shipping_status'] === 'shipped' ? ($locked->shipped_at ?: now()) : $locked->shipped_at,
+                'delivered_at' => $data['shipping_status'] === 'delivered' ? ($locked->delivered_at ?: now()) : $locked->delivered_at,
+            ]);
+        });
+
+        return back()->with('success', 'Physical order fulfillment status updated.');
+    }
+
     /** Record a refund as a separate immutable ledger adjustment. */
     public function recordRefund(Request $request, Order $order)
     {
