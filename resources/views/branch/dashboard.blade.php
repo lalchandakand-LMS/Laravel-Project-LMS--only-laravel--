@@ -92,7 +92,7 @@
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 <div class="mb-3 flex items-center justify-between">
             <h2 class="font-bold text-slate-800">Recent orders</h2>
-            <a href="{{ route('branch.revenue') }}" class="text-sm font-bold text-emerald-700">Revenue →</a>
+            <a href="{{ route('branch.revenue') }}" class="text-sm font-bold text-orange-700">Revenue →</a>
         </div>
 
         <ul class="divide-y divide-slate-100 text-sm">
