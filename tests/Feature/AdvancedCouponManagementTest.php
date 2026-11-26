@@ -152,10 +152,16 @@ class AdvancedCouponManagementTest extends TestCase
             'status' => 'pending',
         ]);
 
+        $student->update(['name' => '=HYPERLINK("https://example.test","Open")']);
+        $branch->update(['name' => '+CMD|/C calc!A0']);
+
         $this->actingAs($admin)->get(route('admin.coupons.usage'))
             ->assertOk()->assertSee($order->order_no)->assertSee('REPORT');
-        $this->get(route('admin.coupons.usage.export'))
+        $export = $this->get(route('admin.coupons.usage.export'))
             ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        $this->assertStringContainsString("'=HYPERLINK", $export->streamedContent());
+        $this->assertStringContainsString("'+CMD|/C calc!A0", $export->streamedContent());
 
         $this->post(route('admin.coupons.store'), [
             'code' => 'TOOMUCH',
