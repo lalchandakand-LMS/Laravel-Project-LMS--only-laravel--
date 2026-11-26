@@ -106,7 +106,15 @@ lives in **[UPDATE.md](UPDATE.md)**.
 - **Exam engine** – timed attempts, autosave every 15 s, question navigator,
   resume unfinished attempt, negative marking, auto-grading, per-question review
   with explanations, pass/fail, attempt limits.
+- **Assignments** – view course assignments, submit text or private file uploads,
+  receive teacher feedback/grades, and revise only when a teacher returns work.
+- **Live class schedule** – eligible enrolled students see published sessions;
+  meeting links/passwords unlock only inside the join window and recordings
+  become available after the session window.
 - My courses, orders, e-books, certificates (printable), profile & password.
+- **AI Agent Workspace** – optional Gemini-powered Student, Teacher, Admin,
+  Support and Learning agents. Teacher assignment drafts require human approval
+  and are created unpublished. See [AI Agent Setup](docs/AI_AGENT_SETUP.md).
 
 ### Multi-role organisation layer
 - **Branches** (`/admin/branches`) – CRUD, activate/close, per-branch student &
