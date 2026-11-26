@@ -68,8 +68,8 @@ class AdminOrderRefundFormTest extends TestCase
             ->get(route('admin.orders.show', $order->order_no))
             ->assertOk()
             ->assertSee('Record refund')
-            ->assertSee('max="500"')
-            ->assertDontSee('max="1000"');
+            ->assertSee('max="500"', false)
+            ->assertDontSee('max="1000"', false);
     }
 
     public function test_refund_form_is_hidden_when_order_has_only_internal_credit_and_no_cash_receipt(): void
