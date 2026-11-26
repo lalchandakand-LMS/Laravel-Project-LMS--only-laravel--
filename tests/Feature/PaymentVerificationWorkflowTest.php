@@ -362,7 +362,7 @@ class PaymentVerificationWorkflowTest extends TestCase
         ])->assertRedirect()->assertSessionHasErrors('payment');
 
         $this->assertSame('cancelled', $order->fresh()->status);
-        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('rejected', $payment->fresh()->status);
         $this->assertSame(0.0, $order->fresh()->amountPaid());
     }
     public function test_cancelled_order_closes_pending_payment_as_rejected(): void
