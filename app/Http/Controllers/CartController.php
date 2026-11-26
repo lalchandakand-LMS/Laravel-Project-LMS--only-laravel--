@@ -123,7 +123,7 @@ class CartController extends Controller
         $data = $request->validate(['quantity' => 'required|integer|min:1|max:20']);
         [, $id] = explode(':', $key, 2);
         $product = Product::published()->findOrFail((int) $id);
-        if ($data['quantity'] > $product->stock_quantity) {
+        if ($data['quantity'] > $product->availableQuantity()) {
             throw ValidationException::withMessages(['quantity' => 'Requested quantity exceeds available stock.']);
         }
         abort_unless(in_array($key, (array) session('cart', []), true), 404);
