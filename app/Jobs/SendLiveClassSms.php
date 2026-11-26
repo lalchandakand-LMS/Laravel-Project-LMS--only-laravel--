@@ -68,6 +68,8 @@ class SendLiveClassSms implements ShouldQueue
 
         $message = match ($this->event) {
             'cancelled' => 'Alom English Center: '.$liveClass->title.' has been cancelled. '.($liveClass->cancellation_reason ? 'Reason: '.$liveClass->cancellation_reason.'. ' : '').'Check your LMS for details.',
+            'unpublished' => 'Alom English Center: '.$liveClass->title.' is no longer published and is unavailable in your LMS schedule.',
+            'updated' => 'Alom English Center: Details for '.$liveClass->title.' have changed. Check your LMS schedule for the latest joining information.',
             'rescheduled' => 'Alom English Center: '.$liveClass->title.' is rescheduled to '.$liveClass->starts_at?->format('d M Y, h:i A').'. Check your LMS for details.',
             default => 'Alom English Center: '.$liveClass->title.' is scheduled for '.$liveClass->starts_at?->format('d M Y, h:i A').'. Check your LMS for details.',
         };
