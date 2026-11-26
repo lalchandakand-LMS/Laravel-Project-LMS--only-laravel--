@@ -169,8 +169,8 @@
 @if (($homepageSettings['homepage_show_featured'] ?? '1') === '1' && $featured->count())
 <section data-home-section="featured" data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
-        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Featured courses</h2>
-        <p class="mt-1 text-slate-500">Hand-picked by our academic team.</p>
+        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_featured_title'] ?? 'Featured courses' }}</h2>
+        <p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_featured_subtitle'] ?? 'Hand-picked by our academic team.' }}</p>
         <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($featured as $course)
                 @include('partials.course-card', ['course' => $course])
@@ -186,7 +186,7 @@
 <section data-home-section="online_batches" data-home-carousel="online_batches" data-home-carousel-layout="carousel" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="bg-orange-50 py-14">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
-            <div><p class="text-sm font-bold uppercase tracking-wider text-orange-700">Online Course</p><h2 class="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Online batches are ongoing!</h2><p class="mt-1 text-slate-600">Book your seat in an upcoming live learning batch.</p></div>
+            <div><p class="text-sm font-bold uppercase tracking-wider text-orange-700">Online Course</p><h2 class="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online batches are ongoing!' }}</h2><p class="mt-1 text-slate-600">{{ $homepageSettings['homepage_online_batches_subtitle'] ?? 'Book your seat in an upcoming live learning batch.' }}</p></div>
             <a href="{{ auth()->check() && auth()->user()->isStudent() ? route('student.online-batches') : route('login') }}" class="rounded-xl bg-orange-600 px-5 py-3 text-sm font-bold text-white hover:bg-orange-700">Apply for a seat</a>
         </div>
         <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -223,8 +223,8 @@
 @if (($homepageSettings['homepage_show_latest'] ?? '1') === '1')
 <section data-home-section="latest" data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
-        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Latest courses</h2>
-        <a href="{{ route('courses.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">Browse all →</a>
+        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_latest_title'] ?? 'Latest courses' }}</h2>
+        <div class="text-right"><p class="mt-1 text-sm text-slate-500">{{ $homepageSettings['homepage_latest_subtitle'] ?? 'Explore our newest learning opportunities.' }}</p><a href="{{ route('courses.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">Browse all →</a></div>
     </div>
     <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         @foreach ($latest as $course)
@@ -239,7 +239,7 @@
 <section data-home-section="live_classes" data-home-carousel="live_classes" data-home-carousel-layout="{{ $homepageSettings['homepage_live_classes_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
-            <div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Upcoming live classes</h2><p class="mt-1 text-slate-500">Join scheduled learning sessions with our instructors.</p></div>
+            <div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_live_classes_title'] ?? 'Upcoming live classes' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_live_classes_subtitle'] ?? 'Join scheduled learning sessions with our instructors.' }}</p></div>
             <a href="{{ route('courses.index') }}" class="text-sm font-bold text-emerald-700">Explore courses →</a>
         </div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -260,7 +260,7 @@
 {{-- UPCOMING EXAMS --}}
 @if (($homepageSettings['homepage_show_exams'] ?? '1') === '1' && $upcomingExams->isNotEmpty())
 <section data-home-section="exams" data-home-carousel="exams" data-home-carousel-layout="{{ $homepageSettings['homepage_exams_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
-    <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Exams & assessments</h2><p class="mt-1 text-slate-500">Prepare, practise and track your progress.</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
+    <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_exams_title'] ?? 'Exams & assessments' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_exams_subtitle'] ?? 'Prepare, practise and track your progress.' }}</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ($upcomingExams as $exam)
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -278,7 +278,7 @@
 @if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
 <section data-home-section="teachers" data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
-        <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">Meet our teachers</h2><p class="mt-1 text-slate-500">Learn with experienced instructors and practical guidance.</p></div>
+        <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_teachers_title'] ?? 'Meet our teachers' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_teachers_subtitle'] ?? 'Learn with experienced instructors and practical guidance.' }}</p></div>
         <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($teachers as $teacher)
                 <article class="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
@@ -310,7 +310,7 @@
 @if (($homepageSettings['homepage_show_reviews'] ?? '1') === '1' && $reviews->count())
 <section data-home-section="reviews" data-home-carousel="reviews" data-home-carousel-layout="{{ $homepageSettings['homepage_reviews_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
     <div class="mx-auto max-w-7xl px-4">
-        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2>
+        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2><p class="mt-1 text-sm text-slate-500">{{ $homepageSettings['homepage_reviews_subtitle'] ?? 'Real feedback from our learning community.' }}</p>
         <div class="mt-8 grid gap-5 md:grid-cols-3">
             @foreach ($reviews as $review)
                 <figure class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -334,7 +334,7 @@
 @if (($homepageSettings['homepage_show_ebooks'] ?? '1') === '1' && $ebooks->count())
 <section data-home-section="ebooks" data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
-        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">E-books & notes</h2>
+        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_ebooks_title'] ?? 'E-books & notes' }}</h2><p class="mt-1 text-sm text-slate-500">{{ $homepageSettings['homepage_ebooks_subtitle'] ?? 'Study guides and resources for learning anywhere.' }}</p>
         <a href="{{ route('ebooks.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">All e-books →</a>
     </div>
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

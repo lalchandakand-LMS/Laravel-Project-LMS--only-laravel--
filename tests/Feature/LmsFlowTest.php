@@ -119,7 +119,7 @@ class LmsFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Upcoming live classes')
             ->assertSee('Live speaking practice')
-            ->assertSee('Exams & assessments', false)
+            ->assertSee('Exams &amp; assessments', false)
             ->assertSee('English progress assessment')
             ->assertSee('Meet our teachers')
             ->assertSee('Senior English Teacher')
