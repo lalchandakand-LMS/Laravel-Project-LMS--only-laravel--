@@ -340,4 +340,29 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame('paid', $order->fresh()->status);
         $this->assertSame(1000.0, $order->fresh()->amountPaid());
     }
+
+    public function test_pending_payment_cannot_be_verified_after_order_is_cancelled(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'CANCELLED-ORDER-PENDING-PAYMENT',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'cancelled',
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->post(route('admin.payments.verify', $payment), [
+            'action' => 'verify',
+        ])->assertRedirect()->assertSessionHasErrors('payment');
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame(0.0, $order->fresh()->amountPaid());
+    }
 }
