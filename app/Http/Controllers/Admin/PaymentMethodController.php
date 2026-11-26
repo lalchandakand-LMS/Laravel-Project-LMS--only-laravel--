@@ -93,11 +93,11 @@ class PaymentMethodController extends Controller
 
         $bkashBaseUrl = data_get($submittedProviders, 'bkash.credentials.base_url');
         if (filled($bkashBaseUrl) && ! in_array(rtrim($bkashBaseUrl, '/'), [
-            'https://tokenized.sandbox.bka.sh',
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+            'https://checkout.sandbox.bka.sh',
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta',
         ], true)) {
             throw ValidationException::withMessages([
-                'providers.bkash.credentials.base_url' => 'Only the official bKash Tokenized Checkout sandbox base URL is accepted.',
+                'providers.bkash.credentials.base_url' => 'Only the official bKash Checkout sandbox base URL is accepted.',
             ]);
         }
 
@@ -138,7 +138,7 @@ class PaymentMethodController extends Controller
         });
 
         return redirect()->route('admin.payment-methods.index')
-            ->with('success', 'Payment settings saved. bKash Tokenized Checkout sandbox is available when its required credentials are complete; Live mode and other provider APIs remain locked pending their official integration and certification.');
+            ->with('success', 'Payment settings saved. bKash Checkout sandbox is available when its required credentials are complete; Live mode and other provider APIs remain locked pending their official integration and certification.');
     }
 
     private function credentials(string $provider): array
