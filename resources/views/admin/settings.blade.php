@@ -49,6 +49,14 @@
                 <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 2 MB.</p>
             </div>
         </div>
+        <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+            <h4 class="font-bold text-slate-900">Public website brand colors</h4>
+            <p class="mt-1 text-xs text-slate-600">These colors control public navigation, buttons, links, badges and accent highlights. Homepage section backgrounds can still be customized separately below.</p>
+            <div class="mt-3 grid gap-4 sm:grid-cols-2">
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#ea580c') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#9a3412') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+            </div>
+        </div>
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
