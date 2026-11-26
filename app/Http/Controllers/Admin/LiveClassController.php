@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\LiveClass;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class LiveClassController extends Controller
 {
@@ -92,7 +95,7 @@ class LiveClassController extends Controller
             'course_id' => 'required|exists:courses,id',
             'title' => 'required|string|max:160',
             'description' => 'nullable|string|max:2000',
-            'platform' => 'required|string|max:40',
+            'platform' => ['required', 'string', Rule::in(LiveClass::PLATFORMS)],
             'meeting_url' => 'nullable|url|max:255',
             'meeting_password' => 'nullable|string|max:60',
             'recording_url' => 'nullable|url|max:255',
@@ -100,8 +103,37 @@ class LiveClassController extends Controller
             'duration_minutes' => 'required|integer|min:5|max:600',
         ]);
 
+        $course = Course::findOrFail($data['course_id']);
+
         if (! auth()->user()->isAdmin()) {
-            abort_unless(Course::whereKey($data['course_id'])->where('instructor_id', auth()->id())->exists(), 403);
+            abort_unless((int) $course->instructor_id === (int) auth()->id(), 403);
+        }
+
+        // A teacher cannot be scheduled to teach two sessions at the same time,
+        // even when the sessions belong to different courses. Exclude the record
+        // being edited so an unchanged schedule remains valid.
+        if ($course->instructor_id) {
+            $startsAt = Carbon::parse($data['starts_at']);
+            $endsAt = $startsAt->copy()->addMinutes((int) $data['duration_minutes']);
+
+            $hasConflict = LiveClass::query()
+                ->where('id', '!=', $request->route('liveClass')?->id ?? 0)
+                ->whereHas('course', fn ($query) => $query->where('instructor_id', $course->instructor_id))
+                ->get(['id', 'starts_at', 'duration_minutes'])
+                ->contains(function (LiveClass $scheduled) use ($startsAt, $endsAt) {
+                    $scheduledStart = $scheduled->starts_at;
+                    $scheduledEnd = $scheduledStart?->copy()->addMinutes((int) $scheduled->duration_minutes);
+
+                    return $scheduledStart && $scheduledEnd
+                        && $scheduledStart->lt($endsAt)
+                        && $scheduledEnd->gt($startsAt);
+                });
+
+            if ($hasConflict) {
+                throw ValidationException::withMessages([
+                    'starts_at' => 'This teacher already has a live class scheduled during the selected time.',
+                ]);
+            }
         }
 
         $data['is_published'] = $request->boolean('is_published');
