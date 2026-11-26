@@ -199,6 +199,65 @@ class StudentPortalExamAccessTest extends TestCase
         $this->assertDatabaseCount('exam_attempts', 1);
     }
 
+    public function test_completed_exam_attempt_cannot_be_changed_by_late_autosave_or_resubmission(): void
+    {
+        [$student, , $exam] = $this->createPaidExam();
+        $exam->update(['is_free' => true, 'pass_marks' => 5]);
+
+        $question = $exam->questions()->create([
+            'type' => 'mcq',
+            'question' => 'Which answer is correct?',
+            'marks' => 10,
+            'position' => 1,
+        ]);
+        $correctOption = $question->options()->create([
+            'option_text' => 'Correct answer',
+            'is_correct' => true,
+            'position' => 1,
+        ]);
+        $wrongOption = $question->options()->create([
+            'option_text' => 'Wrong answer',
+            'is_correct' => false,
+            'position' => 2,
+        ]);
+
+        $attempt = ExamAttempt::create([
+            'exam_id' => $exam->id,
+            'user_id' => $student->id,
+            'started_at' => now()->subMinute(),
+            'duration_minutes' => 30,
+            'status' => 'in_progress',
+        ]);
+        $attempt->questions()->attach($question->id, ['position' => 1]);
+
+        $this->actingAs($student)->post(route('student.attempts.submit', $attempt), [
+            'answers' => [$question->id => $correctOption->id],
+        ])->assertRedirect(route('student.attempts.result', $attempt));
+
+        $gradedAttempt = $attempt->fresh();
+        $originalSubmittedAt = $gradedAttempt->submitted_at;
+        $this->assertSame('submitted', $gradedAttempt->status);
+        $this->assertSame(10.0, (float) $gradedAttempt->score);
+        $this->assertSame(1, $gradedAttempt->correct_count);
+
+        $this->actingAs($student)->postJson(route('student.attempts.save', $attempt), [
+            'answers' => [$question->id => $wrongOption->id],
+        ])->assertForbidden();
+
+        $this->actingAs($student)->post(route('student.attempts.submit', $attempt), [
+            'answers' => [$question->id => $wrongOption->id],
+        ])->assertForbidden();
+
+        $savedAnswer = $attempt->answers()->where('question_id', $question->id)->firstOrFail();
+        $this->assertSame($correctOption->id, $savedAnswer->option_id);
+        $this->assertSame(10.0, (float) $attempt->fresh()->score);
+        $this->assertEquals($originalSubmittedAt, $attempt->fresh()->submitted_at);
+        $this->assertSame(2, \Illuminate\Support\Facades\DB::table('gamification_events')
+            ->where('user_id', $student->id)
+            ->whereIn('event_type', ['exam_submitted', 'exam_passed'])
+            ->count());
+    }
+
     public function test_student_cannot_start_another_attempt_after_the_limit_is_used(): void
     {
         [$student, , $exam] = $this->createPaidExam();
