@@ -7,6 +7,7 @@ use App\Models\AttemptAnswer;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\User;
+use App\Services\GamificationService;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
@@ -260,5 +261,27 @@ class ExamController extends Controller
             'submitted_at' => now(),
             'status' => 'submitted',
         ]);
+
+        $attempt->refresh();
+        $student = $attempt->user;
+        if ($student && $student->isStudent()) {
+            GamificationService::award(
+                $student,
+                'exam_submitted',
+                'exam_attempt:'.$attempt->id,
+                15,
+                ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
+            );
+
+            if ($attempt->isPassed()) {
+                GamificationService::award(
+                    $student,
+                    'exam_passed',
+                    'exam_passed:'.$attempt->id,
+                    5,
+                    ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
+                );
+            }
+        }
     }
 }

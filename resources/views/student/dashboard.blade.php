@@ -72,6 +72,27 @@
 </div>
 @endif
 
+<section class="mt-6 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 p-5">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-wide text-violet-700">Your learning rewards</p>
+            <p class="mt-1 text-2xl font-black text-slate-900">{{ number_format($gamification['xp']) }} XP</p>
+            <p class="text-sm text-slate-600">Level {{ $gamification['level'] }} · {{ $gamification['streak_days'] }} day learning streak · {{ $gamification['unlocked_badges'] }} badges unlocked</p>
+        </div>
+        <div class="min-w-48 flex-1 sm:max-w-xs">
+            <div class="flex justify-between text-xs font-semibold text-violet-800"><span>Level progress</span><span>{{ $gamification['level_progress'] }}/100 XP</span></div>
+            <div class="mt-2 h-2 overflow-hidden rounded-full bg-violet-200"><div class="h-full rounded-full bg-violet-600" style="width: {{ $gamification['level_progress'] }}%"></div></div>
+        </div>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2">
+        @foreach ($gamification['badges'] as $badge)
+            <span title="{{ $badge['description'] }}" class="rounded-full px-3 py-1.5 text-xs font-bold {{ $badge['unlocked'] ? 'bg-white text-violet-800 ring-1 ring-violet-200' : 'bg-violet-100/70 text-violet-400' }}">
+                {{ $badge['unlocked'] ? '🏅' : '🔒' }} {{ $badge['name'] }}
+            </span>
+        @endforeach
+    </div>
+</section>
+
 <div class="mt-8 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
 @if (\App\Models\Setting::get('dashboard_widget_student_courses', '1') === '1')
 <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

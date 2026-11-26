@@ -12,6 +12,7 @@ use App\Models\Exam;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Services\GamificationService;
 
 class DashboardController extends Controller
 {
@@ -40,6 +41,7 @@ class DashboardController extends Controller
             'coachingInvoices' => $coachingInvoices,
             'coachingDue' => $coachingDue,
             'continueCourse' => $inProgress->first(),
+            'gamification' => GamificationService::summary($user),
             'stats' => [
                 'enrolled' => $enrollments->count(),
                 'in_progress' => $inProgress->count(),
