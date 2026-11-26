@@ -44,6 +44,9 @@
         </table>
 
         <dl class="ml-auto mt-5 max-w-xs space-y-2 text-sm">
+            <div class="flex justify-between"><dt class="text-slate-500">Subtotal</dt><dd>৳{{ number_format($order->subtotal, 2) }}</dd></div>
+            @if($order->discount > 0)<div class="flex justify-between text-emerald-700"><dt>Discount</dt><dd>−৳{{ number_format($order->discount, 2) }}</dd></div>@endif
+            @if($order->items->contains('item_type', 'product'))<div class="flex justify-between"><dt class="text-slate-500">Delivery fee</dt><dd>{{ $order->shipping_fee > 0 ? '৳'.number_format($order->shipping_fee, 2) : 'Free' }}</dd></div>@endif
             <div class="flex justify-between"><dt class="text-slate-500">Order total</dt><dd class="font-semibold">৳{{ number_format($order->total, 2) }}</dd></div>
             <div class="flex justify-between text-emerald-700"><dt>Net received after refunds</dt><dd class="font-bold">৳{{ number_format($order->amountPaid(), 2) }}</dd></div>
             <div class="flex justify-between border-t border-slate-200 pt-2 font-extrabold"><dt>Balance due</dt><dd>৳{{ number_format($order->dueAmount(), 2) }}</dd></div>
