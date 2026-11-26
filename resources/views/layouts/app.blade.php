@@ -30,6 +30,26 @@
     @if (filled(\App\Models\Setting::get('google_site_verification')) && !$privateSeoRoute)
         <meta name="google-site-verification" content="{{ \App\Models\Setting::get('google_site_verification') }}">
     @endif
+    @php
+        $organizationSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'EducationalOrganization',
+            'name' => $brandName,
+            'url' => config('app.url'),
+            'logo' => $socialImage,
+            'description' => $brandDescription,
+            'telephone' => \\App\\Models\\Setting::get('site_phone') ?: null,
+            'email' => \\App\\Models\\Setting::get('site_email') ?: null,
+            'address' => \\App\\Models\\Setting::get('site_address') ?: null,
+            'sameAs' => array_values(array_filter([
+                \\App\\Models\\Setting::get('facebook'),
+                \\App\\Models\\Setting::get('youtube'),
+                \\App\\Models\\Setting::get('instagram'),
+            ])),
+        ];
+    @endphp
+    <script type="application/ld+json">@json($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+    @stack('structured_data')
     @include('partials.assets')
     <style>
         :root {
