@@ -120,7 +120,7 @@ class AssignmentController extends Controller
                     $lockedAssignment->submissions()->create($values + ['student_id' => $user->id]);
                 }
             });
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($newAttachment) {
                 Storage::disk('local')->delete($newAttachment);
             }
