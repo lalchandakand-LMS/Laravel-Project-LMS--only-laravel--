@@ -59,9 +59,9 @@
                             <a href="{{ $class->meeting_url }}" target="_blank" rel="noopener" class="text-sm font-semibold text-slate-600">Open</a>
                         @endif
                         <a href="{{ route('admin.live-classes.edit', $class) }}" class="ml-3 text-sm font-semibold text-emerald-700">Edit</a>
-                        <form method="POST" action="{{ route('admin.live-classes.destroy', $class) }}" class="inline" onsubmit="return confirm('Delete this class?')">
+                        <form method="POST" action="{{ route('admin.live-classes.destroy', $class) }}" class="inline" onsubmit="return confirm('Cancel this live class and notify enrolled learners?')">
                             @csrf @method('DELETE')
-                            <button class="ml-3 text-sm font-semibold text-rose-600">Delete</button>
+                            <button class="ml-3 text-sm font-semibold text-rose-600">Cancel class</button>
                         </form>
                     </td>
                 </tr>
