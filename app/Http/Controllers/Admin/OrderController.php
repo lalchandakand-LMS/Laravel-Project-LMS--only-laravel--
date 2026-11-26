@@ -190,7 +190,7 @@ class OrderController extends Controller
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
             'products' => Product::withTrashed()->where(function ($query) use ($order) {
-                $query->where(fn ($published) => $published->where('is_published', true)->where('stock_quantity', '>', 0))
+                $query->where(fn ($published) => $published->where('is_published', true)->whereColumn('stock_quantity', '>', 'reserved_quantity'))
                     ->orWhereIn('id', $order->items->where('item_type', 'product')->pluck('item_id'));
             })->orderBy('title')->get(),
         ]);
