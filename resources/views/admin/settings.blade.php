@@ -237,7 +237,12 @@
                 'developer_bg' => ['Developer strip background', '#0f172a'],
                 'developer_text_color' => ['Developer strip text', '#ffffff'],
             ] as $key => [$label, $default])
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, (($settings[$key] ?? $default) === '#ea580c' ? '#06b6d4' : (($settings[$key] ?? $default) === '#ffffff' && $key === 'homepage_learning_bg' ? '#f1f3ff' : (($settings[$key] ?? $default) === '#f1f5f9' && $key === 'homepage_testimonial_bg' ? '#111827' : (($settings[$key] ?? $default) === '#ffffff' && $key === 'footer_bg' ? '#071b26' : ($settings[$key] ?? $default))))) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                @php($colorValue = $settings[$key] ?? $default)
+                @if ($key === 'homepage_learning_bg' && $colorValue === '#ffffff') @php($colorValue = '#f1f3ff') @endif
+                @if ($key === 'homepage_testimonial_bg' && $colorValue === '#f1f5f9') @php($colorValue = '#111827') @endif
+                @if ($key === 'footer_bg' && $colorValue === '#ffffff') @php($colorValue = '#071b26') @endif
+                @if ($key === 'brand_loader_color' && $colorValue === '#ea580c') @php($colorValue = '#06b6d4') @endif
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $colorValue) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             @endforeach
         </div>
         <label class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="developer_show" value="1" @checked(($settings['developer_show'] ?? '0') === '1')> Show developer credit strip on website</label>
