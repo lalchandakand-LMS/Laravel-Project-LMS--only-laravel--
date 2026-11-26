@@ -30,7 +30,7 @@
             </div>
         @else
             <div class="coverflow-stage relative mx-auto max-w-5xl overflow-hidden rounded-[1.6rem] border border-white/10 bg-white/5 shadow-2xl">
-                <div class="grid h-full min-h-64 place-items-center"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ $brandName }} banner placeholder" class="h-32 w-32 object-contain opacity-80"></div>
+                <div class="grid h-full min-h-64 place-items-center"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ AppModelsSetting::get('site_name', 'Alom English Center') }} banner placeholder" class="h-32 w-32 object-contain opacity-80"></div>
             </div>
         @endif
 
