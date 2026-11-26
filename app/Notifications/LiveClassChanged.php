@@ -6,6 +6,7 @@ use App\Models\LiveClass;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Notifications\Channels\MiMSmsChannel;
 
 class LiveClassChanged extends Notification
 {
@@ -20,8 +21,15 @@ class LiveClassChanged extends Notification
     {
         $channels = ['database'];
 
-        if (config('live_classes.email_notifications') && filled($notifiable->routeNotificationFor('mail'))) {
+        $mailer = (string) config('mail.default', 'log');
+        if (config('live_classes.email_notifications')
+            && ! in_array($mailer, ['log', 'array'], true)
+            && filled($notifiable->routeNotificationFor('mail'))) {
             $channels[] = 'mail';
+        }
+
+        if (config('live_classes.sms_notifications') && filled($notifiable->phone)) {
+            $channels[] = MiMSmsChannel::class;
         }
 
         return $channels;
@@ -47,6 +55,16 @@ class LiveClassChanged extends Notification
         return $mail
             ->action('View live class schedule', route('student.live-classes'))
             ->line('Please check your LMS schedule for the latest details.');
+    }
+
+    public function liveClass(): LiveClass
+    {
+        return $this->liveClass;
+    }
+
+    public function event(): string
+    {
+        return $this->event;
     }
 
     public function toDatabase(object $notifiable): array
