@@ -222,7 +222,14 @@ class AdvancedExamBuilderTest extends TestCase
         $selectedId = $attempt->questions()->value('questions.id');
         $unselected = $selectedId === $first->id ? $second : $first;
 
-        $this->actingAs($student)->post(route('student.attempts.submit', $attempt), ['answers' => []])->assertRedirect();
+        $unselectedOption = $unselected->options()->firstOrFail();
+        $this->actingAs($student)->post(route('student.attempts.submit', $attempt), [
+            'answers' => [$unselected->id => $unselectedOption->id],
+        ])->assertRedirect();
+        $this->assertDatabaseMissing('attempt_answers', [
+            'exam_attempt_id' => $attempt->id,
+            'question_id' => $unselected->id,
+        ]);
         $response = $this->actingAs($student)->get(route('student.attempts.result', $attempt))->assertOk();
         $response->assertSee($attempt->questions()->first()->question);
         $response->assertDontSee($unselected->question);
@@ -263,6 +270,28 @@ class AdvancedExamBuilderTest extends TestCase
         ])->assertStatus(409);
         $this->actingAs($admin)->delete(route('admin.exams.destroy', $exam))->assertStatus(409);
         $this->assertDatabaseHas('questions', ['id' => $question->id, 'question' => 'Locked question']);
+    }
+
+
+    public function test_editing_exam_settings_preserves_question_pool_total_marks(): void
+    {
+        $admin = $this->admin();
+        $exam = $this->freeExam(['total_marks' => 17]);
+
+        $this->actingAs($admin)->put(route('admin.exams.update', $exam), [
+            'title' => 'Updated exam title',
+            'course_id' => '',
+            'description' => 'Updated description',
+            'duration_minutes' => 45,
+            'pass_marks' => 8,
+            'negative_marking' => 0.25,
+            'attempt_limit' => 2,
+            'random_question_count' => 0,
+            'is_published' => 1,
+            'is_free' => 1,
+        ])->assertRedirect(route('admin.exams.index'));
+
+        $this->assertSame(17.0, (float) $exam->fresh()->total_marks);
     }
 
 }
