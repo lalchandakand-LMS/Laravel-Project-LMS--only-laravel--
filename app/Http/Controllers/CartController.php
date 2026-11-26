@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Ebook;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -32,6 +33,16 @@ class CartController extends Controller
                     'price' => $e->final_price, 'original_price' => (float) $e->price,
                     'has_discount' => $e->has_discount, 'flash_sale_name' => $e->activeFlashSale()?->name,
                     'image' => $e->coverUrl(), 'url' => route('ebooks.show', $e->slug),
+                ];
+            }
+
+            if ($type === 'product' && ($p = Product::published()->find($id))) {
+                $rows[] = [
+                    'key' => $key, 'type' => 'product', 'id' => $id, 'title' => $p->title,
+                    'price' => (float) $p->price, 'original_price' => (float) $p->price,
+                    'has_discount' => false, 'flash_sale_name' => null,
+                    'image' => $p->imageUrl(), 'url' => route('products.show', $p->slug),
+                    'qty' => 1,
                 ];
             }
         }
@@ -76,7 +87,7 @@ class CartController extends Controller
 
     public function add(Request $request, string $type, int $id)
     {
-        abort_unless(in_array($type, ['course', 'ebook'], true), 404);
+        abort_unless(in_array($type, ['course', 'ebook', 'product'], true), 404);
 
         if ($type === 'course') {
             $course = Course::published()->findOrFail($id);
@@ -86,11 +97,13 @@ class CartController extends Controller
             if ($course->final_price <= 0) {
                 return redirect()->route('courses.enroll-free', $course->slug);
             }
-        } else {
+        } elseif ($type === 'ebook') {
             $ebook = Ebook::where('is_published', true)->findOrFail($id);
             if ($ebook->ownedBy($request->user())) {
                 return back()->with('info', 'You already own this e-book.');
             }
+        } else {
+            Product::published()->findOrFail($id);
         }
 
         $key = "{$type}:{$id}";
