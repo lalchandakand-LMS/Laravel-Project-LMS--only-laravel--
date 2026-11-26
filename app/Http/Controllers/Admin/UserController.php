@@ -52,9 +52,17 @@ class UserController extends Controller
             'role' => 'required|in:'.implode(',', array_keys(User::ROLES)),
             'branch_id' => 'nullable|exists:branches,id',
             'designation' => 'nullable|string|max:120',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'password' => ['required', 'string', Password::min(8)],
         ]);
 
+        if ($request->hasFile('avatar')) {
+            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } elseif (! empty($data['avatar_url'])) {
+            $data['avatar'] = $data['avatar_url'];
+        }
+        unset($data['avatar_url']);
         $data['is_active'] = $request->boolean('is_active');
         $user = User::create($data);
 
@@ -107,6 +115,8 @@ class UserController extends Controller
             'branch_id' => 'nullable|exists:branches,id',
             'designation' => 'nullable|string|max:120',
             'bio' => 'nullable|string|max:1000',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'password' => ['nullable', 'string', Password::min(8)],
         ]);
 
@@ -114,6 +124,19 @@ class UserController extends Controller
             unset($data['password']);
         }
 
+        if ($request->hasFile('avatar')) {
+            $newAvatar = $request->file('avatar')->store('avatars', 'public');
+            if ($user->avatar && ! str_starts_with($user->avatar, 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $newAvatar;
+        } elseif (! empty($data['avatar_url'])) {
+            if ($user->avatar && ! str_starts_with($user->avatar, 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $data['avatar_url'];
+        }
+        unset($data['avatar_url']);
         $data['is_active'] = $request->boolean('is_active');
         $user->update($data);
 
