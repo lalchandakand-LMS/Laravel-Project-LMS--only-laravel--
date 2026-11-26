@@ -84,6 +84,31 @@ class AdminOrderManagementTest extends TestCase
         $this->assertStringContainsString($order->order_no, $response->streamedContent());
     }
 
+    public function test_admin_can_edit_an_unpaid_order_and_recalculate_its_items_and_total(): void
+    {
+        [$admin, $student, $branch] = $this->setupAdminAndStudent();
+        $first = Course::create(['title' => 'Original Course', 'slug' => 'original-course', 'price' => 400, 'is_published' => true]);
+        $replacement = Course::create(['title' => 'Replacement Course', 'slug' => 'replacement-course', 'price' => 750, 'is_published' => true]);
+        $order = Order::create([
+            'user_id' => $student->id, 'branch_id' => $branch->id,
+            'subtotal' => 400, 'discount' => 0, 'total' => 400,
+            'status' => 'pending', 'name' => $student->name,
+            'phone' => '01712345678', 'email' => $student->email,
+        ]);
+        $order->items()->create(['item_type' => 'course', 'item_id' => $first->id, 'title' => $first->title, 'price' => 400, 'qty' => 1]);
+
+        $this->actingAs($admin)->put(route('admin.orders.update', $order->order_no), [
+            'name' => 'Updated Student Name', 'phone' => '01799999999',
+            'email' => $student->email, 'address' => 'Updated address',
+            'items' => [['type' => 'course', 'id' => $replacement->id]],
+        ])->assertRedirect(route('admin.orders.show', $order->order_no));
+
+        $this->assertSame('Updated Student Name', $order->fresh()->name);
+        $this->assertSame(750.0, (float) $order->fresh()->total);
+        $this->assertSame('Replacement Course', $order->fresh()->items()->firstOrFail()->title);
+        $this->assertDatabaseCount('payments', 0);
+    }
+
     public function test_orders_with_payment_history_cannot_be_edited(): void
     {
         [$admin, $student, $branch] = $this->setupAdminAndStudent();
