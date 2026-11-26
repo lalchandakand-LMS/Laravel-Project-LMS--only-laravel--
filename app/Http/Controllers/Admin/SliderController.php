@@ -82,6 +82,40 @@ class SliderController extends Controller
         return back()->with('success', 'Slider '.($slider->is_active ? 'published' : 'hidden').'.');
     }
 
+    /**
+     * Public CTA links may be same-site root paths, fragments or absolute
+     * HTTP(S) URLs only. Reject script/data schemes and protocol-relative URLs.
+     */
+    private function safeNavigationTarget(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || trim((string) $value) === '') {
+                return;
+            }
+
+            $url = trim((string) $value);
+
+            if (str_starts_with($url, '#')
+                || (str_starts_with($url, '/') && ! str_starts_with($url, '//')
+                    && ! str_contains($url, '\\')
+                    && preg_match('/[\x00-\x20]/', $url) !== 1)) {
+                return;
+            }
+
+            $parts = parse_url($url);
+            $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+            $safeExternal = is_array($parts)
+                && in_array($scheme, ['http', 'https'], true)
+                && filled($parts['host'] ?? null)
+                && ! isset($parts['user'])
+                && ! isset($parts['pass']);
+
+            if (! $safeExternal) {
+                $fail('Use a same-site path, anchor, or http/https URL.');
+            }
+        };
+    }
+
     private function validated(Request $request, ?Slider $slider = null): array
     {
         $data = $request->validate([
@@ -91,7 +125,7 @@ class SliderController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:4096',
             'image_url' => 'nullable|url:http,https|max:2048',
             'button_text' => 'nullable|string|max:60',
-            'button_url' => 'nullable|string|max:255',
+            'button_url' => ['nullable', 'string', 'max:255', $this->safeNavigationTarget()],
             'theme' => 'required|in:'.implode(',', array_keys(Slider::THEMES)),
             'sort_order' => 'nullable|integer|min:0',
         ]);
