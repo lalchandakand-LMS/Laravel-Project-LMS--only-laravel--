@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\LiveClass;
 use App\Models\OnlineBatchEnrollment;
 use App\Services\EnrollmentEligibility;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class LiveClassController extends Controller
 {
