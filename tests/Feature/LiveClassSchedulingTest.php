@@ -442,7 +442,7 @@ class LiveClassSchedulingTest extends TestCase
         $this->assertSame(['database'], $notification->via($student));
 
         config(['live_classes.email_notifications' => true, 'mail.default' => 'smtp', 'mail.mailers.smtp.host' => 'smtp.example.test', 'mail.mailers.smtp.username' => 'test-user', 'mail.mailers.smtp.password' => 'test-password', 'mail.from.address' => 'noreply@example.test']);
-        $this->assertSame(['database', \\App\\Notifications\\Channels\\QueuedMailChannel::class], $notification->via($student));
+        $this->assertSame(['database', \App\Notifications\Channels\QueuedMailChannel::class], $notification->via($student));
     }
 
 
