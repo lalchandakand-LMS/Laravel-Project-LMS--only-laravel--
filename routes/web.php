@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Route;
  |  PUBLIC
  |------------------------------------------------------------------*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
