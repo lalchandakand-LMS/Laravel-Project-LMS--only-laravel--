@@ -91,6 +91,45 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame(2, $order->payments()->where('status', 'verified')->count());
     }
 
+    public function test_payment_verification_rolls_back_when_purchased_course_is_archived(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $course = Course::create([
+            'title' => 'Archived Before Payment Review',
+            'slug' => 'archived-before-payment-review',
+            'price' => 1000,
+            'is_published' => true,
+        ]);
+        $order->items()->create([
+            'item_type' => 'course',
+            'item_id' => $course->id,
+            'title' => $course->title,
+            'price' => 1000,
+            'qty' => 1,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'ARCHIVED-COURSE-PAYMENT',
+            'status' => 'pending',
+        ]);
+
+        $course->delete();
+
+        $this->actingAs($admin)->post(route('admin.payments.verify', $payment), [
+            'action' => 'verify',
+        ])->assertRedirect()->assertSessionHasErrors('course');
+
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertDatabaseMissing('enrollments', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+    }
+
     public function test_student_cannot_submit_second_payment_while_one_is_pending(): void
     {
         [$student, $admin, $branch, $order] = $this->orderForStudent();

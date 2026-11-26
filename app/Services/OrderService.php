@@ -23,7 +23,9 @@ class OrderService
                 if ($item->item_type === 'course') {
                     $course = Course::whereKey($item->item_id)->lockForUpdate()->first();
                     if (! $course) {
-                        continue;
+                        throw ValidationException::withMessages([
+                            'course' => 'The purchased course is no longer available. Restore the course before verifying this payment.',
+                        ]);
                     }
 
                     $existing = Enrollment::where('user_id', $order->user_id)
