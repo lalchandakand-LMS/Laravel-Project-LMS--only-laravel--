@@ -137,7 +137,7 @@ class AssignmentController extends Controller
             'feedback' => 'nullable|string|max:10000',
         ]);
 
-        if ($data['status'] === 'graded' && ! array_key_exists('score', $data)) {
+        if ($data['status'] === 'graded' && (! isset($data['score']) || $data['score'] === '')) {
             return back()->withErrors(['score' => 'Enter a score before marking the submission as graded.']);
         }
 
