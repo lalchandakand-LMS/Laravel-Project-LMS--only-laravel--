@@ -97,7 +97,8 @@ class ExamResultController extends Controller
             '80–100%' => 0,
         ];
         foreach ((clone $attempts)->get() as $attempt) {
-            $percent = $exam->total_marks > 0 ? ($attempt->score / $exam->total_marks) * 100 : 0;
+            $maxScore = $attempt->max_score ?? $exam->total_marks;
+            $percent = $maxScore > 0 ? ($attempt->score / $maxScore) * 100 : 0;
             $bucket = $percent < 40 ? '0–39%' : ($percent < 60 ? '40–59%' : ($percent < 80 ? '60–79%' : '80–100%'));
             $distribution[$bucket]++;
         }
