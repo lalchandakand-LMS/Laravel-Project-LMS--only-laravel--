@@ -32,7 +32,10 @@ jobs:
           tools: composer:v2
 
       - name: Validate safe update scripts
-        run: bash -n update.sh backup.sh
+        run: bash -n update.sh backup.sh tests/scripts/backup-safety-test.sh
+
+      - name: Test backup privacy and secret handling
+        run: bash tests/scripts/backup-safety-test.sh
 
       - name: Validate Composer configuration
         run: composer validate --no-check-publish
