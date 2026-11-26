@@ -22,16 +22,25 @@ class ProfileDocumentController extends Controller
         $file = $request->file('file');
         $path = $file->store('profile-documents/'.$user->id, 'local');
 
-        $profile->documents()->create([
-            'document_type' => $data['document_type'],
-            'disk' => 'local',
-            'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
-            'size_bytes' => $file->getSize(),
-            'status' => 'pending',
-            'uploaded_by' => $request->user()->id,
-        ]);
+        if (! is_string($path) || $path === '') {
+            return back()->withErrors(['file' => 'The document could not be stored. Please try again.'])->withInput();
+        }
+
+        try {
+            $profile->documents()->create([
+                'document_type' => $data['document_type'],
+                'disk' => 'local',
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+                'size_bytes' => $file->getSize(),
+                'status' => 'pending',
+                'uploaded_by' => $request->user()->id,
+            ]);
+        } catch (Throwable $exception) {
+            Storage::disk('local')->delete($path);
+            throw $exception;
+        }
 
         return back()->with('success', 'Document uploaded for verification.');
     }
