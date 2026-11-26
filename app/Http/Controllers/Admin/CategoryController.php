@@ -96,7 +96,7 @@ class CategoryController extends Controller
             }
             throw $exception;
         }
-        if ($oldImage && isset($data['image']) && $oldImage !== $data['image']) {
+        if ($oldImage && array_key_exists('image', $data) && $oldImage !== $data['image']) {
             delete_stored_media('public', $oldImage);
         }
 
