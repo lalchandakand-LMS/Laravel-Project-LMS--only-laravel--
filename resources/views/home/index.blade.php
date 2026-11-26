@@ -38,7 +38,7 @@
             @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
             <section class="home-glass-card">
                 <div class="flex items-center justify-between gap-3">
-                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">Online Course</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
+                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">{{ $homepageSettings['homepage_online_batches_badge'] ?? 'Online Course' }}</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
                     <a href="{{ route('courses.index') }}" class="shrink-0 text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a>
                 </div>
                 <div class="mt-5 grid gap-3 sm:grid-cols-2">
@@ -55,9 +55,14 @@
             @endif
             @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
             <section class="home-glass-card">
-                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">See the stats!</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
+                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_stats_title'] ?? 'See the stats!' }}</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
                 <div class="mt-5 grid grid-cols-2 gap-3">
-                    @foreach ([['Students', $stats['students'], '♙'], ['Courses', $stats['courses'], '▤'], ['Teachers', $stats['instructors'], '♧'], ['Videos / Lessons', $stats['lessons'], '▷']] as [$label, $value, $icon])
+                    @foreach ([
+                        [$homepageSettings['homepage_stats_students_label'] ?? 'Students', $stats['students'], $homepageSettings['homepage_stats_students_icon'] ?? '♙'],
+                        [$homepageSettings['homepage_stats_courses_label'] ?? 'Courses', $stats['courses'], $homepageSettings['homepage_stats_courses_icon'] ?? '▤'],
+                        [$homepageSettings['homepage_stats_teachers_label'] ?? 'Teachers', $stats['instructors'], $homepageSettings['homepage_stats_teachers_icon'] ?? '♧'],
+                        [$homepageSettings['homepage_stats_lessons_label'] ?? 'Videos / Lessons', $stats['lessons'], $homepageSettings['homepage_stats_lessons_icon'] ?? '▷'],
+                    ] as [$label, $value, $icon])
                         <div class="rounded-xl border border-white/10 bg-white/[.045] p-4"><div class="flex items-center justify-between"><span class="text-xl text-cyan-300">{{ $icon }}</span><strong class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</strong></div><p class="mt-1 text-xs font-semibold text-slate-300">{{ $label }}</p></div>
                     @endforeach
                 </div>
