@@ -146,10 +146,6 @@ class AttendanceController extends Controller
 
     public function save(Request $request, AttendanceSession $session)
     {
-        abort_unless($this->canManage($request, $session), 403);
-        abort_unless(in_array($session->status, ['draft', 'returned'], true), 422, 'Only draft or returned attendance can be edited.');
-
-        $studentIds = $this->activeStudentIds($session)->map(fn ($id) => (string) $id)->all();
         $data = $request->validate([
             'attendance' => ['required', 'array'],
             'attendance.*.status' => ['required', Rule::in(Attendance::STATUSES)],
@@ -158,18 +154,34 @@ class AttendanceController extends Controller
 
         $submittedIds = array_map('strval', array_keys($data['attendance']));
         sort($submittedIds);
-        $expectedIds = $studentIds;
-        sort($expectedIds);
-        abort_unless($submittedIds === $expectedIds, 422, 'Attendance must include every active student in this batch and no other student.');
 
-        DB::transaction(function () use ($session, $data, $request) {
+        DB::transaction(function () use ($session, $data, $request, $submittedIds) {
+            // Save and submit share the same row lock so a stale save cannot
+            // reopen or mutate a roster after it has been submitted.
+            $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            abort_unless($this->canManage($request, $lockedSession), 403);
+            abort_unless(in_array($lockedSession->status, ['draft', 'returned'], true), 422,
+                'Only draft or returned attendance can be edited.');
+
+            $expectedIds = $this->activeStudentIds($lockedSession)->map(fn ($id) => (string) $id)->all();
+            sort($expectedIds);
+            abort_unless($submittedIds === $expectedIds, 422,
+                'Attendance must include every active student in this batch and no other student.');
+
             foreach ($data['attendance'] as $studentId => $record) {
                 Attendance::updateOrCreate(
-                    ['attendance_session_id' => $session->id, 'student_id' => $studentId],
+                    ['attendance_session_id' => $lockedSession->id, 'student_id' => $studentId],
                     ['status' => $record['status'], 'note' => $record['note'] ?? null, 'marked_by' => $request->user()->id]
                 );
             }
-            $session->update(['status' => 'draft', 'submitted_at' => null, 'reviewed_by' => null, 'reviewed_at' => null, 'review_note' => null]);
+
+            $lockedSession->update([
+                'status' => 'draft',
+                'submitted_at' => null,
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'review_note' => null,
+            ]);
         });
 
         return back()->with('success', 'Attendance saved as draft.');
@@ -177,10 +189,9 @@ class AttendanceController extends Controller
 
     public function submit(Request $request, AttendanceSession $session)
     {
-        abort_unless($this->canManage($request, $session), 403);
-
-        DB::transaction(function () use ($session) {
+        DB::transaction(function () use ($session, $request) {
             $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            abort_unless($this->canManage($request, $lockedSession), 403);
             abort_unless(in_array($lockedSession->status, ['draft', 'returned'], true), 422);
 
             $expectedIds = $this->activeStudentIds($lockedSession)
