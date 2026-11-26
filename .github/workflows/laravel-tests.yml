@@ -25,7 +25,10 @@ jobs:
           coverage: none
 
       - name: Validate safe update scripts
-        run: bash -n update.sh backup.sh
+        run: bash -n update.sh backup.sh tests/scripts/backup-safety-test.sh
+
+      - name: Test backup privacy and secret handling
+        run: bash tests/scripts/backup-safety-test.sh
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress

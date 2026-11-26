@@ -3,7 +3,7 @@
 # Alom's English Center LMS - safe update script
 #
 # What it does, in order:
-#   1. makes verified timestamped backups of the database + .env + uploaded files (storage/backups/)
+#   1. makes verified timestamped backups of the database + .env + public and private uploads (storage/backups/)
 #   2. puts the site into maintenance mode
 #   3. installs composer dependencies (skippable)
 #   4. runs ONLY new migrations (php artisan migrate --force) - never a fresh wipe
@@ -19,6 +19,7 @@
 #   ./update.sh --dry-run       # show what would happen, change nothing
 #
 set -uo pipefail
+umask 077
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$APP_DIR" || exit 1
@@ -68,9 +69,11 @@ DB_DATABASE="$(ENV_VAL DB_DATABASE)"
 say "Backing up database (.env is backed up too)"
 mkdir -p "$BACKUP_DIR" storage/framework/cache/data storage/framework/sessions \
          storage/framework/views storage/logs storage/app/public bootstrap/cache
+chmod 700 "$BACKUP_DIR"
 
 if [ "$DRY_RUN" -eq 0 ]; then
   cp -p .env "$BACKUP_DIR/env-$STAMP.bak" || die ".env backup failed."
+  chmod 600 "$BACKUP_DIR/env-$STAMP.bak"
   [ -s "$BACKUP_DIR/env-$STAMP.bak" ] || die ".env backup is empty."
   ok ".env -> $BACKUP_DIR/env-$STAMP.bak"
 fi
@@ -81,6 +84,7 @@ case "$DB_CONNECTION" in
     [ -f "$DB_FILE" ] || die "SQLite database not found at $DB_FILE - refusing to update without a verified backup."
     if [ -f "$DB_FILE" ] && [ "$DRY_RUN" -eq 0 ]; then
       cp -p "$DB_FILE" "$BACKUP_DIR/sqlite-$STAMP.sqlite" && [ -s "$BACKUP_DIR/sqlite-$STAMP.sqlite" ] || die "SQLite backup failed or is empty."
+      chmod 600 "$BACKUP_DIR/sqlite-$STAMP.sqlite"
       ok "database -> $BACKUP_DIR/sqlite-$STAMP.sqlite"
     fi
     ;;
@@ -88,9 +92,9 @@ case "$DB_CONNECTION" in
     if command -v mysqldump >/dev/null 2>&1; then
       # shellcheck disable=SC2046
       if [ "$DRY_RUN" -eq 0 ]; then
-        mysqldump --single-transaction --quick --no-tablespaces \
+        MYSQL_PWD="$(ENV_VAL DB_PASSWORD)" mysqldump --single-transaction --quick --no-tablespaces \
           -h"$(ENV_VAL DB_HOST)" -P"$(ENV_VAL DB_PORT)" \
-          -u"$(ENV_VAL DB_USERNAME)" -p"$(ENV_VAL DB_PASSWORD)" \
+          -u"$(ENV_VAL DB_USERNAME)" \
           "${DB_DATABASE:-laravel}" > "$BACKUP_DIR/mysql-$STAMP.sql" 2>/dev/null \
           && ok "database -> $BACKUP_DIR/mysql-$STAMP.sql" \
           || warn "mysqldump failed (is it installed / are the credentials right?) - stopping safely"
@@ -125,11 +129,32 @@ if [ -d storage/app/public ] && find storage/app/public -type f -print -quit | g
   fi
 fi
 
-# keep the 10 newest backup artifacts, drop the rest
+# Private submissions and learning files are separate from public media.
+# Exclude the Admin database-backup folder to avoid recursive archive growth.
+if [ -d storage/app/private ] && find storage/app/private -mindepth 1 -maxdepth 1 ! -name system-backups -print -quit | grep -q .; then
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "    [dry-run] archive storage/app/private (excluding system-backups) -> $BACKUP_DIR/private-$STAMP.tar.gz"
+  else
+    tar -czf "$BACKUP_DIR/private-$STAMP.tar.gz" --exclude='private/system-backups' -C storage/app private || die "Private-file backup failed."
+    tar -tzf "$BACKUP_DIR/private-$STAMP.tar.gz" >/dev/null 2>&1 || die "Private-file backup verification failed."
+    chmod 600 "$BACKUP_DIR/private-$STAMP.tar.gz"
+    ok "private uploads -> $BACKUP_DIR/private-$STAMP.tar.gz"
+  fi
+fi
+
+# Keep the 10 newest complete timestamped backup sets.
 if [ "$DRY_RUN" -eq 0 ]; then
-  ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +11 | while read -r old; do
-    rm -rf "${BACKUP_DIR:?}/$old"
-  done
+  mapfile -t SNAPSHOTS < <(
+    for artifact in "$BACKUP_DIR"/*; do
+      [ -f "$artifact" ] || continue
+      basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\..*)?/\2/p'
+    done | sort -ru
+  )
+  if [ "${#SNAPSHOTS[@]}" -gt 10 ]; then
+    for old_stamp in "${SNAPSHOTS[@]:10}"; do
+      rm -f "$BACKUP_DIR/"*-"$old_stamp".*
+    done
+  fi
 fi
 
 # ---------------------------------------------------- 2. maintenance mode
@@ -197,6 +222,8 @@ if [ "$DRY_RUN" -eq 0 ]; then
   "$PHP_BIN" artisan view:cache     >/dev/null 2>&1 && ok "views cached"    || warn "view:cache skipped"
   [ -L public/storage ] || { "$PHP_BIN" artisan storage:link >/dev/null 2>&1 && ok "public/storage linked" || warn "storage:link failed (uploads may 404)"; }
   chmod -R ug+rwX storage bootstrap/cache 2>/dev/null && ok "storage/ + bootstrap/cache/ writable" || warn "chmod failed (fix permissions manually)"
+  chmod 700 "$BACKUP_DIR" 2>/dev/null || warn "could not restrict backup directory permissions"
+  find "$BACKUP_DIR" -maxdepth 1 -type f -exec chmod 600 {} \; 2>/dev/null || warn "could not restrict backup file permissions"
 else
   echo "    [dry-run] optimize:clear / config:cache / route:cache / view:cache / storage:link / chmod"
 fi

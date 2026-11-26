@@ -2,11 +2,12 @@
 
 ## Database backups
 
-- Admins can create and restore a database snapshot from **Admin → System → Backup & Restore**. This panel currently handles the database only; it does not package or restore public/private uploaded files.
-- MySQL backups require the host to provide the `mysqldump` and `mysql` command-line clients.
+- Admins can create and restore a database snapshot from **Admin → System → Backup & Restore**. The panel and scheduled `system:backup` command currently handle the database only; they do not package or restore uploaded files.
+- MySQL backups require the host to provide the `mysqldump` and `mysql` command-line clients. The shell backup/update scripts pass the MySQL password through `MYSQL_PWD`, not a command-line `-p` argument.
 - SQLite backups are copied as database files.
-- Backup files are written to `storage/app/private/system-backups`, outside the public web root, with restrictive directory/file permissions.
-- Download database backups and keep an encrypted off-server copy. `backup.sh` and `update.sh` also save `.env` and public uploads, but private uploads (admission documents, assignment submissions and other private learning files) are not included in the Admin backup panel or scheduled `system:backup` command. Back up `storage/app/private` separately before production upgrades. A backup stored only on the same hosting account is not a disaster-recovery strategy.
+- Admin-panel backup files are written to `storage/app/private/system-backups`, outside the public web root, with restrictive directory/file permissions.
+- `backup.sh` and `update.sh` create separate archives for public uploads (`storage/app/public`) and private uploads (`storage/app/private`, including admission documents, payment evidence and assignment submissions). They exclude `storage/app/private/system-backups` to avoid recursively archiving database backups. The backup directory is restricted to mode 0700 and backup artifacts to mode 0600.
+- Keep a matching database, `.env`, public-upload and private-upload backup set, and store an encrypted copy off-server. The Admin panel restore does not restore media archives; restore the matching `uploads-*.tar.gz` and `private-*.tar.gz` archives to `storage/app/` after database recovery, keeping private files outside the public web root. A backup stored only on the same hosting account is not a disaster-recovery strategy.
 - The scheduled command is `php artisan system:backup --keep=14`; it retains the newest 14 backups and removes activity log rows older than 180 days.
 - The scheduler runs the database backup daily at 02:00 server time and safe Recycle Bin cleanup at 02:30 server time. Recycle Bin retention defaults to 30 days and can be changed with RECYCLE_BIN_RETENTION_DAYS; linked/financial records are never auto-purged. In cPanel → Cron Jobs, add the standard Laravel scheduler entry (replace the path and PHP binary with the account's actual values):
 
@@ -25,7 +26,7 @@ MySQL restore requires both `mysqldump` and `mysql` binaries and sufficient data
 
 ## Safe code upgrades
 
-Use `./update.sh --dry-run` first. The update script takes a timestamped database, environment and public-upload backup before applying additive Laravel migrations. It does not run `migrate:fresh`, `db:wipe` or seed commands. It does not currently archive private uploaded files; make a separate protected copy of `storage/app/private` before updates.
+Use `./update.sh --dry-run` first. The update script takes timestamped database, environment, public-upload and private-upload backups before applying additive Laravel migrations. It does not run `migrate:fresh`, `db:wipe` or seed commands.
 
 ## Activity audit
 
