@@ -179,7 +179,8 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
             || ($parts['path'] ?? '/') !== '/' || isset($parts['port']) && (int) $parts['port'] !== 443
             || ($query['Action'] ?? null) !== 'ConfirmSubscription'
             || ($query['TopicArn'] ?? null) !== $topic
-            || blank($query['Token'] ?? null)) {
+            || blank($query['Token'] ?? null)
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['fragment'])) {
             throw ValidationException::withMessages(['webhook' => 'The SNS subscription confirmation URL is not trusted.']);
         }
 
