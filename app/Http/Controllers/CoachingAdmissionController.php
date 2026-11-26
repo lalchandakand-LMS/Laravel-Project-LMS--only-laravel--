@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\CoachingAdmission;
 use App\Models\CoachingBatch;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CoachingAdmissionController extends Controller
 {
