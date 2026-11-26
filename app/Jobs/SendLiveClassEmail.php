@@ -39,6 +39,19 @@ class SendLiveClassEmail implements ShouldQueue
             return;
         }
 
+        $smtp = (array) config('mail.mailers.smtp', []);
+        if (config('mail.default') !== 'smtp'
+            || blank($smtp['host'] ?? null)
+            || blank($smtp['username'] ?? null)
+            || blank($smtp['password'] ?? null)
+            || blank(config('mail.from.address'))) {
+            Log::warning('Live class email job skipped because SMTP configuration is incomplete.', [
+                'user_id' => $this->userId,
+                'live_class_id' => $this->liveClassId,
+            ]);
+            return;
+        }
+
         $user = User::query()->whereKey($this->userId)->where('is_active', true)->first();
         $liveClass = LiveClass::query()->find($this->liveClassId);
 
