@@ -140,6 +140,8 @@ class LmsFlowTest extends TestCase
 
     public function test_registration_welcome_message_uses_application_brand(): void
     {
+        config(['mail.from.address' => 'noreply@example.test']);
+
         $response = $this->post('/register', [
             'name' => 'New Demo Student',
             'email' => 'new-student@example.test',
