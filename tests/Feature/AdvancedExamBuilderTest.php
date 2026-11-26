@@ -115,6 +115,7 @@ class AdvancedExamBuilderTest extends TestCase
         $selected = $attempt->questions()->pluck('questions.id')->all();
         $this->assertCount(2, $selected);
         $this->assertCount(2, array_unique($selected));
+        $this->assertSame(2.0, (float) $attempt->max_score);
         $this->assertEqualsCanonicalizing(
             $selected,
             $attempt->fresh()->questions()->pluck('questions.id')->all()
@@ -183,4 +184,48 @@ class AdvancedExamBuilderTest extends TestCase
         $teacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
         $this->actingAs($teacher)->get(route('admin.question-bank.index'))->assertForbidden();
     }
+
+    public function test_selected_question_bank_items_are_copied_into_an_exam_without_changing_the_bank(): void
+    {
+        $admin = $this->admin();
+        $exam = $this->freeExam();
+        $item = QuestionBankItem::create([
+            'created_by' => $admin->id,
+            'category' => 'Grammar',
+            'difficulty' => 'easy',
+            'type' => 'mcq',
+            'question' => 'Select the past tense.',
+            'options' => ['go', 'went', 'gone'],
+            'correct_option_index' => 1,
+            'marks' => 2,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.question-bank.attach', $exam), [
+            'item_ids' => [$item->id],
+        ])->assertRedirect(route('admin.exams.questions.index', $exam));
+
+        $question = Question::where('exam_id', $exam->id)->firstOrFail();
+        $this->assertSame('Select the past tense.', $question->question);
+        $this->assertSame(2.0, (float) $exam->fresh()->total_marks);
+        $this->assertSame(1, $question->options()->where('is_correct', true)->firstOrFail()->position);
+        $this->assertDatabaseHas('question_bank_items', ['id' => $item->id]);
+    }
+
+    public function test_student_result_uses_only_the_randomized_question_snapshot(): void
+    {
+        $student = $this->student();
+        $exam = $this->freeExam(['random_question_count' => 1]);
+        $first = $this->addMcq($exam, 'Pool question one');
+        $second = $this->addMcq($exam, 'Pool question two');
+        $this->actingAs($student)->post(route('student.exams.start', $exam))->assertRedirect();
+        $attempt = ExamAttempt::where('exam_id', $exam->id)->where('user_id', $student->id)->firstOrFail();
+        $selectedId = $attempt->questions()->value('questions.id');
+        $unselected = $selectedId === $first->id ? $second : $first;
+
+        $this->actingAs($student)->post(route('student.attempts.submit', $attempt), ['answers' => []])->assertRedirect();
+        $response = $this->actingAs($student)->get(route('student.attempts.result', $attempt))->assertOk();
+        $response->assertSee($attempt->questions()->first()->question);
+        $response->assertDontSee($unselected->question);
+    }
+
 }
