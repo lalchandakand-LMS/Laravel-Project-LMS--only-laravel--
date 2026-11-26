@@ -48,10 +48,12 @@ class UserController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $role = in_array($request->query('role'), ['student', 'instructor'], true) ? $request->query('role') : 'student';
+
         return view('admin.users.form', [
-            'user' => new User(['role' => 'student', 'is_active' => true]),
+            'user' => new User(['role' => $role, 'is_active' => true]),
             'roles' => User::ROLES,
             'branches' => Branch::orderBy('name')->get(),
             'students' => User::where('role', 'student')->orderBy('name')->get(),
