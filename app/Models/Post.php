@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Models;
+namespace App\Models;
 
-use App\\Models\\Concerns\\TracksDeletionActor;
-use Illuminate\\Database\\Eloquent\\Model;
-use Illuminate\\Support\\Str;
+use App\Models\Concerns\TracksDeletionActor;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Post extends Model
 {
