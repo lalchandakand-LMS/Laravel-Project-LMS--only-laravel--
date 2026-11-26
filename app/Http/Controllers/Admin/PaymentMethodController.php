@@ -22,7 +22,7 @@ class PaymentMethodController extends Controller
     private const PROVIDERS = [
         'bkash' => [
             'label' => 'bKash',
-            'fields' => ['merchant_number' => 'Merchant number', 'app_key' => 'App key', 'app_secret' => 'App secret', 'username' => 'API username', 'password' => 'API password', 'base_url' => 'API base URL', 'webhook_secret' => 'Webhook secret', 'webhook_topic_arn' => 'bKash SNS webhook Topic ARN'],
+            'fields' => ['merchant_number' => 'Merchant number', 'app_key' => 'App key', 'app_secret' => 'App secret', 'username' => 'API username', 'password' => 'API password', 'base_url' => 'API base URL', 'webhook_topic_arn' => 'bKash SNS webhook Topic ARN'],
         ],
         'nagad' => [
             'label' => 'Nagad',
