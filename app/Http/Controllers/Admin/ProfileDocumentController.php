@@ -39,7 +39,7 @@ class ProfileDocumentController extends Controller
     public function download(User $user, ProfileDocument $document)
     {
         $profile = $this->profileFor($user);
-        abort_unless($document->documentable()->is($profile), 404);
+        abort_unless($document->documentable_type === $profile->getMorphClass() && (int) $document->documentable_id === (int) $profile->getKey(), 404);
 
         abort_unless(Storage::disk($document->disk)->exists($document->path), 404);
 
