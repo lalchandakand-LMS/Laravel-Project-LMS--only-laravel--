@@ -83,7 +83,7 @@ class GoogleAuthController extends Controller
 
             if (! $user) {
                 $user = User::create([
-                    'name' => Str::limit(trim((string) ($profile['name'] ?? 'Student')), 100, ''),
+                    'name' => Str::limit(trim((string) ($profile['name'] ?? '')) ?: Str::before($profile['email'], '@'), 100, ''),
                     'email' => Str::lower($profile['email']),
                     'password' => Hash::make(Str::random(64)),
                     'role' => 'student',
