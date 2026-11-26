@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\StaffPayroll;
+use App\Models\StaffProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -97,6 +98,78 @@ class StaffPayrollWorkflowTest extends TestCase
         $payroll->update(['status' => 'paid']);
         $this->delete(route('admin.staff-payroll.destroy', $payroll))->assertStatus(409);
         $this->assertDatabaseHas('staff_payrolls', ['id' => $payroll->id, 'status' => 'paid']);
+    }
+
+    public function test_approved_payroll_cannot_be_approved_or_deleted_again(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $teacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+        $profile = $teacher->staffProfile()->create(['employment_status' => 'active']);
+        $payroll = StaffPayroll::create([
+            'staff_profile_id' => $profile->id,
+            'payroll_month' => '2026-12',
+            'basic_salary' => 20000,
+            'allowances' => 0,
+            'deductions' => 0,
+            'net_salary' => 20000,
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.staff-payroll.approve', $payroll))
+            ->assertStatus(409);
+        $this->delete(route('admin.staff-payroll.destroy', $payroll))
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('staff_payrolls', [
+            'id' => $payroll->id,
+            'status' => 'approved',
+        ]);
+    }
+
+    public function test_only_active_staff_can_receive_payroll_and_concurrent_month_duplicate_is_reported(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $inactive = User::factory()->create(['role' => 'instructor', 'is_active' => false]);
+        $inactive->staffProfile()->create(['employment_status' => 'active']);
+
+        $this->actingAs($admin)->from(route('admin.staff-payroll.index'))
+            ->post(route('admin.staff-payroll.store'), [
+                'staff_user_id' => $inactive->id,
+                'payroll_month' => '2026-12',
+                'basic_salary' => 20000,
+            ])->assertRedirect(route('admin.staff-payroll.index'))
+                ->assertSessionHasErrors('staff_user_id');
+
+        $inactiveProfileTeacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+        $inactiveProfileTeacher->staffProfile()->create(['employment_status' => 'on_leave']);
+
+        $this->from(route('admin.staff-payroll.index'))
+            ->post(route('admin.staff-payroll.store'), [
+                'staff_user_id' => $inactiveProfileTeacher->id,
+                'payroll_month' => '2026-12',
+                'basic_salary' => 20000,
+            ])->assertRedirect(route('admin.staff-payroll.index'))
+                ->assertSessionHasErrors('staff_user_id');
+
+        $teacher = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+        $profile = $teacher->staffProfile()->create(['employment_status' => 'active']);
+        StaffPayroll::create([
+            'staff_profile_id' => $profile->id,
+            'payroll_month' => '2026-12',
+            'basic_salary' => 20000,
+            'allowances' => 0,
+            'deductions' => 0,
+            'net_salary' => 20000,
+            'status' => 'draft',
+        ]);
+
+        $this->post(route('admin.staff-payroll.store'), [
+            'staff_user_id' => $teacher->id,
+            'payroll_month' => '2026-12',
+            'basic_salary' => 21000,
+        ])->assertRedirect()->assertSessionHasErrors('payroll_month');
+
+        $this->assertSame(1, StaffPayroll::where('staff_profile_id', $profile->id)->where('payroll_month', '2026-12')->count());
     }
 
     public function test_non_admin_cannot_open_payroll_management(): void
