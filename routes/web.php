@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name('student.')->group(function () {
     Route::get('/', [Student\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-courses', [Student\DashboardController::class, 'courses'])->name('courses');
+    Route::get('/live-classes', [Student\LiveClassController::class, 'index'])->name('live-classes');
     Route::get('/orders', [Student\DashboardController::class, 'orders'])->name('orders');
     Route::get('/ebooks', [Student\DashboardController::class, 'ebooks'])->name('ebooks');
     Route::get('/certificates', [Student\DashboardController::class, 'certificates'])->name('certificates');
