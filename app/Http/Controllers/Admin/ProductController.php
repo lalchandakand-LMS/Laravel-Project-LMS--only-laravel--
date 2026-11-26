@@ -68,7 +68,15 @@ class ProductController extends Controller
         }
 
         try {
-            DB::transaction(fn () => $product->update($data));
+            DB::transaction(function () use ($product, $data) {
+                $locked = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+                if ((int) $data['stock_quantity'] < (int) $locked->reserved_quantity) {
+                    throw ValidationException::withMessages([
+                        'stock_quantity' => 'Total stock cannot be reduced below units reserved by unpaid orders. Cancel those orders first.',
+                    ]);
+                }
+                $locked->update($data);
+            });
         } catch (\Throwable $exception) {
             if ($newImage) {
                 delete_stored_media('public', $newImage);
