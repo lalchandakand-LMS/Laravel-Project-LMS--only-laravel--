@@ -86,9 +86,9 @@ class SliderController extends Controller
      * Public CTA links may be same-site root paths, fragments or absolute
      * HTTP(S) URLs only. Reject script/data schemes and protocol-relative URLs.
      */
-    private function safeNavigationTarget(): \\Closure
+    private function safeNavigationTarget(): \Closure
     {
-        return function (string $attribute, mixed $value, \\Closure $fail): void {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
             if ($value === null || trim((string) $value) === '') {
                 return;
             }
@@ -97,8 +97,8 @@ class SliderController extends Controller
 
             if (str_starts_with($url, '#')
                 || (str_starts_with($url, '/') && ! str_starts_with($url, '//')
-                    && ! str_contains($url, '\\\\')
-                    && preg_match('/[\\x00-\\x20]/', $url) !== 1)) {
+                    && ! str_contains($url, '\\')
+                    && preg_match('/[\x00-\x20]/', $url) !== 1)) {
                 return;
             }
 
