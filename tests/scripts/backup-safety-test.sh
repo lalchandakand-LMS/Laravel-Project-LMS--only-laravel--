@@ -62,7 +62,13 @@ fi
   exit 1
 }
 
-PRIVATE_ARCHIVE="$(find "$PROJECT/storage/backups" -maxdepth 1 -name 'private-*.tar.gz' -print -quit)"
+PRIVATE_ARCHIVE=""
+for candidate in "$PROJECT/storage/backups"/private-*.tar.gz; do
+  if tar -tzf "$candidate" 2>/dev/null | grep -Fq 'private/documents/student.pdf'; then
+    PRIVATE_ARCHIVE="$candidate"
+    break
+  fi
+done
 [[ -n "$PRIVATE_ARCHIVE" ]] || {
   echo "Private upload archive was not created." >&2
   exit 1
@@ -75,11 +81,12 @@ fi
 
 [[ "$(stat -c '%a' "$PROJECT/storage/backups")" == "700" ]]
 [[ "$(stat -c '%a' "$PRIVATE_ARCHIVE")" == "600" ]]
-[[ "$(stat -c '%a' "$PROJECT/storage/backups"/env-*.bak)" == "600" ]]
+CURRENT_ENV_BACKUP="$(ls -1t "$PROJECT/storage/backups"/env-*.bak | head -n1)"
+[[ "$(stat -c '%a' "$CURRENT_ENV_BACKUP")" == "600" ]]
 
 mapfile -t RETAINED_STAMPS < <(
   for artifact in "$PROJECT/storage/backups"/*; do
-    basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\\..*)?/\\2/p'
+    basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\..*)?$/\2/p'
   done | sort -u
 )
 [[ "${#RETAINED_STAMPS[@]}" -eq 30 ]] || {
