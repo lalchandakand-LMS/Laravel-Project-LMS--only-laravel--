@@ -46,7 +46,6 @@
         <input type="file" name="attachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip" class="block w-full text-sm text-slate-600">
         <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste a hosted resource URL</label>
         <input type="url" name="resource_url" value="{{ old('resource_url', str_starts_with((string) $assignment->attachment, 'http') ? $assignment->attachment : '') }}" placeholder="https://example.com/reference.pdf" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-        <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library →</a>
         @if ($assignment->attachment && ! str_starts_with((string) $assignment->attachment, 'http'))
             <p class="mt-1 text-xs text-slate-500">A private uploaded reference file is already attached. Upload or link another file to replace it.</p>
         @endif
