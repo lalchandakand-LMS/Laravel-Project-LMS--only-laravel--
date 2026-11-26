@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\AnnouncementAttachment;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class NoticeController extends Controller
 {
     public function index(Request $request)
     {
         $notices = $this->visibleTo($request->user())
-            ->with(['course', 'batch'])
+            ->with(['course', 'batch', 'branch'])
+            ->withCount('attachments')
             ->orderByDesc('is_pinned')->orderByDesc('publish_at')->orderByDesc('created_at')
             ->paginate(15);
 
@@ -29,7 +32,19 @@ class NoticeController extends Controller
             ['read_at' => now()]
         );
 
+        $announcement->load('attachments', 'course', 'batch', 'branch');
         return view('notices.show', compact('announcement'));
+    }
+
+    public function attachment(Request $request, AnnouncementAttachment $attachment)
+    {
+        abort_unless(
+            $this->visibleTo($request->user())->whereKey($attachment->announcement_id)->exists(),
+            404
+        );
+
+        abort_unless(Storage::disk('local')->exists($attachment->path), 404);
+        return Storage::disk('local')->download($attachment->path, $attachment->original_name);
     }
 
     private function visibleTo(User $user)
@@ -42,28 +57,54 @@ class NoticeController extends Controller
 
         if ($user->isAdmin()) return $query;
 
+        $query->where(function ($branch) use ($user) {
+            $branch->whereNull('branch_id');
+            if ($user->isGuardian()) {
+                $childIds = $user->children()->select('users.id');
+                $branch->orWhereIn('branch_id', User::whereIn('id', $childIds)->whereNotNull('branch_id')->select('branch_id'));
+            } elseif ($user->branch_id) {
+                $branch->orWhere('branch_id', $user->branch_id);
+            }
+        });
+
         return $query->where(function ($scope) use ($user) {
-            $scope->where(function ($general) {
-                $general->whereNull('course_id')->whereNull('batch_id');
+            $scope->where(function ($general) use ($user) {
+                $general->whereNull('course_id')->whereNull('batch_id')
+                    ->where(function ($branch) use ($user) {
+                        $branch->whereNull('branch_id');
+                        if ($user->isGuardian()) {
+                            $childIds = $user->children()->select('users.id');
+                            $branch->orWhereIn('branch_id', User::whereIn('id', $childIds)->select('branch_id')->whereNotNull('branch_id'));
+                        } else {
+                            $branch->orWhere('branch_id', $user->branch_id);
+                        }
+                    });
             });
 
             if ($user->isStudent()) {
                 $scope->orWhere(function ($target) use ($user) {
-                    $target->whereNotNull('batch_id')
-                        ->whereHas('batch.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'));
+                    $target->whereNotNull('batch_id')->where(function ($q) use ($user) {
+                        $q->whereHas('batch.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'))
+                            ->orWhereHas('batch.onlineEnrollments', fn ($e) => $e->where('student_id', $user->id)->where('status', 'active'));
+                    });
                 })->orWhere(function ($target) use ($user) {
-                    $target->whereNotNull('course_id')->whereNull('batch_id')
-                        ->whereHas('course.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'));
+                    $target->whereNotNull('course_id')->whereNull('batch_id')->where(function ($q) use ($user) {
+                        $q->whereHas('course.enrollments', fn ($e) => $e->where('user_id', $user->id)->where('status', 'active'))
+                            ->orWhereHas('course.batches.onlineEnrollments', fn ($e) => $e->where('student_id', $user->id)->where('status', 'active'));
+                    });
                 });
             } elseif ($user->isGuardian()) {
-                $scope->orWhere(function ($target) use ($user) {
-                    $childIds = $user->children()->select('users.id');
-                    $target->whereNotNull('batch_id')
-                        ->whereHas('batch.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'));
-                })->orWhere(function ($target) use ($user) {
-                    $childIds = $user->children()->select('users.id');
-                    $target->whereNotNull('course_id')->whereNull('batch_id')
-                        ->whereHas('course.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'));
+                $childIds = $user->children()->select('users.id');
+                $scope->orWhere(function ($target) use ($childIds) {
+                    $target->whereNotNull('batch_id')->where(function ($q) use ($childIds) {
+                        $q->whereHas('batch.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'))
+                            ->orWhereHas('batch.onlineEnrollments', fn ($e) => $e->whereIn('student_id', $childIds)->where('status', 'active'));
+                    });
+                })->orWhere(function ($target) use ($childIds) {
+                    $target->whereNotNull('course_id')->whereNull('batch_id')->where(function ($q) use ($childIds) {
+                        $q->whereHas('course.enrollments', fn ($e) => $e->whereIn('user_id', $childIds)->where('status', 'active'))
+                            ->orWhereHas('course.batches.onlineEnrollments', fn ($e) => $e->whereIn('student_id', $childIds)->where('status', 'active'));
+                    });
                 });
             } elseif ($user->isInstructor()) {
                 $scope->orWhere(function ($target) use ($user) {
@@ -71,6 +112,10 @@ class NoticeController extends Controller
                 })->orWhere(function ($target) use ($user) {
                     $target->whereNotNull('course_id')->whereNull('batch_id')
                         ->whereHas('course', fn ($c) => $c->where('instructor_id', $user->id));
+                });
+            } elseif ($user->isBranchManager()) {
+                $scope->orWhere(function ($target) use ($user) {
+                    $target->where('branch_id', $user->branch_id)->whereNotNull('branch_id');
                 });
             }
         });
