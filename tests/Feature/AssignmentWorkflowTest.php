@@ -207,4 +207,35 @@ class AssignmentWorkflowTest extends TestCase
             ->get(route('teacher.assignments.submission-file', [$assignment, $submission]))
             ->assertOk();
     }
+
+    public function test_returned_submission_replaces_its_private_file_after_the_new_file_is_stored(): void
+    {
+        Storage::fake('local');
+        [$teacher, $student, , , $assignment] = $this->assignmentFixture();
+
+        $this->actingAs($student)->post(route('student.assignments.submit', $assignment), [
+            'attachment' => UploadedFile::fake()->create('first-homework.pdf', 40, 'application/pdf'),
+        ])->assertRedirect();
+
+        $submission = AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->where('student_id', $student->id)->firstOrFail();
+        $oldAttachment = $submission->attachment;
+        Storage::disk('local')->assertExists($oldAttachment);
+
+        $this->actingAs($teacher)->post(route('teacher.assignments.grade', [$assignment, $submission]), [
+            'status' => 'returned',
+            'feedback' => 'Please revise and resubmit.',
+        ])->assertRedirect();
+
+        $this->actingAs($student)->post(route('student.assignments.submit', $assignment), [
+            'answer_text' => 'Revised work',
+            'attachment' => UploadedFile::fake()->create('revised-homework.pdf', 55, 'application/pdf'),
+        ])->assertRedirect();
+
+        $submission->refresh();
+        $this->assertNotSame($oldAttachment, $submission->attachment);
+        Storage::disk('local')->assertMissing($oldAttachment);
+        Storage::disk('local')->assertExists($submission->attachment);
+    }
+
 }
