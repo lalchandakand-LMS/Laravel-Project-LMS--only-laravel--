@@ -57,6 +57,7 @@ class FinanceController extends Controller
         $invoicePayments = DB::table('student_fee_payments')
             ->select('invoice_id')
             ->selectRaw('SUM(applied_amount) as paid_total')
+            ->selectRaw('SUM(amount) as collected_total')
             ->groupBy('invoice_id');
         $invoiceCredits = DB::table('student_fee_credit_applications')
             ->select('invoice_id')
@@ -66,7 +67,7 @@ class FinanceController extends Controller
             ->leftJoinSub($invoicePayments, 'fee_payments', fn ($join) => $join->on('fee_payments.invoice_id', '=', 'invoices.id'))
             ->leftJoinSub($invoiceCredits, 'fee_credits', fn ($join) => $join->on('fee_credits.invoice_id', '=', 'invoices.id'))
             ->where('invoices.branch_id', $branch->id)
-            ->selectRaw('COALESCE(SUM(COALESCE(fee_payments.paid_total, 0) + COALESCE(fee_credits.credit_total, 0)), 0) as collected')
+            ->selectRaw('COALESCE(SUM(COALESCE(fee_payments.collected_total, 0)), 0) as collected')
             ->selectRaw('COALESCE(SUM(CASE WHEN invoices.amount - invoices.discount - COALESCE(fee_payments.paid_total, 0) - COALESCE(fee_credits.credit_total, 0) > 0 THEN invoices.amount - invoices.discount - COALESCE(fee_payments.paid_total, 0) - COALESCE(fee_credits.credit_total, 0) ELSE 0 END), 0) as due')
             ->first();
 
