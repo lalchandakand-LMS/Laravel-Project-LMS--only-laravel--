@@ -209,6 +209,12 @@ class AdvancedExamBuilderTest extends TestCase
         $this->assertSame(2.0, (float) $exam->fresh()->total_marks);
         $this->assertSame(1, $question->options()->where('is_correct', true)->firstOrFail()->position);
         $this->assertDatabaseHas('question_bank_items', ['id' => $item->id]);
+
+        $this->actingAs($admin)->postJson(route('admin.question-bank.attach', $exam), [
+            'item_ids' => [$item->id, $item->id],
+        ])->assertUnprocessable()->assertJsonValidationErrors('item_ids.1');
+
+        $this->assertSame(1, $exam->questions()->count());
     }
 
     public function test_student_result_uses_only_the_randomized_question_snapshot(): void
