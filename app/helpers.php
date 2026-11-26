@@ -33,8 +33,8 @@ if (! function_exists('media_url')) {
 
 if (! function_exists('delete_stored_media')) {
     /**
-     * Delete a locally uploaded file without ever treating a remote URL or
-     * a shared Media Library asset as an owned, disposable file.
+     * Delete an owned upload only after its last LMS reference has gone.
+     * Remote URLs and Media Library files are managed separately.
      */
     function delete_stored_media(string $disk, ?string $path): void
     {
@@ -43,6 +43,35 @@ if (! function_exists('delete_stored_media')) {
             || str_starts_with(strtolower($path), 'https://')
             || ($disk === 'public' && str_starts_with($path, 'media-library/'))) {
             return;
+        }
+
+        $values = [$path];
+        if ($disk === 'public') {
+            $values[] = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+            $values[] = asset('storage/'.ltrim($path, '/'));
+        }
+
+        $references = [
+            'settings' => ['value'],
+            'courses' => ['thumbnail'],
+            'sliders' => ['image'],
+            'ebooks' => ['cover', 'file'],
+            'lessons' => ['attachment'],
+            'assignments' => ['attachment'],
+            'users' => ['avatar'],
+        ];
+
+        foreach ($references as $table => $columns) {
+            if (! \Illuminate\Support\Facades\Schema::hasTable($table)) {
+                continue;
+            }
+
+            foreach ($columns as $column) {
+                if (\Illuminate\Support\Facades\Schema::hasColumn($table, $column)
+                    && \Illuminate\Support\Facades\DB::table($table)->whereIn($column, $values)->exists()) {
+                    return;
+                }
+            }
         }
 
         \Illuminate\Support\Facades\Storage::disk($disk)->delete($path);
