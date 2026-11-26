@@ -15,6 +15,9 @@ return new class extends Migration {
             $table->timestamp('manual_reviewed_at')->nullable()->after('submitted_at');
             $table->text('manual_feedback')->nullable()->after('manual_reviewed_at');
             $table->decimal('max_score', 8, 2)->nullable()->after('score');
+            $table->decimal('pass_mark_target', 8, 2)->nullable()->after('max_score');
+            $table->unsignedInteger('duration_minutes')->nullable()->after('pass_mark_target');
+            $table->decimal('negative_marking', 4, 2)->nullable()->after('duration_minutes');
         });
 
         Schema::create('question_bank_items', function (Blueprint $table) {
@@ -47,7 +50,7 @@ return new class extends Migration {
         Schema::dropIfExists('exam_attempt_questions');
         Schema::dropIfExists('question_bank_items');
         Schema::table('exam_attempts', function (Blueprint $table) {
-            $table->dropColumn(['manual_reviewed_at', 'manual_feedback', 'max_score']);
+            $table->dropColumn(['manual_reviewed_at', 'manual_feedback', 'max_score', 'pass_mark_target', 'duration_minutes', 'negative_marking']);
         });
         Schema::table('exams', function (Blueprint $table) {
             $table->dropColumn('random_question_count');
