@@ -50,6 +50,26 @@ class CoachingAdmissionWorkflowTest extends TestCase
         $this->assertDatabaseCount('enrollments', 0);
     }
 
+    public function test_failed_admission_document_storage_rolls_back_the_application(): void
+    {
+        [, , $batch] = $this->setupCoaching();
+        $disk = \\Mockery::mock(\\Illuminate\\Filesystem\\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->once()->with('local')->andReturn($disk);
+
+        $this->from(route('coaching-admission.create'))->post(route('coaching-admission.store'), [
+            'student_name' => 'Storage Failure Student',
+            'student_email' => 'storage-failure@example.com',
+            'student_phone' => '01700000000',
+            'coaching_batch_id' => $batch->id,
+            'student_photo' => UploadedFile::fake()->image('student.png'),
+        ])->assertRedirect(route('coaching-admission.create'))
+            ->assertSessionHasErrors('student_photo');
+
+        $this->assertDatabaseCount('coaching_admissions', 0);
+        $this->assertDatabaseCount('profile_documents', 0);
+    }
+
     public function test_approval_generates_required_admission_fee_and_enrollment_activates_only_after_full_payment(): void
     {
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
