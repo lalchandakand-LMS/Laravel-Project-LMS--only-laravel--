@@ -33,17 +33,7 @@
                 <textarea name="bio" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">{{ old('bio', $user->bio) }}</textarea>
             </div>
         </div>
-        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div><p class="text-sm font-bold text-slate-800">Mobile number verification</p><p class="mt-1 text-xs {{ $user->phone_verified_at ? 'text-emerald-700' : 'text-amber-700' }}">{{ $user->phone_verified_at ? 'Verified on '.$user->phone_verified_at->format('d M Y, h:i A') : 'Not verified yet' }}</p></div>
-                @if($user->phone_verified_at)<span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Verified</span>@endif
-            </div>
-            @if(!$user->phone_verified_at)
-                <form method="POST" action="{{ route('account.phone.send') }}" class="mt-3">@csrf<button class="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-bold text-emerald-700">Send OTP to saved mobile</button></form>
-                <form method="POST" action="{{ route('account.phone.verify') }}" class="mt-3 flex flex-wrap gap-2">@csrf<input name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit OTP" required class="w-36 rounded-lg border px-3 py-2 text-sm"><button class="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white">Verify mobile</button></form>
-                <p class="mt-2 text-xs text-slate-500">Save your correct Bangladesh mobile number first. OTP expires in 5 minutes and allows up to 5 attempts.</p>
-            @endif
-        </div>
+        @include('partials.phone-verification')
         <button class="mt-5 rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white">Save changes</button>
     </form>
 
