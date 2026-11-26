@@ -105,12 +105,12 @@ class BkashPaymentController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($order, $payment, $result) {
+            $settled = DB::transaction(function () use ($order, $payment, $result) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
                 $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
                 if ($lockedPayment->status === 'verified') {
-                    return;
+                    return true;
                 }
 
                 if ($lockedPayment->status !== 'pending'
@@ -130,7 +130,7 @@ class BkashPaymentController extends Controller
                         'rejection_reason' => 'Provider status query did not match the order reference, amount, currency or transaction ID.',
                         'payload' => array_merge($lockedPayment->payload ?? [], ['provider_result' => $result]),
                     ]);
-                    throw ValidationException::withMessages(['payment' => 'The bKash transaction did not match this order. Contact the office before retrying.']);
+                    return false;
                 }
 
                 if (Payment::where('transaction_id', $result['transaction_id'])
@@ -156,7 +156,14 @@ class BkashPaymentController extends Controller
                 } else {
                     $lockedOrder->update(['status' => 'partially_paid']);
                 }
+
+                return true;
             });
+
+            if (! $settled) {
+                return redirect()->route('checkout.success', $order->order_no)
+                    ->withErrors(['payment' => 'The bKash transaction did not match this order. Contact the office before retrying.']);
+            }
         } catch (ValidationException $exception) {
             return redirect()->route('checkout.success', $order->order_no)
                 ->withErrors($exception->errors());
