@@ -62,13 +62,13 @@ class BkashPaymentController extends Controller
     }
 
     /** Browser return. Browser-supplied status is ignored; bKash is queried server-to-server. */
-    public function callback(Request $request, Order $order, BkashTokenizedCheckoutAdapter $adapter)
+    public function callback(Request $request, BkashCheckoutAdapter $adapter)
     {
         $paymentId = trim((string) ($request->input('paymentID') ?: $request->query('paymentID')));
-        $payment = Payment::where('order_id', $order->id)
-            ->where('gateway', 'bkash')
+        $payment = Payment::where('gateway', 'bkash')
             ->where('provider_payment_id', $paymentId)
             ->firstOrFail();
+        $order = Order::whereKey($payment->order_id)->firstOrFail();
 
         if ($payment->status === 'verified') {
             return redirect()->route('checkout.success', $order->order_no)
@@ -117,7 +117,7 @@ class BkashPaymentController extends Controller
     }
 
     /** Signed bKash/AWS SNS webhook listener. */
-    public function webhook(Request $request, BkashTokenizedCheckoutAdapter $adapter)
+    public function webhook(Request $request, BkashCheckoutAdapter $adapter)
     {
         try {
             $event = $adapter->verifyWebhook($request);
