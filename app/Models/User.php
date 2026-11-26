@@ -107,22 +107,20 @@ class User extends Authenticatable
 
     public function hasCourse(Course $course): bool
     {
-        return $this->enrollments()
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->exists();
+        return \App\Services\EnrollmentEligibility::hasCourse($this, $course);
     }
 
-    /** Overall completion % across every enrolled course. */
+    /** Overall completion % across currently eligible course enrollments. */
     public function overallProgress(): float
     {
-        $courses = $this->enrolledCourses;
+        $courses = \App\Services\EnrollmentEligibility::query($this)
+            ->with('course')->get()->pluck('course')->filter();
 
         if ($courses->isEmpty()) {
             return 0.0;
         }
 
-        return round($courses->avg(fn (Course $c) => $c->progressFor($this)), 1);
+        return round($courses->avg(fn (Course $course) => $course->progressFor($this)), 1);
     }
 
     public function avatarUrl(): string
