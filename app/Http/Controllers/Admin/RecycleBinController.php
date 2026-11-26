@@ -15,6 +15,7 @@ use App\Models\Lesson;
 use App\Models\LiveClass;
 use App\Models\Level;
 use App\Models\MenuItem;
+use App\Models\Post;
 use App\Models\Question;
 use App\Models\Review;
 use App\Models\Section;
@@ -42,6 +43,7 @@ class RecycleBinController extends Controller
         'sliders' => Slider::class,
         'menu-items' => MenuItem::class,
         'coupons' => Coupon::class,
+        'posts' => Post::class,
         'branches' => Branch::class,
         'batches' => Batch::class,
         'levels' => Level::class,
@@ -140,6 +142,7 @@ class RecycleBinController extends Controller
         }
 
         $ebookMedia = $record instanceof Ebook ? ['cover' => $record->cover, 'file' => $record->file] : null;
+        $postThumbnail = $record instanceof Post ? $record->thumbnail : null;
 
         try {
             $record->forceDelete();
@@ -151,6 +154,9 @@ class RecycleBinController extends Controller
         if ($ebookMedia) {
             delete_stored_media('public', $ebookMedia['cover']);
             delete_stored_media('local', $ebookMedia['file']);
+        }
+        if ($postThumbnail) {
+            delete_stored_media('public', $postThumbnail);
         }
 
         return back()->with('success', class_basename($class).' permanently deleted.');

@@ -10,6 +10,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CoachingAdmissionController;
 use App\Http\Controllers\CoachingFeeReportController;
 use App\Http\Controllers\OnlineBatchApplicationController;
@@ -30,6 +31,8 @@ use Illuminate\Support\Facades\Route;
  |------------------------------------------------------------------*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'sendContact'])->name('contact.send');
 
@@ -171,6 +174,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('attendance/{session}', [AttendanceController::class, 'adminShow'])->name('attendance.show');
         Route::post('attendance/{session}/review', [AttendanceController::class, 'review'])->name('attendance.review');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
+        Route::resource('posts', Admin\PostController::class)->except('show');
         Route::resource('levels', Admin\LevelController::class)->except('show');
         Route::resource('batches', Admin\BatchController::class)->except('show');
         Route::get('batches/{batch}', [Admin\BatchController::class, 'show'])->name('batches.show');
