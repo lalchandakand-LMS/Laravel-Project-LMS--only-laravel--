@@ -43,7 +43,7 @@ class ConsentBasedTrackingTest extends TestCase
             'ga_measurement_id' => 'javascript:alert(1)',
             'meta_pixel_id' => '<script>alert(1)</script>',
             'gtm_container_id' => 'https://evil.test/gtm',
-        'gtm_container_id']);
+        ])->assertSessionHasErrors(['ga_measurement_id', 'meta_pixel_id', 'gtm_container_id']);
 
         $this->assertNull(Setting::get('ga_measurement_id'));
         $this->assertNull(Setting::get('meta_pixel_id'));
