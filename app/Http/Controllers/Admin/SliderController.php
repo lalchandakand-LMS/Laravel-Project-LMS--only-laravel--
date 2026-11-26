@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Slider;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SliderController extends Controller
 {
@@ -28,7 +29,15 @@ class SliderController extends Controller
 
     public function store(Request $request)
     {
-        Slider::create($this->validated($request));
+        $data = $this->validated($request);
+        try {
+            Slider::create($data);
+        } catch (\Throwable $exception) {
+            if ($request->hasFile('image') && ! empty($data['image'])) {
+                delete_stored_media('public', $data['image']);
+            }
+            throw $exception;
+        }
 
         return redirect()->route('admin.sliders.index')->with('success', 'Slider added.');
     }
@@ -42,7 +51,14 @@ class SliderController extends Controller
     {
         $data = $this->validated($request, $slider);
         $oldImage = $slider->image;
-        $slider->update($data);
+        try {
+            $slider->update($data);
+        } catch (\Throwable $exception) {
+            if ($request->hasFile('image') && ! empty($data['image'])) {
+                delete_stored_media('public', $data['image']);
+            }
+            throw $exception;
+        }
         if (isset($data['image']) && $data['image'] !== $oldImage) {
             delete_stored_media('public', $oldImage);
         }
@@ -82,6 +98,9 @@ class SliderController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('sliders', 'public');
+            if (! $data['image']) {
+                throw ValidationException::withMessages(['image' => 'The slider image could not be stored. The previous image has been kept.']);
+            }
         } elseif ($request->filled('image_url')) {
             $data['image'] = $data['image_url'];
         }
