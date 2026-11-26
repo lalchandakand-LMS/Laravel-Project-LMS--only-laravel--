@@ -50,7 +50,9 @@ class StaffPayrollController extends Controller
         $basic = (float) $data['basic_salary'];
         $allowances = (float) ($data['allowances'] ?? 0);
         $deductions = (float) ($data['deductions'] ?? 0);
-        abort_if($deductions > $basic + $allowances, 422, 'Deductions cannot exceed gross salary.');
+        if ($deductions > $basic + $allowances) {
+            throw ValidationException::withMessages(['deductions' => 'Deductions cannot exceed gross salary.']);
+        }
 
         StaffPayroll::create([
             'staff_profile_id' => $profile->id,
