@@ -15,7 +15,9 @@ return new class extends Migration {
             $table->string('student_phone', 30);
             $table->string('guardian_name', 160)->nullable();
             $table->string('guardian_phone', 30)->nullable();
-            $table->string('guardian_email')->nullable();\n            $table->boolean('student_sms_consent')->default(false);\n            $table->boolean('guardian_sms_consent')->default(false);
+            $table->string('guardian_email')->nullable();
+            $table->boolean('student_sms_consent')->default(false);
+            $table->boolean('guardian_sms_consent')->default(false);
             $table->foreignId('branch_id')->constrained()->restrictOnDelete();
             $table->foreignId('course_id')->constrained()->restrictOnDelete();
             $table->foreignId('batch_id')->constrained()->restrictOnDelete();
