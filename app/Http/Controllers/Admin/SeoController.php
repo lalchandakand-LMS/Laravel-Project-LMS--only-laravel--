@@ -31,7 +31,7 @@ class SeoController extends Controller
                 $query->whereNull('meta_title')->orWhere('meta_title', '')
                     ->orWhereNull('meta_description')->orWhere('meta_description', '');
             })->orderBy('title')->limit(8)->get(['id', 'title'])->each(function ($course) use ($missingMeta) {
-                $missingMeta->push(['type' => 'Course', 'title' => $course->title, 'url' => route('admin.courses.edit', $course)]);
+                $missingMeta->push(['type' => 'Course', 'title' => $course->title, 'url' => route('admin.courses.edit', ['course' => $course->slug])]);
             });
 
         Post::published()
@@ -39,7 +39,7 @@ class SeoController extends Controller
                 $query->whereNull('meta_title')->orWhere('meta_title', '')
                     ->orWhereNull('meta_description')->orWhere('meta_description', '');
             })->orderBy('title')->limit(8)->get(['id', 'title', 'slug'])->each(function ($post) use ($missingMeta) {
-                $missingMeta->push(['type' => 'Blog post', 'title' => $post->title, 'url' => route('admin.posts.edit', $post)]);
+                $missingMeta->push(['type' => 'Blog post', 'title' => $post->title, 'url' => route('admin.posts.edit', ['post' => $post->slug])]);
             });
 
         return view('admin.seo.index', [
