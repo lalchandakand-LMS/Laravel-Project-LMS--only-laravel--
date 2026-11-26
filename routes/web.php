@@ -52,7 +52,10 @@ Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Condit
 Route::view('/privacy-policy', 'legal.policy', ['title' => 'Privacy Policy', 'policy' => 'privacy'])->name('legal.privacy');
 Route::view('/refund-policy', 'legal.policy', ['title' => 'Refund Policy', 'policy' => 'refund'])->name('legal.refunds');
 
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');\nRoute::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');\n\nRoute::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+
+Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/coaching-admission', [CoachingAdmissionController::class, 'create'])->name('coaching-admission.create');
 Route::post('/coaching-admission', [CoachingAdmissionController::class, 'store'])->middleware('throttle:5,10')->name('coaching-admission.store');
 Route::get('/courses/{course:slug}', [CourseController::class, 'show'])->name('courses.show');
@@ -218,6 +221,8 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::post('batches/{batch}/students', [Admin\BatchController::class, 'assignStudent'])->name('batches.students.store');
         Route::delete('batches/{batch}/students/{enrollment}', [Admin\BatchController::class, 'removeStudent'])->name('batches.students.destroy');
         Route::resource('ebooks', Admin\EbookController::class)->except('show');
+        Route::resource('products', Admin\ProductController::class)->except('show');
+        Route::post('products/{product}/restore', [Admin\ProductController::class, 'restore'])->withTrashed()->name('products.restore');
         Route::get('coupons/usage', [Admin\CouponController::class, 'usage'])->name('coupons.usage');
         Route::get('coupons/usage/export', [Admin\CouponController::class, 'exportUsage'])->name('coupons.usage.export');
         Route::resource('coupons', Admin\CouponController::class)->except('show');
