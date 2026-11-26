@@ -187,6 +187,7 @@ class QuestionBankController extends Controller
 
     public function attach(Request $request, Exam $exam)
     {
+        abort_if($exam->attempts()->exists(), 409, 'This exam already has attempts. Duplicate the exam before changing its question pool.');
         $ids = $request->validate(['item_ids' => 'required|array|min:1', 'item_ids.*' => 'integer|exists:question_bank_items,id'])['item_ids'];
         DB::transaction(function () use ($ids, $exam) {
             foreach (QuestionBankItem::whereIn('id', $ids)->get() as $item) {
