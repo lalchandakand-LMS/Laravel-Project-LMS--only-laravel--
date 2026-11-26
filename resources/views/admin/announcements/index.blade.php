@@ -37,8 +37,8 @@
                 </div>
                 <div class="shrink-0 text-xs font-semibold">
                     <a href="{{ route('admin.announcements.edit', $announcement) }}" class="text-emerald-700">Edit</a>
-                    <form method="POST" action="{{ route('admin.announcements.destroy', $announcement) }}" class="inline" onsubmit="return confirm('Delete this announcement and its attachments?')">
-                        @csrf @method('DELETE')<button class="ml-3 text-rose-600">Delete</button>
+                    <form method="POST" action="{{ route('admin.announcements.destroy', $announcement) }}" class="inline" onsubmit="return confirm('Archive this announcement? It can be restored from the Recycle Bin.')">
+                        @csrf @method('DELETE')<button class="ml-3 text-rose-600">Archive</button>
                     </form>
                 </div>
             </div>
