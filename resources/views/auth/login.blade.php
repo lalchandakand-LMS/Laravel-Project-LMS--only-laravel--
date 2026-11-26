@@ -29,6 +29,7 @@
             <label class="flex items-center gap-2 text-sm text-slate-600">
                 <input type="checkbox" name="remember" class="rounded border-slate-300 text-emerald-700"> Remember me
             </label>
+            <div class="text-right text-sm"><a href="{{ route('password.request') }}" class="font-semibold text-blue-800 hover:underline">Forgot password?</a></div>
             <button type="submit" class="w-full rounded-lg bg-emerald-700 px-4 py-3 font-semibold text-white hover:bg-emerald-800">Log in</button>
         </form>
         <p class="mt-5 text-center text-sm text-slate-600">New here?
