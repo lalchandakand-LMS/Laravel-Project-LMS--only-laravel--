@@ -106,6 +106,7 @@ class LiveClassController extends Controller
             'title' => $liveClass->title,
             'platform' => $liveClass->platform,
             'meeting_url' => $liveClass->meeting_url,
+            'meeting_password' => $liveClass->meeting_password,
             'description' => $liveClass->description,
             'recording_url' => $liveClass->recording_url,
         ];
@@ -162,6 +163,7 @@ class LiveClassController extends Controller
             'title' => $updated->title,
             'platform' => $updated->platform,
             'meeting_url' => $updated->meeting_url,
+            'meeting_password' => $updated->meeting_password,
             'description' => $updated->description,
             'recording_url' => $updated->recording_url,
         ];
