@@ -277,6 +277,35 @@ class AssignmentWorkflowTest extends TestCase
     }
 
 
+    public function test_teacher_cannot_delete_an_assignment_after_student_work_exists(): void
+    {
+        Storage::fake('local');
+        [$teacher, $student, , , $assignment] = $this->assignmentFixture();
+        $resource = 'assignments/resources/deletion-protection.pdf';
+        Storage::disk('local')->put($resource, 'assignment resource');
+        $assignment->update(['attachment' => $resource]);
+
+        $submission = AssignmentSubmission::create([
+            'assignment_id' => $assignment->id,
+            'student_id' => $student->id,
+            'answer_text' => 'Student work that must be retained.',
+            'submitted_at' => now(),
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($teacher)
+            ->delete(route('teacher.assignments.destroy', $assignment))
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('assignments', ['id' => $assignment->id]);
+        $this->assertDatabaseHas('assignment_submissions', [
+            'id' => $submission->id,
+            'assignment_id' => $assignment->id,
+            'student_id' => $student->id,
+        ]);
+        Storage::disk('local')->assertExists($resource);
+    }
+
     public function test_teacher_cannot_move_assignment_to_another_course_after_submissions_exist(): void
     {
         [$teacher, $student, $course, , $assignment] = $this->assignmentFixture();
