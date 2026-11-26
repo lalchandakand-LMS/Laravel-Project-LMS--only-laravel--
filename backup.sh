@@ -73,7 +73,7 @@ fi
 mapfile -t SNAPSHOTS < <(
   for artifact in "$BACKUP_DIR"/*; do
     [ -f "$artifact" ] || continue
-    basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\\..*)?$/\\2/p'
+    basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\..*)?/\2/p'
   done | sort -ru
 )
 if [ "${#SNAPSHOTS[@]}" -gt 30 ]; then
