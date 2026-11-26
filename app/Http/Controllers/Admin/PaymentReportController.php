@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Branch;
-use App\\Models\\Payment;
-use App\\Models\\PaymentAdjustment;
-use Illuminate\\Http\\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Branch;
+use App\Models\Payment;
+use App\Models\PaymentAdjustment;
+use Illuminate\Http\Request;
 
 class PaymentReportController extends Controller
 {
@@ -84,7 +84,7 @@ class PaymentReportController extends Controller
     {
         $value = (string) ($value ?? '');
 
-        return preg_match('/^[\\\\x00-\\\\x20]*[=+\\\\-@]/u', $value) === 1
+        return preg_match('/^[\\x00-\\x20]*[=+\\-@]/u', $value) === 1
             ? "'".$value
             : $value;
     }
