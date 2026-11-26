@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MediaAsset extends Model
 {
@@ -46,6 +48,7 @@ class MediaAsset extends Model
         $references = [
             'settings' => ['value'],
             'courses' => ['thumbnail'],
+            'categories' => ['image'],
             'sliders' => ['image'],
             'ebooks' => ['cover', 'file'],
             'lessons' => ['attachment'],
