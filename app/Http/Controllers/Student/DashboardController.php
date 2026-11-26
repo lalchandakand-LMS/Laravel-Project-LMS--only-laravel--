@@ -103,12 +103,23 @@ class DashboardController extends Controller
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string|max:1000',
-            'avatar' => 'nullable|image|max:2048',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
         ]);
 
         if ($request->hasFile('avatar')) {
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $newAvatar = $request->file('avatar')->store('avatars', 'public');
+            if ($user->avatar && ! str_starts_with($user->avatar, 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $newAvatar;
+        } elseif (! empty($data['avatar_url'])) {
+            if ($user->avatar && ! str_starts_with($user->avatar, 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $data['avatar_url'];
         }
+        unset($data['avatar_url']);
 
         $user->update($data);
 
