@@ -160,6 +160,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('coaching-fees/invoices/{invoice}/payments', [Admin\StudentFeeController::class, 'collectPayment'])->name('coaching-fees.payments.store');
         Route::post('coaching-admissions/{admission}/approve', [Admin\CoachingAdmissionController::class, 'approve'])->name('coaching-admissions.approve');
         Route::post('coaching-admissions/{admission}/reject', [Admin\CoachingAdmissionController::class, 'reject'])->name('coaching-admissions.reject');
+        Route::get('coaching-admissions/{admission}/documents/{document}', [Admin\ProfileDocumentController::class, 'downloadAdmission'])->name('coaching-admissions.documents.download');
+        Route::post('coaching-admissions/{admission}/documents/{document}/review', [Admin\ProfileDocumentController::class, 'reviewAdmission'])->name('coaching-admissions.documents.review');
         Route::get('attendance/{session}', [AttendanceController::class, 'adminShow'])->name('attendance.show');
         Route::post('attendance/{session}/review', [AttendanceController::class, 'review'])->name('attendance.review');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
@@ -197,9 +199,22 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
             Route::post('/loans/{loan}/return', [Admin\LibraryLoanController::class, 'returnBook'])->name('loans.return');
         });
 
+        Route::get('staff-attendance', [Admin\StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
+        Route::post('staff-attendance', [Admin\StaffAttendanceController::class, 'save'])->name('staff-attendance.save');
+
+        Route::get('staff-payroll', [Admin\StaffPayrollController::class, 'index'])->name('staff-payroll.index');
+        Route::post('staff-payroll', [Admin\StaffPayrollController::class, 'store'])->name('staff-payroll.store');
+        Route::post('staff-payroll/{payroll}/approve', [Admin\StaffPayrollController::class, 'approve'])->name('staff-payroll.approve');
+        Route::post('staff-payroll/{payroll}/paid', [Admin\StaffPayrollController::class, 'markPaid'])->name('staff-payroll.paid');
+        Route::delete('staff-payroll/{payroll}', [Admin\StaffPayrollController::class, 'destroy'])->name('staff-payroll.destroy');
+
         Route::get('staff-leave-requests', [Admin\LeaveRequestController::class, 'index'])->name('staff-leave-requests.index');
         Route::post('staff-leave-requests/{leaveRequest}/approve', [Admin\LeaveRequestController::class, 'approve'])->name('staff-leave-requests.approve');
         Route::post('staff-leave-requests/{leaveRequest}/reject', [Admin\LeaveRequestController::class, 'reject'])->name('staff-leave-requests.reject');
+
+        Route::post('students/{user}/documents', [Admin\ProfileDocumentController::class, 'store'])->name('users.documents.store');
+        Route::get('students/{user}/documents/{document}', [Admin\ProfileDocumentController::class, 'download'])->name('users.documents.download');
+        Route::post('students/{user}/documents/{document}/review', [Admin\ProfileDocumentController::class, 'review'])->name('users.documents.review');
 
         Route::get('students/create', [Admin\UserController::class, 'create'])->name('users.create');
         Route::post('students', [Admin\UserController::class, 'store'])->name('users.store');
@@ -342,6 +357,12 @@ Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('gu
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/', [Branch\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/people/{type}/create', [Branch\PeopleController::class, 'create'])->whereIn('type', ['student', 'staff'])->name('people.create');
+    Route::post('/people/{type}', [Branch\PeopleController::class, 'store'])->whereIn('type', ['student', 'staff'])->name('people.store');
+    Route::get('/people/{user}/edit', [Branch\PeopleController::class, 'edit'])->name('people.edit');
+    Route::put('/people/{user}', [Branch\PeopleController::class, 'update'])->name('people.update');
+    Route::delete('/people/{user}', [Branch\PeopleController::class, 'destroy'])->name('people.destroy');
+
     Route::get('/students', [Branch\DashboardController::class, 'students'])->name('students');
     Route::get('/students/{student}', [Branch\DashboardController::class, 'student'])->name('students.show');
     Route::get('/staff', [Branch\DashboardController::class, 'staff'])->name('staff');

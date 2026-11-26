@@ -10,13 +10,17 @@ class CoachingAdmission extends Model
     protected $fillable = [
         'application_no', 'student_name', 'student_email', 'student_phone',
         'guardian_name', 'guardian_phone', 'guardian_email', 'student_sms_consent',
-        'guardian_sms_consent', 'coaching_batch_id', 'branch_id', 'course_id',
+        'guardian_sms_consent', 'student_date_of_birth', 'student_gender', 'school_name',
+        'academic_class', 'academic_roll', 'academic_session', 'academic_group',
+        'present_address', 'permanent_address', 'quota_type', 'quota_notes',
+        'coaching_batch_id', 'branch_id', 'course_id',
         'student_id', 'status', 'applicant_note', 'admin_note', 'reviewed_by',
         'reviewed_at', 'admitted_at',
     ];
 
     protected $casts = [
         'reviewed_at' => 'datetime',
+        'student_date_of_birth' => 'date',
         'admitted_at' => 'datetime',
         'student_sms_consent' => 'boolean',
         'guardian_sms_consent' => 'boolean',
@@ -35,6 +39,7 @@ class CoachingAdmission extends Model
     public function coachingBatch() { return $this->belongsTo(CoachingBatch::class, 'coaching_batch_id'); }
     public function reviewer() { return $this->belongsTo(User::class, 'reviewed_by'); }
     public function invoices() { return $this->hasMany(StudentFeeInvoice::class, 'coaching_admission_id'); }
+    public function documents() { return $this->morphMany(ProfileDocument::class, 'documentable')->latest(); }
     public function enrollment() { return $this->hasOne(CoachingEnrollment::class, 'coaching_admission_id'); }
 
     public function isActive(): bool
@@ -63,6 +68,7 @@ class CoachingAdmission extends Model
             ]);
 
             $admission->update(['status' => 'admitted', 'admitted_at' => now()]);
+            $admission->student?->studentProfile?->update(['status' => 'active']);
 
             return $enrollment;
         });
