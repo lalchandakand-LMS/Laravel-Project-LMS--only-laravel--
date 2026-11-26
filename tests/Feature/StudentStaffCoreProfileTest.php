@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\StaffProfile;
-use App\\Models\\StudentProfile;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Models\StaffProfile;
+use App\Models\StudentProfile;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class StudentStaffCoreProfileTest extends TestCase
 {
@@ -15,7 +15,6 @@ class StudentStaffCoreProfileTest extends TestCase
     public function test_student_profile_is_one_to_one_and_keeps_academic_information_separate_from_login_account(): void
     {
         $student = User::factory()->create(['role' => 'student']);
-
         $profile = $student->studentProfile()->create([
             'student_code' => 'AEC-STU-0001',
             'school_name' => 'Alom Model School',
@@ -37,7 +36,6 @@ class StudentStaffCoreProfileTest extends TestCase
     public function test_staff_profile_is_one_to_one_and_tracks_employment_information(): void
     {
         $teacher = User::factory()->create(['role' => 'instructor']);
-
         $profile = $teacher->staffProfile()->create([
             'employee_code' => 'AEC-EMP-0001',
             'department' => 'English',
