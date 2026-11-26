@@ -73,7 +73,7 @@ class QuestionBankController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate(['file' => 'required|file|mimes:csv,txt|max:10240']);
+        $request->validate(['file' => 'required|file|extensions:csv,txt|max:10240']);
         $handle = fopen($request->file('file')->getRealPath(), 'r');
         abort_unless($handle, 422, 'Unable to read the uploaded file.');
 
