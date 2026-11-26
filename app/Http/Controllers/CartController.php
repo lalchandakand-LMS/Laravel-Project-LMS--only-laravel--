@@ -38,25 +38,30 @@ class CartController extends Controller
         return $rows;
     }
 
-    public static function totals(): array
+    public static function totals(?int $branchId = null, ?Coupon $lockedCoupon = null): array
     {
         $items = self::items();
         $subtotal = round(array_sum(array_column($items, 'price')), 2);
         $coupon = null;
         $discount = 0.0;
+        $eligibleSubtotal = 0.0;
 
         if ($code = session('coupon')) {
-            $coupon = Coupon::where('code', $code)->first();
-            if ($coupon && $coupon->isValidFor($subtotal)) {
-                $discount = $coupon->discountFor($subtotal);
-            } else {
-                $coupon = null;
+            $candidate = $lockedCoupon ?? Coupon::where('code', $code)->first();
+            if ($candidate) {
+                $eligibleSubtotal = $candidate->eligibleSubtotal($items);
+                $effectiveBranchId = $branchId ?? $candidate->branch_id;
+                if ($candidate->isValidFor($eligibleSubtotal, auth()->user(), $items, $effectiveBranchId)) {
+                    $coupon = $candidate;
+                    $discount = $coupon->discountFor($eligibleSubtotal);
+                }
             }
         }
 
         return [
             'items' => $items,
             'subtotal' => $subtotal,
+            'eligible_subtotal' => $eligibleSubtotal,
             'discount' => $discount,
             'total' => max(0, round($subtotal - $discount, 2)),
             'coupon' => $coupon,
@@ -108,10 +113,11 @@ class CartController extends Controller
     {
         $request->validate(['code' => 'required|string']);
         $coupon = Coupon::where('code', strtoupper(trim($request->code)))->first();
-        $subtotal = self::totals()['subtotal'];
+        $items = self::items();
+        $eligibleSubtotal = $coupon?->eligibleSubtotal($items) ?? 0;
 
-        if (! $coupon || ! $coupon->isValidFor($subtotal)) {
-            return back()->withErrors(['code' => 'This coupon is invalid or expired.']);
+        if (! $coupon || ! $coupon->isValidFor($eligibleSubtotal, $request->user(), $items, $coupon->branch_id)) {
+            return back()->withErrors(['code' => 'This coupon is invalid, unavailable for these items, or its usage limit has been reached.']);
         }
 
         session(['coupon' => $coupon->code]);
