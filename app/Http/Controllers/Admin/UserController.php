@@ -138,7 +138,7 @@ class UserController extends Controller
             'permanent_address' => [$student ? 'nullable' : 'prohibited', 'string', 'max:500'],
             'emergency_contact_name' => [$student ? 'nullable' : 'prohibited', 'string', 'max:160'],
             'emergency_contact_phone' => [$student ? 'nullable' : 'prohibited', 'string', 'max:30'],
-            'student_status' => [$student ? 'required' : 'prohibited', Rule::in(['active', 'inactive', 'suspended', 'graduated'])],
+            'student_status' => [$student ? 'nullable' : 'prohibited', Rule::in(['active', 'inactive', 'suspended', 'graduated'])],
 
             'employee_code' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:40', Rule::unique('staff_profiles', 'employee_code')->ignore($user?->staffProfile?->id)],
             'department' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:120'],
@@ -202,7 +202,7 @@ class UserController extends Controller
                 'permanent_address' => $data['permanent_address'] ?? null,
                 'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
                 'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
-                'status' => $data['student_status'],
+                'status' => $data['student_status'] ?? 'active',
             ]);
         }
 
