@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdvancedCategoryCourseBuilderTest extends TestCase
@@ -109,4 +111,61 @@ class AdvancedCategoryCourseBuilderTest extends TestCase
             'name' => 'Not allowed', 'is_active' => 1,
         ])->assertForbidden();
     }
+
+    public function test_category_images_support_uploads_hosted_urls_and_safe_replacement(): void
+    {
+        Storage::fake('public');
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('admin.categories.store'), [
+            'name' => 'Image URL Category',
+            'image_url' => 'https://cdn.example.com/categories/grammar.webp',
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.categories.index'));
+
+        $category = Category::where('name', 'Image URL Category')->firstOrFail();
+        $this->assertSame('https://cdn.example.com/categories/grammar.webp', $category->image_url);
+
+        $this->actingAs($admin)->put(route('admin.categories.update', $category), [
+            'name' => $category->name,
+            'image' => UploadedFile::fake()->image('category.png'),
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.categories.index'));
+
+        $category->refresh();
+        $this->assertNotSame('https://cdn.example.com/categories/grammar.webp', $category->image);
+        Storage::disk('public')->assertExists($category->image);
+        $this->assertStringContainsString('/storage/', $category->image_url);
+    }
+
+    public function test_category_image_url_rejects_non_http_schemes(): void
+    {
+        $this->actingAs($this->admin())->post(route('admin.categories.store'), [
+            'name' => 'Unsafe Category Image',
+            'image_url' => 'javascript:alert(1)',
+            'is_active' => 1,
+        ])->assertSessionHasErrors('image_url');
+
+        $this->assertDatabaseMissing('categories', ['name' => 'Unsafe Category Image']);
+    }
+
+    public function test_category_image_can_be_removed_without_deleting_remote_assets(): void
+    {
+        Storage::fake('public');
+        $category = Category::create([
+            'name' => 'Remote image category',
+            'image' => 'https://cdn.example.com/categories/remote.webp',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->admin())->put(route('admin.categories.update', $category), [
+            'name' => $category->name,
+            'remove_image' => 1,
+            'image_url' => 'https://cdn.example.com/categories/remote.webp',
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.categories.index'));
+
+        $this->assertNull($category->fresh()->image);
+    }
+
 }
