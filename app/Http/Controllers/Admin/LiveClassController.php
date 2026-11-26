@@ -11,6 +11,7 @@ use App\Models\OnlineBatchEnrollment;
 use App\Models\User;
 use App\Notifications\LiveClassChanged;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -217,10 +218,15 @@ class LiveClassController extends Controller
             );
 
             // Guardians receive the same class lifecycle update for each linked child.
+            $guardianIds = DB::table('guardian_students')
+                ->whereIn('student_id', $studentIds)
+                ->distinct()
+                ->pluck('guardian_id');
+
             $guardians = User::query()
+                ->whereIn('id', $guardianIds)
                 ->where('role', 'guardian')
                 ->where('is_active', true)
-                ->whereHas('children', fn ($children) => $children->whereIn('users.id', $studentIds))
                 ->get();
 
             Notification::send($guardians, $notification);
