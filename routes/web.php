@@ -350,6 +350,12 @@ Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('gu
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/', [Branch\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/people/{type}/create', [Branch\PeopleController::class, 'create'])->whereIn('type', ['student', 'staff'])->name('people.create');
+    Route::post('/people/{type}', [Branch\PeopleController::class, 'store'])->whereIn('type', ['student', 'staff'])->name('people.store');
+    Route::get('/people/{user}/edit', [Branch\PeopleController::class, 'edit'])->name('people.edit');
+    Route::put('/people/{user}', [Branch\PeopleController::class, 'update'])->name('people.update');
+    Route::delete('/people/{user}', [Branch\PeopleController::class, 'destroy'])->name('people.destroy');
+
     Route::get('/students', [Branch\DashboardController::class, 'students'])->name('students');
     Route::get('/students/{student}', [Branch\DashboardController::class, 'student'])->name('students.show');
     Route::get('/staff', [Branch\DashboardController::class, 'staff'])->name('staff');
