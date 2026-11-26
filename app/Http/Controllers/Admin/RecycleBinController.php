@@ -143,8 +143,16 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Permanent deletion blocked: this record still has linked learning, account, or transaction data. Keep it in the Recycle Bin or remove dependent records first.');
         }
 
-        $ebookMedia = $record instanceof Ebook ? ['cover' => $record->cover, 'file' => $record->file] : null;
-        $postThumbnail = $record instanceof Post ? $record->thumbnail : null;
+        $media = match (true) {
+            $record instanceof User => [['public', $record->avatar]],
+            $record instanceof Course => [['public', $record->thumbnail]],
+            $record instanceof Category => [['public', $record->image]],
+            $record instanceof Lesson => [['local', $record->attachment]],
+            $record instanceof Slider => [['public', $record->image]],
+            $record instanceof Ebook => [['public', $record->cover], ['local', $record->file]],
+            $record instanceof Post => [['public', $record->thumbnail]],
+            default => [],
+        };
 
         try {
             $record->forceDelete();
@@ -153,12 +161,8 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Permanent deletion was blocked by a linked database record. The item remains safely in the Recycle Bin.');
         }
 
-        if ($ebookMedia) {
-            delete_stored_media('public', $ebookMedia['cover']);
-            delete_stored_media('local', $ebookMedia['file']);
-        }
-        if ($postThumbnail) {
-            delete_stored_media('public', $postThumbnail);
+        foreach ($media as [$disk, $path]) {
+            delete_stored_media($disk, $path);
         }
 
         return back()->with('success', class_basename($class).' permanently deleted.');
@@ -197,11 +201,17 @@ class RecycleBinController extends Controller
                 ['assignments', 'course_id'], ['batches', 'course_id'], ['online_batch_enrollments', 'course_id'],
             ],
             'sections' => [['lessons', 'section_id']],
-            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id']],
+            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id'], ['assignments', 'lesson_id']],
             'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
-            'branches' => [['users', 'branch_id']],
+            'branches' => [
+                ['users', 'branch_id'], ['orders', 'branch_id'], ['batches', 'branch_id'],
+                ['coaching_batches', 'branch_id'], ['coaching_admissions', 'branch_id'],
+                ['student_fee_invoices', 'branch_id'], ['fee_plans', 'branch_id'],
+            ],
+            'batches' => [['enrollments', 'batch_id'], ['online_batch_enrollments', 'batch_id'], ['live_classes', 'batch_id'], ['attendance_sessions', 'batch_id']],
+            'levels' => [['courses', 'level_id'], ['batches', 'level_id'], ['coaching_batches', 'level_id']],
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };

@@ -103,9 +103,9 @@ class LessonController extends Controller
     {
         $this->authorizeCourse($lesson->course);
         $course = $lesson->course;
-        $attachment = $lesson->attachment;
+        // Keep the private attachment while the lesson remains recoverable.
         $lesson->delete();
-        delete_stored_media('local', $attachment);
+
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson deleted.');
     }
 
