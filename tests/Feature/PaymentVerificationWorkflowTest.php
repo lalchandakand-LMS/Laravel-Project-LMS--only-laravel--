@@ -169,7 +169,18 @@ class PaymentVerificationWorkflowTest extends TestCase
     {
         Storage::fake('local');
         [$firstStudent, $admin, $branch, $firstOrder] = $this->orderForStudent();
-        [$secondStudent, $secondAdmin, $secondBranch, $secondOrder] = $this->orderForStudent();
+        $secondStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $branch->id]);
+        $secondOrder = Order::create([
+            'user_id' => $secondStudent->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 1000,
+            'discount' => 0,
+            'total' => 1000,
+            'status' => 'pending',
+            'name' => $secondStudent->name,
+            'phone' => '01700000001',
+            'email' => $secondStudent->email,
+        ]);
 
         Payment::create([
             'order_id' => $firstOrder->id,
