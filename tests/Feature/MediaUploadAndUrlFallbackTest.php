@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Course;
 use App\Models\Ebook;
-use App\Models\EbookPurchase;
 use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Slider;
