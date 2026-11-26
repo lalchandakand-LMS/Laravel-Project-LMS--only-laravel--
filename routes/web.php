@@ -50,6 +50,8 @@ Route::get('/instructors', [InstructorController::class, 'index'])->name('instru
 Route::get('/instructors/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('instructors.show');
 Route::get('/teacher/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('teachers.public.show');
 Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:5,10')->name('contact.send');
+Route::post('/marketing/popups/{popup}/impression', [\\App\\Http\\Controllers\\MarketingPopupTrackingController::class, 'impression'])->middleware('throttle:60,1')->name('marketing.popups.impression');
+Route::post('/marketing/popups/{popup}/click', [\\App\\Http\\Controllers\\MarketingPopupTrackingController::class, 'click'])->middleware('throttle:60,1')->name('marketing.popups.click');
 
 Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Conditions', 'policy' => 'terms'])->name('legal.terms');
 Route::view('/privacy-policy', 'legal.policy', ['title' => 'Privacy Policy', 'policy' => 'privacy'])->name('legal.privacy');
@@ -207,6 +209,12 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
         Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
         Route::get('marketing/dashboard', [Admin\MarketingDashboardController::class, 'index'])->name('marketing.dashboard');
+        Route::get('marketing/popups', [Admin\\MarketingPopupController::class, 'index'])->name('marketing.popups.index');
+        Route::get('marketing/popups/create', [Admin\\MarketingPopupController::class, 'create'])->name('marketing.popups.create');
+        Route::post('marketing/popups', [Admin\\MarketingPopupController::class, 'store'])->name('marketing.popups.store');
+        Route::get('marketing/popups/{popup}/edit', [Admin\\MarketingPopupController::class, 'edit'])->name('marketing.popups.edit');
+        Route::put('marketing/popups/{popup}', [Admin\\MarketingPopupController::class, 'update'])->name('marketing.popups.update');
+        Route::delete('marketing/popups/{popup}', [Admin\\MarketingPopupController::class, 'destroy'])->name('marketing.popups.destroy');
         Route::get('marketing/leads', [Admin\MarketingLeadController::class, 'index'])->name('marketing.leads.index');
         Route::get('marketing/campaigns', [Admin\MarketingCampaignController::class, 'index'])->name('marketing.campaigns.index');
         Route::get('marketing/campaigns/create', [Admin\MarketingCampaignController::class, 'create'])->name('marketing.campaigns.create');
