@@ -116,7 +116,7 @@ class LiveClassSchedulingTest extends TestCase
         $this->assertSame($batch->id, $session->batch_id);
         $this->assertSame('Updated attendance topic', $session->topic);
         $this->assertSame($newStart->timestamp, $session->starts_at->timestamp);
-        $this->assertSame(90, $session->starts_at->diffInMinutes($session->ends_at));
+        $this->assertEquals(90, $session->starts_at->diffInMinutes($session->ends_at));
     }
 
     public function test_admin_cannot_change_live_class_schedule_after_attendance_is_approved(): void
