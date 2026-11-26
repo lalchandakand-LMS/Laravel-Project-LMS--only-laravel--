@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\CartController;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -64,7 +65,7 @@ class PhysicalProductStoreTest extends TestCase
 
         $this->post(route('cart.quantity', 'product:'.$product->id), ['quantity' => 3])
             ->assertRedirect();
-        $updatedTotals = \\App\\Http\\Controllers\\CartController::totals();
+        $updatedTotals = CartController::totals();
         $this->assertSame(3, $updatedTotals['items'][0]['qty']);
         $this->assertSame(1350.0, $updatedTotals['subtotal']);
 
