@@ -71,13 +71,11 @@ class AnnouncementController extends Controller
 
     public function destroy(Announcement $announcement)
     {
-        foreach ($announcement->attachments as $attachment) {
-            Storage::disk('local')->delete($attachment->path);
-            $attachment->delete();
-        }
+        // Announcements use SoftDeletes and can be restored from the Recycle Bin.
+        // Keep attachment metadata and private files intact for that restore path.
         $announcement->delete();
 
-        return back()->with('success', 'Announcement deleted.');
+        return back()->with('success', 'Announcement archived. It can be restored from the Recycle Bin.');
     }
 
     private function validated(Request $request): array

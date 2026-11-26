@@ -113,4 +113,22 @@ class AdvancedAnnouncementTest extends TestCase
         $this->assertDatabaseMissing('announcement_attachments', ['id' => $attachment->id]);
         Storage::disk('local')->assertMissing($path);
     }
+    public function test_archiving_and_restoring_an_announcement_preserves_private_attachments(): void
+    {
+        Storage::fake('local');
+        $announcement = Announcement::create(['title' => 'Archive safely', 'body' => 'Keep the file.', 'is_published' => false]);
+        $path = UploadedFile::fake()->create('archive.pdf', 15, 'application/pdf')->store('announcements/'.$announcement->id, 'local');
+        $attachment = $announcement->attachments()->create([
+            'path' => $path, 'original_name' => 'archive.pdf', 'mime_type' => 'application/pdf', 'size' => 15360,
+        ]);
+
+        $announcement->delete();
+        Storage::disk('local')->assertExists($path);
+        $this->assertDatabaseHas('announcement_attachments', ['id' => $attachment->id]);
+
+        $announcement->restore();
+        Storage::disk('local')->assertExists($path);
+        $this->assertSame(1, $announcement->fresh()->attachments()->count());
+    }
+
 }
