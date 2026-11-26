@@ -208,7 +208,7 @@
     <div class="border-t border-white/10">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-xs text-slate-400">
             <span>© {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. {{ \App\Models\Setting::get('footer_copyright', 'All rights reserved.') }}</span>
-            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-orange-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-orange-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-orange-300">Refund Policy</a></nav>
+            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-orange-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-orange-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-orange-300">Refund Policy</a>@if (filled(\App\Models\Setting::get('ga4_measurement_id')) || filled(\App\Models\Setting::get('gtm_container_id')) || filled(\App\Models\Setting::get('meta_pixel_id'))) <button type="button" id="open-tracking-settings" class="hover:text-orange-300 underline">Cookie settings</button>@endif</nav>
         </div>
     </div>
     @if (\App\Models\Setting::get('developer_show', '0') === '1' && \App\Models\Setting::get('developer_name'))
@@ -216,9 +216,9 @@
     @endif
 </footer>
     @php
-        $trackingEnabled = filled(\\App\\Models\\Setting::get('ga4_measurement_id'))
-            || filled(\\App\\Models\\Setting::get('gtm_container_id'))
-            || filled(\\App\\Models\\Setting::get('meta_pixel_id'));
+        $trackingEnabled = filled(\App\Models\Setting::get('ga4_measurement_id'))
+            || filled(\App\Models\Setting::get('gtm_container_id'))
+            || filled(\App\Models\Setting::get('meta_pixel_id'));
     @endphp
     @if ($trackingEnabled && !$privateSeoRoute)
         <section id="tracking-consent" aria-label="Cookie preferences" aria-live="polite" hidden class="fixed inset-x-4 bottom-4 z-[100] mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
@@ -239,9 +239,9 @@
                 const banner = document.getElementById('tracking-consent');
                 const consentKey = 'aec_optional_tracking_consent_v1';
                 const ids = {
-                    ga4: @json(\\App\\Models\\Setting::get('ga4_measurement_id')),
-                    gtm: @json(\\App\\Models\\Setting::get('gtm_container_id')),
-                    meta: @json(\\App\\Models\\Setting::get('meta_pixel_id'))
+                    ga4: @json(\App\Models\Setting::get('ga4_measurement_id')),
+                    gtm: @json(\App\Models\Setting::get('gtm_container_id')),
+                    meta: @json(\App\Models\Setting::get('meta_pixel_id'))
                 };
                 const loadOptionalTracking = () => {
                     if (ids.gtm && !document.querySelector('[data-aec-gtm]')) {
@@ -273,6 +273,7 @@
                 const stored = localStorage.getItem(consentKey);
                 if (stored === 'accepted') loadOptionalTracking();
                 else if (stored !== 'rejected') banner.hidden = false;
+                document.getElementById('open-tracking-settings')?.addEventListener('click', () => { banner.hidden = false; });
                 document.getElementById('tracking-accept').addEventListener('click', () => {
                     localStorage.setItem(consentKey, 'accepted');
                     banner.hidden = true;
