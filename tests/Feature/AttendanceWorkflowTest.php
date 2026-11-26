@@ -255,8 +255,14 @@ class AttendanceWorkflowTest extends TestCase
             'slug' => 'ended-attendance-course',
             'instructor_id' => $teacher->id,
         ]);
+        $branch = Branch::create([
+            'name' => 'Ended Attendance Branch',
+            'code' => 'ATT-END-BR',
+            'is_active' => true,
+        ]);
 
         $coachingBatch = CoachingBatch::create([
+            'branch_id' => $branch->id,
             'course_id' => $course->id,
             'instructor_id' => $teacher->id,
             'name' => 'Ended Coaching Batch',
@@ -268,6 +274,7 @@ class AttendanceWorkflowTest extends TestCase
             'student_email' => $student->email,
             'student_phone' => '01711110000',
             'student_id' => $student->id,
+            'branch_id' => $branch->id,
             'course_id' => $course->id,
             'coaching_batch_id' => $coachingBatch->id,
             'status' => 'admitted',
