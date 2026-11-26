@@ -434,6 +434,51 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame('active', $student->enrollments()->where('course_id', $course->id)->firstOrFail()->status);
     }
 
+    public function test_full_payment_verification_closes_other_pending_submissions_for_the_order(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 400,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'SETTLEMENT-INITIAL-400',
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'partially_paid']);
+
+        $settlingPayment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 600,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'SETTLEMENT-FINAL-600',
+            'status' => 'pending',
+        ]);
+        $stalePendingPayment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bank',
+            'amount' => 600,
+            'sender_number' => 'Alom English Center',
+            'transaction_id' => 'SETTLEMENT-STALE-PENDING',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.payments.verify', $settlingPayment), [
+            'action' => 'verify',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame('verified', $settlingPayment->fresh()->status);
+        $this->assertSame('rejected', $stalePendingPayment->fresh()->status);
+        $this->assertSame($admin->id, $stalePendingPayment->fresh()->verified_by);
+        $this->assertNotNull($stalePendingPayment->fresh()->verified_at);
+        $this->assertStringContainsString('another payment completed the order', $stalePendingPayment->fresh()->rejection_reason);
+    }
+
     public function test_payment_report_and_csv_export_are_admin_only(): void
     {
         [$student, $admin, $branch, $order] = $this->orderForStudent();
