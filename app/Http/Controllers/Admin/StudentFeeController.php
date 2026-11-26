@@ -16,13 +16,13 @@ class StudentFeeController extends Controller
 {
     public function index(Request $request)
     {
-        $invoices = StudentFeeInvoice::with(['student', 'coachingAdmission', 'course', 'batch', 'branch', 'payments'])
+        $invoices = StudentFeeInvoice::with(['student', 'coachingAdmission', 'course', 'coachingBatch', 'branch', 'payments'])
             ->when($request->filled('q'), fn ($q) => $q->whereHas('student', fn ($s) => $s->where('name', 'like', '%'.$request->input('q').'%')->orWhere('email', 'like', '%'.$request->input('q').'%')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->latest('issued_at')->paginate(25)->withQueryString();
 
-        $admissions = CoachingAdmission::with(['student', 'course', 'batch', 'branch'])
-            ->where('status', 'approved')->whereNotNull('student_id')->latest('admitted_at')->get();
+        $admissions = CoachingAdmission::with(['student', 'course', 'coachingBatch', 'branch'])
+            ->where('status', 'admitted')->whereNotNull('student_id')->latest('admitted_at')->get();
 
         $totals = [
             'invoiced' => (float) StudentFeeInvoice::sum(DB::raw('amount - discount')),
@@ -54,7 +54,7 @@ class StudentFeeController extends Controller
                 'coaching_admission_id' => $admission->id,
                 'student_id' => $admission->student_id,
                 'course_id' => $admission->course_id,
-                'batch_id' => $admission->batch_id,
+                'coaching_batch_id' => $admission->coaching_batch_id,\n                'invoice_type' => 'recurring',
                 'branch_id' => $admission->branch_id,
                 'description' => $data['description'],
                 'issued_at' => now()->toDateString(),
@@ -94,7 +94,7 @@ class StudentFeeController extends Controller
 
         DB::transaction(function () use ($invoice, $data) {
             $invoice = StudentFeeInvoice::with('coachingAdmission')->lockForUpdate()->findOrFail($invoice->id);
-            abort_unless($invoice->coachingAdmission?->isActive() && (int) $invoice->student_id === (int) $invoice->coachingAdmission->student_id, 422, 'এটি সক্রিয় coaching admission-এর invoice নয়।');
+            $admission = $invoice->coachingAdmission;\n            abort_unless($admission && (int) $invoice->student_id === (int) $admission->student_id, 422, 'এটি coaching admission-এর invoice নয়।');\n            abort_unless(in_array($admission->status, ['awaiting_payment', 'admitted'], true), 422, 'এই coaching admission-এ payment নেওয়া যাবে না।');\n            abort_if($invoice->invoice_type !== 'admission' && ! $admission->isActive(), 422, 'শুধু সক্রিয় coaching admission-এর recurring fee নেওয়া যাবে।');
             $amount = round((float) $data['amount'], 2);
             $applied = min($amount, $invoice->dueAmount());
             $advance = round($amount - $applied, 2);
