@@ -41,7 +41,7 @@ class CheckoutController extends Controller
         ]);
 
         $branch = Branch::active()->findOrFail($data['branch_id']);
-        if (count($branch->payment_methods ?? []) === 0) {
+        if ($branch->enabledStudentPaymentMethods() === []) {
             throw ValidationException::withMessages(['branch_id' => 'This branch has not enabled any payment method yet.']);
         }
         if (auth()->user()->branch_id && auth()->user()->branch_id !== $branch->id) {
