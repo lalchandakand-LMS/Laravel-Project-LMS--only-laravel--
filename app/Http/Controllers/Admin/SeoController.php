@@ -10,10 +10,43 @@ class SeoController extends Controller
 {
     public function index()
     {
+        $missingMeta = collect();
+
+        $coursesMissingMeta = Course::query()->where('is_published', true)
+            ->where(function ($query) {
+                $query->whereNull('meta_title')->orWhere('meta_title', '')
+                    ->orWhereNull('meta_description')->orWhere('meta_description', '');
+            })->count();
+
+        $postsMissingMeta = Post::published()
+            ->where(function ($query) {
+                $query->whereNull('meta_title')->orWhere('meta_title', '')
+                    ->orWhereNull('meta_description')->orWhere('meta_description', '');
+            })->count();
+
+        Course::query()->where('is_published', true)
+            ->where(function ($query) {
+                $query->whereNull('meta_title')->orWhere('meta_title', '')
+                    ->orWhereNull('meta_description')->orWhere('meta_description', '');
+            })->orderBy('title')->limit(8)->get(['id', 'title'])->each(function ($course) use ($missingMeta) {
+                $missingMeta->push(['type' => 'Course', 'title' => $course->title, 'url' => route('admin.courses.edit', $course)]);
+            });
+
+        Post::published()
+            ->where(function ($query) {
+                $query->whereNull('meta_title')->orWhere('meta_title', '')
+                    ->orWhereNull('meta_description')->orWhere('meta_description', '');
+            })->orderBy('title')->limit(8)->get(['id', 'title', 'slug'])->each(function ($post) use ($missingMeta) {
+                $missingMeta->push(['type' => 'Blog post', 'title' => $post->title, 'url' => route('admin.posts.edit', $post)]);
+            });
+
         return view('admin.seo.index', [
             'settings' => Setting::all_(),
             'sitemapUrl' => route('sitemap'),
             'robotsUrl' => route('robots'),
+            'coursesMissingMeta' => $coursesMissingMeta,
+            'postsMissingMeta' => $postsMissingMeta,
+            'missingMeta' => $missingMeta,
         ]);
     }
 
