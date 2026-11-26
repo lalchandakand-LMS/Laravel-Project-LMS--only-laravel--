@@ -39,7 +39,6 @@ The application now contains a sandbox-only `BkashCheckoutAdapter` and a provide
 ### Not implemented / Live remains disabled
 
 - **Nagad:** obtain the current official merchant integration package, API endpoints, credentials and callback/signature rules. No guessed cryptographic behavior is accepted.
-- **Nagad:** obtain the current official merchant integration package, API endpoints, credentials and callback/signature rules. No guessed cryptographic behavior is accepted.
 - **Rocket:** obtain DBBL's approved merchant integration/API specification and credentials. Public merchant payment information is not enough to implement a server API.
 - **SSLCommerz:** the static website badge is not a gateway integration. No adapter or route is enabled.
 
@@ -47,7 +46,8 @@ Official starting points:
 - bKash Developer Portal: https://developer.bka.sh/
 - bKash Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
 - bKash official sandbox merchant demo: https://merchantdemo.sandbox.bka.sh/
-- bKash official Instant Payment Notification / SNS webhook specification: https://developer.bka.sh/docs/webhooks
+- bKash official merchant webhook endpoint onboarding sample: https://github.com/bKash-developer/merchant-webhook-endpoint
+- bKash official merchant sandbox portal and Tokenized Checkout v1.2.0-beta documentation: https://merchantdemo.sandbox.bka.sh/
 
 ### Live-mode acceptance gate for each provider
 
