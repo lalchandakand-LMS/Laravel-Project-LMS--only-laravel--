@@ -197,6 +197,7 @@ class OrderController extends Controller
             'items.*.type' => 'required|in:course,ebook',
             'items.*.id' => 'required|integer',
         ]);
+        $this->assertUniqueOrderItems($data['items']);
         $lines = [];
         foreach ($data['items'] as $line) {
             $product = $line['type'] === 'course'
