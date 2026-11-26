@@ -104,7 +104,8 @@ class CourseController extends Controller
             'starts_at' => 'nullable|date',
             'seat_limit' => 'nullable|integer|min:1',
             'access_duration_days' => 'nullable|integer|min:1|max:3650',
-            'thumbnail' => 'nullable|image|max:4096',
+            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'thumbnail_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'promo_video' => 'nullable|string|max:255',
             'meta_title' => 'nullable|string|max:180',
             'meta_description' => 'nullable|string|max:300',
@@ -114,7 +115,10 @@ class CourseController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
+        } elseif (! empty($data['thumbnail_url'])) {
+            $data['thumbnail'] = $data['thumbnail_url'];
         }
+        unset($data['thumbnail_url']);
 
         $data['outcomes'] = collect(preg_split('/\r
 |\r|
