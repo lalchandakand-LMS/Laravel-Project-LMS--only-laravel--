@@ -139,7 +139,7 @@ class CheckoutController extends Controller
             'order' => $order->load('items', 'payments'),
             'branch' => $branch,
             'enabledMethods' => $enabledMethods,
-            'bkashReady' => ! app()->environment('production') && app(BkashTokenizedCheckoutAdapter::class)->isConfigured(),
+            'bkashReady' => $order->user_id === auth()->id() && ! app()->environment('production') && app(BkashTokenizedCheckoutAdapter::class)->isConfigured(),
             'paymentNumbers' => [
                 'bkash' => \App\Models\Setting::get('bkash_number', ''),
                 'nagad' => \App\Models\Setting::get('nagad_number', ''),
