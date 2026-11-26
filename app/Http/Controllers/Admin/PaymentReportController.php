@@ -37,40 +37,40 @@ class PaymentReportController extends Controller
     public function export(Request $request)
     {
         $this->validateFilters($request);
-        $payments = $this->paymentsQuery($request)->with(['order.branch', 'verifier'])->oldest()->get();
-        $adjustments = $this->adjustmentsQuery($request)->with(['order.branch', 'creator'])->oldest()->get();
+        $payments = $this->paymentsQuery($request)->with(['order.branch', 'verifier'])->reorder('id');
+        $adjustments = $this->adjustmentsQuery($request)->with(['order.branch', 'creator'])->reorder('id');
 
         return response()->streamDownload(function () use ($payments, $adjustments) {
             $output = fopen('php://output', 'w');
             fputcsv($output, ['Date', 'Record type', 'Order', 'Branch', 'Method', 'Reference', 'Amount', 'Status', 'Reviewed/Created by', 'Reason']);
 
-            foreach ($payments as $payment) {
+            foreach ($payments->lazyById(500) as $payment) {
                 fputcsv($output, [
                     optional($payment->created_at)->toDateTimeString(),
-                    'payment',
-                    $payment->order?->order_no,
-                    $payment->order?->branch?->name,
-                    $payment->gateway,
-                    $payment->transaction_id,
+                    $this->safeCsvCell('payment'),
+                    $this->safeCsvCell($payment->order?->order_no),
+                    $this->safeCsvCell($payment->order?->branch?->name),
+                    $this->safeCsvCell($payment->gateway),
+                    $this->safeCsvCell($payment->transaction_id),
                     number_format($payment->amount, 2, '.', ''),
-                    $payment->status,
-                    $payment->verifier?->name,
-                    $payment->rejection_reason,
+                    $this->safeCsvCell($payment->status),
+                    $this->safeCsvCell($payment->verifier?->name),
+                    $this->safeCsvCell($payment->rejection_reason),
                 ]);
             }
 
-            foreach ($adjustments as $adjustment) {
+            foreach ($adjustments->lazyById(500) as $adjustment) {
                 fputcsv($output, [
                     optional($adjustment->created_at)->toDateTimeString(),
-                    $adjustment->type,
-                    $adjustment->order?->order_no,
-                    $adjustment->order?->branch?->name,
-                    'adjustment',
-                    $adjustment->reference,
+                    $this->safeCsvCell($adjustment->type),
+                    $this->safeCsvCell($adjustment->order?->order_no),
+                    $this->safeCsvCell($adjustment->order?->branch?->name),
+                    $this->safeCsvCell('adjustment'),
+                    $this->safeCsvCell($adjustment->reference),
                     number_format($adjustment->amount, 2, '.', ''),
-                    'recorded',
-                    $adjustment->creator?->name,
-                    $adjustment->reason,
+                    $this->safeCsvCell('recorded'),
+                    $this->safeCsvCell($adjustment->creator?->name),
+                    $this->safeCsvCell($adjustment->reason),
                 ]);
             }
 
@@ -78,6 +78,15 @@ class PaymentReportController extends Controller
         }, 'payment-ledger-'.now()->format('Ymd-His').'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    private function safeCsvCell(mixed $value): string
+    {
+        $value = (string) ($value ?? '');
+
+        return preg_match('/^[\\x00-\\x20]*[=+\\-@]/u', $value) === 1
+            ? "'".$value
+            : $value;
     }
 
     private function validateFilters(Request $request): void
