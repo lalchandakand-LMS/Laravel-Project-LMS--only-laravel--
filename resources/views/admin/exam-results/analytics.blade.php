@@ -2,7 +2,7 @@
 @section('title', 'Exam Analytics')
 @section('heading', 'Analytics · '.$exam->title)
 @section('content')
-<div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+<div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
 @foreach([['Attempts',$total],['Unique students',$uniqueStudents],['Pass rate',$reviewedTotal ? round($passed/$reviewedTotal*100,1).'%' : '—'],['Pending manual review',$pendingReview],['Average score',number_format($average,2)]] as [$label,$value])
 <div class="rounded-xl border border-slate-200 bg-white p-5"><p class="text-xs font-semibold uppercase text-slate-500">{{ $label }}</p><p class="mt-2 text-2xl font-extrabold text-slate-900">{{ $value }}</p></div>
 @endforeach
