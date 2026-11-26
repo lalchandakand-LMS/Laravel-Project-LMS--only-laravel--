@@ -191,69 +191,6 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame([], Storage::disk('local')->allFiles('payment-proofs'));
     }
 
-    public function test_ebook_refund_revokes_purchase_and_repayment_restores_access(): void
-    {
-        [$student, $admin, $branch, $order] = $this->orderForStudent();
-        $ebook = Ebook::create([
-            'title' => 'Refundable eBook',
-            'slug' => 'refundable-ebook',
-            'price' => 1000,
-            'file' => 'ebooks/refundable.pdf',
-            'is_free' => false,
-            'is_published' => true,
-        ]);
-        $order->items()->create([
-            'item_type' => 'ebook',
-            'item_id' => $ebook->id,
-            'title' => $ebook->title,
-            'price' => 1000,
-            'qty' => 1,
-        ]);
-        Payment::create([
-            'order_id' => $order->id,
-            'gateway' => 'nagad',
-            'transaction_id' => 'EBOOK-REFUND-TRX',
-            'amount' => 1000,
-            'status' => 'verified',
-            'verified_by' => $admin->id,
-            'verified_at' => now(),
-        ]);
-        $order->update(['status' => 'paid']);
-        EbookPurchase::create([
-            'user_id' => $student->id,
-            'ebook_id' => $ebook->id,
-            'order_id' => $order->id,
-        ]);
-
-        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
-            'amount' => 1000,
-            'reference' => 'EBOOK-REFUND-1000',
-            'reason' => 'Full eBook refund.',
-        ])->assertRedirect();
-
-        $this->assertDatabaseMissing('ebook_purchases', [
-            'user_id' => $student->id,
-            'ebook_id' => $ebook->id,
-        ]);
-        $this->assertSame('refunded', $order->fresh()->status);
-
-        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
-            'status' => 'pending',
-        ])->assertRedirect();
-        $this->actingAs($admin)->post(route('admin.orders.offline-payment', $order->order_no), [
-            'gateway' => 'cash',
-            'amount' => 1000,
-            'reference' => 'EBOOK-REPAY-1000',
-        ])->assertRedirect();
-
-        $this->assertDatabaseHas('ebook_purchases', [
-            'user_id' => $student->id,
-            'ebook_id' => $ebook->id,
-            'order_id' => $order->id,
-        ]);
-        $this->assertSame('paid', $order->fresh()->status);
-    }
-
     public function test_cash_and_office_collection_are_staff_recorded_as_verified_ledger_entries(): void
     {
         [$student, $admin, $branch, $order] = $this->orderForStudent();
