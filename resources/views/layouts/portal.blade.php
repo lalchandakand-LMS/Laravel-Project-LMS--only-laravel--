@@ -44,8 +44,11 @@
         'branch_manager' => [
             ['branch.dashboard', 'Dashboard',      '📊'],
             ['branch.students',  'Branch students','👩‍🎓'],
+            ['branch.admissions.index', 'Admissions', '📝'],
             ['branch.staff',     'Teachers & staff','👥'],
-            ['branch.revenue',   'Revenue',        '💰'],
+            ['branch.attendance', 'Attendance review', '📅'],
+            ['branch.finance', 'Finance & fee collection', '💰'],
+            ['branch.revenue',   'Revenue ledger',        '📈'],
             ['notices.index', 'Notice board', '📣'],
             ['complaints.index', 'Complaints', '🛟']
         ],
