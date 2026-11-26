@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Services\GamificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -64,6 +65,17 @@ class ExamResultController extends Controller
                 'manual_reviewed_at' => now(),
                 'manual_feedback' => $data['feedback'] ?? null,
             ]);
+            $attempt->refresh();
+            $student = $attempt->user;
+            if ($student && $student->isStudent() && $attempt->isPassed()) {
+                GamificationService::award(
+                    $student,
+                    'exam_passed',
+                    'exam_passed:'.$attempt->id,
+                    5,
+                    ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
+                );
+            }
         });
 
         return redirect()->route('admin.exams.results.show', [$exam, $attempt])
