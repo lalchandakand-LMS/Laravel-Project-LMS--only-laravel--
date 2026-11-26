@@ -86,7 +86,9 @@ class QuestionBankController extends Controller
                 if (count(array_filter($row, fn ($value) => trim((string) $value) !== '')) === 0) {
                     continue;
                 }
-                $values = array_combine(array_slice($header, 0, count($row)), $row);
+                abort_unless(count($row) === count($header), 422, "CSV column count mismatch on line {$line}.");
+                $values = array_combine($header, $row);
+                abort_unless(filled($values['question'] ?? null), 422, "Question text is required on CSV line {$line}.");
                 $type = trim((string) ($values['type'] ?? ''));
                 abort_unless(in_array($type, ['mcq', 'cq', 'short'], true), 422, "Invalid question type on CSV line {$line}.");
                 $options = $type === 'mcq' ? array_values(array_filter(array_map('trim', explode('|', (string) ($values['options'] ?? ''))), fn ($v) => $v !== '')) : [];
@@ -112,6 +114,18 @@ class QuestionBankController extends Controller
         fclose($handle);
 
         return back()->with('success', "{$created} questions imported into the bank.");
+    }
+
+    public function template()
+    {
+        $csv = "question,type,marks,options,correct_index,category,difficulty,explanation\\n";
+        $csv .= '"What is the past tense of go?",mcq,1,"went|gone|goes|going",0,Grammar,easy,"Went is the simple past form."'. "\\n";
+        $csv .= '"Write a sentence using present perfect.",short,2,,,Grammar,medium,"Check tense and structure."'. "\\n";
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="question-bank-template.csv"',
+        ]);
     }
 
     public function attach(Request $request, Exam $exam)
