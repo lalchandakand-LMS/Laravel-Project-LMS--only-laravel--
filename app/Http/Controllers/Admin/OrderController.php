@@ -34,7 +34,8 @@ class OrderController extends Controller
             'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
             'cancelled' => Order::where('status', 'cancelled')->count(),
             'revenue' => max(0, (float) Payment::where('status', 'verified')->sum('amount')
-                - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')),
+                - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')
+                + (float) PaymentAdjustment::where('type', 'credit')->sum('amount')),
         ];
 
         return view('admin.orders.index', [
@@ -60,6 +61,8 @@ class OrderController extends Controller
     {
         return Order::query()->with(['user', 'branch'])->withCount('items')
             ->withSum(['payments as verified_paid' => fn ($q) => $q->where('status', 'verified')], 'amount')
+            ->withSum(['adjustments as refund_total' => fn ($q) => $q->where('type', 'refund')], 'amount')
+            ->withSum(['adjustments as credit_total' => fn ($q) => $q->where('type', 'credit')], 'amount')
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
@@ -87,12 +90,13 @@ class OrderController extends Controller
             foreach ($orders as $order) {
                 $received = (float) $order->payments->where('status', 'verified')->sum('amount');
                 $refunds = (float) $order->adjustments->where('type', 'refund')->sum('amount');
+                $credits = (float) $order->adjustments->where('type', 'credit')->sum('amount');
                 fputcsv($out, [
                     $order->order_no, optional($order->created_at)->toDateTimeString(),
                     $order->name, $order->phone, $order->email, $order->branch?->name,
                     $order->items->count(), $order->subtotal, $order->discount, $order->total,
                     number_format($received, 2, '.', ''), number_format($refunds, 2, '.', ''),
-                    number_format(max(0, $order->total - $received + $refunds), 2, '.', ''), $order->status,
+                    number_format(max(0, $order->total - $received + $refunds - $credits), 2, '.', ''), $order->status,
                 ]);
             }
             fclose($out);
