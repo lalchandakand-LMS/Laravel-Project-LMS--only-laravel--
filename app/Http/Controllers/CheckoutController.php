@@ -140,6 +140,18 @@ class CheckoutController extends Controller
     public function pay(Request $request, Order $order)
     {
         abort_unless($order->user_id === $request->user()->id, 403);
+        abort_unless(in_array($order->status, ['pending', 'partially_paid'], true), 403, 'This order is not awaiting payment.');
+
+        // Preserve immediate branch/method feedback, then recheck under locks below.
+        $initialBranch = $order->branch;
+        abort_unless($initialBranch && $initialBranch->is_active, 403, 'The selected branch is no longer accepting payments.');
+        $initialMethods = $initialBranch->enabledStudentPaymentMethods();
+        if ($initialMethods === []) {
+            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
+        }
+        if ($request->filled('gateway') && ! in_array($request->input('gateway'), $initialMethods, true)) {
+            throw ValidationException::withMessages(['gateway' => 'This payment method is not enabled for the selected branch.']);
+        }
 
         $data = $request->validate([
             'gateway' => 'required|string|max:30',
