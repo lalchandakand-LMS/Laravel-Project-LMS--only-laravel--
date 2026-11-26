@@ -166,6 +166,16 @@ class OrderController extends Controller
 
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
         $order = DB::transaction(function () use ($student, $branch, $data, $lines, $subtotal) {
+            foreach ($lines as $line) {
+                if ($line['type'] !== 'product') {
+                    continue;
+                }
+                $stockItem = Product::whereKey($line['id'])->lockForUpdate()->first();
+                if (! $stockItem || ! $stockItem->is_published || $stockItem->availableQuantity() < 1) {
+                    throw ValidationException::withMessages(['items' => 'Product stock changed while the Admin order was being created.']);
+                }
+            }
+
             $order = Order::create([
                 'user_id' => $student->id, 'branch_id' => $branch->id,
                 'subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal,
@@ -234,10 +244,19 @@ class OrderController extends Controller
         }
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
         $customerData = collect($data)->except('items')->all();
-        DB::transaction(function () use ($order, $customerData, $lines, $subtotal) {
+        DB::transaction(function () use ($order, $customerData, $lines, $subtotal, $existingProductIds) {
             $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
             if ($locked->payments()->exists()) {
                 abort(403, 'Orders with payment records cannot be edited.');
+            }
+            foreach ($lines as $line) {
+                if ($line['type'] !== 'product' || in_array((int) $line['id'], $existingProductIds, true)) {
+                    continue;
+                }
+                $stockItem = Product::whereKey($line['id'])->lockForUpdate()->first();
+                if (! $stockItem || ! $stockItem->is_published || $stockItem->availableQuantity() < 1) {
+                    throw ValidationException::withMessages(['items' => 'Product stock changed while the Admin order was being edited.']);
+                }
             }
             OrderService::releaseReservations($locked);
             $locked->items()->delete();
