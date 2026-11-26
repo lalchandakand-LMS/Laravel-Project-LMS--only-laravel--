@@ -176,6 +176,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
         Route::post('enrollments/manual', [Admin\EnrollmentController::class, 'store'])->name('enrollments.store');
 
+        Route::get('staff-leave-requests', [Admin\LeaveRequestController::class, 'index'])->name('staff-leave-requests.index');
+        Route::post('staff-leave-requests/{leaveRequest}/approve', [Admin\LeaveRequestController::class, 'approve'])->name('staff-leave-requests.approve');
+        Route::post('staff-leave-requests/{leaveRequest}/reject', [Admin\LeaveRequestController::class, 'reject'])->name('staff-leave-requests.reject');
+
         Route::get('students/create', [Admin\UserController::class, 'create'])->name('users.create');
         Route::post('students', [Admin\UserController::class, 'store'])->name('users.store');
         Route::get('students', [Admin\UserController::class, 'index'])->name('users.index');
@@ -257,6 +261,9 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
     Route::get('/students/{user}', [Teacher\DashboardController::class, 'student'])->name('students.show');
     Route::get('/earnings', [Teacher\DashboardController::class, 'earnings'])->name('earnings');
     Route::get('/live-classes', [Teacher\DashboardController::class, 'liveClasses'])->name('live-classes');
+    Route::get('/leave-requests', [Teacher\LeaveRequestController::class, 'index'])->name('leave-requests.index');
+    Route::post('/leave-requests', [Teacher\LeaveRequestController::class, 'store'])->name('leave-requests.store');
+    Route::post('/leave-requests/{leaveRequest}/cancel', [Teacher\LeaveRequestController::class, 'cancel'])->name('leave-requests.cancel');
     Route::get('/assignments', [Teacher\AssignmentController::class, 'index'])->name('assignments.index');
     Route::get('/assignments/create', [Teacher\AssignmentController::class, 'create'])->name('assignments.create');
     Route::post('/assignments', [Teacher\AssignmentController::class, 'store'])->name('assignments.store');
