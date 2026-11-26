@@ -96,6 +96,9 @@ class AiAgentController extends Controller
         abort_unless(auth()->user()->isAdmin() || (int) $course->instructor_id === (int) auth()->id(), 403);
 
         DB::transaction(function () use ($proposal, $payload, $course) {
+            $lockedProposal = AiActionProposal::whereKey($proposal->id)->lockForUpdate()->firstOrFail();
+            abort_if($lockedProposal->status !== 'pending', 409, 'This proposal has already been reviewed.');
+
             $assignment = Assignment::create([
                 'course_id' => $course->id,
                 'title' => $payload['title'],
@@ -106,7 +109,7 @@ class AiAgentController extends Controller
                 'is_published' => false,
             ]);
 
-            $proposal->update([
+            $lockedProposal->update([
                 'status' => 'executed',
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
@@ -123,11 +126,16 @@ class AiAgentController extends Controller
         $this->authorizeProposal($proposal);
         abort_if($proposal->status !== 'pending', 409, 'This proposal has already been reviewed.');
 
-        $proposal->update([
-            'status' => 'rejected',
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-        ]);
+        DB::transaction(function () use ($proposal) {
+            $lockedProposal = AiActionProposal::whereKey($proposal->id)->lockForUpdate()->firstOrFail();
+            abort_if($lockedProposal->status !== 'pending', 409, 'This proposal has already been reviewed.');
+
+            $lockedProposal->update([
+                'status' => 'rejected',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+            ]);
+        });
 
         return redirect()->route('ai-agent.index')->with('success', 'AI action proposal rejected.');
     }
