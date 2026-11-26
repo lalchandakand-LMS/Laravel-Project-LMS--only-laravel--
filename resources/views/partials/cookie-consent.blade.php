@@ -76,6 +76,8 @@
         window.__aecGaLoaded = true;
         window.dataLayer = window.dataLayer || [];
         window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+        window.gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+        window.gtag('consent', 'update', { analytics_storage: 'granted' });
         window.gtag('js', new Date());
         window.gtag('config', gaId, { anonymize_ip: true });
         var script = document.createElement('script');
@@ -102,20 +104,30 @@
     function sendPendingConversions() {
         var event = window.aecPurchaseEvent;
         if (!event) return;
+        var transactionId = String(event.transaction_id || '');
+        if (!transactionId) return;
         if (consent && consent.analytics && window.gtag && !window.__aecGaPurchaseSent) {
+            var gaKey = 'aec_ga_purchase_' + transactionId;
+            try { if (window.localStorage.getItem(gaKey)) return; } catch (error) {}
             window.gtag('event', 'purchase', event);
             window.__aecGaPurchaseSent = true;
+            try { window.localStorage.setItem(gaKey, '1'); } catch (error) {}
         }
         if (consent && consent.marketing && window.fbq && !window.__aecMetaPurchaseSent) {
+            var metaKey = 'aec_meta_purchase_' + transactionId;
+            try { if (window.localStorage.getItem(metaKey)) return; } catch (error) {}
             window.fbq('track', 'Purchase', { value: event.value, currency: event.currency });
             window.__aecMetaPurchaseSent = true;
+            try { window.localStorage.setItem(metaKey, '1'); } catch (error) {}
         }
     }
 
     function applyConsent() {
         if (!consent) return;
         if (consent.analytics) loadAnalytics();
+        else if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
         if (consent.marketing) loadMarketing();
+        else if (window.fbq) window.fbq('consent', 'revoke');
         window.setTimeout(sendPendingConversions, 0);
     }
 
