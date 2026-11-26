@@ -55,7 +55,7 @@ class UserController extends Controller
             $user->children()->sync($request->input('children', []));
         }
 
-        return redirect()->route('admin.users.show', $user)->with('success', 'User created.');
+        return redirect()->route('admin.users.index')->with('success', 'User created.');
     }
 
     public function show(User $user)
@@ -103,7 +103,7 @@ class UserController extends Controller
             $user->children()->sync($request->input('children', []));
         }
 
-        return redirect()->route('admin.users.show', $user)->with('success', 'User updated.');
+        return redirect()->route('admin.users.index')->with('success', 'User updated.');
     }
 
     private function validatedData(Request $request, ?User $user = null): array
@@ -149,7 +149,7 @@ class UserController extends Controller
             'experience_years' => [$staff ? 'nullable' : 'prohibited', 'integer', 'min:0', 'max:60'],
             'highest_qualification' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:180'],
             'institution' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:180'],
-            'employment_status' => [$staff ? 'required' : 'prohibited', Rule::in(['active', 'on_leave', 'suspended', 'resigned', 'terminated'])],
+            'employment_status' => [$staff ? 'nullable' : 'prohibited', Rule::in(['active', 'on_leave', 'suspended', 'resigned', 'terminated'])],
             'professional_bio' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:5000'],
         ]);
     }
@@ -202,7 +202,7 @@ class UserController extends Controller
                 'permanent_address' => $data['permanent_address'] ?? null,
                 'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
                 'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
-                'status' => $data['student_status'] ?? 'active',
+                'status' => $data['student_status'] ?? $user->studentProfile?->status ?? 'active',
             ]);
         }
 
@@ -217,7 +217,7 @@ class UserController extends Controller
                 'experience_years' => $data['experience_years'] ?? null,
                 'highest_qualification' => $data['highest_qualification'] ?? null,
                 'institution' => $data['institution'] ?? null,
-                'employment_status' => $data['employment_status'],
+                'employment_status' => $data['employment_status'] ?? $user->staffProfile?->employment_status ?? 'active',
                 'professional_bio' => $data['professional_bio'] ?? null,
             ]);
         }
