@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         $branch = $user->isBranchManager()
-            ? Branch::where('manager_id', $user->id)->first()
+            ? Branch::forManager($user)
             : ($user->branch ?? Branch::where('manager_id', $user->id)->first());
 
         abort_unless($branch, 403, 'No branch has been assigned to your account yet. Please contact the admin.');
