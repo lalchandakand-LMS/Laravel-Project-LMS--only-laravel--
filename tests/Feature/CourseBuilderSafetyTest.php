@@ -271,4 +271,34 @@ class CourseBuilderSafetyTest extends TestCase
         $this->assertNotSame($student->id, $course->fresh()->instructor_id);
     }
 
+    public function test_lesson_builder_rejects_untrusted_iframe_hosts_and_accepts_supported_video_urls(): void
+    {
+        $admin = $this->admin();
+        $course = Course::firstOrFail();
+
+        $payload = [
+            'course_id' => $course->id,
+            'title' => 'Video host validation lesson',
+            'type' => 'video',
+            'is_published' => 1,
+        ];
+
+        $this->actingAs($admin)
+            ->post(route('admin.lessons.store'), $payload + [
+                'video_url' => 'https://attacker.example/phishing',
+            ])
+            ->assertSessionHasErrors('video_url');
+
+        $this->assertDatabaseMissing('lessons', ['title' => 'Video host validation lesson']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.lessons.store'), $payload + [
+                'video_url' => 'https://vimeo.com/123456789',
+            ])
+            ->assertRedirect(route('admin.courses.edit', $course));
+
+        $lesson = Lesson::where('title', 'Video host validation lesson')->firstOrFail();
+        $this->assertSame('https://player.vimeo.com/video/123456789', $lesson->embedUrl());
+    }
+
 }
