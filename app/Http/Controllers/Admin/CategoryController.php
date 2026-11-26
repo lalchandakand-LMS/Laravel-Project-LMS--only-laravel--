@@ -55,9 +55,25 @@ class CategoryController extends Controller
             'name' => 'required|string|max:120',
             'parent_id' => 'nullable|exists:categories,id',
             'icon' => 'nullable|string|max:60',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'image_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'description' => 'nullable|string|max:500',
             'position' => 'nullable|integer|min:0',
         ]);
+
+        if ($request->hasFile('image')) {
+            $newImage = $request->file('image')->store('categories', 'public');
+            if (! empty($data['image']) && ! str_starts_with($data['image'], 'https://')) {
+                Storage::disk('public')->delete($data['image']);
+            }
+            $data['image'] = $newImage;
+        } elseif (! empty($data['image_url'])) {
+            if (! empty($data['image']) && ! str_starts_with($data['image'], 'https://')) {
+                Storage::disk('public')->delete($data['image']);
+            }
+            $data['image'] = $data['image_url'];
+        }
+        unset($data['image_url']);
 
         $data['is_active'] = $request->boolean('is_active');
         $data['position'] = $data['position'] ?? 0;
