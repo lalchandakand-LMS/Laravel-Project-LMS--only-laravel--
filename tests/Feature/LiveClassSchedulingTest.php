@@ -763,4 +763,119 @@ class LiveClassSchedulingTest extends TestCase
 
         Notification::assertNotSentTo($student, LiveClassChanged::class);
     }
+
+    public function test_publishing_an_existing_draft_live_class_notifies_eligible_students(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        $startsAt = now()->addDays(30)->startOfHour();
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Draft live class to publish',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'starts_at' => $startsAt,
+            'duration_minutes' => 60,
+            'is_published' => false,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), [
+            'course_id' => $course->id,
+            'title' => $liveClass->title,
+            'platform' => 'Zoom',
+            'meeting_url' => $liveClass->meeting_url,
+            'starts_at' => $startsAt->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        Notification::assertSentTo($student, LiveClassChanged::class, fn ($notification) =>
+            $notification->event() === 'scheduled'
+        );
+    }
+
+    public function test_changing_live_class_join_details_notifies_eligible_students(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        $startsAt = now()->addDays(31)->startOfHour();
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Join details update',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'starts_at' => $startsAt,
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), [
+            'course_id' => $course->id,
+            'title' => 'Join details update',
+            'platform' => 'Google Meet',
+            'meeting_url' => 'https://meet.google.com/abc-defg-hij',
+            'starts_at' => $startsAt->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        Notification::assertSentTo($student, LiveClassChanged::class, fn ($notification) =>
+            $notification->event() === 'updated'
+        );
+    }
+
+    public function test_unpublishing_a_live_class_notifies_eligible_students(): void
+    {
+        Notification::fake();
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        $startsAt = now()->addDays(32)->startOfHour();
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Unpublish live class',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'starts_at' => $startsAt,
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.live-classes.update', $liveClass), [
+            'course_id' => $course->id,
+            'title' => $liveClass->title,
+            'platform' => 'Zoom',
+            'meeting_url' => $liveClass->meeting_url,
+            'starts_at' => $startsAt->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+            'is_published' => 0,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        Notification::assertSentTo($student, LiveClassChanged::class, fn ($notification) =>
+            $notification->event() === 'unpublished'
+        );
+    }
+
 }
