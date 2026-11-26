@@ -83,6 +83,7 @@ class User extends Authenticatable
     public function gamificationEvents() { return $this->hasMany(GamificationEvent::class); }
     public function staffLeaveRequests() { return $this->hasMany(StaffLeaveRequest::class); }
     public function reviewedLeaveRequests() { return $this->hasMany(StaffLeaveRequest::class, 'reviewed_by'); }
+    public function libraryLoans() { return $this->hasMany(LibraryLoan::class, 'student_id'); }
 
     public function branch()           { return $this->belongsTo(Branch::class); }
     public function managedBranches()  { return $this->hasMany(Branch::class, 'manager_id'); }
