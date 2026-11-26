@@ -23,7 +23,7 @@ if (! function_exists('media_url')) {
             return $fallback;
         }
 
-        if (preg_match('/^https?:\\/\\//i', $path)) {
+        if ((str_starts_with(strtolower($path), 'http://') || str_starts_with(strtolower($path), 'https://'))) {
             return $path;
         }
 
