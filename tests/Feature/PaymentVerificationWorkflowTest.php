@@ -365,4 +365,52 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame('pending', $payment->fresh()->status);
         $this->assertSame(0.0, $order->fresh()->amountPaid());
     }
+    public function test_cancelled_order_closes_pending_payment_as_rejected(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'CANCEL-AND-CLOSE-PENDING',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'cancelled',
+        ])->assertRedirect();
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame('rejected', $payment->fresh()->status);
+        $this->assertSame($admin->id, $payment->fresh()->verified_by);
+        $this->assertStringContainsString('cancelled', $payment->fresh()->rejection_reason);
+    }
+
+    public function test_student_cannot_submit_payment_above_remaining_balance_after_partial_settlement(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 400,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'ALREADY-SETTLED-400',
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'partially_paid']);
+
+        $this->actingAs($student)->post(route('checkout.pay', $order->order_no), [
+            'gateway' => 'nagad',
+            'amount' => 601,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'OVER-DUE-601',
+        ])->assertSessionHasErrors('amount');
+
+        $this->assertDatabaseMissing('payments', ['transaction_id' => 'OVER-DUE-601']);
+        $this->assertSame(600.0, $order->fresh()->dueAmount());
+    }
+
 }
