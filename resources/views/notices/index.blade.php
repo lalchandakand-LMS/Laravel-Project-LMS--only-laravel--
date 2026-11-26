@@ -14,7 +14,7 @@
             </div>
             <h2 class="mt-2 text-lg font-bold text-slate-900">{{ $notice->title }}</h2>
             <p class="mt-1 text-sm text-slate-600">{{ \Illuminate\Support\Str::limit(strip_tags($notice->body), 180) }}</p>
-            <p class="mt-3 text-xs font-semibold text-emerald-700">{{ $notice->batch?->name ?? $notice->course?->title ?? 'General notice' }} · View notice →</p>
+            <p class="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-emerald-700"><span>{{ $notice->branch?->name ?? 'All branches' }} · {{ $notice->batch?->name ?? $notice->course?->title ?? 'General notice' }}</span>@if($notice->attachments_count)<span class="text-slate-500">{{ $notice->attachments_count }} attachment(s)</span>@endif<span>View notice →</span></p>
         </a>
     @empty
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">There are no active notices for your account.</div>
