@@ -83,12 +83,16 @@ class FinanceController extends Controller
         return app(AdminOrderController::class)->recordOfflinePayment($request, $order);
     }
 
-    public function createInvoice(Request $request, CoachingAdmission $admission)
+    public function createInvoice(Request $request)
     {
         $branch = $this->branch();
-        abort_unless((int) $admission->branch_id === (int) $branch->id, 404);
+        $data = $request->validate([
+            'coaching_admission_id' => ['required', 'integer', 'exists:coaching_admissions,id'],
+        ]);
+        CoachingAdmission::where('branch_id', $branch->id)
+            ->where('status', 'admitted')
+            ->findOrFail($data['coaching_admission_id']);
 
-        $request->merge(['coaching_admission_id' => $admission->id]);
         return app(AdminStudentFeeController::class)->storeInvoice($request);
     }
 
