@@ -44,7 +44,7 @@ php artisan serve
 Open <http://127.0.0.1:8000>.
 
 > **CI verification:** the current GitHub Actions run on 26 November 2026 passed
-> the full Laravel suite with 256 tests / 1,383 assertions (4 tests marked risky).
+> the full Laravel suite with 276 tests / 1,468 assertions (all passed).
 > CI validates the application in a clean SQLite test environment; still run a
 > staging install and acceptance test before production. The writable directories
 > (`storage/framework/{cache,sessions,views}`, `storage/logs`,
@@ -59,12 +59,13 @@ Open <http://127.0.0.1:8000>.
 ./update.sh              # backup DB + .env -> maintenance mode -> composer ->
                          # php artisan migrate --force -> rebuild caches -> up
 ./update.sh --dry-run    # show every step without changing anything
-./backup.sh              # database + .env only (safe for cron)
+./backup.sh              # database + .env + public uploads (safe for cron)
 ```
 
 `migrate` only applies **new** migration files; every migration in this project
 is additive, so existing users/orders/enrolments are untouched. Never run
 `migrate:fresh`, `db:wipe`, `migrate:refresh` or `db:seed` on a live database.
+The update and admin backup tools currently protect the database, environment file and public uploads as described by each script; private uploaded files (such as admission documents and assignment submissions) are not yet included in the admin database backup/restore flow. Keep an additional off-server copy of private files before production changes.
 Full step-by-step (VPS, cPanel, manual update, rollback, restore, backup cron)
 lives in **[UPDATE.md](UPDATE.md)**.
 
@@ -86,7 +87,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 ## 3. What's included
 
 ### Public site
-- **Home** – admin-controlled visibility for hero, learning paths, featured courses, online batches, stats, latest courses, live classes, exams, teachers, board results, reviews, e-books and admission CTA; hero slides and content records are database-driven.
+- **Home** – Admin controls section visibility and order for hero, learning paths, featured courses, online batches, stats, latest courses, live classes, exams, teachers, board results, reviews, e-books and admission CTA; section headings/descriptions, grid/carousel layouts, autoplay and public brand colors are configurable.
 - **Course catalogue** – search, category filter, level filter, sort by
   newest / popular / rating / price, pagination.
 - **Course landing page** – outcomes, description, expandable curriculum with
@@ -121,7 +122,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 - **Branches** (`/admin/branches`) – CRUD, activate/close, per-branch student &
   user counts, revenue roll-up, branch-level student roster.
 - **Home slider** (`/admin/sliders`) – CRUD, image upload or URL, ordering,
-  show/hide; the public hero renders active slides with autoplay dots/arrows. Homepage section visibility and carousel/grid preferences are managed in Site Settings.
+  show/hide; the public hero renders active slides with autoplay dots/arrows. Homepage section visibility/order, section copy, carousel/grid preferences and global public brand colors are managed in Site Settings.
 - **Live classes** (`/admin/live-classes`) – schedule per course/branch, meeting
   link, start/end time, join button inside the student dashboard.
 - **Teacher portal** (`/teacher`) – my courses, my students, upcoming live
@@ -179,7 +180,7 @@ Database schema is maintained in the ordered migration files under `database/mig
 php artisan test            # full Unit + Feature suite
 ```
 
-The current GitHub Actions validation (26 November 2026) passed 256 tests / 1,383 assertions, with 4 tests reported as risky. Coverage includes course and curriculum workflows, payments and refunds, eligibility/access control, exams, assignments, live classes, admissions, branches, attendance, finance, notifications, media, recycle-bin recovery, profile documents, payroll, AI-agent approval/audit, site settings and homepage behavior. Automated CI is necessary but not sufficient: complete browser-based responsive, accessibility, payment-provider sandbox and cPanel staging checks before launch.
+The current GitHub Actions validation (26 November 2026) passed 276 tests / 1,468 assertions. Coverage includes course and curriculum workflows, payments and refunds, eligibility/access control, exams, assignments, live classes, admissions, branches, attendance, finance, notifications, media, recycle-bin recovery, profile documents, payroll, AI-agent approval/audit, site settings and homepage behavior. Automated CI is necessary but not sufficient: complete browser-based responsive, accessibility, payment-provider sandbox and cPanel staging checks before launch.
 
 The suite is written to be deterministic: the seeder randomises enrollments and
 branch assignment, so tests resolve their fixtures through explicit queries
