@@ -1,5 +1,24 @@
 @extends('layouts.app')
 @section('title', $post->meta_title ?: $post->title)
+@section('meta_description', $post->meta_description ?: $post->excerpt)
+@push('structured_data')
+    @php
+        $articleSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $post->meta_title ?: $post->title,
+            'description' => $post->meta_description ?: $post->excerpt,
+            'datePublished' => $post->published_at?->toIso8601String(),
+            'dateModified' => $post->updated_at?->toIso8601String(),
+            'author' => ['@type' => 'Person', 'name' => $post->author?->name ?: setting('site_name', "Alom's English Center")],
+            'publisher' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center")],
+            'mainEntityOfPage' => route('blog.show', $post),
+            'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
+        ];
+    @endphp
+    <script type="application/ld+json">@json($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+@endpush
+
 @section('content')
 <article class="mx-auto max-w-4xl px-4 py-10">
     <a href="{{ route('blog.index') }}" class="text-sm font-bold text-orange-700">← Blog & News</a>
