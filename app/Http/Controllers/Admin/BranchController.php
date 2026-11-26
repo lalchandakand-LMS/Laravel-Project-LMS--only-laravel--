@@ -36,7 +36,7 @@ class BranchController extends Controller
 
     public function store(Request $request)
     {
-        Branch::create($this->validated($request));
+        $data = $this->validated($request);\n        DB::transaction(function () use ($data) {\n            $branch = Branch::create($data);\n            $this->syncManagerAssignment($branch, null);\n        });
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch created.');
     }
@@ -52,7 +52,7 @@ class BranchController extends Controller
 
     public function update(Request $request, Branch $branch)
     {
-        $branch->update($this->validated($request, $branch));
+        $data = $this->validated($request, $branch);\n        DB::transaction(function () use ($branch, $data) {\n            $oldManagerId = $branch->manager_id;\n            $branch->update($data);\n            $this->syncManagerAssignment($branch, $oldManagerId);\n        });
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch updated.');
     }
@@ -73,7 +73,22 @@ class BranchController extends Controller
 
     private function managers()
     {
-        return User::whereIn('role', ['branch_manager', 'admin'])->orderBy('name')->get();
+        return User::where('role', 'branch_manager')->orderBy('name')->get();
+    }
+
+    private function syncManagerAssignment(Branch $branch, ?int $oldManagerId): void
+    {
+        $newManagerId = $branch->manager_id;
+
+        if ($oldManagerId && $oldManagerId !== $newManagerId) {
+            User::whereKey($oldManagerId)
+                ->where('branch_id', $branch->id)
+                ->update(['branch_id' => null]);
+        }
+
+        if ($newManagerId) {
+            User::whereKey($newManagerId)->update(['branch_id' => $branch->id]);
+        }
     }
 
     private function validated(Request $request, ?Branch $branch = null): array
@@ -84,7 +99,7 @@ class BranchController extends Controller
             'address' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:120',
-            'manager_id' => 'nullable|exists:users,id',
+            'manager_id' => ['nullable', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'branch_manager')), Rule::unique('branches', 'manager_id')->ignore($branch?->id)],
             'payment_methods' => 'sometimes|array',
             'payment_methods.*' => ['string', Rule::in(array_keys(Branch::PAYMENT_METHODS))],
             'bkash_number' => 'nullable|string|max:40',
