@@ -136,8 +136,8 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
     Route::get('/certificates/{course:slug}', [Student\CertificateController::class, 'show'])->name('certificates.show');
 
     // Ebook download
-    Route::get('/ebooks/{ebook:slug}/read', [EbookController::class, 'read'])->name('ebooks.read');
-    Route::get('/ebooks/{ebook:slug}/file', [EbookController::class, 'file'])->name('ebooks.file');
+    Route::get('/ebooks/{ebook:slug}/read', [EbookController::class, 'read'])->withTrashed()->name('ebooks.read');
+    Route::get('/ebooks/{ebook:slug}/file', [EbookController::class, 'file'])->withTrashed()->name('ebooks.file');
 });
 
 /* ------------------------------------------------------------------
