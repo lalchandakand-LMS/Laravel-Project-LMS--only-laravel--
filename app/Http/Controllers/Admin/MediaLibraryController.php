@@ -12,8 +12,10 @@ class MediaLibraryController extends Controller
     public function index(Request $request)
     {
         $assets = MediaAsset::with('uploader')
-            ->when($request->filled('q'), fn ($query) => $query->where('title', 'like', '%'.(string) $request->input('q').'%')
-                ->orWhere('original_name', 'like', '%'.(string) $request->input('q').'%'))
+            ->when($request->filled('q'), fn ($query) => $query->where(function ($search) use ($request) {
+                $term = '%'.(string) $request->input('q').'%';
+                $search->where('title', 'like', $term)->orWhere('original_name', 'like', $term);
+            }))
             ->when($request->input('type') === 'image', fn ($query) => $query->where('mime_type', 'like', 'image/%'))
             ->when($request->input('type') === 'pdf', fn ($query) => $query->where('mime_type', 'application/pdf'))
             ->latest()->paginate(24)->withQueryString();
