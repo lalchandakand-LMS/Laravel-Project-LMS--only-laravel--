@@ -38,6 +38,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $user->sendEmailVerificationNotification();
 
         return redirect()->route('student.dashboard')
             ->with('success', "Welcome to ".config('app.name', "Alom's English Center")."!");
