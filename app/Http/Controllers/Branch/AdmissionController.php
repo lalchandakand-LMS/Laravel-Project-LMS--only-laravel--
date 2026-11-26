@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\OnlineBatchApplicationController as AdminOnlineBa
 use App\Models\Branch;
 use App\Models\CoachingAdmission;
 use App\Models\OnlineBatchApplication;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdmissionController extends Controller
@@ -35,6 +36,7 @@ class AdmissionController extends Controller
 
         $coachingAdmissions = CoachingAdmission::with(['student', 'course', 'coachingBatch', 'invoices'])
             ->where('branch_id', $branch->id)
+            ->whereHas('coachingBatch', fn ($batch) => $batch->where('branch_id', $branch->id))
             ->when($request->filled('coaching_status'), fn ($query) => $query->where('status', $request->input('coaching_status')))
             ->when($request->filled('q'), fn ($query) => $query->where(fn ($search) => $search
                 ->where('student_name', 'like', '%'.$request->input('q').'%')
@@ -49,6 +51,7 @@ class AdmissionController extends Controller
     {
         $branch = $this->branch();
         abort_unless((int) $application->batch?->branch_id === (int) $branch->id, 403);
+        abort_if($application->student?->branch_id && (int) $application->student->branch_id !== (int) $branch->id, 403, 'This student is assigned to another branch.');
         return app(AdminOnlineBatchApplicationController::class)->approve($request, $application);
     }
 
@@ -64,13 +67,16 @@ class AdmissionController extends Controller
         $branch = $this->branch();
         abort_unless((int) $admission->branch_id === (int) $branch->id
             && (int) $admission->coachingBatch?->branch_id === (int) $branch->id, 403);
+        $existingStudent = User::where('email', $admission->student_email)->first();
+        abort_if($existingStudent?->branch_id && (int) $existingStudent->branch_id !== (int) $branch->id, 403, 'This student is already assigned to another branch.');
         return app(AdminCoachingAdmissionController::class)->approve($request, $admission);
     }
 
     public function rejectCoaching(Request $request, CoachingAdmission $admission)
     {
         $branch = $this->branch();
-        abort_unless((int) $admission->branch_id === (int) $branch->id, 403);
+        abort_unless((int) $admission->branch_id === (int) $branch->id
+            && (int) $admission->coachingBatch?->branch_id === (int) $branch->id, 403);
         return app(AdminCoachingAdmissionController::class)->reject($request, $admission);
     }
 }
