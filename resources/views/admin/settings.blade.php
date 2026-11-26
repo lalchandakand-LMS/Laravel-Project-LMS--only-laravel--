@@ -40,10 +40,14 @@
             </div>
             <div>
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Logo</label>
-                <img src="{{ !empty($settings['logo']) ? asset('storage/'.$settings['logo']) : asset('images/aec-logo.svg') }}" alt="Current logo" class="mb-3 h-16 w-16 rounded-lg border border-slate-200 object-contain">
+                @php($currentLogo = $settings['logo'] ?? '')
+                <img src="{{ $currentLogo ? (str_starts_with($currentLogo, 'https://') ? $currentLogo : asset('storage/'.$currentLogo)) : asset('images/aec-logo.svg') }}" alt="Current logo" class="mb-3 h-16 w-16 rounded-lg border border-slate-200 object-contain">
+                <label class="mb-1 block text-xs font-semibold text-slate-600">Upload logo</label>
                 <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
-                @if (!empty($settings['logo']))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_logo" value="1"> Remove current logo</label>@endif
-                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 2 MB.</p>
+                <label class="mb-1 mt-3 block text-xs font-semibold text-slate-600">Or logo image URL (HTTPS)</label>
+                <input type="url" name="logo_url" value="{{ old('logo_url', str_starts_with((string) $currentLogo, 'https://') ? $currentLogo : '') }}" placeholder="https://example.com/logo.png" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                @if (!empty($currentLogo))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_logo" value="1"> Remove current logo</label>@endif
+                <p class="mt-1 text-xs text-slate-500">Upload takes priority. PNG, JPG or WebP; max 2 MB.</p>
             </div>
         </div>
     </section>
@@ -57,10 +61,14 @@
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Button text</label><input name="dashboard_banner_button_text" value="{{ old('dashboard_banner_button_text', $settings['dashboard_banner_button_text'] ?? 'Manage courses') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Button URL (optional)</label><input name="dashboard_banner_button_url" value="{{ old('dashboard_banner_button_url', $settings['dashboard_banner_button_url'] ?? '') }}" placeholder="https://... or /admin/courses" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
             <div class="sm:col-span-2"><label class="mb-2 block text-sm font-semibold text-slate-700">Banner image</label>
-                @if (!empty($settings['dashboard_banner']))<img src="{{ asset('storage/'.$settings['dashboard_banner']) }}" alt="Current dashboard banner" class="mb-3 h-36 w-full rounded-xl object-cover">@endif
+                @php($currentBanner = $settings['dashboard_banner'] ?? '')
+                @if ($currentBanner)<img src="{{ str_starts_with($currentBanner, 'https://') ? $currentBanner : asset('storage/'.$currentBanner) }}" alt="Current dashboard banner" class="mb-3 h-36 w-full rounded-xl object-cover">@endif
+                <label class="mb-1 block text-xs font-semibold text-slate-600">Upload banner image</label>
                 <input type="file" name="dashboard_banner" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
-                @if (!empty($settings['dashboard_banner']))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_dashboard_banner" value="1"> Remove banner image</label>@endif
-                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 5 MB. Without an image, the banner uses a gradient background.</p>
+                <label class="mb-1 mt-3 block text-xs font-semibold text-slate-600">Or banner image URL (HTTPS)</label>
+                <input type="url" name="dashboard_banner_url" value="{{ old('dashboard_banner_url', str_starts_with((string) $currentBanner, 'https://') ? $currentBanner : '') }}" placeholder="https://example.com/dashboard-banner.webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                @if ($currentBanner)<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_dashboard_banner" value="1"> Remove banner image</label>@endif
+                <p class="mt-1 text-xs text-slate-500">Upload takes priority. PNG, JPG or WebP; max 5 MB. Leave both empty to keep the current banner.</p>
             </div>
         </div>
     </section>
