@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\User;
 use App\Services\OrderService;
+use App\Services\GamificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -134,12 +135,27 @@ class LearnController extends Controller
         $this->guard($course, $lesson);
         $user = auth()->user();
 
-        LessonProgress::updateOrCreate(
-            ['user_id' => $user->id, 'lesson_id' => $lesson->id],
-            ['completed_at' => now()]
-        );
+        $progress = LessonProgress::firstOrNew([
+            'user_id' => $user->id,
+            'lesson_id' => $lesson->id,
+        ]);
+        $wasCompleted = $progress->exists && $progress->completed_at !== null;
+
+        if (! $wasCompleted) {
+            $progress->completed_at = now();
+            $progress->save();
+        }
 
         $hasActiveEnrollment = $user->isAdmin() || (bool) $this->activeEnrollment($user, $course);
+        if ($user->isStudent() && $hasActiveEnrollment && ! $wasCompleted) {
+            GamificationService::award(
+                $user,
+                'lesson_completed',
+                'lesson:'.$lesson->id,
+                10,
+                ['course_id' => $course->id, 'lesson_id' => $lesson->id]
+            );
+        }
         $certificate = $hasActiveEnrollment
             ? OrderService::maybeIssueCertificate($user->id, $course)
             : null;
