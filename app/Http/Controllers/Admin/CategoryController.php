@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -57,6 +56,7 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $data = $this->validated($request, $category);
+        $oldImage = null;
         if ($request->hasFile('image') || $request->filled('image_url') || $request->boolean('remove_image')) {
             $oldImage = $category->image;
             if ($request->hasFile('image')) {
@@ -68,12 +68,12 @@ class CategoryController extends Controller
             } else {
                 $data['image'] = null;
             }
-            if ($oldImage && ! str_starts_with(strtolower($oldImage), 'http://') && ! str_starts_with(strtolower($oldImage), 'https://')) {
-                Storage::disk('public')->delete($oldImage);
-            }
         }
         unset($data['image_url']);
         $category->update($data);
+        if ($oldImage) {
+            delete_stored_media('public', $oldImage);
+        }
 
         return redirect()->route('admin.categories.index')->with('success', 'Category updated.');
     }

@@ -72,6 +72,8 @@ class MediaLibraryController extends Controller
 
     public function destroy(MediaAsset $media)
     {
+        abort_if($media->isReferenced(), 409, 'This media item is in use. Replace or remove its references before deleting it.');
+
         if ($media->source_type === 'upload' && $media->disk && $media->path) {
             Storage::disk($media->disk)->delete($media->path);
         }

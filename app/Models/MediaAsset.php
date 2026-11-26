@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MediaAsset extends Model
 {
@@ -28,6 +30,65 @@ class MediaAsset extends Model
         return $this->path && $this->disk
             ? Storage::disk($this->disk)->url($this->path)
             : null;
+    }
+
+
+
+    /**
+     * A copied Media Library URL may be referenced by site content.
+     * Prevent deleting the library item while any supported field uses it.
+     */
+    public function isReferenced(): bool
+    {
+        $url = $this->publicUrl();
+
+        if (! $url) {
+            return false;
+        }
+
+        $values = [$url];
+        if ($this->source_type === 'upload' && $this->path) {
+            $values[] = $this->path;
+        }
+
+        if ($this->source_type === 'upload' && $this->disk && $this->path) {
+            $duplicate = self::query()
+                ->where('id', '!=', $this->id)
+                ->where('source_type', 'upload')
+                ->where('disk', $this->disk)
+                ->where('path', $this->path)
+                ->exists();
+
+            if ($duplicate) {
+                return true;
+            }
+        }
+
+        $references = [
+            'settings' => ['value'],
+            'courses' => ['thumbnail'],
+            'categories' => ['image'],
+            'sliders' => ['image'],
+            'ebooks' => ['cover', 'file'],
+            'lessons' => ['attachment'],
+            'assignments' => ['attachment'],
+            'users' => ['avatar'],
+        ];
+
+        foreach ($references as $table => $columns) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
+            foreach ($columns as $column) {
+                if (Schema::hasColumn($table, $column)
+                    && DB::table($table)->whereIn($column, $values)->exists()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function isImage(): bool

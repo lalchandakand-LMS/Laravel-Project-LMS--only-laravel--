@@ -90,22 +90,23 @@ class AssignmentController extends Controller
         $this->authorizeCourse($course);
         $this->assertLessonBelongsToCourse($data);
 
+        $oldAttachment = $assignment->attachment;
+        $replaceAttachment = false;
         if ($request->hasFile('attachment')) {
-            if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
-                Storage::disk('local')->delete($assignment->attachment);
-            }
             $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
+            $replaceAttachment = true;
         } elseif ($request->filled('resource_url')) {
-            if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
-                Storage::disk('local')->delete($assignment->attachment);
-            }
             $data['attachment'] = $data['resource_url'];
+            $replaceAttachment = true;
         } else {
             unset($data['attachment']);
         }
         unset($data['resource_url']);
 
         $assignment->update($data);
+        if ($replaceAttachment) {
+            delete_stored_media('local', $oldAttachment);
+        }
 
         return redirect()->route('teacher.assignments.index')->with('success', 'Assignment updated.');
     }
@@ -116,10 +117,9 @@ class AssignmentController extends Controller
         abort_if($assignment->submissions()->exists(), 409,
             'Assignments with student submissions cannot be deleted. Unpublish the assignment instead.');
 
-        if ($assignment->attachment && ! (str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
-            Storage::disk('local')->delete($assignment->attachment);
-        }
+        $attachment = $assignment->attachment;
         $assignment->delete();
+        delete_stored_media('local', $attachment);
 
         return redirect()->route('teacher.assignments.index')->with('success', 'Assignment deleted.');
     }

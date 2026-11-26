@@ -40,14 +40,21 @@ class SliderController extends Controller
 
     public function update(Request $request, Slider $slider)
     {
-        $slider->update($this->validated($request, $slider));
+        $data = $this->validated($request, $slider);
+        $oldImage = $slider->image;
+        $slider->update($data);
+        if (isset($data['image']) && $data['image'] !== $oldImage) {
+            delete_stored_media('public', $oldImage);
+        }
 
         return redirect()->route('admin.sliders.index')->with('success', 'Slider updated.');
     }
 
     public function destroy(Slider $slider)
     {
+        $image = $slider->image;
         $slider->delete();
+        delete_stored_media('public', $image);
 
         return redirect()->route('admin.sliders.index')->with('success', 'Slider deleted.');
     }

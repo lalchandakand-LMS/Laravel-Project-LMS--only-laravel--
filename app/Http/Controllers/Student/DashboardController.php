@@ -12,7 +12,6 @@ use App\Models\Exam;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use App\Services\GamificationService;
 
 class DashboardController extends Controller
@@ -108,20 +107,21 @@ class DashboardController extends Controller
             'avatar_url' => 'nullable|url:http,https|max:2048',
         ]);
 
+        $oldAvatar = $user->avatar;
+        $replaceAvatar = false;
         if ($request->hasFile('avatar')) {
-            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
-                Storage::disk('public')->delete($user->avatar);
-            }
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $replaceAvatar = true;
         } elseif ($request->filled('avatar_url')) {
-            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
-                Storage::disk('public')->delete($user->avatar);
-            }
             $data['avatar'] = $data['avatar_url'];
+            $replaceAvatar = true;
         }
         unset($data['avatar_url']);
 
         $user->update($data);
+        if ($replaceAvatar) {
+            delete_stored_media('public', $oldAvatar);
+        }
 
         return back()->with('success', 'Profile updated.');
     }
