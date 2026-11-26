@@ -113,6 +113,7 @@ class PaymentReportController extends Controller
     private function adjustmentsQuery(Request $request)
     {
         return PaymentAdjustment::with(['order.user', 'order.branch', 'creator'])
+            ->when($request->filled('gateway'), fn ($q) => $q->whereHas('payment', fn ($payment) => $payment->where('gateway', $request->input('gateway'))))
             ->when($request->filled('branch_id'), fn ($q) => $q->whereHas('order', fn ($order) => $order->where('branch_id', $request->integer('branch_id'))))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')));
