@@ -53,6 +53,7 @@ class ExamController extends Controller
     public function destroy(Exam $exam)
     {
         $this->authorizeExam($exam);
+        abort_if($exam->attempts()->exists(), 409, 'This exam has student attempt history and cannot be deleted.');
         $exam->delete();
         return redirect()->route('admin.exams.index')->with('success', 'Exam deleted.');
     }
