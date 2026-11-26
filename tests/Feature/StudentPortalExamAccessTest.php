@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Exam;
+use App\Models\ExamAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -137,4 +138,45 @@ class StudentPortalExamAccessTest extends TestCase
         $this->actingAs($student)->get(route('student.exams.show', $exam))->assertForbidden();
         $this->actingAs($student)->post(route('student.exams.start', $exam))->assertForbidden();
     }
+
+    public function test_expired_attempt_is_finalized_instead_of_accepting_late_answers(): void
+    {
+        [$student, , $exam] = $this->createPaidExam();
+        $exam->update(['is_free' => true]);
+        $attempt = ExamAttempt::create([
+            'exam_id' => $exam->id,
+            'user_id' => $student->id,
+            'started_at' => now()->subMinutes(31),
+            'status' => 'in_progress',
+        ]);
+
+        $this->actingAs($student)
+            ->post(route('student.attempts.submit', $attempt), ['answers' => []])
+            ->assertRedirect(route('student.attempts.result', $attempt))
+            ->assertSessionHas('info');
+
+        $this->assertSame('submitted', $attempt->fresh()->status);
+        $this->assertNotNull($attempt->fresh()->submitted_at);
+    }
+
+    public function test_autosave_after_attempt_deadline_finalizes_attempt_and_returns_result_url(): void
+    {
+        [$student, , $exam] = $this->createPaidExam();
+        $exam->update(['is_free' => true]);
+        $attempt = ExamAttempt::create([
+            'exam_id' => $exam->id,
+            'user_id' => $student->id,
+            'started_at' => now()->subMinutes(31),
+            'status' => 'in_progress',
+        ]);
+
+        $this->actingAs($student)
+            ->postJson(route('student.attempts.save', $attempt), ['answers' => []])
+            ->assertOk()
+            ->assertJsonPath('expired', true)
+            ->assertJsonPath('redirect', route('student.attempts.result', $attempt));
+
+        $this->assertSame('submitted', $attempt->fresh()->status);
+    }
+
 }

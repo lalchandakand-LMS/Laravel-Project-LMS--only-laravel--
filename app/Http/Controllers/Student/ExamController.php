@@ -144,6 +144,16 @@ class ExamController extends Controller
         $this->authorizeAttempt($attempt);
         abort_if($attempt->status !== 'in_progress', 403);
 
+        if ($attempt->remainingSeconds() <= 0) {
+            $this->grade($attempt);
+
+            return response()->json([
+                'ok' => true,
+                'expired' => true,
+                'redirect' => route('student.attempts.result', $attempt),
+            ]);
+        }
+
         $answers = (array) $request->input('answers', []);
         foreach ($attempt->exam->questions as $question) {
             $value = $answers[$question->id] ?? null;
@@ -174,6 +184,15 @@ class ExamController extends Controller
     public function submit(Request $request, ExamAttempt $attempt)
     {
         $this->authorizeAttempt($attempt);
+
+        if ($attempt->status === 'in_progress' && $attempt->remainingSeconds() <= 0) {
+            $this->grade($attempt);
+
+            return redirect()->route('student.attempts.result', $attempt)
+                ->with('info', 'Time is up — your saved answers were submitted.');
+        }
+
+        abort_if($attempt->status !== 'in_progress', 403);
 
         $answers = (array) $request->input('answers', []);
         foreach ($attempt->exam->questions as $question) {
