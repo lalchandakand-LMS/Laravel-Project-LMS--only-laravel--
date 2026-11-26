@@ -365,67 +365,67 @@ class ExamController extends Controller
 
             $attempt = $lockedAttempt;
             $score = 0.0;
-        $correct = 0;
-        $wrong = 0;
+            $correct = 0;
+            $wrong = 0;
 
-        foreach ($this->attemptQuestions($attempt) as $question) {
-            $answer = $attempt->answers()->where('question_id', $question->id)->first();
+            foreach ($this->attemptQuestions($attempt) as $question) {
+                $answer = $attempt->answers()->where('question_id', $question->id)->first();
 
-            if ($question->type === 'mcq') {
-                $correctOption = $question->options->firstWhere('is_correct', true);
-                $isCorrect = $answer && $correctOption && (int) $answer->option_id === (int) $correctOption->id;
+                if ($question->type === 'mcq') {
+                    $correctOption = $question->options->firstWhere('is_correct', true);
+                    $isCorrect = $answer && $correctOption && (int) $answer->option_id === (int) $correctOption->id;
 
-                $awarded = 0.0;
-                if ($isCorrect) {
-                    $awarded = (float) $question->marks;
-                    $correct++;
-                } elseif ($answer && $answer->option_id) {
-                    $awarded = -1 * (float) ($attempt->negative_marking ?? $attempt->exam->negative_marking);
-                    $wrong++;
+                    $awarded = 0.0;
+                    if ($isCorrect) {
+                        $awarded = (float) $question->marks;
+                        $correct++;
+                    } elseif ($answer && $answer->option_id) {
+                        $awarded = -1 * (float) ($attempt->negative_marking ?? $attempt->exam->negative_marking);
+                        $wrong++;
+                    }
+
+                    $score += $awarded;
+
+                    if ($answer) {
+                        $answer->update(['is_correct' => $isCorrect, 'marks_awarded' => $awarded]);
+                    }
+                } else {
+                    // Keep an explicit empty answer row so the marker can review unanswered CQ / short questions.
+                    $answer ??= $attempt->answers()->create(['question_id' => $question->id, 'answer_text' => null]);
+                    $answer->update(['is_correct' => false, 'marks_awarded' => 0]);
                 }
-
-                $score += $awarded;
-
-                if ($answer) {
-                    $answer->update(['is_correct' => $isCorrect, 'marks_awarded' => $awarded]);
-                }
-            } else {
-                // Keep an explicit empty answer row so the marker can review unanswered CQ / short questions.
-                $answer ??= $attempt->answers()->create(['question_id' => $question->id, 'answer_text' => null]);
-                $answer->update(['is_correct' => false, 'marks_awarded' => 0]);
             }
-        }
 
-        $attempt->update([
-            'score' => max(0, round($score, 2)),
-            'correct_count' => $correct,
-            'wrong_count' => $wrong,
-            'submitted_at' => now(),
-            'status' => 'submitted',
-        ]);
+            $attempt->update([
+                'score' => max(0, round($score, 2)),
+                'correct_count' => $correct,
+                'wrong_count' => $wrong,
+                'submitted_at' => now(),
+                'status' => 'submitted',
+            ]);
 
-        $attempt->refresh();
-        $student = $attempt->user;
-        if ($student && $student->isStudent()) {
-            GamificationService::award(
-                $student,
-                'exam_submitted',
-                'exam_attempt:'.$attempt->id,
-                15,
-                ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
-            );
-
-            $requiresManualReview = $attempt->questions()->whereIn('type', ['cq', 'short'])->exists();
-            if (! $requiresManualReview && $attempt->isPassed()) {
+            $attempt->refresh();
+            $student = $attempt->user;
+            if ($student && $student->isStudent()) {
                 GamificationService::award(
                     $student,
-                    'exam_passed',
-                    'exam_passed:'.$attempt->id,
-                    5,
+                    'exam_submitted',
+                    'exam_attempt:'.$attempt->id,
+                    15,
                     ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
                 );
+
+                $requiresManualReview = $attempt->questions()->whereIn('type', ['cq', 'short'])->exists();
+                if (! $requiresManualReview && $attempt->isPassed()) {
+                    GamificationService::award(
+                        $student,
+                        'exam_passed',
+                        'exam_passed:'.$attempt->id,
+                        5,
+                        ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
+                    );
+                }
             }
-        }
         });
     }
 }
