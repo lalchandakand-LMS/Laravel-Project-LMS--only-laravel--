@@ -209,10 +209,21 @@ class LiveClassController extends Controller
 
         $studentIds = $legacy->merge($online)->unique()->values();
         if ($studentIds->isNotEmpty()) {
+            $notification = new LiveClassChanged($liveClass, $event);
+
             Notification::send(
                 User::query()->whereIn('id', $studentIds)->get(),
-                new LiveClassChanged($liveClass, $event)
+                $notification
             );
+
+            // Guardians receive the same class lifecycle update for each linked child.
+            $guardians = User::query()
+                ->where('role', 'guardian')
+                ->where('is_active', true)
+                ->whereHas('children', fn ($children) => $children->whereIn('users.id', $studentIds))
+                ->get();
+
+            Notification::send($guardians, $notification);
         }
     }
 
