@@ -61,6 +61,16 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertSame(1, $totals['count']);
         $this->assertSame('product', $totals['items'][0]['type']);
         $this->assertSame(450.0, $totals['items'][0]['price']);
+
+        $this->post(route('cart.quantity', 'product:'.$product->id), ['quantity' => 3])
+            ->assertRedirect();
+        $updatedTotals = \\App\\Http\\Controllers\\CartController::totals();
+        $this->assertSame(3, $updatedTotals['items'][0]['qty']);
+        $this->assertSame(1350.0, $updatedTotals['subtotal']);
+
+        $this->from(route('cart.index'))
+            ->post(route('cart.quantity', 'product:'.$product->id), ['quantity' => 9])
+            ->assertSessionHasErrors('quantity');
     }
 
     public function test_paid_fulfillment_decrements_inventory_once_and_is_idempotent(): void
