@@ -36,6 +36,25 @@ class LiveClassController extends Controller
         ]);
     }
 
+    public function calendar(Request $request)
+    {
+        $user = auth()->user();
+        try {
+            $month = Carbon::createFromFormat('Y-m', (string) $request->get('month', now()->format('Y-m')))->startOfMonth();
+        } catch (\\Throwable $exception) {
+            $month = now()->startOfMonth();
+        }
+
+        $classes = LiveClass::with(['course', 'batch'])
+            ->whereBetween('starts_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->when(! $user->isAdmin(), fn ($q) => $q->whereHas('course', fn ($course) => $course->where('instructor_id', $user->id)))
+            ->orderBy('starts_at')
+            ->get()
+            ->groupBy(fn (LiveClass $class) => $class->starts_at?->toDateString());
+
+        return view('admin.live-classes.calendar', compact('month', 'classes'));
+    }
+
     public function create()
     {
         return view('admin.live-classes.form', [
