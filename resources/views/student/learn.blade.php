@@ -166,13 +166,14 @@
         if (!endpoint || !csrf || position <= lastSent) return;
         lastSent = position;
         try {
-            await fetch(endpoint, {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
                 keepalive: true,
                 headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf},
                 body: JSON.stringify({seconds: position})
             });
+            if (!response.ok) throw new Error('Progress heartbeat was not saved.');
         } catch (_) {
             lastSent = Math.min(lastSent, position - 1);
         }
