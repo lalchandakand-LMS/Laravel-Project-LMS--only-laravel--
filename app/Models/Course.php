@@ -48,6 +48,7 @@ class Course extends Model
     public function students()    { return $this->belongsToMany(User::class, 'enrollments')->withTimestamps(); }
     public function reviews()     { return $this->hasMany(Review::class); }
     public function exams()       { return $this->hasMany(Exam::class); }
+    public function assignments() { return $this->hasMany(Assignment::class); }
     public function announcements(){ return $this->hasMany(Announcement::class); }
     public function liveClasses() { return $this->hasMany(LiveClass::class)->orderBy('starts_at'); }
 
