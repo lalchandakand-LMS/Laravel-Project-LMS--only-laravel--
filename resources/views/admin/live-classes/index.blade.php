@@ -2,6 +2,7 @@
 @section('title', 'Live classes')
 @section('heading', 'Live classes')
 @section('actions')
+    <a href="{{ route('admin.live-classes.calendar') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Calendar</a>
     <a href="{{ route('admin.live-classes.create') }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">+ Schedule class</a>
 @endsection
 @section('content')
