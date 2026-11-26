@@ -238,8 +238,9 @@ class ExamController extends Controller
         $this->authorizeAttempt($attempt);
 
         return view('student.exams.result', [
-            'attempt' => $attempt->load('exam.course'),
+            'attempt' => $attempt->load('exam.course', 'questions.options'),
             'exam' => $attempt->exam,
+            'manualPending' => $attempt->manual_reviewed_at === null && $attempt->questions->contains(fn ($question) => in_array($question->type, ['cq', 'short'], true)),
             'answers' => $attempt->answers()->with(['question.options', 'option'])->get()->keyBy('question_id'),
         ]);
     }
