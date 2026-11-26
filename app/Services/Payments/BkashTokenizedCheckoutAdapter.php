@@ -42,7 +42,7 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
         }
 
         $config = $this->configuration();
-        $response = $this->api($config)->post(self::CREATE_PATH, [
+        $response = $this->api($config)->post($config['base_url'].self::CREATE_PATH, [
             'mode' => '0011',
             'payerReference' => substr((string) $order->order_no, 0, 30),
             'callbackURL' => route('payments.bkash.callback', ['order' => $order->order_no]),
@@ -243,7 +243,8 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
 
     private function providerPost(string $path, array $payload): array
     {
-        $response = $this->api($this->configuration())->post($path, $payload)->throw();
+        $configuration = $this->configuration();
+        $response = $this->api($configuration)->post($configuration['base_url'].$path, $payload)->throw();
         $json = $response->json();
 
         if (! is_array($json)) {
