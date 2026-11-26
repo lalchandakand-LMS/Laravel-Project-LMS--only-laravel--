@@ -78,8 +78,8 @@
 .coverflow-slide.is-prev,.coverflow-slide.is-next{opacity:.62;pointer-events:auto;filter:blur(2px);z-index:2}
 .coverflow-slide.is-prev{transform:translateX(-76%) scale(.82)}
 .coverflow-slide.is-next{transform:translateX(76%) scale(.82)}
-.coverflow-arrow{position:absolute;bottom:.15rem;z-index:5;display:grid;width:2.65rem;height:2.65rem;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.13);color:white;font-size:1.8rem;line-height:1;backdrop-filter:blur(12px)}
-.coverflow-dots{position:absolute;bottom:.8rem;left:50%;z-index:6;display:flex;gap:.5rem;transform:translateX(-50%)}
+.coverflow-arrow{position:absolute;bottom:3.5rem;z-index:5;display:grid;width:2.65rem;height:2.65rem;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.13);color:white;font-size:1.8rem;line-height:1;backdrop-filter:blur(12px)}
+.coverflow-dots{position:absolute;bottom:3.8rem;left:50%;z-index:6;display:flex;gap:.5rem;transform:translateX(-50%)}
 .coverflow-dots button{width:.48rem;height:.48rem;border-radius:999px;background:rgba(255,255,255,.35);transition:all .2s}
 .coverflow-dots button[aria-current=true]{width:1.5rem;background:#22d3ee}
 @media(max-width:639px){.coverflow-slide{left:2%;width:96%}.coverflow-slide.is-prev{transform:translateX(-84%) scale(.84)}.coverflow-slide.is-next{transform:translateX(84%) scale(.84)}}
