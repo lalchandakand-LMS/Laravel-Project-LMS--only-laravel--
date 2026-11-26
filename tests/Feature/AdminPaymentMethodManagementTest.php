@@ -34,7 +34,7 @@ class AdminPaymentMethodManagementTest extends TestCase
                         'app_secret' => 'test-app-secret',
                         'username' => 'test-user',
                         'password' => 'test-password',
-                        'base_url' => 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+                        'base_url' => 'https://checkout.sandbox.bka.sh/v1.2.0-beta',
                         'webhook_topic_arn' => 'arn:aws:sns:ap-southeast-1:123456789012:aec-test-topic',
                         'webhook_secret' => 'test-webhook-secret',
                     ],
