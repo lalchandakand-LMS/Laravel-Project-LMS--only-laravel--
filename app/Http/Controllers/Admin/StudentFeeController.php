@@ -26,7 +26,7 @@ class StudentFeeController extends Controller
         $totals = [
             'invoiced' => (float) StudentFeeInvoice::sum(DB::raw('amount - discount')),
             'collected' => (float) StudentFeePayment::sum('amount'),
-            'due' => max(0, (float) StudentFeeInvoice::sum(DB::raw('amount - discount')) - (float) StudentFeePayment::sum('applied_amount')),
+            'due' => max(0, (float) StudentFeeInvoice::sum(DB::raw('amount - discount')) - (float) StudentFeePayment::sum('applied_amount') - (float) DB::table('student_fee_credit_applications')->sum('amount')),
             'advance' => max(0, (float) StudentFeeCredit::sum('amount') - (float) DB::table('student_fee_credit_applications')->sum('amount')),
         ];
 
@@ -69,7 +69,7 @@ class StudentFeeController extends Controller
                 $available = $credit->remainingAmount();
                 $toApply = min($available, $invoice->dueAmount());
                 if ($toApply <= 0) { continue; }
-                \\App\\Models\\StudentFeeCreditApplication::create([
+                StudentFeeCreditApplication::create([
                     'credit_id' => $credit->id, 'invoice_id' => $invoice->id,
                     'amount' => $toApply, 'applied_by' => auth()->id(),
                 ]);
