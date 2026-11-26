@@ -17,7 +17,7 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
 
-        $status = Password::sendResetLink($request->only('email'));
+        Password::sendResetLink($request->only('email'));
 
         // Do not reveal whether an email address has an account.
         return back()->with('status', 'If an account exists for that email, a password reset link has been sent.');
