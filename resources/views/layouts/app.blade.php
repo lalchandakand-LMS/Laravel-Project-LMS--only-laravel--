@@ -215,10 +215,8 @@
     <div class="border-t border-white/10 px-4 py-3 text-center text-xs" style="background-color: {{ \App\Models\Setting::get('developer_bg', '#0f172a') }}; color: {{ \App\Models\Setting::get('developer_text_color', '#ffffff') }}">{{ \App\Models\Setting::get('developer_text', 'Developed by') }} @if ($developerUrl = \App\Models\Setting::get('developer_url'))<a href="{{ $developerUrl }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ \App\Models\Setting::get('developer_name') }}</a>@else <strong>{{ \App\Models\Setting::get('developer_name') }}</strong>@endif</div>
     @endif
 </footer>
-@if (!$privateSeoRoute)
-    @if (!$privateSeoRoute || request()->routeIs('checkout.success'))
+@if (!$privateSeoRoute || request()->routeIs('checkout.success'))
     @include('partials.cookie-consent')
-@endif
 @endif
 @stack('scripts')
 </body>
