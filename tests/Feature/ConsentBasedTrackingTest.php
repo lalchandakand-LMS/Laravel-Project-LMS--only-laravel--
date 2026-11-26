@@ -100,7 +100,7 @@ class ConsentBasedTrackingTest extends TestCase
         $this->actingAs($user)->get(route('checkout.success', $order->order_no))->assertOk()
             ->assertSee('data-disable-pageview="1"', false)
             ->assertSee('aecPurchaseEvent')
-            ->assertSee('CONSENT-PURCHASE-1', false)
+            ->assertSee($order->order_no)
             ->assertSee('Cookie settings');
     }
 
