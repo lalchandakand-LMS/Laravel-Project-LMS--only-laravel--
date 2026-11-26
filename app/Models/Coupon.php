@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Models;
+namespace App\Models;
 
-use Illuminate\\Database\\Eloquent\\Model;
-use Illuminate\\Support\\Collection;
-use App\\Models\\Concerns\\TracksDeletionActor;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use App\Models\Concerns\TracksDeletionActor;
 
 class Coupon extends Model
 {
