@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Ebook;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Models\Ebook;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class EbookController extends Controller
 {
@@ -38,7 +38,7 @@ class EbookController extends Controller
             }
 
             Ebook::create($data);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             foreach ($stored as [$disk, $path]) {
                 delete_stored_media($disk, $path);
             }
@@ -88,7 +88,7 @@ class EbookController extends Controller
             }
 
             $ebook->update($data);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             foreach ($stored as [$disk, $path]) {
                 delete_stored_media($disk, $path);
             }
