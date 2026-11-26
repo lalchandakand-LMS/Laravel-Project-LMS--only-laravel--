@@ -87,7 +87,7 @@ class CartController extends Controller
                 return redirect()->route('courses.enroll-free', $course->slug);
             }
         } else {
-            $ebook = Ebook::findOrFail($id);
+            $ebook = Ebook::where('is_published', true)->findOrFail($id);
             if ($ebook->ownedBy($request->user())) {
                 return back()->with('info', 'You already own this e-book.');
             }
