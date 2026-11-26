@@ -9,14 +9,13 @@ return new class extends Migration {
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->decimal('shipping_fee', 10, 2)->default(0)->after('discount');
-            $table->timestamp('delivered_at')->nullable()->after('shipping_status');
         });
     }
 
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['shipping_fee', 'delivered_at']);
+            $table->dropColumn('shipping_fee');
         });
     }
 };
