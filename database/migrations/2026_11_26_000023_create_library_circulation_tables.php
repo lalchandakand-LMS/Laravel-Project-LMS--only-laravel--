@@ -31,6 +31,8 @@ return new class extends Migration {
             $table->foreignId('student_id')->constrained('users')->cascadeOnDelete();
             $table->timestamp('requested_at')->nullable();
             $table->foreignId('issued_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('reviewed_at')->nullable();
             $table->timestamp('issued_at')->nullable();
             $table->timestamp('due_at')->nullable();
             $table->timestamp('returned_at')->nullable();
