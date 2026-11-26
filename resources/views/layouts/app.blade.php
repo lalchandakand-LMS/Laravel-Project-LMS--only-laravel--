@@ -265,19 +265,25 @@
                         window.fbq('track', 'PageView');
                     }
                 };
-                const stored = localStorage.getItem(consentKey);
-                if (stored === 'accepted') loadOptionalTracking();
-                else if (stored !== 'rejected') banner.hidden = false;
+                const stored = localStorage.getItem(consentKey) || '';
+                const [choice, expiry] = stored.split(':');
+                const validChoice = ['accepted', 'rejected'].includes(choice) && Number(expiry) > Date.now();
+                if (validChoice && choice === 'accepted') loadOptionalTracking();
+                else if (!validChoice) {
+                    localStorage.removeItem(consentKey);
+                    banner.hidden = false;
+                }
+                const saveChoice = (value) => {
+                    const expiresAt = Date.now() + (180 * 24 * 60 * 60 * 1000);
+                    localStorage.setItem(consentKey, value + ':' + expiresAt);
+                    banner.hidden = true;
+                };
                 document.getElementById('open-tracking-settings')?.addEventListener('click', () => { banner.hidden = false; });
                 document.getElementById('tracking-accept').addEventListener('click', () => {
-                    localStorage.setItem(consentKey, 'accepted');
-                    banner.hidden = true;
+                    saveChoice('accepted');
                     loadOptionalTracking();
                 });
-                document.getElementById('tracking-reject').addEventListener('click', () => {
-                    localStorage.setItem(consentKey, 'rejected');
-                    banner.hidden = true;
-                });
+                document.getElementById('tracking-reject').addEventListener('click', () => saveChoice('rejected'));
             })();
         </script>
     @endif
