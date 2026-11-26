@@ -61,6 +61,8 @@ class CategoryController extends Controller
             $oldImage = $category->image;
             if ($request->hasFile('image')) {
                 $data['image'] = $request->file('image')->store('categories', 'public');
+            } elseif ($request->boolean('remove_image')) {
+                $data['image'] = null;
             } elseif ($request->filled('image_url')) {
                 $data['image'] = $data['image_url'];
             } else {
