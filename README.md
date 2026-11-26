@@ -44,8 +44,8 @@ php artisan serve
 Open <http://127.0.0.1:8000>.
 
 > **CI verification:** the current GitHub Actions run on 26 November 2026 passed
-> the full Laravel suite with 276 tests / 1,468 assertions (all passed).
-> CI validates the application in a clean SQLite test environment; still run a
+> the full Laravel suite with 402 tests / 2,197 assertions (all passed).
+> CI validates clean SQLite and MySQL 8.0 test environments; still run a
 > staging install and acceptance test before production. The writable directories
 > (`storage/framework/{cache,sessions,views}`, `storage/logs`,
 > `storage/app/public`, `bootstrap/cache`) ship with `.gitignore` placeholders;
@@ -180,7 +180,7 @@ Database schema is maintained in the ordered migration files under `database/mig
 php artisan test            # full Unit + Feature suite
 ```
 
-The current GitHub Actions validation (26 November 2026) passed 276 tests / 1,468 assertions. Coverage includes course and curriculum workflows, payments and refunds, eligibility/access control, exams, assignments, live classes, admissions, branches, attendance, finance, notifications, media, recycle-bin recovery, profile documents, payroll, AI-agent approval/audit, site settings and homepage behavior. Automated CI is necessary but not sufficient: complete browser-based responsive, accessibility, payment-provider sandbox and cPanel staging checks before launch.
+The current GitHub Actions validation (26 November 2026) passed 402 tests / 2,197 assertions. Coverage includes course and curriculum workflows, payments and refunds, eligibility/access control, exams, assignments, live classes, admissions, branches, attendance, finance, notifications, media, recycle-bin recovery, profile documents, payroll, AI-agent approval/audit, site settings and homepage behavior. Automated CI is necessary but not sufficient: complete browser-based responsive, accessibility, payment-provider sandbox and cPanel staging checks before launch.
 
 The suite is written to be deterministic: the seeder randomises enrollments and
 branch assignment, so tests resolve their fixtures through explicit queries
