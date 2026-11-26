@@ -33,21 +33,26 @@
     @php
         $organizationSchema = [
             '@context' => 'https://schema.org',
-            '@type' => 'EducationalOrganization',
-            '@id' => rtrim(config('app.url'), '/').'#organization',
-            'name' => $brandName,
-            'url' => config('app.url'),
-            'logo' => $socialImage,
-            'description' => $brandDescription,
-            'telephone' => \App\Models\Setting::get('site_phone') ?: null,
-            'email' => \App\Models\Setting::get('site_email') ?: null,
-            'address' => \App\Models\Setting::get('site_address') ?: null,
-            'sameAs' => array_values(array_filter([
-                \App\Models\Setting::get('facebook'),
-                \App\Models\Setting::get('youtube'),
-                \App\Models\Setting::get('instagram'),
-            ])),
             '@graph' => [
+                [
+                    '@type' => 'EducationalOrganization',
+                    '@id' => rtrim(config('app.url'), '/').'#organization',
+                    'name' => $brandName,
+                    'url' => config('app.url'),
+                    'logo' => $socialImage,
+                    'description' => $brandDescription,
+                    'contactPoint' => array_filter([
+                        '@type' => 'ContactPoint',
+                        'telephone' => \\App\\Models\\Setting::get('site_phone') ?: null,
+                        'email' => \\App\\Models\\Setting::get('site_email') ?: null,
+                        'contactType' => 'customer support',
+                    ]),
+                    'sameAs' => array_values(array_filter([
+                        \\App\\Models\\Setting::get('facebook'),
+                        \\App\\Models\\Setting::get('youtube'),
+                        \\App\\Models\\Setting::get('instagram'),
+                    ])),
+                ],
                 [
                     '@type' => 'WebSite',
                     '@id' => rtrim(config('app.url'), '/').'#website',
