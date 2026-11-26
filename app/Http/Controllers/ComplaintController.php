@@ -8,6 +8,9 @@ use App\Models\ComplaintReply;
 use App\Models\ComplaintEvent;
 use App\Notifications\ComplaintUpdateNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -29,27 +32,36 @@ class ComplaintController extends Controller
             'attachments.*' => 'file|mimes:jpg,jpeg,png,webp,pdf,doc,docx|max:5120',
         ]);
 
-        $complaint = Complaint::create([
-            'tracking_code' => 'AEC-'.now()->format('ym').'-'.Str::upper(Str::random(8)),
-            'user_id' => $request->user()->id,
-            'branch_id' => $request->user()->branch_id,
-            'category' => $data['category'],
-            'subject' => $data['subject'],
-            'body' => $data['body'],
-        ]);
+        $storedPaths = [];
 
-        ComplaintEvent::create(['complaint_id' => $complaint->id, 'created_by' => $request->user()->id, 'event_type' => 'submitted', 'description' => 'Complaint submitted.']);
+        try {
+            $complaint = DB::transaction(function () use ($request, $data, &$storedPaths) {
+                $complaint = Complaint::create([
+                    'tracking_code' => 'AEC-'.now()->format('ym').'-'.Str::upper(Str::random(8)),
+                    'user_id' => $request->user()->id,
+                    'branch_id' => $request->user()->branch_id,
+                    'category' => $data['category'],
+                    'subject' => $data['subject'],
+                    'body' => $data['body'],
+                ]);
 
-        foreach ($request->file('attachments', []) as $file) {
-            $path = $file->store('complaints/'.$complaint->id, 'local');
-            ComplaintAttachment::create([
-                'complaint_id' => $complaint->id,
-                'uploaded_by' => $request->user()->id,
-                'path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-            ]);
+                ComplaintEvent::create([
+                    'complaint_id' => $complaint->id,
+                    'created_by' => $request->user()->id,
+                    'event_type' => 'submitted',
+                    'description' => 'Complaint submitted.',
+                ]);
+
+                $this->storeFiles($request, $complaint, null, $storedPaths);
+
+                return $complaint;
+            });
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $exception;
         }
 
         $admins = \App\Models\User::where('role', 'admin')->where('is_active', true)->get();
@@ -74,13 +86,32 @@ class ComplaintController extends Controller
             'attachments' => 'nullable|array|max:4',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,webp,pdf,doc,docx|max:5120',
         ]);
-        $reply = ComplaintReply::create([
-            'complaint_id' => $complaint->id,
-            'user_id' => $request->user()->id,
-            'body' => $data['body'],
-        ]);
-        $this->storeReplyFiles($request, $complaint, $reply);
-        ComplaintEvent::create(['complaint_id' => $complaint->id, 'created_by' => $request->user()->id, 'event_type' => 'reply', 'description' => 'A reply was added.']);
+        $storedPaths = [];
+
+        try {
+            DB::transaction(function () use ($request, $complaint, $data, &$storedPaths) {
+                $reply = ComplaintReply::create([
+                    'complaint_id' => $complaint->id,
+                    'user_id' => $request->user()->id,
+                    'body' => $data['body'],
+                ]);
+
+                $this->storeFiles($request, $complaint, $reply, $storedPaths);
+
+                ComplaintEvent::create([
+                    'complaint_id' => $complaint->id,
+                    'created_by' => $request->user()->id,
+                    'event_type' => 'reply',
+                    'description' => 'A reply was added.',
+                ]);
+            });
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $exception;
+        }
 
         $admins = \App\Models\User::where('role', 'admin')->where('is_active', true)->get();
         foreach ($admins as $admin) $admin->notify(new ComplaintUpdateNotification($complaint, 'The complainant added a reply.'));
@@ -101,13 +132,21 @@ class ComplaintController extends Controller
         abort_unless($request->user()->isAdmin() || $complaint->user_id === $request->user()->id, 403);
     }
 
-    private function storeReplyFiles(Request $request, Complaint $complaint, ComplaintReply $reply): void
+    private function storeFiles(Request $request, Complaint $complaint, ?ComplaintReply $reply, array &$storedPaths): void
     {
         foreach ($request->file('attachments', []) as $file) {
             $path = $file->store('complaints/'.$complaint->id, 'local');
+
+            if (! is_string($path) || $path === '') {
+                throw ValidationException::withMessages([
+                    'attachments' => 'A complaint attachment could not be stored. Please try again.',
+                ]);
+            }
+
+            $storedPaths[] = $path;
             ComplaintAttachment::create([
                 'complaint_id' => $complaint->id,
-                'reply_id' => $reply->id,
+                'reply_id' => $reply?->id,
                 'uploaded_by' => $request->user()->id,
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),

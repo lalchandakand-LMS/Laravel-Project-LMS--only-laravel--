@@ -207,7 +207,15 @@ class CheckoutController extends Controller
                     throw ValidationException::withMessages(['transaction_id' => 'This transaction ID has already been submitted.']);
                 }
 
-                $proofPath = $request->file('proof')?->store('payment-proofs', 'local');
+                if ($request->hasFile('proof')) {
+                    $proofPath = $request->file('proof')->store('payment-proofs', 'local');
+
+                    if (! is_string($proofPath) || $proofPath === '') {
+                        throw ValidationException::withMessages([
+                            'proof' => 'The payment proof could not be stored. Please try again.',
+                        ]);
+                    }
+                }
 
                 Payment::create([
                     'order_id' => $lockedOrder->id,

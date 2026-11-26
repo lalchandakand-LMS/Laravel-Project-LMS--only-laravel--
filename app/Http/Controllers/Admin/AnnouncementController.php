@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AnnouncementController extends Controller
 {
@@ -39,8 +40,23 @@ class AnnouncementController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        $announcement = Announcement::create($data);
-        $this->storeAttachments($request, $announcement);
+        $storedPaths = [];
+
+        try {
+            $announcement = DB::transaction(function () use ($request, $data, &$storedPaths) {
+                $announcement = Announcement::create($data);
+                $this->storeAttachments($request, $announcement, $storedPaths);
+
+                return $announcement;
+            });
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $exception;
+        }
+
         if ($announcement->isVisible()) $this->notifyAudience($announcement);
 
         return redirect()->route('admin.announcements.index')->with('success', 'Announcement posted.');
@@ -58,13 +74,32 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Announcement $announcement)
     {
-        $announcement->update($this->validated($request));
-        $this->removeAttachments($request, $announcement);
-        $this->storeAttachments($request, $announcement);
+        $data = $this->validated($request);
+        $storedPaths = [];
+        $removedPaths = [];
+
+        try {
+            DB::transaction(function () use ($request, $announcement, $data, &$storedPaths, &$removedPaths) {
+                $announcement->update($data);
+                $removedPaths = $this->removeAttachments($request, $announcement);
+                $this->storeAttachments($request, $announcement, $storedPaths);
+            });
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $exception;
+        }
+
+        foreach ($removedPaths as $path) {
+            Storage::disk('local')->delete($path);
+        }
 
         // Delivery records make this safe to run after every edit: existing
         // recipients are not spammed, while newly targeted users are notified.
-        if ($announcement->fresh()->isVisible()) $this->notifyAudience($announcement->fresh());
+        $announcement->refresh();
+        if ($announcement->isVisible()) $this->notifyAudience($announcement);
 
         return redirect()->route('admin.announcements.index')->with('success', 'Announcement updated.');
     }
@@ -115,10 +150,18 @@ class AnnouncementController extends Controller
         return $data;
     }
 
-    private function storeAttachments(Request $request, Announcement $announcement): void
+    private function storeAttachments(Request $request, Announcement $announcement, array &$storedPaths): void
     {
         foreach ($request->file('attachments', []) as $file) {
             $path = $file->store('announcements/'.$announcement->id, 'local');
+
+            if (! is_string($path) || $path === '') {
+                throw ValidationException::withMessages([
+                    'attachments' => 'An announcement attachment could not be stored. Please try again.',
+                ]);
+            }
+
+            $storedPaths[] = $path;
             $announcement->attachments()->create([
                 'uploaded_by' => $request->user()->id,
                 'path' => $path,
@@ -129,15 +172,19 @@ class AnnouncementController extends Controller
         }
     }
 
-    private function removeAttachments(Request $request, Announcement $announcement): void
+    private function removeAttachments(Request $request, Announcement $announcement): array
     {
+        $paths = [];
+
         foreach ($request->input('remove_attachments', []) as $id) {
             $attachment = $announcement->attachments()->whereKey($id)->first();
             if ($attachment) {
-                Storage::disk('local')->delete($attachment->path);
+                $paths[] = $attachment->path;
                 $attachment->delete();
             }
         }
+
+        return $paths;
     }
 
     private function notifyAudience(Announcement $announcement): void

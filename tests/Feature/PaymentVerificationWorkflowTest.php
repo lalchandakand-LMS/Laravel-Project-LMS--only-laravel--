@@ -147,6 +147,26 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertStringContainsString('no-store', $cacheControl);
     }
 
+    public function test_failed_private_payment_proof_upload_does_not_create_a_pending_payment(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->once()->with('local')->andReturn($disk);
+
+        $this->actingAs($student)->post(route('checkout.pay', $order->order_no), [
+            'gateway' => 'bank',
+            'amount' => 1000,
+            'sender_number' => 'Alom English Center',
+            'transaction_id' => 'FAILED-PROOF-STORAGE',
+            'proof' => UploadedFile::fake()->create('deposit-slip.pdf', 100, 'application/pdf'),
+        ])->assertSessionHasErrors('proof');
+
+        $this->assertDatabaseMissing('payments', ['transaction_id' => 'FAILED-PROOF-STORAGE']);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(1000.0, $order->fresh()->dueAmount());
+    }
+
     public function test_payment_submission_rechecks_the_balance_under_the_order_lock(): void
     {
         [$student, $admin, $branch, $order] = $this->orderForStudent();

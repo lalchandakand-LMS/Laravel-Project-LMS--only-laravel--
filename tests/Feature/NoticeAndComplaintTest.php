@@ -9,6 +9,8 @@ use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class NoticeAndComplaintTest extends TestCase
@@ -54,6 +56,61 @@ class NoticeAndComplaintTest extends TestCase
         ])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('in_progress', $complaint->fresh()->status);
         $this->assertDatabaseHas('complaint_events', ['complaint_id' => $complaint->id, 'event_type' => 'status']);
+    }
+
+    public function test_failed_complaint_attachment_upload_rolls_back_and_cleans_prior_files(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->twice()->andReturn('complaints/1/first.pdf', false);
+        $disk->shouldReceive('delete')->once()->with('complaints/1/first.pdf')->andReturn(true);
+        Storage::shouldReceive('disk')->times(3)->with('local')->andReturn($disk);
+
+        $this->actingAs($student)->from(route('complaints.index'))->post(route('complaints.store'), [
+            'category' => 'technical',
+            'subject' => 'Attachment storage failure',
+            'body' => 'The complaint should roll back if a private attachment cannot be saved.',
+            'attachments' => [
+                UploadedFile::fake()->create('first.pdf', 100, 'application/pdf'),
+                UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'),
+            ],
+        ])->assertRedirect(route('complaints.index'))
+            ->assertSessionHasErrors('attachments');
+
+        $this->assertDatabaseCount('complaints', 0);
+        $this->assertDatabaseCount('complaint_events', 0);
+        $this->assertDatabaseCount('complaint_attachments', 0);
+    }
+
+    public function test_failed_complaint_reply_attachment_does_not_create_a_reply_or_event(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $complaint = Complaint::create([
+            'tracking_code' => 'AEC-REPLY-'.uniqid(),
+            'user_id' => $student->id,
+            'category' => 'technical',
+            'subject' => 'Reply upload failure',
+            'body' => 'An existing complaint for a failed reply upload.',
+        ]);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->twice()->andReturn('complaints/'.$complaint->id.'/first.pdf', false);
+        $disk->shouldReceive('delete')->once()->with('complaints/'.$complaint->id.'/first.pdf')->andReturn(true);
+        Storage::shouldReceive('disk')->times(3)->with('local')->andReturn($disk);
+
+        $this->actingAs($student)->from(route('complaints.show', $complaint))
+            ->post(route('complaints.reply', $complaint), [
+                'body' => 'I am adding supporting evidence to this complaint.',
+                'attachments' => [
+                    UploadedFile::fake()->create('first.pdf', 100, 'application/pdf'),
+                    UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'),
+                ],
+            ])
+            ->assertRedirect(route('complaints.show', $complaint))
+            ->assertSessionHasErrors('attachments');
+
+        $this->assertDatabaseCount('complaint_replies', 0);
+        $this->assertDatabaseCount('complaint_events', 0);
+        $this->assertDatabaseCount('complaint_attachments', 0);
     }
 
     public function test_user_cannot_view_another_users_complaint(): void
