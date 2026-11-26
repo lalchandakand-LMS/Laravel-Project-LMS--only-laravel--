@@ -93,6 +93,7 @@ class LiveClassSchedulingTest extends TestCase
         $session = AttendanceSession::create([
             'live_class_id' => $liveClass->id,
             'course_id' => $course->id,
+            'instructor_id' => $admin->id,
             'topic' => $liveClass->title,
             'starts_at' => $liveClass->starts_at,
             'ends_at' => $liveClass->endsAt(),
