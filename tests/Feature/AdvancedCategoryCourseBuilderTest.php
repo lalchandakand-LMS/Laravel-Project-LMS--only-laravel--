@@ -77,9 +77,10 @@ class AdvancedCategoryCourseBuilderTest extends TestCase
         $this->assertSame($primary->id, (int) $course->fresh()->category_id);
 
         $course->update(['is_published' => true]);
-        $this->get(route('categories.show', $secondary->slug))
-            ->assertOk()
-            ->assertSee($course->title);
+        $this->assertDatabaseHas('courses', ['id' => $course->id, 'is_published' => true]);
+        $this->assertDatabaseHas('course_category', ['course_id' => $course->id, 'category_id' => $secondary->id]);
+        $response = $this->get(route('categories.show', $secondary->slug))->assertOk();
+        $response->assertViewHas('courses', fn ($courses) => $courses->getCollection()->contains('id', $course->id));
     }
 
     public function test_archiving_category_reassigns_primary_courses_and_children_without_hard_deleting(): void
