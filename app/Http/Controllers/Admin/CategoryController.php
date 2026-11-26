@@ -115,7 +115,6 @@ class CategoryController extends Controller
             'position' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ]);
 
-        unset($data['image_url']);
         $data['slug'] = filled($data['slug'] ?? null) ? Str::slug($data['slug']) : null;
         $data['is_active'] = $request->boolean('is_active');
         $data['position'] = $data['position'] ?? 0;
