@@ -11,7 +11,8 @@ class StudentProfile extends Model
         'user_id', 'student_code', 'date_of_birth', 'gender', 'school_name',
         'academic_class', 'academic_roll', 'academic_session', 'academic_group',
         'present_address', 'permanent_address', 'emergency_contact_name',
-        'emergency_contact_phone', 'status',
+        'emergency_contact_phone', 'guardian_name', 'guardian_phone', 'guardian_email',
+        'quota_type', 'quota_notes', 'status',
     ];
 
     protected function casts(): array
