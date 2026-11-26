@@ -100,10 +100,12 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
         }
 
         $result = $this->providerPost(self::STATUS_PATH, ['paymentID' => $paymentId]);
-        $completed = strcasecmp((string) ($result['transactionStatus'] ?? ''), 'Completed') === 0;
+        $providerStatus = strtolower((string) ($result['transactionStatus'] ?? ''));
+        $completed = $providerStatus === 'completed';
+        $failed = in_array($providerStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'expired'], true);
 
         return [
-            'status' => $completed ? 'success' : 'pending',
+            'status' => $completed ? 'success' : ($failed ? 'failed' : 'pending'),
             'payment_id' => (string) ($result['paymentID'] ?? $paymentId),
             'transaction_id' => (string) ($result['trxID'] ?? ''),
             'invoice' => (string) ($result['merchantInvoiceNumber'] ?? ''),
@@ -111,6 +113,7 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
             'currency' => strtoupper((string) ($result['currency'] ?? '')),
             'customer_msisdn' => (string) ($result['customerMsisdn'] ?? ''),
             'provider_status' => (string) ($result['transactionStatus'] ?? ''),
+            'reason' => $failed ? 'bKash reported '.$providerStatus.'.' : null,
         ];
     }
 
