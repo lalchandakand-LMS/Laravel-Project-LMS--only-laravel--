@@ -143,9 +143,20 @@
     <div class="border-t border-white/10">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-5 text-xs text-slate-400 sm:justify-between">
             <span class="font-bold uppercase tracking-wider text-slate-300">Pay With</span>
-            <div class="flex flex-wrap items-center justify-center gap-2">
-                @foreach (['VISA','Mastercard','bKash','Nagad','SSLCommerz'] as $gateway)
-                    <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-extrabold {{ $gateway === 'bKash' ? 'text-pink-600' : ($gateway === 'Nagad' ? 'text-orange-600' : 'text-slate-800') }}">{{ $gateway }}</span>
+            @php
+                $footerPaymentMethods = isset($branch) && $branch
+                    ? $branch->enabledStudentPaymentMethods()
+                    : \\App\\Models\\Branch::active()->get()
+                        ->flatMap(fn ($paymentBranch) => $paymentBranch->enabledStudentPaymentMethods())
+                        ->unique()
+                        ->values()
+                        ->all();
+            @endphp
+            <div class="flex flex-wrap items-center justify-center gap-2" aria-label="Accepted payment methods">
+                @foreach (['bkash' => 'bKash', 'nagad' => 'Nagad', 'rocket' => 'Rocket', 'bank' => 'Bank transfer'] as $method => $label)
+                    @if (in_array($method, $footerPaymentMethods, true))
+                        <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-extrabold {{ $method === 'bkash' ? 'text-pink-600' : ($method === 'nagad' ? 'text-orange-600' : 'text-slate-800') }}">{{ $label }}</span>
+                    @endif
                 @endforeach
             </div>
         </div>
