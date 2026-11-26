@@ -18,7 +18,7 @@ class CoachingBatchController extends Controller {
  public function edit(CoachingBatch $coachingBatch) { return view('admin.coaching-batches.form',$this->formData($coachingBatch)); }
  public function update(Request $request,CoachingBatch $coachingBatch) { $coachingBatch->update($this->validated($request,$coachingBatch)); return redirect()->route('admin.coaching-batches.index')->with('success','কোচিং ব্যাচ আপডেট হয়েছে।'); }
  public function destroy(CoachingBatch $coachingBatch) {
-  abort_if($coachingBatch->enrollments()->exists()||$coachingBatch->admissions()->whereIn('status',['pending','awaiting_payment','admitted'])->exists(),422,'এই ব্যাচে আবেদন বা শিক্ষার্থী আছে; আগে তাদের স্থানান্তর/সমাধান করুন।');
+  abort_if($coachingBatch->enrollments()->exists()||$coachingBatch->admissions()->exists(),422,'এই ব্যাচে আবেদন বা শিক্ষার্থী আছে; আগে তাদের স্থানান্তর/সমাধান করুন।');
   $coachingBatch->delete(); return back()->with('success','কোচিং ব্যাচ মুছে ফেলা হয়েছে।');
  }
  private function formData(CoachingBatch $batch): array {
@@ -27,7 +27,7 @@ class CoachingBatchController extends Controller {
  private function validated(Request $request,?CoachingBatch $batch=null): array {
   return $request->validate([
    'branch_id'=>['required','exists:branches,id'],'course_id'=>['required','exists:courses,id'],
-   'level_id'=>['nullable','exists:levels,id'],'instructor_id'=>['nullable','exists:users,id'],
+   'level_id'=>['nullable','exists:levels,id'],'instructor_id'=>['nullable',Rule::exists('users','id')->where(fn($q)=>$q->where('role','instructor'))],
    'name'=>['required','string','max:120'],'code'=>['required','string','max:30',Rule::unique('coaching_batches','code')->ignore($batch?->id)],
    'description'=>['nullable','string','max:2000'],'admission_fee'=>['required','numeric','min:0','max:99999999.99'],
    'monthly_fee'=>['required','numeric','min:0','max:99999999.99'],'starts_at'=>['nullable','date'],
