@@ -12,6 +12,7 @@ use App\Http\Controllers\Branch;
 use App\Http\Controllers\Guardian;
 use App\Http\Controllers\Teacher;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\BkashPaymentController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseController;
@@ -65,6 +66,8 @@ Route::get('/category/{category:slug}', [CourseController::class, 'category'])->
 Route::get('/ebooks', [EbookController::class, 'index'])->name('ebooks.index');
 Route::get('/ebooks/{ebook:slug}', [EbookController::class, 'show'])->name('ebooks.show');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->name('certificates.verify');
+Route::get('/payments/bkash/callback/{order:order_no}', [BkashPaymentController::class, 'callback'])
+    ->middleware('throttle:20,1')->name('payments.bkash.callback');
 Route::get('/id/verify/{token}', [Admin\IdentityCardController::class, 'verify'])->name('identity.verify');
 
 /* ------------------------------------------------------------------
@@ -115,6 +118,8 @@ Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::get('/checkout/success/{order:order_no}', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
+    Route::post('/orders/{order:order_no}/payments/bkash', [BkashPaymentController::class, 'initiate'])
+        ->middleware('throttle:5,1')->name('checkout.bkash');
 
     Route::get('/online-batches', [OnlineBatchApplicationController::class, 'index'])->name('student.online-batches');
     Route::post('/online-batches/apply', [OnlineBatchApplicationController::class, 'store'])->name('student.online-batches.apply');
