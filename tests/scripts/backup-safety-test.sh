@@ -17,6 +17,15 @@ printf 'private student document\n' > "$PROJECT/storage/app/private/documents/st
 printf 'old database backup\n' > "$PROJECT/storage/app/private/system-backups/old.sqlite"
 printf 'public course image\n' > "$PROJECT/storage/app/public/courses/course.jpg"
 
+# Seed old backup sets so retention can prove it keeps whole snapshots.
+for index in $(seq 1 32); do
+  stamp="$(printf '20260101-%06d' "$index")"
+  : > "$PROJECT/storage/backups/env-$stamp.bak"
+  : > "$PROJECT/storage/backups/mysql-$stamp.sql"
+  : > "$PROJECT/storage/backups/uploads-$stamp.tar.gz"
+  : > "$PROJECT/storage/backups/private-$stamp.tar.gz"
+done
+
 cat > "$PROJECT/.env" <<'ENV'
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -67,6 +76,23 @@ fi
 [[ "$(stat -c '%a' "$PROJECT/storage/backups")" == "700" ]]
 [[ "$(stat -c '%a' "$PRIVATE_ARCHIVE")" == "600" ]]
 [[ "$(stat -c '%a' "$PROJECT/storage/backups"/env-*.bak)" == "600" ]]
+
+mapfile -t RETAINED_STAMPS < <(
+  for artifact in "$PROJECT/storage/backups"/*; do
+    basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\\..*)?/\\2/p'
+  done | sort -u
+)
+[[ "${#RETAINED_STAMPS[@]}" -eq 30 ]] || {
+  echo "Backup retention should keep 30 complete snapshots." >&2
+  exit 1
+}
+for stamp in "${RETAINED_STAMPS[@]}"; do
+  count="$(find "$PROJECT/storage/backups" -maxdepth 1 -type f -name "*-$stamp.*" | wc -l | tr -d ' ')"
+  [[ "$count" -eq 4 ]] || {
+    echo "Backup retention left an incomplete snapshot: $stamp" >&2
+    exit 1
+  }
+done
 
 for script_file in "$REPO_ROOT/backup.sh" "$REPO_ROOT/update.sh"; do
   if grep -Fq -- '-p"$(ENV_VAL DB_PASSWORD)"' "$script_file"; then
