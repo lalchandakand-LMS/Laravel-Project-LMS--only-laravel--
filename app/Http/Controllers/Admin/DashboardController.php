@@ -22,10 +22,11 @@ class DashboardController extends Controller
         $now = now();
         $currentStart = $now->copy()->startOfMonth();
         $previousStart = $now->copy()->subMonthNoOverflow()->startOfMonth();
-        $previousEnd = $currentStart->copy()->subSecond();
+        $currentEnd = $now->copy();
+        $previousEnd = $now->copy()->subMonthNoOverflow()->endOfDay();
 
-        $growth = function ($query) use ($currentStart, $previousStart, $previousEnd) {
-            $current = (clone $query)->where('created_at', '>=', $currentStart)->count();
+        $growth = function ($query) use ($currentStart, $currentEnd, $previousStart, $previousEnd) {
+            $current = (clone $query)->whereBetween('created_at', [$currentStart, $currentEnd])->count();
             $previous = (clone $query)->whereBetween('created_at', [$previousStart, $previousEnd])->count();
             $percent = $previous > 0 ? round((($current - $previous) / $previous) * 100, 1) : ($current > 0 ? 100 : 0);
 
