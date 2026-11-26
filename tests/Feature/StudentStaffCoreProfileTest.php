@@ -55,7 +55,7 @@ class StudentStaffCoreProfileTest extends TestCase
         ]);
     }
 
-    public function test_profile_records_are_removed_when_their_user_account_is_deleted(): void
+    public function test_profile_records_are_retained_when_user_accounts_are_soft_deleted_for_recycle_bin(): void
     {
         $student = User::factory()->create(['role' => 'student']);
         $teacher = User::factory()->create(['role' => 'instructor']);
@@ -65,7 +65,9 @@ class StudentStaffCoreProfileTest extends TestCase
         $student->delete();
         $teacher->delete();
 
-        $this->assertDatabaseMissing('student_profiles', ['user_id' => $student->id]);
-        $this->assertDatabaseMissing('staff_profiles', ['user_id' => $teacher->id]);
+        $this->assertSoftDeleted('users', ['id' => $student->id]);
+        $this->assertSoftDeleted('users', ['id' => $teacher->id]);
+        $this->assertDatabaseHas('student_profiles', ['user_id' => $student->id]);
+        $this->assertDatabaseHas('staff_profiles', ['user_id' => $teacher->id]);
     }
 }
