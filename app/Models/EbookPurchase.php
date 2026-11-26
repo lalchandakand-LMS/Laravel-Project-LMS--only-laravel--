@@ -7,5 +7,5 @@ class EbookPurchase extends Model
 {
     protected $fillable = ['user_id','ebook_id','order_id'];
     public function user()  { return $this->belongsTo(User::class); }
-    public function ebook() { return $this->belongsTo(Ebook::class); }
+    public function ebook() { return $this->belongsTo(Ebook::class)->withTrashed(); }
 }
