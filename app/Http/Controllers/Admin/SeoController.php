@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Setting;
-use Illuminate\\Http\\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use Illuminate\Http\Request;
 
 class SeoController extends Controller
 {
@@ -58,7 +58,7 @@ class SeoController extends Controller
             $lines[] = 'Sitemap: '.route('sitemap');
         }
 
-        return response(implode("\\n", $lines)."\\n", 200, [
+        return response(implode("\n", $lines)."\n", 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
             'X-Robots-Tag' => Setting::get('seo_robots_index', '1') === '1' ? 'all' : 'noindex, nofollow',
         ]);
