@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Route;
  |------------------------------------------------------------------*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [Admin\SeoController::class, 'robots'])->name('robots');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/board-result', [BoardResultController::class, 'index'])->name('board-results.index');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
@@ -329,6 +330,8 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::post('media/links', [Admin\MediaLibraryController::class, 'storeLink'])->name('media.links.store');
         Route::delete('media/{media}', [Admin\MediaLibraryController::class, 'destroy'])->name('media.destroy');
 
+        Route::get('seo', [Admin\SeoController::class, 'index'])->name('seo.index');
+        Route::post('seo', [Admin\SeoController::class, 'update'])->name('seo.update');
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);
