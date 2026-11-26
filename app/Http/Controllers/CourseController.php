@@ -22,8 +22,15 @@ class CourseController extends Controller
                 ->orWhere('description', 'like', "%{$q}%"));
         }
 
-        if ($category = $request->get('category')) {
-            $query->where(fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $category))->orWhereHas('categories', fn ($c) => $c->where('slug', $category)));
+        if ($categorySlug = $request->get('category')) {
+            $selectedCategory = Category::where('slug', $categorySlug)->where('is_active', true)->first();
+            if ($selectedCategory) {
+                $categoryIds = $selectedCategory->descendants()->pluck('id')->push($selectedCategory->id)->all();
+                $query->where(fn ($q) => $q->whereIn('category_id', $categoryIds)
+                    ->orWhereHas('categories', fn ($categories) => $categories->whereIn('categories.id', $categoryIds)));
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($level = $request->get('level')) {
@@ -47,10 +54,12 @@ class CourseController extends Controller
 
     public function category(Category $category)
     {
+        $categoryIds = $category->descendants()->pluck('id')->push($category->id)->all();
+
         return view('courses.index', [
-            'courses' => Course::published()->where(fn ($query) => $query->where('category_id', $category->id)->orWhereHas('categories', fn ($categories) => $categories->whereKey($category->id)))
+            'courses' => Course::published()->where(fn ($query) => $query->whereIn('category_id', $categoryIds)->orWhereHas('categories', fn ($categories) => $categories->whereIn('categories.id', $categoryIds)))
                 ->with(['instructor', 'category', 'categories'])->latest()->paginate(9),
-            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->get(),
+            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->orderBy('position')->orderBy('name')->get(),
             'filters' => ['category' => $category->slug],
             'activeCategory' => $category,
         ]);
