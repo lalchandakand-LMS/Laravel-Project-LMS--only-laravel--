@@ -207,6 +207,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
         Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
         Route::get('marketing/dashboard', [Admin\MarketingDashboardController::class, 'index'])->name('marketing.dashboard');
+        Route::get('marketing', [Admin\MarketingDashboardController::class, 'index'])->name('marketing.dashboard');
         Route::get('marketing/leads', [Admin\MarketingLeadController::class, 'index'])->name('marketing.leads.index');
         Route::get('marketing/campaigns', [Admin\MarketingCampaignController::class, 'index'])->name('marketing.campaigns.index');
         Route::get('marketing/campaigns/create', [Admin\MarketingCampaignController::class, 'create'])->name('marketing.campaigns.create');
