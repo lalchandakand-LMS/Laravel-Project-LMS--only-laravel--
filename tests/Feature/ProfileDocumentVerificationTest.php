@@ -69,7 +69,7 @@ class ProfileDocumentVerificationTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
-        $disk = \\Mockery::mock(\\Illuminate\\Filesystem\\FilesystemAdapter::class);
+        $disk = \Mockery::mock(\Illuminate\\Filesystem\\FilesystemAdapter::class);
         $disk->shouldReceive('putFileAs')->once()->andReturn(false);
         Storage::shouldReceive('disk')->once()->with('local')->andReturn($disk);
 
