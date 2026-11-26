@@ -16,6 +16,7 @@ use App\Http\Controllers\CoachingFeeReportController;
 use App\Http\Controllers\OnlineBatchApplicationController;
 use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\ComplaintController;
@@ -35,6 +36,8 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::get('/instructors', [InstructorController::class, 'index'])->name('instructors.index');
+Route::get('/instructors/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('instructors.show');
 Route::post('/contact', [PageController::class, 'sendContact'])->name('contact.send');
 
 Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Conditions', 'policy' => 'terms'])->name('legal.terms');
