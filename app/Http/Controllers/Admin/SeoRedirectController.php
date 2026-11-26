@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\SeoRedirect;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\SeoRedirect;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SeoRedirectController extends Controller
 {
@@ -69,15 +69,15 @@ class SeoRedirectController extends Controller
         }
         $request->merge(['source_path' => $source]);
 
-        return $request->validate([
+        $validated = $request->validate([
             'source_path' => [
                 'required',
                 'string',
                 'min:2',
                 'max:255',
-                'regex:/^\\/(?!\\/)[A-Za-z0-9._~%\\/-]+$/',
+                'regex:/^\/(?!\/)[A-Za-z0-9._~%\/-]+$/',
                 Rule::unique('seo_redirects', 'source_path')->ignore($redirect?->id),
-                function (string $attribute, mixed $value, \\Closure $fail): void {
+                function (string $attribute, mixed $value, \Closure $fail): void {
                     $segments = explode('/', trim((string) $value, '/'));
                     if (in_array('..', $segments, true) || in_array('.', $segments, true)) {
                         $fail('The source path cannot contain dot segments.');
@@ -88,11 +88,11 @@ class SeoRedirectController extends Controller
                 'required',
                 'string',
                 'max:2048',
-                function (string $attribute, mixed $value, \\Closure $fail) use ($source): void {
+                function (string $attribute, mixed $value, \Closure $fail) use ($source): void {
                     if (! is_string($value) || ! str_starts_with($value, '/')
                         || str_starts_with($value, '//')
-                        || str_contains($value, '\\\\')
-                        || preg_match('/[\\x00-\\x20]/', $value) === 1
+                        || str_contains($value, '\\')
+                        || preg_match('/[\x00-\x20]/', $value) === 1
                         || str_contains($value, '#')) {
                         $fail('Use a same-site path beginning with a single slash. External URLs, fragments and control characters are not allowed.');
                         return;
@@ -116,5 +116,9 @@ class SeoRedirectController extends Controller
             'status_code' => ['required', 'integer', Rule::in([301, 302])],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        $validated['is_active'] = $request->boolean('is_active');
+
+        return $validated;
     }
 }
