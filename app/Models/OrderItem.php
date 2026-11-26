@@ -8,7 +8,6 @@ class OrderItem extends Model
 {
     protected $fillable = ['order_id','item_type','item_id','title','price','qty','stock_reserved'];
     protected $casts = ['price' => 'float', 'stock_reserved' => 'boolean'];
-    protected $casts = ['price' => 'float'];
 
     public function order() { return $this->belongsTo(Order::class); }
 
