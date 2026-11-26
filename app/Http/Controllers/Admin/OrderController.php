@@ -141,12 +141,15 @@ class OrderController extends Controller
         }
 
         $this->assertUniqueOrderItems($data['items']);
+        $existingProductIds = $order->items()->where('item_type', 'product')->pluck('item_id')->map(fn ($id) => (int) $id)->all();
         $lines = [];
         foreach ($data['items'] as $line) {
             $product = match ($line['type']) {
                 'course' => Course::where('is_published', true)->findOrFail($line['id']),
                 'ebook' => Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']),
-                'product' => Product::published()->findOrFail($line['id']),
+                'product' => in_array((int) $line['id'], $existingProductIds, true)
+                    ? Product::withTrashed()->findOrFail($line['id'])
+                    : Product::published()->findOrFail($line['id']),
             };
             if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($student, $product)) {
                 throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
