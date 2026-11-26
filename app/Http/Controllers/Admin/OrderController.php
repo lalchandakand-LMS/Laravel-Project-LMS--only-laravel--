@@ -173,8 +173,10 @@ class OrderController extends Controller
                 $order->items()->create([
                     'item_type' => $line['type'], 'item_id' => $line['id'],
                     'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
+                    'stock_reserved' => false,
                 ]);
             }
+            OrderService::reserveProducts($order);
             return $order;
         });
 
@@ -234,14 +236,17 @@ class OrderController extends Controller
             if ($locked->payments()->exists()) {
                 abort(403, 'Orders with payment records cannot be edited.');
             }
+            OrderService::releaseReservations($locked);
             $locked->items()->delete();
             foreach ($lines as $line) {
                 $locked->items()->create([
                     'item_type' => $line['type'], 'item_id' => $line['id'],
                     'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
+                    'stock_reserved' => false,
                 ]);
             }
             $locked->update($customerData + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
+            OrderService::reserveProducts($locked);
         });
         return redirect()->route('admin.orders.show', $order)->with('success', 'Order details and items updated.');
     }
@@ -284,6 +289,10 @@ class OrderController extends Controller
                     ]);
                 }
 
+                if ($data['status'] === 'pending' && in_array($lockedOrder->status, ['failed', 'cancelled'], true)) {
+                    OrderService::reserveProducts($lockedOrder);
+                }
+
                 if ($data['status'] === 'paid' && $lockedOrder->status !== 'paid') {
                     $due = $lockedOrder->dueAmount();
                     if ($due > 0) {
@@ -316,6 +325,7 @@ class OrderController extends Controller
                 }
 
                 if (in_array($data['status'], ['failed', 'cancelled'], true)) {
+                    OrderService::releaseReservations($lockedOrder);
                     $lockedOrder->payments()
                         ->where('status', 'pending')
                         ->update([
