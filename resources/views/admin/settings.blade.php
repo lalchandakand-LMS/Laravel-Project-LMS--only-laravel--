@@ -12,6 +12,7 @@
                 ['site_address', 'Address'], ['company_license', 'Company license / registration'], ['currency', 'Currency symbol'],
             ],
             'Payments' => [['bkash_number', 'bKash number'], ['nagad_number', 'Nagad number']],
+            'Physical Store' => [['physical_shipping_fee', 'Flat shipping fee (BDT)'], ['physical_free_shipping_threshold', 'Free shipping minimum (BDT)'], ['physical_return_window_days', 'Return window (days)']],
             'Social' => [['facebook', 'Facebook URL'], ['youtube', 'YouTube URL'], ['instagram', 'Instagram URL']],
         ];
     @endphp
@@ -28,6 +29,15 @@
             </div>
         </section>
     @endforeach
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <h3 class="font-bold text-slate-900">Physical store return policy</h3>
+        <label class="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700">
+            <input type="checkbox" name="physical_returns_enabled" value="1" @checked(old('physical_returns_enabled', $settings['physical_returns_enabled'] ?? '1'))>
+            Allow customers to request product returns
+        </label>
+        <p class="mt-2 text-xs text-slate-500">Returns are available only for delivered physical-product orders within the configured window. Admin approval and received-item inspection are required; refunds and restocking remain deliberate separate actions.</p>
+    </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
         <h3 class="font-bold text-slate-900">Brand identity</h3>
