@@ -55,7 +55,6 @@ if (! function_exists('delete_stored_media')) {
             'settings' => ['value'],
             'categories' => ['image'],
             'courses' => ['thumbnail'],
-            'categories' => ['image'],
             'sliders' => ['image'],
             'ebooks' => ['cover', 'file'],
             'lessons' => ['attachment'],
