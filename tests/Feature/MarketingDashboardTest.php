@@ -21,6 +21,8 @@ class MarketingDashboardTest extends TestCase
     public function test_admin_can_view_lead_and_campaign_performance_metrics(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $initialTotal = MarketingLead::count();
+        $initialConverted = MarketingLead::where('status', 'converted')->count();
         $campaign = MarketingCampaign::create([
             'created_by' => $admin->id,
             'name' => 'IELTS Facebook Campaign',
@@ -61,8 +63,8 @@ class MarketingDashboardTest extends TestCase
             ->assertOk()
             ->assertSee('Marketing Performance Dashboard')
             ->assertSee('Total captured leads')
-            ->assertSee('3')
-            ->assertSee('66.7%')
+            ->assertSee(number_format($initialTotal + 3))
+            ->assertSee(number_format((($initialConverted + 1) / ($initialTotal + 3)) * 100, 1).'%')
             ->assertSee('IELTS Facebook Campaign')
             ->assertSee('2 leads')
             ->assertSee('facebook')
