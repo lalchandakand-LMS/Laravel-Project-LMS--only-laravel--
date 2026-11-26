@@ -196,7 +196,8 @@ class OrderController extends Controller
             $lines[] = ['type' => $line['type'], 'id' => $product->id, 'title' => $product->title, 'price' => $price];
         }
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
-        DB::transaction(function () use ($order, $data, $lines, $subtotal) {
+        $customerData = collect($data)->except('items')->all();
+        DB::transaction(function () use ($order, $customerData, $lines, $subtotal) {
             $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
             if ($locked->payments()->exists()) {
                 abort(403, 'Orders with payment records cannot be edited.');
@@ -208,7 +209,7 @@ class OrderController extends Controller
                     'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
                 ]);
             }
-            $locked->update($data + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
+            $locked->update($customerData + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
         });
         return redirect()->route('admin.orders.show', $order)->with('success', 'Order details and items updated.');
     }
