@@ -2,21 +2,18 @@
 @section('title', $course->meta_title ?: $course->title)
 @section('meta_description', $course->meta_description ?: $course->subtitle)
 @push('structured_data')
-    @php
-        $courseSchema = [
-            '@context' => 'https://schema.org',
-            '@type' => 'Course',
-            'name' => $course->title,
-            'description' => $course->meta_description ?: $course->subtitle,
-            'url' => route('courses.show', $course),
-            'image' => $course->thumbnail ? media_url($course->thumbnail) : null,
-            'provider' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
-            'inLanguage' => $course->language ?: 'en',
-            'educationalLevel' => $course->level,
-            'offers' => ['@type' => 'Offer', 'priceCurrency' => 'BDT', 'price' => number_format((float) $course->final_price, 2, '.', ''), 'availability' => 'https://schema.org/InStock', 'url' => route('courses.show', $course)],
-        ];
-    @endphp
-    <script type="application/ld+json">@json($courseSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+<script type="application/ld+json">@json([
+    '@context' => 'https://schema.org',
+    '@type' => 'Course',
+    'name' => $course->title,
+    'description' => $course->meta_description ?: $course->subtitle,
+    'url' => route('courses.show', $course),
+    'image' => $course->thumbnail ? media_url($course->thumbnail) : null,
+    'provider' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
+    'inLanguage' => $course->language ?: 'en',
+    'educationalLevel' => $course->level,
+    'offers' => ['@type' => 'Offer', 'priceCurrency' => 'BDT', 'price' => number_format((float) $course->final_price, 2, '.', ''), 'availability' => 'https://schema.org/InStock', 'url' => route('courses.show', $course)],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
 @endpush
 
 @section('content')
