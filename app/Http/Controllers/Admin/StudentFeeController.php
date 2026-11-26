@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CoachingAdmission;
 use App\Models\StudentFeeCredit;
+use App\Models\StudentFeeCreditApplication;
 use App\Models\StudentFeeInvoice;
 use App\Models\StudentFeePayment;
 use Illuminate\Http\Request;
