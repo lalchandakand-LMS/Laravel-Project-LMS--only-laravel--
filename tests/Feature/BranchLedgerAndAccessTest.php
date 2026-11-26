@@ -14,6 +14,7 @@ use App\Models\OnlineBatchEnrollment;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAdjustment;
+use App\Models\StudentFeeInvoice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -193,4 +194,32 @@ class BranchLedgerAndAccessTest extends TestCase
 
         $this->assertDatabaseMissing('branches', ['code' => 'BAD-MANAGER']);
     }
+
+    public function test_branch_manager_cannot_collect_coaching_fees_with_a_disabled_branch_payment_method(): void
+    {
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $branch = $this->branch('FEE-METHOD', $manager);
+        $manager->update(['branch_id' => $branch->id]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $branch->id]);
+        $invoice = StudentFeeInvoice::create([
+            'student_id' => $student->id,
+            'branch_id' => $branch->id,
+            'invoice_type' => 'recurring',
+            'description' => 'Monthly tuition',
+            'issued_at' => now()->toDateString(),
+            'amount' => 1500,
+            'discount' => 0,
+            'status' => 'unpaid',
+            'created_by' => $manager->id,
+        ]);
+
+        $this->actingAs($manager)->post(route('branch.finance.invoices.collect', $invoice), [
+            'amount' => 500,
+            'method' => 'rocket',
+            'reference' => 'DISABLED-BRANCH-METHOD',
+        ])->assertRedirect()->assertSessionHasErrors('method');
+
+        $this->assertDatabaseCount('student_fee_payments', 0);
+    }
+
 }
