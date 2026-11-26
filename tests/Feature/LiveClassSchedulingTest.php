@@ -115,4 +115,46 @@ class LiveClassSchedulingTest extends TestCase
             'title' => 'Unsupported platform session',
         ]);
     }
+
+    public function test_batch_live_class_is_visible_only_to_active_members_of_that_batch(): void
+    {
+        $course = Course::firstOrFail();
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $otherStudent = User::factory()->create(['role' => 'student', 'is_active' => true]);
+
+        $batch = Batch::create([
+            'course_id' => $course->id,
+            'name' => 'Evening Batch',
+            'code' => 'EVENING-'.strtoupper(\Illuminate\Support\Str::random(5)),
+            'status' => 'active',
+        ]);
+
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+
+        LiveClass::create([
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'title' => 'Private batch revision',
+            'platform' => 'Zoom',
+            'meeting_url' => 'https://zoom.us/j/987654321',
+            'starts_at' => now()->addDay(),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($student)->get(route('student.live-classes'))
+            ->assertOk()
+            ->assertSee('Private batch revision');
+
+        $this->actingAs($otherStudent)->get(route('student.live-classes'))
+            ->assertOk()
+            ->assertDontSee('Private batch revision');
+    }
+
 }
