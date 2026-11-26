@@ -238,7 +238,7 @@ class StudentPortalExamAccessTest extends TestCase
         $originalSubmittedAt = $gradedAttempt->submitted_at;
         $this->assertSame('submitted', $gradedAttempt->status);
         $this->assertSame(10.0, (float) $gradedAttempt->score);
-        $this->assertSame(1, $gradedAttempt->correct_count);
+        $this->assertSame(1.0, (float) $gradedAttempt->correct_count);
 
         $this->actingAs($student)->postJson(route('student.attempts.save', $attempt), [
             'answers' => [$question->id => $wrongOption->id],
