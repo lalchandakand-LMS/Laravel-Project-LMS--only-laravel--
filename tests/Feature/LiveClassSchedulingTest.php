@@ -442,7 +442,7 @@ class LiveClassSchedulingTest extends TestCase
         config(['live_classes.email_notifications' => true, 'mail.default' => 'log']);
         $this->assertSame(['database'], $notification->via($student));
 
-        config(['mail.default' => 'smtp']);
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => 'smtp.example.test', 'mail.mailers.smtp.username' => 'test-user', 'mail.mailers.smtp.password' => 'test-password', 'mail.from.address' => 'noreply@example.test']);
         $this->assertSame(['database', \App\Notifications\Channels\QueuedMailChannel::class], $notification->via($student));
     }
 
@@ -467,7 +467,7 @@ class LiveClassSchedulingTest extends TestCase
         config(['live_classes.sms_notifications' => false]);
         $this->assertSame(['database'], $notification->via($student));
 
-        config(['live_classes.sms_notifications' => true]);
+        config(['live_classes.sms_notifications' => true, 'live_classes.sms.username' => 'panel@example.test', 'live_classes.sms.api_key' => 'test-key', 'live_classes.sms.sender_name' => 'ALOMS']);
         $this->assertContains(\App\Notifications\Channels\MiMSmsChannel::class, $notification->via($student));
 
         $student->forceFill(['phone' => null])->save();
