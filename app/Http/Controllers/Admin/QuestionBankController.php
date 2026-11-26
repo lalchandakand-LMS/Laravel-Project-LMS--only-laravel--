@@ -116,6 +116,56 @@ class QuestionBankController extends Controller
         return back()->with('success', "{$created} questions imported into the bank.");
     }
 
+    public function edit(QuestionBankItem $item)
+    {
+        return view('admin.question-bank.form', compact('item'));
+    }
+
+    public function update(Request $request, QuestionBankItem $item)
+    {
+        $data = $request->validate([
+            'question' => 'required|string',
+            'type' => 'required|in:mcq,cq,short',
+            'category' => 'nullable|string|max:100',
+            'difficulty' => 'required|in:easy,medium,hard',
+            'marks' => 'required|numeric|min:0.25|max:1000',
+            'explanation' => 'nullable|string',
+            'options' => 'nullable|array',
+            'options.*' => 'nullable|string|max:500',
+            'correct_option_index' => 'nullable|integer|min:0|max:9',
+        ]);
+        $options = array_filter($data['options'] ?? [], fn ($value) => filled($value));
+        $correctIndex = null;
+        if ($data['type'] === 'mcq') {
+            validator(['options' => $options, 'correct_option_index' => $data['correct_option_index'] ?? null], [
+                'options' => 'required|array|min:2|max:10',
+                'correct_option_index' => 'required|integer|min:0',
+            ])->validate();
+            $correctIndex = array_search((int) $data['correct_option_index'], array_keys($options), true);
+            abort_if($correctIndex === false, 422, 'Select a valid correct option.');
+        }
+
+        $item->update([
+            'category' => $data['category'] ?? null,
+            'difficulty' => $data['difficulty'],
+            'type' => $data['type'],
+            'question' => $data['question'],
+            'options' => $data['type'] === 'mcq' ? array_values($options) : null,
+            'correct_option_index' => $data['type'] === 'mcq' ? $correctIndex : null,
+            'marks' => $data['marks'],
+            'explanation' => $data['explanation'] ?? null,
+        ]);
+
+        return redirect()->route('admin.question-bank.index')->with('success', 'Bank question updated.');
+    }
+
+    public function destroy(QuestionBankItem $item)
+    {
+        $item->delete();
+
+        return back()->with('success', 'Bank question deleted.');
+    }
+
     public function template()
     {
         $csv = "question,type,marks,options,correct_index,category,difficulty,explanation\n";
