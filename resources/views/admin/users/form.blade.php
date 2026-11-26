@@ -83,6 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const update = () => {
         student.hidden = role.value !== 'student';
         staff.hidden = !['instructor', 'branch_manager'].includes(role.value);
+        student.querySelectorAll('input, select, textarea').forEach((field) => field.disabled = student.hidden);
+        staff.querySelectorAll('input, select, textarea').forEach((field) => field.disabled = staff.hidden);
     };
     role.addEventListener('change', update);
     update();
