@@ -84,6 +84,7 @@ class PeopleController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
+            'phone_verified_at' => ($data['phone'] ?? null) !== $user->phone ? null : $user->phone_verified_at,
             'designation' => $data['designation'] ?? null,
             'is_active' => $request->boolean('is_active'),
             ...(! blank($data['password'] ?? null) ? ['password' => $data['password']] : []),

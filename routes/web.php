@@ -42,6 +42,7 @@ Route::get('/category/{category:slug}', [CourseController::class, 'category'])->
 Route::get('/ebooks', [EbookController::class, 'index'])->name('ebooks.index');
 Route::get('/ebooks/{ebook:slug}', [EbookController::class, 'show'])->name('ebooks.show');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->name('certificates.verify');
+Route::get('/id/verify/{token}', [Admin\IdentityCardController::class, 'verify'])->name('identity.verify');
 
 /* ------------------------------------------------------------------
  |  GUEST AUTH
@@ -53,6 +54,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+Route::middleware('auth')->group(function () {
+    Route::post('/account/phone-verification/send', [App\Http\Controllers\PhoneVerificationController::class, 'send'])->middleware('throttle:3,10')->name('account.phone.send');
+    Route::post('/account/phone-verification/verify', [App\Http\Controllers\PhoneVerificationController::class, 'verify'])->middleware('throttle:10,10')->name('account.phone.verify');
+});
 
 /* ------------------------------------------------------------------
  |  AUTHENTICATED (cart / checkout / reviews)
@@ -114,6 +119,7 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
     Route::get('/certificates', [Student\DashboardController::class, 'certificates'])->name('certificates');
     Route::get('/attendance', [AttendanceController::class, 'studentReport'])->name('attendance');
     Route::get('/profile', [Student\DashboardController::class, 'profile'])->name('profile');
+    Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::put('/profile', [Student\DashboardController::class, 'updateProfile'])->name('profile.update');
     Route::put('/password', [Student\DashboardController::class, 'updatePassword'])->name('password.update');
 
@@ -203,6 +209,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('staff-attendance', [Admin\StaffAttendanceController::class, 'save'])->name('staff-attendance.save');
 
         Route::get('staff-payroll', [Admin\StaffPayrollController::class, 'index'])->name('staff-payroll.index');
+        Route::get('staff-payroll/report', [Admin\StaffPayrollController::class, 'report'])->name('staff-payroll.report');
+        Route::get('staff-payroll/report/export', [Admin\StaffPayrollController::class, 'exportReport'])->name('staff-payroll.report.export');
         Route::post('staff-payroll', [Admin\StaffPayrollController::class, 'store'])->name('staff-payroll.store');
         Route::post('staff-payroll/{payroll}/approve', [Admin\StaffPayrollController::class, 'approve'])->name('staff-payroll.approve');
         Route::post('staff-payroll/{payroll}/paid', [Admin\StaffPayrollController::class, 'markPaid'])->name('staff-payroll.paid');
@@ -220,6 +228,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('students', [Admin\UserController::class, 'store'])->name('users.store');
         Route::get('students', [Admin\UserController::class, 'index'])->name('users.index');
         Route::get('students/{user}', [Admin\UserController::class, 'show'])->name('users.show');
+        Route::get('students/{user}/id-card', [Admin\IdentityCardController::class, 'show'])->name('users.id-card');
         Route::get('students/{user}/edit', [Admin\UserController::class, 'edit'])->name('users.edit');
         Route::put('students/{user}', [Admin\UserController::class, 'update'])->name('users.update');
         Route::delete('students/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
@@ -316,6 +325,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/', [Teacher\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/courses', [Teacher\DashboardController::class, 'courses'])->name('courses');
     Route::get('/students', [Teacher\DashboardController::class, 'students'])->name('students');
     Route::get('/students/{user}', [Teacher\DashboardController::class, 'student'])->name('students.show');
@@ -357,6 +367,7 @@ Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('gu
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/', [Branch\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/people/{type}/create', [Branch\PeopleController::class, 'create'])->whereIn('type', ['student', 'staff'])->name('people.create');
     Route::post('/people/{type}', [Branch\PeopleController::class, 'store'])->whereIn('type', ['student', 'staff'])->name('people.store');
     Route::get('/people/{user}/edit', [Branch\PeopleController::class, 'edit'])->name('people.edit');

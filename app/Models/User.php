@@ -22,7 +22,7 @@ class User extends Authenticatable
     ];
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'branch_id', 'phone', 'avatar', 'bio',
+        'name', 'email', 'password', 'role', 'branch_id', 'phone', 'phone_verified_at', 'avatar', 'bio',
         'designation', 'is_active', 'provider',
     ];
 
@@ -32,6 +32,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
