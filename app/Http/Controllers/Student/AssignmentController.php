@@ -8,6 +8,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AssignmentController extends Controller
@@ -58,59 +59,75 @@ class AssignmentController extends Controller
     {
         $user = $request->user();
         abort_unless($this->canAccess($user, $assignment), 404);
-        abort_if($assignment->isClosed(), 403, 'The submission deadline has passed.');
 
         $data = $request->validate([
             'answer_text' => 'nullable|string|max:20000',
             'attachment' => 'nullable|file|max:20480',
         ]);
 
-        $submission = $assignment->submissions()->where('student_id', $user->id)->first();
-        abort_if($submission && $submission->status !== 'returned', 409,
-            'This assignment has already been submitted. You can edit it only after your teacher returns it.');
-
-        if (blank($data['answer_text'] ?? null) && ! $request->hasFile('attachment') && ! $submission?->attachment) {
-            return back()->withErrors(['answer_text' => 'Write an answer or attach a file before submitting.'])->withInput();
-        }
-
-        $previousAttachment = $submission?->attachment;
+        $previousAttachment = null;
         $newAttachment = null;
-        $attachment = $previousAttachment;
-        if ($request->hasFile('attachment')) {
-            $newAttachment = $request->file('attachment')->store('assignments/submissions', 'local');
-            if (! $newAttachment) {
-                throw ValidationException::withMessages([
-                    'attachment' => 'The uploaded file could not be stored. Your previous submission file has been kept.',
-                ]);
-            }
-            $attachment = $newAttachment;
-        }
-
-        $values = [
-            'answer_text' => $data['answer_text'] ?? null,
-            'attachment' => $attachment,
-            'submitted_at' => now(),
-            'status' => 'submitted',
-            'score' => null,
-            'feedback' => null,
-            'graded_by' => null,
-            'graded_at' => null,
-        ];
 
         try {
-            if ($submission) {
-                $submission->update($values);
-            } else {
-                $assignment->submissions()->create($values + ['student_id' => $user->id]);
-            }
-        } catch (\Throwable $exception) {
+            DB::transaction(function () use ($assignment, $user, $request, $data, &$previousAttachment, &$newAttachment) {
+                // Serialize attempts for this assignment so concurrent first submissions
+                // or returned-work resubmissions cannot race the unique student row.
+                $lockedAssignment = Assignment::with('course')->whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+                abort_unless($this->canAccess($user, $lockedAssignment), 404);
+                abort_if($lockedAssignment->isClosed(), 403, 'The submission deadline has passed.');
+
+                $submission = $lockedAssignment->submissions()
+                    ->where('student_id', $user->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                abort_if($submission && $submission->status !== 'returned', 409,
+                    'This assignment has already been submitted. You can edit it only after your teacher returns it.');
+
+                if (blank($data['answer_text'] ?? null) && ! $request->hasFile('attachment') && ! $submission?->attachment) {
+                    throw ValidationException::withMessages([
+                        'answer_text' => 'Write an answer or attach a file before submitting.',
+                    ]);
+                }
+
+                $previousAttachment = $submission?->attachment;
+                $attachment = $previousAttachment;
+
+                if ($request->hasFile('attachment')) {
+                    $newAttachment = $request->file('attachment')->store('assignments/submissions', 'local');
+                    if (! $newAttachment) {
+                        throw ValidationException::withMessages([
+                            'attachment' => 'The uploaded file could not be stored. Your previous submission file has been kept.',
+                        ]);
+                    }
+                    $attachment = $newAttachment;
+                }
+
+                $values = [
+                    'answer_text' => $data['answer_text'] ?? null,
+                    'attachment' => $attachment,
+                    'submitted_at' => now(),
+                    'status' => 'submitted',
+                    'score' => null,
+                    'feedback' => null,
+                    'graded_by' => null,
+                    'graded_at' => null,
+                ];
+
+                if ($submission) {
+                    $submission->update($values);
+                } else {
+                    $lockedAssignment->submissions()->create($values + ['student_id' => $user->id]);
+                }
+            });
+        } catch (\\Throwable $exception) {
             if ($newAttachment) {
                 Storage::disk('local')->delete($newAttachment);
             }
             throw $exception;
         }
 
-        if ($newAttachment && $previousAttachment) {
+        if ($newAttachment && $previousAttachment && $previousAttachment !== $newAttachment) {
             Storage::disk('local')->delete($previousAttachment);
         }
 
