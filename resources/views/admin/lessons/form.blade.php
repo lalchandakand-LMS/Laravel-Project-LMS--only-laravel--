@@ -63,11 +63,14 @@
             <input type="number" name="position" value="{{ old('position', $lesson->position ?? 0) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
         <div class="sm:col-span-2">
-            <label class="mb-1 block text-sm font-semibold text-slate-700">Attachment (PDF / zip)</label>
-            <input type="file" name="attachment" class="w-full text-sm">
-            @if ($lesson->attachment)
-                <a href="{{ asset('storage/'.$lesson->attachment) }}" target="_blank" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Current file</a>
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Attachment upload (PDF / ZIP / Office document)</label>
+            <input type="file" name="attachment" accept=".pdf,.zip,.doc,.docx,.ppt,.pptx" class="w-full text-sm">
+            <label class="mb-1 mt-3 block text-sm font-semibold text-slate-700">Or attachment URL (HTTPS)</label>
+            <input type="url" name="attachment_url" value="{{ old('attachment_url', str_starts_with((string) $lesson->attachment, 'https://') ? $lesson->attachment : '') }}" placeholder="https://example.com/lesson-notes.pdf" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            @if ($lesson->attachment && !str_starts_with((string) $lesson->attachment, 'https://'))
+                <p class="mt-1 text-xs text-slate-500">Current private upload: {{ basename($lesson->attachment) }}. Leave both inputs empty to keep it.</p>
             @endif
+            <p class="mt-1 text-xs text-slate-500">Learners must pass course/lesson access checks before the attachment is delivered or redirected.</p>
         </div>
     </div>
 
