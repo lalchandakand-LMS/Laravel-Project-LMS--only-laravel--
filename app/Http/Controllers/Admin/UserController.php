@@ -169,6 +169,7 @@ class UserController extends Controller
             'institution' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:180'],
             'employment_status' => [$staff ? 'nullable' : 'prohibited', Rule::in(['active', 'on_leave', 'suspended', 'resigned', 'terminated'])],
             'professional_bio' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:5000'],
+            'base_salary' => [$staff ? 'nullable' : 'prohibited', 'numeric', 'min:0', 'max:99999999.99'],
         ]);
     }
 
@@ -242,6 +243,7 @@ class UserController extends Controller
                 'institution' => $data['institution'] ?? null,
                 'employment_status' => $data['employment_status'] ?? $user->staffProfile?->employment_status ?? 'active',
                 'professional_bio' => $data['professional_bio'] ?? null,
+                'base_salary' => $data['base_salary'] ?? 0,
             ]);
         }
     }
