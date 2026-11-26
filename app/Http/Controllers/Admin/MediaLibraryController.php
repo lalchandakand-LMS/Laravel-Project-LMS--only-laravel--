@@ -54,7 +54,7 @@ class MediaLibraryController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:180',
             'alt_text' => 'nullable|string|max:255',
-            'url' => ['required', 'url', 'max:2048', 'regex:/^https?:\/\//i'],
+            'url' => ['required', 'url:http,https', 'max:2048'],
             'mime_type' => 'nullable|in:image/jpeg,image/png,image/webp,image/gif,application/pdf',
         ]);
 
