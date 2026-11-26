@@ -49,7 +49,6 @@ class MediaAsset extends Model
             'settings' => ['value'],
             'categories' => ['image'],
             'courses' => ['thumbnail'],
-            'categories' => ['image'],
             'sliders' => ['image'],
             'ebooks' => ['cover', 'file'],
             'lessons' => ['attachment'],
