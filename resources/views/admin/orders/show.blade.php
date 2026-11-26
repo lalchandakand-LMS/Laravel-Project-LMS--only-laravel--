@@ -35,7 +35,7 @@
                     <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="min-w-0">
-                                <p class="font-semibold uppercase text-slate-700">{{ $payment->gateway }} · {{ $payment->transaction_id }}</p>
+                                <p class="font-semibold uppercase text-slate-700">{{ $payment->gateway }} · {{ $payment->transaction_id ?: ('Provider ref '.$payment->provider_payment_id) }}</p>
                                 <p class="text-xs text-slate-500">From/received by: {{ $payment->sender_number ?: '—' }} · ৳{{ number_format($payment->amount, 2) }}</p>
                                 <p class="mt-1 text-xs text-slate-500">Submitted {{ $payment->created_at->format('d M Y, h:i A') }}
                                     @if ($payment->verifier) · Reviewed by {{ $payment->verifier->name }} at {{ optional($payment->verified_at)->format('d M Y, h:i A') }} @endif
