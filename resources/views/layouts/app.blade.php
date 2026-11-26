@@ -21,16 +21,10 @@
     <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     <meta name="description" content="{{ $brandDescription }}">
     @include('partials.assets')
-    @php
-        $publicPrimaryColor = setting('site_primary_color', '#ea580c');
-        $publicSecondaryColor = setting('site_secondary_color', '#9a3412');
-        $publicPrimaryColor = is_string($publicPrimaryColor) && preg_match('/^#[0-9A-Fa-f]{6}$/', $publicPrimaryColor) ? $publicPrimaryColor : '#ea580c';
-        $publicSecondaryColor = is_string($publicSecondaryColor) && preg_match('/^#[0-9A-Fa-f]{6}$/', $publicSecondaryColor) ? $publicSecondaryColor : '#9a3412';
-    @endphp
     <style>
         :root {
-            --aec-primary: {{ $publicPrimaryColor }};
-            --aec-primary-dark: {{ $publicSecondaryColor }};
+            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) ? setting('site_primary_color') : '#ea580c' }};
+            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) ? setting('site_secondary_color') : '#9a3412' }};
         }
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
         .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
