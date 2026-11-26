@@ -16,6 +16,9 @@ use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AttendanceController;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AttendanceWorkflowTest extends TestCase
@@ -368,16 +371,16 @@ class AttendanceWorkflowTest extends TestCase
             'reviewed_at' => now(),
         ]);
 
-        $request = \Illuminate\Http\Request::create('/admin/attendance/'.$session->id.'/review', 'POST', [
+        $request = Request::create('/admin/attendance/'.$session->id.'/review', 'POST', [
             'action' => 'return',
             'review_note' => 'This stale review must not reverse the approval.',
         ]);
         $request->setUserResolver(fn () => $admin);
 
         try {
-            app(\App\Http\Controllers\AttendanceController::class)->review($request, $staleSession);
+            app(AttendanceController::class)->review($request, $staleSession);
             $this->fail('A stale review must not overwrite an already approved attendance session.');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+        } catch (HttpException $exception) {
             $this->assertSame(422, $exception->getStatusCode());
         }
 
