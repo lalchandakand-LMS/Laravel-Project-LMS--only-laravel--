@@ -48,11 +48,13 @@
                     <select name="items[{{ $i }}][type]" required class="item-type rounded-lg border border-slate-300 px-3 py-2">
                         <option value="course" @selected(($line['type'] ?? 'course') === 'course')>Course</option>
                         <option value="ebook" @selected(($line['type'] ?? '') === 'ebook')>E-book</option>
+                        <option value="product" @selected(($line['type'] ?? '') === 'product')>Physical product</option>
                     </select>
                     <select name="items[{{ $i }}][id]" required class="item-id rounded-lg border border-slate-300 px-3 py-2">
                         <option value="">Select item</option>
                         @foreach ($courses as $course)<option data-type="course" value="{{ $course->id }}" @selected(($line['type'] ?? '') === 'course' && (string) ($line['id'] ?? '') === (string) $course->id)>{{ $course->title }} · ৳{{ number_format($course->final_price, 2) }}</option>@endforeach
                         @foreach ($ebooks as $ebook)<option data-type="ebook" value="{{ $ebook->id }}" @selected(($line['type'] ?? '') === 'ebook' && (string) ($line['id'] ?? '') === (string) $ebook->id)>{{ $ebook->title }} · ৳{{ number_format($ebook->price, 2) }}</option>@endforeach
+                        @foreach ($products as $product)<option data-type="product" value="{{ $product->id }}" @selected(($line['type'] ?? '') === 'product' && (string) ($line['id'] ?? '') === (string) $product->id)>{{ $product->title }} · ৳{{ number_format($product->price, 2) }} · stock {{ $product->stock_quantity }}</option>@endforeach
                     </select>
                     <button type="button" class="remove-line rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-700">Remove</button>
                 </div>
