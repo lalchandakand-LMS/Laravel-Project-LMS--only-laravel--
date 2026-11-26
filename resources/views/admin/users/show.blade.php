@@ -50,7 +50,7 @@
                 <h3 class="border-b border-slate-100 px-5 py-4 font-bold">Student attendance history</h3>
                 <div class="divide-y divide-slate-100">
                     @forelse ($user->studentProfile->attendanceRecords->take(8) as $attendance)
-                        <div class="flex justify-between px-5 py-3 text-sm"><span>{{ $attendance->session?->topic ?? 'Class attendance' }} · {{ $attendance->attendance_date ?? $attendance->created_at->format('Y-m-d') }}</span><strong class="capitalize">{{ $attendance->status }}</strong></div>
+                        <div class="flex justify-between px-5 py-3 text-sm"><span>{{ $attendance->session?->topic ?? 'Class attendance' }} · {{ $attendance->session?->starts_at?->format('Y-m-d') ?? $attendance->created_at->format('Y-m-d') }}</span><strong class="capitalize">{{ $attendance->status }}</strong></div>
                     @empty
                         <p class="px-5 py-4 text-sm text-slate-500">No attendance records.</p>
                     @endforelse
