@@ -6,7 +6,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
-use App\Services\Payments\BkashTokenizedCheckoutAdapter;
+use App\Services\Payments\BkashCheckoutAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Tests\TestCase;
 
-class BkashTokenizedCheckoutAdapterTest extends TestCase
+class BkashCheckoutAdapterTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -29,11 +29,11 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
     public function test_adapter_creates_sandbox_checkout_without_marking_order_paid(): void
     {
         Http::fake([
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/token/grant' => Http::response([
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/create' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/create' => Http::response([
                 'paymentID' => 'BKASH-PAY-1001',
                 'bkashURL' => 'https://merchantdemo.sandbox.bka.sh/checkout/BKASH-PAY-1001',
             ]),
@@ -51,7 +51,7 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
             'email' => $student->email,
         ]);
 
-        $result = app(BkashTokenizedCheckoutAdapter::class)->initiate($order);
+        $result = app(BkashCheckoutAdapter::class)->initiate($order);
 
         $this->assertSame('BKASH-PAY-1001', $result['payment_id']);
         $this->assertSame('https://merchantdemo.sandbox.bka.sh/checkout/BKASH-PAY-1001', $result['redirect_url']);
@@ -59,7 +59,7 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
         $this->assertSame('pending', $order->fresh()->status);
         $this->assertSame(0, $order->payments()->count());
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/create'
+        Http::assertSent(fn ($request) => $request->url() === 'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/create'
             && $request['merchantInvoiceNumber'] === $order->order_no
             && $request['currency'] === 'BDT'
             && $request['amount'] === '1200.00');
@@ -68,15 +68,15 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
     public function test_callback_verification_executes_and_queries_provider_before_returning_success(): void
     {
         Http::fake([
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/token/grant' => Http::response([
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/execute' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/execute' => Http::response([
                 'paymentID' => 'BKASH-PAY-1002',
                 'transactionStatus' => 'Completed',
             ]),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/payment/status' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/query' => Http::response([
                 'paymentID' => 'BKASH-PAY-1002',
                 'trxID' => 'BKASH-TRX-2002',
                 'merchantInvoiceNumber' => 'AEC-ORDER-1002',
@@ -92,28 +92,28 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
             'status' => 'cancel',
         ]);
 
-        $result = app(BkashTokenizedCheckoutAdapter::class)->verifyCallback($request);
+        $result = app(BkashCheckoutAdapter::class)->verifyCallback($request);
 
         $this->assertSame('success', $result['status']);
         $this->assertSame('BKASH-TRX-2002', $result['transaction_id']);
         $this->assertSame('AEC-ORDER-1002', $result['invoice']);
         $this->assertSame('850.00', $result['amount']);
-        Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/tokenized/checkout/execute'));
-        Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/tokenized/checkout/payment/status'));
+        Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/checkout/payment/execute'));
+        Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/checkout/payment/query'));
     }
 
     public function test_callback_settles_the_order_only_after_provider_query_and_is_idempotent(): void
     {
         Http::fake([
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/token/grant' => Http::response([
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/execute' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/execute' => Http::response([
                 'paymentID' => 'BKASH-PAY-1003',
                 'transactionStatus' => 'Completed',
             ]),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/payment/status' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/query' => Http::response([
                 'paymentID' => 'BKASH-PAY-1003',
                 'trxID' => 'BKASH-TRX-2003',
                 'merchantInvoiceNumber' => 'AEC-ORDER-1003',
@@ -173,7 +173,7 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
             ],
         ])));
 
-        $adapter = app(BkashTokenizedCheckoutAdapter::class);
+        $adapter = app(BkashCheckoutAdapter::class);
         $this->assertFalse($adapter->isConfigured());
 
         $this->expectException(RuntimeException::class);
@@ -192,7 +192,7 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
                 'app_secret' => 'sandbox-app-secret',
                 'username' => 'sandbox-user',
                 'password' => 'sandbox-password',
-                'base_url' => 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+                'base_url' => 'https://checkout.sandbox.bka.sh/v1.2.0-beta',
             ],
         ])));
     }
