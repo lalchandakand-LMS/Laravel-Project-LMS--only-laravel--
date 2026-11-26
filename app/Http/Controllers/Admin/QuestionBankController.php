@@ -118,9 +118,9 @@ class QuestionBankController extends Controller
 
     public function template()
     {
-        $csv = "question,type,marks,options,correct_index,category,difficulty,explanation\\n";
-        $csv .= '"What is the past tense of go?",mcq,1,"went|gone|goes|going",0,Grammar,easy,"Went is the simple past form."'. "\\n";
-        $csv .= '"Write a sentence using present perfect.",short,2,,,Grammar,medium,"Check tense and structure."'. "\\n";
+        $csv = "question,type,marks,options,correct_index,category,difficulty,explanation\n";
+        $csv .= '"What is the past tense of go?",mcq,1,"went|gone|goes|going",0,Grammar,easy,"Went is the simple past form."'. "\n";
+        $csv .= '"Write a sentence using present perfect.",short,2,,,Grammar,medium,"Check tense and structure."'. "\n";
 
         return response($csv, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
