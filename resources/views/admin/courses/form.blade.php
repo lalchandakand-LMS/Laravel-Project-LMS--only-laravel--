@@ -220,7 +220,6 @@
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy an image URL →</a>
                     @endif
-                    <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy an image URL →</a>
                 </div>
                 <div>
                     <label class="mb-1 block font-semibold text-slate-700">Promo video URL</label>
