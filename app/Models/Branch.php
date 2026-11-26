@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Setting;
 use App\Models\Concerns\TracksDeletionActor;
 
 class Branch extends Model
