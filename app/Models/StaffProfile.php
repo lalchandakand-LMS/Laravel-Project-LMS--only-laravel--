@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StaffProfile extends Model
 {
     protected $fillable = [
-        'user_id', 'employee_code', 'department', 'designation', 'employment_type',
+        'user_id', 'employee_code', 'id_token', 'department', 'designation', 'employment_type',
         'joining_date', 'confirmation_date', 'experience_years',
         'highest_qualification', 'institution', 'employment_status', 'professional_bio', 'base_salary',
     ];
