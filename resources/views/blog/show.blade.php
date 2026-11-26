@@ -2,21 +2,18 @@
 @section('title', $post->meta_title ?: $post->title)
 @section('meta_description', $post->meta_description ?: $post->excerpt)
 @push('structured_data')
-    @php
-        $articleSchema = [
-            '@context' => 'https://schema.org',
-            '@type' => 'Article',
-            'headline' => $post->meta_title ?: $post->title,
-            'description' => $post->meta_description ?: $post->excerpt,
-            'datePublished' => $post->published_at?->toIso8601String(),
-            'dateModified' => $post->updated_at?->toIso8601String(),
-            'author' => ['@type' => 'Person', 'name' => $post->author?->name ?: setting('site_name', "Alom's English Center")],
-            'publisher' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center")],
-            'mainEntityOfPage' => route('blog.show', $post),
-            'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
-        ];
-    @endphp
-    <script type="application/ld+json">@json($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+<script type="application/ld+json">@json([
+    '@context' => 'https://schema.org',
+    '@type' => 'Article',
+    'headline' => $post->meta_title ?: $post->title,
+    'description' => $post->meta_description ?: $post->excerpt,
+    'datePublished' => $post->published_at?->toIso8601String(),
+    'dateModified' => $post->updated_at?->toIso8601String(),
+    'author' => ['@type' => 'Person', 'name' => $post->author?->name ?: setting('site_name', "Alom's English Center")],
+    'publisher' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
+    'mainEntityOfPage' => route('blog.show', $post),
+    'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
 @endpush
 
 @section('content')
