@@ -67,6 +67,9 @@
             <input type="file" name="attachment" accept=".pdf,.zip,.doc,.docx,.ppt,.pptx" class="w-full text-sm">
             <label class="mt-2 block text-xs font-semibold text-slate-600">Or use a hosted PDF / document URL</label>
             <input type="url" name="attachment_url" value="{{ old('attachment_url', str_starts_with((string) $lesson->attachment, 'http') ? $lesson->attachment : '') }}" placeholder="https://example.com/lesson-notes.pdf" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            @if(auth()->user()->isAdmin())
+                <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy a file URL →</a>
+            @endif
             <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy a file URL →</a>
             @if ($lesson->attachment && ! str_starts_with((string) $lesson->attachment, 'http'))
                 <p class="mt-1 text-xs text-slate-500">A protected uploaded file is already attached. Upload or link another file to replace it.</p>
