@@ -30,7 +30,7 @@
     @if (filled(\App\Models\Setting::get('google_site_verification')) && !$privateSeoRoute)
         <meta name="google-site-verification" content="{{ \App\Models\Setting::get('google_site_verification') }}">
     @endif
-    <script type="application/ld+json">@json([
+    <script type="application/ld+json"><?php echo json_encode([
         '@context' => 'https://schema.org',
         '@graph' => [
             [
@@ -42,14 +42,14 @@
                 'description' => $brandDescription,
                 'contactPoint' => array_filter([
                     '@type' => 'ContactPoint',
-                    'telephone' => \App\Models\Setting::get('site_phone') ?: null,
-                    'email' => \App\Models\Setting::get('site_email') ?: null,
+                    'telephone' => \\App\\Models\\Setting::get('site_phone') ?: null,
+                    'email' => \\App\\Models\\Setting::get('site_email') ?: null,
                     'contactType' => 'customer support',
                 ]),
                 'sameAs' => array_values(array_filter([
-                    \App\Models\Setting::get('facebook'),
-                    \App\Models\Setting::get('youtube'),
-                    \App\Models\Setting::get('instagram'),
+                    \\App\\Models\\Setting::get('facebook'),
+                    \\App\\Models\\Setting::get('youtube'),
+                    \\App\\Models\\Setting::get('instagram'),
                 ])),
             ],
             [
@@ -65,7 +65,7 @@
                 ],
             ],
         ],
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
     <script type="application/ld+json">@json($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
     @stack('structured_data')
     @include('partials.assets')
