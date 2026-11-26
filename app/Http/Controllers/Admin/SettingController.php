@@ -114,7 +114,7 @@ class SettingController extends Controller
                 $newPath = $request->file($field)->store($directory, 'public');
                 if ($newPath) {
                     Setting::set($field, $newPath);
-                    if ($oldPath && $oldPath !== $newPath) {
+                    if ($oldPath && $oldPath !== $newPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
                         Storage::disk('public')->delete($oldPath);
                     }
                 }
@@ -135,7 +135,7 @@ class SettingController extends Controller
             if ($request->boolean($flag)) {
                 $oldPath = Setting::get($key);
                 Setting::set($key, '');
-                if ($oldPath) {
+                if ($oldPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
                     Storage::disk('public')->delete($oldPath);
                 }
             }
