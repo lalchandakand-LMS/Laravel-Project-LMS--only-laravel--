@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\Section;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LessonAccessSecurityTest extends TestCase
@@ -109,4 +112,23 @@ class LessonAccessSecurityTest extends TestCase
             ->post(route('student.learn.heartbeat', [$courses[0]->slug, $lesson->id]), ['seconds' => 30])
             ->assertNotFound();
     }
+
+    public function test_invalid_cross_course_section_does_not_leave_an_uploaded_lesson_attachment(): void
+    {
+        Storage::fake('local');
+        $admin = User::where('role', 'admin')->firstOrFail();
+        $course = Course::whereHas('sections')->firstOrFail();
+        $otherSection = Section::where('course_id', '!=', $course->id)->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.lessons.store'), [
+            'course_id' => $course->id,
+            'section_id' => $otherSection->id,
+            'title' => 'Invalid cross-course lesson',
+            'type' => 'pdf',
+            'attachment' => UploadedFile::fake()->create('lesson.pdf', 30, 'application/pdf'),
+        ])->assertStatus(422);
+
+        $this->assertSame([], Storage::disk('local')->allFiles('lessons'));
+    }
+
 }
