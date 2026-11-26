@@ -29,9 +29,41 @@ class DashboardController extends Controller
         $inProgress = $enrollments->filter(fn ($e) => $e->course && $e->course->progressFor($user) < 100);
         $completed = $enrollments->filter(fn ($e) => $e->course && $e->course->progressFor($user) >= 100);
         $onlineBatchEnrollments = OnlineBatchEnrollment::with(['batch', 'course'])
-            ->where('student_id', $user->id)->where('status', 'active')->latest()->get();
+            ->where('student_id', $user->id)
+            ->where('status', 'active')
+            ->whereNull('ended_at')
+            ->whereHas('batch', function ($batch) use ($user) {
+                $batch->where('status', '!=', 'cancelled')
+                    ->where(function ($branch) use ($user) {
+                        $branch->whereNull('branch_id');
+                        if ($user->branch_id !== null) {
+                            $branch->orWhere('branch_id', $user->branch_id);
+                        }
+                    });
+            })
+            ->latest()->get();
         $coachingEnrollments = CoachingEnrollment::with(['batch.branch', 'course'])
-            ->where('student_id', $user->id)->where('status', 'active')->latest()->get();
+            ->where('student_id', $user->id)
+            ->where('status', 'active')
+            ->whereNull('ended_at')
+            ->whereHas('admission', function ($admission) use ($user) {
+                $admission->where(function ($branch) use ($user) {
+                    $branch->whereNull('branch_id');
+                    if ($user->branch_id !== null) {
+                        $branch->orWhere('branch_id', $user->branch_id);
+                    }
+                });
+            })
+            ->whereHas('batch', function ($batch) use ($user) {
+                $batch->where('status', '!=', 'cancelled')
+                    ->where(function ($branch) use ($user) {
+                        $branch->whereNull('branch_id');
+                        if ($user->branch_id !== null) {
+                            $branch->orWhere('branch_id', $user->branch_id);
+                        }
+                    });
+            })
+            ->latest()->get();
         $coachingInvoices = StudentFeeInvoice::with(['payments', 'creditApplications'])
             ->where('student_id', $user->id)->whereIn('status', ['unpaid', 'partial'])->latest('issued_at')->get();
         $coachingDue = round($coachingInvoices->sum(fn ($invoice) => $invoice->dueAmount()), 2);
