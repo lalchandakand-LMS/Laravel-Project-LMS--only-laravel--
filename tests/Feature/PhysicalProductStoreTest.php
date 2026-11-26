@@ -466,6 +466,40 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertSame('pending', $order->fresh()->status);
     }
 
+    public function test_admin_cannot_override_a_pending_provider_payment_or_release_its_order(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'provider_payment_id' => 'BKASH-PENDING-GUARD-1',
+            'amount' => 500,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.orders.status', $order->order_no), ['status' => 'cancelled'])
+            ->assertSessionHasErrors('status');
+        $this->post(route('admin.payments.verify', $payment), [
+            'action' => 'reject',
+            'rejection_reason' => 'Manual override attempt',
+        ])->assertSessionHasErrors('payment');
+
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame('pending', $payment->fresh()->status);
+    }
+
     public function test_expiry_does_not_cancel_orders_with_payment_awaiting_review(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
