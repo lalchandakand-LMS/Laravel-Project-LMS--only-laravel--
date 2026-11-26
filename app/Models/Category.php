@@ -2,29 +2,56 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\TracksDeletionActor;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Category extends Model
 {
     use TracksDeletionActor;
-    protected $fillable = ['parent_id','name','slug','icon','image','description','position','is_active'];
+
+    protected $fillable = ['parent_id', 'name', 'slug', 'icon', 'image', 'description', 'position', 'is_active', 'meta_title', 'meta_description'];
+
+    protected $casts = ['is_active' => 'boolean'];
 
     protected static function booted(): void
     {
-        static::saving(function (self $c) {
-            if (! $c->slug) {
-                $c->slug = Str::slug($c->name).'-'.Str::lower(Str::random(4));
+        static::saving(function (self $category) {
+            if (! $category->slug || $category->isDirty('name') && ! $category->isDirty('slug')) {
+                $category->slug = Str::slug($category->name).'-'.Str::lower(Str::random(4));
             }
         });
     }
 
     public function getRouteKeyName() { return 'slug'; }
+    public function courses() { return $this->hasMany(Course::class); }
+    public function courseLinks() { return $this->belongsToMany(Course::class, 'course_category')->withTimestamps(); }
+    public function parent() { return $this->belongsTo(self::class, 'parent_id'); }
+    public function children() { return $this->hasMany(self::class, 'parent_id')->orderBy('position')->orderBy('name'); }
 
-    public function courses()  { return $this->hasMany(Course::class); }
-    public function parent()   { return $this->belongsTo(Category::class, 'parent_id'); }
-    public function children() { return $this->hasMany(Category::class, 'parent_id'); }
+    public function descendants()
+    {
+        $ids = collect();
+        $visited = collect([$this->id]);
+        $frontier = $visited;
+        while ($frontier->isNotEmpty()) {
+            $next = self::whereIn('parent_id', $frontier)
+                ->whereNotIn('id', $visited)
+                ->pluck('id');
+            $ids = $ids->merge($next);
+            $visited = $visited->merge($next);
+            $frontier = $next;
+        }
+        return self::whereIn('id', $ids);
+    }
 
-    public function publishedCourses() { return $this->courses()->where('is_published', true); }
+    public function publishedCourses()
+    {
+        return $this->courseLinks()->where('is_published', true);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? asset('storage/'.$this->image) : null;
+    }
 }

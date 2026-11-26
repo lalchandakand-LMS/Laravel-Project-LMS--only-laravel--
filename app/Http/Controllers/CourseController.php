@@ -14,7 +14,7 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Course::published()->with(['instructor', 'category']);
+        $query = Course::published()->with(['instructor', 'category', 'categories']);
 
         if ($q = $request->get('q')) {
             $query->where(fn ($w) => $w->where('title', 'like', "%{$q}%")
@@ -22,8 +22,15 @@ class CourseController extends Controller
                 ->orWhere('description', 'like', "%{$q}%"));
         }
 
-        if ($category = $request->get('category')) {
-            $query->whereHas('category', fn ($c) => $c->where('slug', $category));
+        if ($categorySlug = $request->get('category')) {
+            $selectedCategory = Category::where('slug', $categorySlug)->where('is_active', true)->first();
+            if ($selectedCategory) {
+                $categoryIds = $selectedCategory->descendants()->pluck('id')->push($selectedCategory->id)->all();
+                $query->where(fn ($q) => $q->whereIn('category_id', $categoryIds)
+                    ->orWhereIn('id', DB::table('course_category')->select('course_id')->whereIn('category_id', $categoryIds)));
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($level = $request->get('level')) {
@@ -40,17 +47,19 @@ class CourseController extends Controller
 
         return view('courses.index', [
             'courses' => $query->paginate(9)->withQueryString(),
-            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->get(),
+            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->orderBy('position')->orderBy('name')->get(),
             'filters' => $request->only('q', 'category', 'level', 'sort'),
         ]);
     }
 
     public function category(Category $category)
     {
+        $categoryIds = $category->descendants()->pluck('id')->push($category->id)->all();
+
         return view('courses.index', [
-            'courses' => Course::published()->where('category_id', $category->id)
-                ->with(['instructor', 'category'])->latest()->paginate(9),
-            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->get(),
+            'courses' => Course::published()->where(fn ($query) => $query->whereIn('category_id', $categoryIds)->orWhereIn('id', DB::table('course_category')->select('course_id')->whereIn('category_id', $categoryIds)))
+                ->with(['instructor', 'category', 'categories'])->latest()->paginate(9),
+            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->orderBy('position')->orderBy('name')->get(),
             'filters' => ['category' => $category->slug],
             'activeCategory' => $category,
         ]);
@@ -60,7 +69,7 @@ class CourseController extends Controller
     {
         abort_unless($course->is_published || optional($request->user())->isAdmin(), 404);
 
-        $course->load(['sections.lessons', 'instructor', 'category', 'liveClasses']);
+        $course->load(['sections.lessons', 'instructor', 'category', 'categories', 'liveClasses']);
         $user = $request->user();
         $enrolled = $user && $user->hasCourse($course);
 
@@ -68,8 +77,7 @@ class CourseController extends Controller
             'course' => $course,
             'enrolled' => $enrolled,
             'reviews' => $course->reviews()->with('user')->where('is_approved', true)->latest()->take(10)->get(),
-            'related' => Course::published()->where('category_id', $course->category_id)
-                ->where('id', '!=', $course->id)->take(3)->get(),
+            'related' => Course::published()->where('id', '!=', $course->id)->where(fn ($query) => $query->where('category_id', $course->category_id)->orWhereHas('categories', fn ($categories) => $categories->whereIn('categories.id', $course->categories->pluck('id'))))->take(3)->get(),
             'myReview' => $user ? $course->reviews()->where('user_id', $user->id)->first() : null,
             'exams' => $course->exams()->where('is_published', true)->get(),
         ]);

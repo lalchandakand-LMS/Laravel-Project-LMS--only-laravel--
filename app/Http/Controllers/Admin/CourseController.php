@@ -14,7 +14,7 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Course::with(['category', 'instructor'])->withCount(['lessons', 'enrollments']);
+        $query = Course::with(['category', 'categories', 'instructor'])->withCount(['lessons', 'enrollments']);
 
         if (! auth()->user()->isAdmin()) {
             $query->where('instructor_id', auth()->id());
@@ -38,7 +38,11 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        $course = Course::create($this->validated($request));
+        $data = $this->validated($request);
+        $categoryIds = $data['category_ids'] ?? [];
+        unset($data['category_ids']);
+        $course = Course::create($data);
+        $course->categories()->sync($categoryIds);
         return redirect()->route('admin.courses.edit', $course)
             ->with('success', 'Course created. Now build the curriculum.');
     }
@@ -58,7 +62,11 @@ class CourseController extends Controller
     public function update(Request $request, Course $course)
     {
         $this->authorizeOwner($course);
-        $course->update($this->validated($request, $course));
+        $data = $this->validated($request, $course);
+        $categoryIds = $data['category_ids'] ?? [];
+        unset($data['category_ids']);
+        $course->update($data);
+        $course->categories()->sync($categoryIds);
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Course updated.');
     }
 
@@ -79,7 +87,8 @@ class CourseController extends Controller
     {
         return [
             'course' => $course,
-            'categories' => Category::orderBy('name')->get(),
+            'categories' => Category::where('is_active', true)->with('parent')->orderBy('parent_id')->orderBy('position')->orderBy('name')->get(),
+            'selectedCategoryIds' => $course->exists ? $course->categories()->pluck('categories.id')->all() : [],
             'levels' => Level::where('is_active', true)->orderBy('position')->orderBy('name')->get(),
             'instructors' => User::whereIn('role', ['instructor', 'admin'])->orderBy('name')->get(),
         ];
@@ -91,6 +100,8 @@ class CourseController extends Controller
             'title' => 'required|string|max:180',
             'subtitle' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'integer|distinct|exists:categories,id',
             'level_id' => 'nullable|exists:levels,id',
             'instructor_id' => 'nullable|exists:users,id',
             'description' => 'nullable|string',
@@ -111,6 +122,10 @@ class CourseController extends Controller
         ], [
             'discount_price.lt' => 'Discount price must be lower than the regular course price.',
         ]);
+
+        $categoryIds = $data['category_ids'] ?? (isset($data['category_id']) ? [$data['category_id']] : []);
+        $data['category_ids'] = array_values(array_unique(array_map('intval', $categoryIds)));
+        $data['category_id'] = $data['category_ids'][0] ?? null;
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
