@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Course;
+use App\Models\Ebook;
+use App\Models\FlashSale;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -137,4 +139,36 @@ class AdminOrderManagementTest extends TestCase
         $this->actingAs($student)->get(route('admin.orders.create'))->assertForbidden();
         $this->actingAs($student)->get(route('admin.orders.export'))->assertForbidden();
     }
+    public function test_admin_created_orders_use_active_flash_sale_price_for_ebooks(): void
+    {
+        [$admin, $student, $branch] = $this->setupAdminAndStudent();
+        $ebook = Ebook::create([
+            'title' => 'Admin Order Sale E-book',
+            'price' => 1200,
+            'pages' => 30,
+            'is_free' => false,
+            'is_published' => true,
+        ]);
+        $sale = FlashSale::create([
+            'name' => 'Admin order e-book sale',
+            'type' => 'fixed',
+            'value' => 200,
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addHour(),
+            'is_active' => true,
+        ]);
+        $sale->ebooks()->sync([$ebook->id]);
+
+        $this->actingAs($admin)->post(route('admin.orders.store'), [
+            'user_id' => $student->id, 'branch_id' => $branch->id,
+            'name' => $student->name, 'phone' => '01700000000',
+            'email' => $student->email, 'address' => 'Dhaka',
+            'items' => [['type' => 'ebook', 'id' => $ebook->id]],
+        ])->assertRedirect();
+
+        $order = Order::with('items')->latest('id')->firstOrFail();
+        $this->assertSame(1000.0, (float) $order->total);
+        $this->assertSame(1000.0, (float) $order->items->first()->price);
+    }
+
 }
