@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class BranchController extends Controller
 {
@@ -21,7 +22,9 @@ class BranchController extends Controller
 
         return view('admin.branches.index', [
             'branches' => $branches,
-            'totalRevenue' => (float) \App\Models\Order::where('status', 'paid')->sum('total'),
+            'totalRevenue' => max(0, (float) \App\Models\Payment::where('status', 'verified')->sum('amount')
+                - (float) \App\Models\PaymentAdjustment::where('type', 'refund')->sum('amount')
+                + (float) \App\Models\PaymentAdjustment::where('type', 'credit')->sum('amount')),
         ]);
     }
 
@@ -36,7 +39,11 @@ class BranchController extends Controller
 
     public function store(Request $request)
     {
-        Branch::create($this->validated($request));
+        $data = $this->validated($request);
+        DB::transaction(function () use ($data) {
+            $branch = Branch::create($data);
+            $this->syncManagerAssignment($branch, null);
+        });
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch created.');
     }
@@ -52,7 +59,12 @@ class BranchController extends Controller
 
     public function update(Request $request, Branch $branch)
     {
-        $branch->update($this->validated($request, $branch));
+        $data = $this->validated($request, $branch);
+        DB::transaction(function () use ($branch, $data) {
+            $oldManagerId = $branch->manager_id;
+            $branch->update($data);
+            $this->syncManagerAssignment($branch, $oldManagerId);
+        });
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch updated.');
     }
@@ -73,7 +85,22 @@ class BranchController extends Controller
 
     private function managers()
     {
-        return User::whereIn('role', ['branch_manager', 'admin'])->orderBy('name')->get();
+        return User::where('role', 'branch_manager')->orderBy('name')->get();
+    }
+
+    private function syncManagerAssignment(Branch $branch, ?int $oldManagerId): void
+    {
+        $newManagerId = $branch->manager_id;
+
+        if ($oldManagerId && $oldManagerId !== $newManagerId) {
+            User::whereKey($oldManagerId)
+                ->where('branch_id', $branch->id)
+                ->update(['branch_id' => null]);
+        }
+
+        if ($newManagerId) {
+            User::whereKey($newManagerId)->update(['branch_id' => $branch->id]);
+        }
     }
 
     private function validated(Request $request, ?Branch $branch = null): array
@@ -84,7 +111,7 @@ class BranchController extends Controller
             'address' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:120',
-            'manager_id' => 'nullable|exists:users,id',
+            'manager_id' => ['nullable', Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', 'branch_manager')), Rule::unique('branches', 'manager_id')->ignore($branch?->id)],
             'payment_methods' => 'sometimes|array',
             'payment_methods.*' => ['string', Rule::in(array_keys(Branch::PAYMENT_METHODS))],
             'bkash_number' => 'nullable|string|max:40',

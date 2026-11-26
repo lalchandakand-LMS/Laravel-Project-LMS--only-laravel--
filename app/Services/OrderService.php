@@ -48,6 +48,7 @@ class OrderService
                     if ($existing) {
                         $existing->update([
                             'order_id' => $order->id,
+                            'branch_id' => $order->branch_id,
                             'price_paid' => $item->price,
                             'status' => 'active',
                             'enrolled_at' => now(),
@@ -57,6 +58,7 @@ class OrderService
                         Enrollment::create([
                             'user_id' => $order->user_id,
                             'course_id' => $course->id,
+                            'branch_id' => $order->branch_id,
                             'order_id' => $order->id,
                             'price_paid' => $item->price,
                             'status' => 'active',

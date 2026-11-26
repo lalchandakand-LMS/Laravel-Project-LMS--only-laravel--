@@ -5,7 +5,7 @@
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-    <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Total collected (paid orders)</p>
+    <p class="text-xs font-bold uppercase tracking-wide text-emerald-700">Net collection (verified payments, refunds and credits)</p>
     <p class="mt-1 text-3xl font-black text-emerald-900">{{ $cur }}{{ number_format($total) }}</p>
 </div>
 
