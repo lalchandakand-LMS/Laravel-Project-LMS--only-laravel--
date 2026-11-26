@@ -8,15 +8,15 @@
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ($ebooks as $ebook)
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <img src="{{ $ebook->coverUrl() }}" class="h-44 w-full object-cover" alt="">
+            <img src="{{ $ebook->coverUrl() }}" class="h-44 w-full object-cover" alt="{{ $ebook->title }}">
             <div class="p-4">
                 <h3 class="line-clamp-2 font-bold text-slate-900">{{ $ebook->title }}</h3>
                 <p class="mt-1 text-sm font-semibold text-emerald-700">{{ $ebook->is_free ? 'Free' : '৳'.number_format($ebook->price) }}</p>
                 <p class="text-xs text-slate-500">{{ $ebook->purchases_count }} purchases · {{ $ebook->pages }} pages</p>
                 <div class="mt-3 flex gap-3 text-xs font-semibold">
                     <a href="{{ route('admin.ebooks.edit', $ebook) }}" class="text-emerald-700">Edit</a>
-                    <form method="POST" action="{{ route('admin.ebooks.destroy', $ebook) }}" onsubmit="return confirm('Delete e-book?')">
-                        @csrf @method('DELETE')<button class="text-rose-600">Delete</button>
+                    <form method="POST" action="{{ route('admin.ebooks.destroy', $ebook) }}" onsubmit="return confirm('Archive this e-book? It will be hidden from students and can be restored from Recycle Bin. Existing purchase history and files will be preserved.')">
+                        @csrf @method('DELETE')<button class="text-amber-700">Archive</button>
                     </form>
                 </div>
             </div>
