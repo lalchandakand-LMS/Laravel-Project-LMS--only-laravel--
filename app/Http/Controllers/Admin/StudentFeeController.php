@@ -26,7 +26,7 @@ class StudentFeeController extends Controller
         $totals = [
             'invoiced' => (float) StudentFeeInvoice::sum(DB::raw('amount - discount')),
             'collected' => (float) StudentFeePayment::sum('applied_amount'),
-            'due' => (float) StudentFeeInvoice::get()->sum(fn ($invoice) => $invoice->dueAmount()),
+            'due' => max(0, (float) StudentFeeInvoice::sum(DB::raw('amount - discount')) - (float) StudentFeePayment::sum('applied_amount')),
             'advance' => (float) StudentFeeCredit::sum('amount'),
         ];
 
