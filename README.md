@@ -124,7 +124,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 - **Live classes** (`/admin/live-classes`) – schedule per course/branch, meeting
   link, start/end time, join button inside the student dashboard.
 - **Teacher portal** (`/teacher`) – my courses, my students, upcoming live
-  classes, exam results; instructors can only touch their own courses.
+  classes, exam results, and staff leave requests with overlap protection.
 - **Guardian portal** (`/guardian`) – linked children, per-child attendance,
   results, exam history and enrolled courses (read-only).
 - **Branch manager portal** (`/branch`) – students, staff, enrolments, revenue
@@ -142,8 +142,9 @@ lives in **[UPDATE.md](UPDATE.md)**.
   and descriptive CQ/short questions.
 - Categories, e-books (cover + PDF upload), announcements, coupons,
   enrollments (manual enrol / remove), students & staff (roles, activate,
-  disable, password reset), orders (status change, payment verification),
-  review moderation, site settings (branding, contact, bKash/Nagad numbers).
+  disable, password reset), staff leave approval/rejection with reviewer notes,
+  orders (status change, payment verification), review moderation, site settings
+  (branding, contact, bKash/Nagad numbers).
 - Role protection: instructors only see/manage **their own** courses,
   students can never reach `/admin` (403).
 
