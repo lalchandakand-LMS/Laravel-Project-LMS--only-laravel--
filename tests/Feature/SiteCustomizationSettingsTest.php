@@ -160,5 +160,16 @@ class SiteCustomizationSettingsTest extends TestCase
             'site_secondary_color' => '#12345',
         ])->assertSessionHasErrors(['site_primary_color', 'site_secondary_color']);
     }
+
+    public function test_public_brand_palette_is_rendered_on_the_website(): void
+    {
+        Setting::set('site_primary_color', '#ea580c');
+        Setting::set('site_secondary_color', '#9a3412');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('--aec-primary: #ea580c', false)
+            ->assertSee('--aec-primary-dark: #9a3412', false);
+    }
 }
 
