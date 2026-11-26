@@ -68,17 +68,7 @@ class BkashPaymentController extends Controller
                 ->with('success', 'Your bKash payment was already confirmed.');
         }
 
-        $callbackStatus = strtolower((string) ($request->input('status') ?: $request->query('status')));
-        if ($callbackStatus !== '' && ! in_array($callbackStatus, ['success', 'completed'], true)) {
-            $payment->update([
-                'status' => 'rejected',
-                'rejection_reason' => 'The customer cancelled or did not complete the bKash checkout.',
-                'payload' => array_merge($payment->payload ?? [], ['callback_status' => $callbackStatus]),
-            ]);
-
-            return redirect()->route('checkout.success', $order->order_no)
-                ->with('error', 'The bKash payment was not completed. You may try again.');
-        }
+        // Browser redirect status is informational only; the adapter always asks bKash.
 
         try {
             $result = $adapter->verifyCallback($request);
