@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        Schema::table('staff_profiles', function (Blueprint $table) {
+            $table->dropColumn('base_salary');
+        });
+
         Schema::table('coaching_admissions', function (Blueprint $table) {
             $table->date('student_date_of_birth')->nullable();
             $table->string('student_gender', 30)->nullable();
@@ -19,7 +23,6 @@ return new class extends Migration {
             $table->string('permanent_address', 500)->nullable();
             $table->string('quota_type', 80)->nullable();
             $table->text('quota_notes')->nullable();
-            $table->decimal('base_salary', 12, 2)->default(0);
         });
 
         Schema::table('student_profiles', function (Blueprint $table) {
@@ -29,12 +32,16 @@ return new class extends Migration {
             $table->string('quota_type', 80)->nullable();
             $table->text('quota_notes')->nullable();
         });
+
+        Schema::table('staff_profiles', function (Blueprint $table) {
+            $table->decimal('base_salary', 12, 2)->default(0);
+        });
     }
 
     public function down(): void
     {
         Schema::table('student_profiles', function (Blueprint $table) {
-            $table->dropColumn(['guardian_name', 'guardian_phone', 'guardian_email', 'quota_type', 'quota_notes', 'base_salary']);
+            $table->dropColumn(['guardian_name', 'guardian_phone', 'guardian_email', 'quota_type', 'quota_notes']);
         });
 
         Schema::table('coaching_admissions', function (Blueprint $table) {
