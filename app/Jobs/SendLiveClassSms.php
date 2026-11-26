@@ -38,6 +38,18 @@ class SendLiveClassSms implements ShouldQueue
             return;
         }
 
+        $settings = (array) config('live_classes.sms', []);
+        foreach (['username', 'api_key', 'sender_name', 'endpoint'] as $key) {
+            if (blank($settings[$key] ?? null)) {
+                Log::warning('Live class SMS job skipped because MiMSMS configuration is incomplete.', [
+                    'user_id' => $this->userId,
+                    'live_class_id' => $this->liveClassId,
+                    'missing_setting' => $key,
+                ]);
+                return;
+            }
+        }
+
         $user = User::query()->whereKey($this->userId)->where('is_active', true)->first();
         $liveClass = LiveClass::query()->with('course')->find($this->liveClassId);
 
