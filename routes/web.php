@@ -104,6 +104,7 @@ Route::middleware(['auth', 'required.email.verified'])->group(function () {
 Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add/{type}/{id}', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/quantity/{key}', [CartController::class, 'updateQuantity'])->name('cart.quantity');
     Route::post('/cart/remove/{key}', [CartController::class, 'remove'])->name('cart.remove');
     Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon');
     Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
