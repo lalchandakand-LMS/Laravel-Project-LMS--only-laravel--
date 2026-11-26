@@ -41,7 +41,7 @@ class LiveClassController extends Controller
         $user = auth()->user();
         try {
             $month = Carbon::createFromFormat('Y-m', (string) $request->get('month', now()->format('Y-m')))->startOfMonth();
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $month = now()->startOfMonth();
         }
 
