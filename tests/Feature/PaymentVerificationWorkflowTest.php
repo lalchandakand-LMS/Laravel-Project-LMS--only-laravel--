@@ -133,11 +133,14 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertNotNull($payment->proof_path);
         Storage::disk('local')->assertExists($payment->proof_path);
 
-        $this->actingAs($admin)->get(route('admin.payments.proof', $payment))
-            ->assertOk()
-            ->assertHeader('cache-control', 'private, no-store, max-age=0')
+        $proofResponse = $this->actingAs($admin)->get(route('admin.payments.proof', $payment));
+        $proofResponse->assertOk()
             ->assertHeader('x-content-type-options', 'nosniff')
             ->assertHeader('content-disposition');
+        $cacheControl = $proofResponse->headers->get('cache-control');
+        $this->assertStringContainsString('private', $cacheControl);
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('max-age=0', $cacheControl);
     }
 
     public function test_payment_submission_rechecks_the_balance_under_the_order_lock(): void
