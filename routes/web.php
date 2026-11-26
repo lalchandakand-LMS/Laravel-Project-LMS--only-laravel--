@@ -67,7 +67,7 @@ Route::get('/id/verify/{token}', [Admin\IdentityCardController::class, 'verify']
  |------------------------------------------------------------------*/
 Route::middleware('guest')->group(function () {
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('throttle:10,1')->name('auth.google.redirect');
-    Route::get('/auth/google/callback', [App\\Http\\Controllers\\Auth\\GoogleAuthController::class, 'callback'])->middleware('throttle:10,1')->name('auth.google.callback');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('throttle:10,1')->name('auth.google.callback');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
