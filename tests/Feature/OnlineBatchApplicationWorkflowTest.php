@@ -1,0 +1,64 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Batch;
+use App\Models\CoachingAdmission;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\OnlineBatchApplication;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class OnlineBatchApplicationWorkflowTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_student_can_apply_for_online_batch_and_admin_approval_uses_online_enrollment_only(): void
+    {
+        $student = User::create(['name' => 'Student', 'email' => 'student@example.com', 'password' => 'password', 'role' => 'student', 'is_active' => true]);
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
+        $course = Course::create(['title' => 'Online English', 'price' => 2000, 'is_published' => true]);
+        $batch = Batch::create(['name' => 'Online Evening', 'code' => 'ONL-EVE', 'course_id' => $course->id, 'status' => 'upcoming']);
+
+        $this->actingAs($student)->post(route('student.online-batches.apply'), ['batch_id' => $batch->id])->assertRedirect();
+        $application = OnlineBatchApplication::firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.online-batch-applications.approve', $application))->assertRedirect();
+
+        $this->assertDatabaseHas('enrollments', ['user_id' => $student->id, 'course_id' => $course->id, 'batch_id' => $batch->id, 'status' => 'active']);
+        $this->assertDatabaseHas('online_batch_applications', ['id' => $application->id, 'status' => 'approved']);
+        $this->assertDatabaseCount('coaching_admissions', 0);
+        $this->assertDatabaseCount('student_fee_invoices', 0);
+    }
+
+    public function test_existing_online_course_buyer_can_apply_for_a_live_batch_without_creating_a_second_course_enrollment(): void
+    {
+        $student = User::create(['name' => 'Student', 'email' => 'buyer@example.com', 'password' => 'password', 'role' => 'student', 'is_active' => true]);
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
+        $course = Course::create(['title' => 'Online English', 'price' => 2000, 'is_published' => true]);
+        $batch = Batch::create(['name' => 'Online Evening', 'code' => 'ONL-EVE', 'course_id' => $course->id, 'status' => 'upcoming']);
+        $existing = Enrollment::create(['user_id' => $student->id, 'course_id' => $course->id, 'batch_id' => null, 'price_paid' => 2000, 'status' => 'active', 'enrolled_at' => now()]);
+
+        $this->actingAs($student)->post(route('student.online-batches.apply'), ['batch_id' => $batch->id])->assertRedirect();
+        $application = OnlineBatchApplication::firstOrFail();
+        $this->actingAs($admin)->post(route('admin.online-batch-applications.approve', $application))->assertRedirect();
+
+        $this->assertDatabaseCount('enrollments', 1);
+        $this->assertSame($batch->id, $existing->fresh()->batch_id);
+        $this->assertSame(2000.0, (float) $existing->fresh()->price_paid);
+    }
+
+    public function test_coaching_student_identity_can_coexist_with_online_enrollment_without_merging_fee_ledgers(): void
+    {
+        $student = User::create(['name' => 'Dual Path Student', 'email' => 'dual@example.com', 'password' => 'password', 'role' => 'student', 'is_active' => true]);
+        $course = Course::create(['title' => 'Online English', 'price' => 2000, 'is_published' => true]);
+        $onlineBatch = Batch::create(['name' => 'Online Evening', 'code' => 'ONL-EVE', 'course_id' => $course->id, 'status' => 'upcoming']);
+
+        $this->assertSame('student', $student->fresh()->role);
+        $this->assertDatabaseCount('coaching_admissions', 0);
+        $this->assertDatabaseCount('student_fee_invoices', 0);
+        $this->assertDatabaseHas('batches', ['id' => $onlineBatch->id]);
+    }
+}
