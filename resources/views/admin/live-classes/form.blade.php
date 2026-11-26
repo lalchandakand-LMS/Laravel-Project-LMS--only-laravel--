@@ -19,6 +19,18 @@
             </select>
         </div>
         <div class="sm:col-span-2">
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Batch (optional)</label>
+            <select name="batch_id" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                <option value="">All eligible students in this course</option>
+                @foreach ($batches as $batch)
+                    <option value="{{ $batch->id }}" data-course="{{ $batch->course_id }}" @selected((string) old('batch_id', $liveClass->batch_id) === (string) $batch->id)>
+                        {{ $batch->name }} ({{ $batch->code }})
+                    </option>
+                @endforeach
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Choose a batch to limit this class to students actively enrolled in that batch.</p>
+        </div>
+        <div class="sm:col-span-2">
             <label class="mb-1 block text-sm font-semibold text-slate-700">Class title</label>
             <input name="title" value="{{ old('title', $liveClass->title) }}" required placeholder="e.g. Physics — Newton's laws doubt solving" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
@@ -68,4 +80,20 @@
         <a href="{{ route('admin.live-classes.index') }}" class="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600">Cancel</a>
     </div>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const course = document.querySelector('[name="course_id"]');
+    const batch = document.querySelector('[name="batch_id"]');
+    if (!course || !batch) return;
+    const filterBatches = () => {
+        [...batch.options].forEach(option => {
+            if (!option.value) return;
+            option.hidden = option.dataset.course !== course.value;
+            if (option.hidden && option.selected) batch.value = '';
+        });
+    };
+    course.addEventListener('change', filterBatches);
+    filterBatches();
+});
+</script>
 @endsection
