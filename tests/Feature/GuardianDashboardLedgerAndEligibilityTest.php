@@ -145,20 +145,20 @@ class GuardianDashboardLedgerAndEligibilityTest extends TestCase
             'email' => $unlinkedChild->email,
         ]);
 
-        $this->actingAs($guardian)->get(route('guardian.dashboard'))
+        $response = $this->actingAs($guardian)->get(route('guardian.dashboard'))
             ->assertOk()
-            ->assertViewHas('summary', function ($summary) use ($child) {
-                return $summary->count() === 1
-                    && $summary->first()['child']->is($child)
-                    && $summary->first()['coaching_batches'] === 1
-                    && $summary->first()['due'] === 925.0;
-            })
             ->assertSee('Guardian Current Branch Batch')
             ->assertDontSee('Guardian Other Branch Batch')
             ->assertDontSee('Guardian Ended Enrollment Batch')
             ->assertDontSee('Guardian Cancelled Batch')
             ->assertDontSee('Guardian Unpublished Course Batch')
             ->assertDontSee($unlinkedChild->name);
+
+        $summary = $response->viewData('summary');
+        $this->assertCount(1, $summary);
+        $this->assertTrue($summary->first()['child']->is($child), 'Guardian summary must contain only the linked child.');
+        $this->assertSame(1, $summary->first()['coaching_batches'], 'Unexpected coaching batch count: '.var_export($summary->first()['coaching_batches'], true));
+        $this->assertSame(925.0, $summary->first()['due'], 'Unexpected outstanding order due: '.var_export($summary->first()['due'], true));
 
         $this->actingAs($guardian)->get(route('guardian.child', $child))->assertOk();
         $this->actingAs($guardian)->get(route('guardian.child', $unlinkedChild))->assertForbidden();
