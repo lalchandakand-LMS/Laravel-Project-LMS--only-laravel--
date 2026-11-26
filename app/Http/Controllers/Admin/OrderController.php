@@ -142,7 +142,7 @@ class OrderController extends Controller
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
-            if ($line['type'] === 'course' && \\App\\Services\\EnrollmentEligibility::hasCourse($student, $product)) {
+            if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($student, $product)) {
                 throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
             }
             if ($line['type'] === 'ebook' && $product->ownedBy($student)) {
@@ -202,7 +202,7 @@ class OrderController extends Controller
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
-            if ($line['type'] === 'course' && \\App\\Services\\EnrollmentEligibility::hasCourse($order->user, $product)) {
+            if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($order->user, $product)) {
                 throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
             }
             if ($line['type'] === 'ebook' && $product->ownedBy($order->user)) {
