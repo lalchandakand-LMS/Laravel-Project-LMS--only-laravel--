@@ -39,27 +39,7 @@ class ExamController extends Controller
             return false;
         }
 
-        $enrollment = $user->enrollments()
-            ->with('batch')
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->first();
-
-        if (! $enrollment) {
-            return false;
-        }
-
-        $batch = $enrollment->batch;
-        if ($enrollment->batch_id && (! $batch || in_array($batch->status, ['upcoming', 'cancelled'], true))) {
-            return false;
-        }
-
-        if ($batch?->branch_id && (int) $user->branch_id !== (int) $batch->branch_id) {
-            return false;
-        }
-
-        return true;
+        return \App\Services\EnrollmentEligibility::hasCourse($user, $course);
     }
 
     public function index()

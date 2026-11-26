@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
-use App\Models\Course;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,22 +22,7 @@ class AssignmentController extends Controller
             return false;
         }
 
-        return $user->enrollments()
-            ->with('batch')
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->get()
-            ->contains(function ($enrollment) use ($user) {
-                if (! $enrollment->batch_id) {
-                    return true;
-                }
-
-                $batch = $enrollment->batch;
-                return $batch
-                    && ! in_array($batch->status, ['upcoming', 'cancelled'], true)
-                    && (! $batch->branch_id || (int) $batch->branch_id === (int) $user->branch_id);
-            });
+        return \App\Services\EnrollmentEligibility::hasCourse($user, $course);
     }
 
     public function index()
@@ -46,20 +30,12 @@ class AssignmentController extends Controller
         $user = auth()->user();
         abort_unless($user->isStudent(), 403);
 
+        $eligibleCourseIds = \App\Services\EnrollmentEligibility::query($user)->pluck('course_id');
+
         $assignments = Assignment::with(['course', 'submissions' => fn ($query) => $query->where('student_id', $user->id)])
             ->where('is_published', true)
-            ->whereHas('course', fn ($course) => $course->where('is_published', true)
-                ->whereHas('enrollments', fn ($enrollments) => $enrollments
-                    ->where('user_id', $user->id)
-                    ->where('status', 'active')
-                    ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                    ->where(function ($batch) use ($user) {
-                        $batch->whereNull('batch_id')
-                            ->orWhereHas('batch', fn ($eligibleBatch) => $eligibleBatch
-                                ->whereNotIn('status', ['upcoming', 'cancelled'])
-                                ->where(fn ($branch) => $branch->whereNull('branch_id')
-                                    ->orWhere('branch_id', $user->branch_id)));
-                    })))
+            ->whereIn('course_id', $eligibleCourseIds)
+            ->whereHas('course', fn ($course) => $course->where('is_published', true))
             ->orderBy('due_at')
             ->paginate(12);
 

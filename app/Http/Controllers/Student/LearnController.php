@@ -16,29 +16,7 @@ class LearnController extends Controller
     /** Return a currently valid enrollment, including batch and branch restrictions. */
     private function activeEnrollment(User $user, Course $course)
     {
-        $enrollment = $user->enrollments()
-            ->with('batch')
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->first();
-
-        if (! $enrollment) {
-            return null;
-        }
-
-        if ($enrollment->batch_id) {
-            $batch = $enrollment->batch;
-            if (! $batch || $batch->status === 'cancelled' || $batch->status === 'upcoming') {
-                return null;
-            }
-
-            if ($batch->branch_id && (int) $user->branch_id !== (int) $batch->branch_id) {
-                return null;
-            }
-        }
-
-        return $enrollment;
+        return \App\Services\EnrollmentEligibility::forCourse($user, $course);
     }
 
     /** Lessons visible to this learner at this moment (published, released and prerequisite-unlocked). */

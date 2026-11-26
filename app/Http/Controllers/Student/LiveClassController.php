@@ -12,33 +12,18 @@ class LiveClassController extends Controller
         $user = auth()->user();
         abort_unless($user->isStudent() || $user->isAdmin(), 403);
 
-        $classes = LiveClass::query()
+        $query = LiveClass::query()
             ->with('course')
             ->where('is_published', true)
             ->whereNotNull('starts_at')
-            ->whereHas('course', function ($course) use ($user) {
-                $course->where('is_published', true);
+            ->whereHas('course', fn ($course) => $course->where('is_published', true));
 
-                if ($user->isAdmin()) {
-                    return;
-                }
+        if (! $user->isAdmin()) {
+            $eligibleCourseIds = \App\Services\EnrollmentEligibility::query($user)->pluck('course_id');
+            $query->whereIn('course_id', $eligibleCourseIds);
+        }
 
-                $course->whereHas('enrollments', function ($enrollments) use ($user) {
-                    $enrollments->where('user_id', $user->id)
-                        ->where('status', 'active')
-                        ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                        ->where(function ($batch) use ($user) {
-                            $batch->whereNull('batch_id')
-                                ->orWhereHas('batch', function ($eligibleBatch) use ($user) {
-                                    $eligibleBatch->whereNotIn('status', ['upcoming', 'cancelled'])
-                                        ->where(function ($branch) use ($user) {
-                                            $branch->whereNull('branch_id')
-                                                ->orWhere('branch_id', $user->branch_id);
-                                        });
-                                });
-                        });
-                });
-            })
+        $classes = $query
             ->orderByRaw('CASE WHEN starts_at >= ? THEN 0 ELSE 1 END', [now()])
             ->orderByRaw('CASE WHEN starts_at >= ? THEN starts_at END ASC', [now()])
             ->orderByRaw('CASE WHEN starts_at < ? THEN starts_at END DESC', [now()])
