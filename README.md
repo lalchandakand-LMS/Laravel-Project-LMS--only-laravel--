@@ -65,7 +65,7 @@ Open <http://127.0.0.1:8000>.
 `migrate` only applies **new** migration files; every migration in this project
 is additive, so existing users/orders/enrolments are untouched. Never run
 `migrate:fresh`, `db:wipe`, `migrate:refresh` or `db:seed` on a live database.
-The update and admin backup tools currently protect the database, environment file and public uploads as described by each script; private uploaded files (such as admission documents and assignment submissions) are not yet included in the admin database backup/restore flow. Keep an additional off-server copy of private files before production changes.
+The Admin backup panel and scheduled `system:backup` command still handle the database only. The `backup.sh` and `update.sh` scripts now also create separate public- and private-upload archives; the Admin restore screen does not restore those archives, so restore the matching `uploads-*.tar.gz` and `private-*.tar.gz` files to `storage/app/` after database recovery. Keep an encrypted off-server copy before production changes.
 Full step-by-step (VPS, cPanel, manual update, rollback, restore, backup cron)
 lives in **[UPDATE.md](UPDATE.md)**.
 
