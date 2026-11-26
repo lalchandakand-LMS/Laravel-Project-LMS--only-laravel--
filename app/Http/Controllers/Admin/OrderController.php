@@ -201,7 +201,7 @@ class OrderController extends Controller
         abort_if($order->payments()->exists(), 403, 'Orders with payment records cannot be edited. Use the payment/refund ledger.');
         $data = $request->validate([
             'name' => 'required|string|max:100', 'phone' => 'required|string|max:30',
-            'email' => 'required|email|max:150', 'address' => 'nullable|string|max:2000',
+            'email' => 'required|email|max:150', 'address' => collect($request->input('items', []))->contains(fn ($line) => ($line['type'] ?? null) === 'product') ? 'required|string|max:2000' : 'nullable|string|max:2000',
             'note' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',
             'items.*.type' => 'required|in:course,ebook,product',
