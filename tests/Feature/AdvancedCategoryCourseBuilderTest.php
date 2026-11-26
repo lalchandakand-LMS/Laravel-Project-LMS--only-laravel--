@@ -161,6 +161,7 @@ class AdvancedCategoryCourseBuilderTest extends TestCase
         $this->actingAs($this->admin())->put(route('admin.categories.update', $category), [
             'name' => $category->name,
             'remove_image' => 1,
+            'image_url' => 'https://cdn.example.com/categories/remote.webp',
             'is_active' => 1,
         ])->assertRedirect(route('admin.categories.index'));
 
