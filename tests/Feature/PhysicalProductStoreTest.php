@@ -140,11 +140,12 @@ class PhysicalProductStoreTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'shipped'])
+            ->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'packed'])
+            ->assertSessionHasNoErrors();
+
+        $this->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'shipped'])
             ->assertSessionHasErrors('tracking_number');
 
-        $this->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'packed'])
-            ->assertSessionHasNoErrors();
         $this->post(route('admin.orders.shipping', $order->order_no), [
             'shipping_status' => 'shipped',
             'shipping_carrier' => 'Courier',
