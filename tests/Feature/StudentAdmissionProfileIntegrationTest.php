@@ -57,7 +57,17 @@ class StudentAdmissionProfileIntegrationTest extends TestCase
         ]);
         $this->assertCount(2, $admission->documents);
 
-        $this->actingAs($admin)->post(route('admin.coaching-admissions.approve', $admission))->assertRedirect();
+        $this->actingAs($admin)->post(route('admin.coaching-admissions.approve', $admission))->assertStatus(422);
+
+        foreach ($admission->documents as $document) {
+            $this->get(route('admin.coaching-admissions.documents.download', [$admission, $document]))->assertOk();
+            $this->post(route('admin.coaching-admissions.documents.review', [$admission, $document]), [
+                'status' => 'approved',
+                'review_note' => 'Verified original document.',
+            ])->assertRedirect();
+        }
+
+        $this->post(route('admin.coaching-admissions.approve', $admission))->assertRedirect();
 
         $student = User::where('email', 'admission.student@example.com')->firstOrFail();
         $profile = $student->studentProfile;
