@@ -188,12 +188,19 @@ class LearnController extends Controller
             'lesson_id' => $lesson->id,
         ]);
 
-        // Keep the furthest playback position so seeking backwards never loses a saved resume point.
-        $progress->update([
-            'watched_seconds' => max((int) $progress->watched_seconds, (int) $data['seconds']),
-        ]);
+        // Enforce monotonic progress in SQL so overlapping/out-of-order heartbeat
+        // requests cannot overwrite a newer playback position with an older one.
+        $seconds = (int) $data['seconds'];
+        LessonProgress::where('user_id', auth()->id())
+            ->where('lesson_id', $lesson->id)
+            ->where('watched_seconds', '<', $seconds)
+            ->update(['watched_seconds' => $seconds]);
 
-        return response()->json(['ok' => true, 'watched_seconds' => (int) $progress->fresh()->watched_seconds]);
+        $watchedSeconds = (int) LessonProgress::where('user_id', auth()->id())
+            ->where('lesson_id', $lesson->id)
+            ->value('watched_seconds');
+
+        return response()->json(['ok' => true, 'watched_seconds' => $watchedSeconds]);
     }
 
     public function attachment(Course $course, Lesson $lesson)
