@@ -73,7 +73,7 @@
                         <p class="font-semibold text-slate-800">{{ \Illuminate\Support\Str::limit($course->title, 45) }}</p>
                         <p class="text-xs text-slate-500">{{ $course->lessons_count }} lessons</p>
                     </div>
-                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">{{ $course->enrollments_count }} students</span>
+                    <span class="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-800">{{ $course->enrollments_count }} students</span>
                 </li>
             @empty
                 <li class="py-3 text-slate-500">No courses assigned to you yet.</li>
