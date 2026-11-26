@@ -821,4 +821,24 @@ class PaymentVerificationWorkflowTest extends TestCase
     }
 
 
+
+    public function test_offline_payment_cannot_be_recorded_for_paid_failed_cancelled_or_refunded_orders(): void
+    {
+        foreach (['paid', 'failed', 'cancelled', 'refunded'] as $status) {
+            [$student, $admin, $branch, $order] = $this->orderForStudent();
+            $order->update(['status' => $status]);
+
+            $this->actingAs($admin)->post(route('admin.orders.offline-payment', $order->order_no), [
+                'gateway' => 'cash',
+                'amount' => 1000,
+                'reference' => 'TERMINAL-OFFLINE-'.$status,
+                'note' => 'This must not be recorded.',
+            ])->assertRedirect()->assertSessionHasErrors('order');
+
+            $this->assertSame(0, $order->payments()->count());
+            $this->assertSame($status, $order->fresh()->status);
+        }
+    }
+
+
 }
