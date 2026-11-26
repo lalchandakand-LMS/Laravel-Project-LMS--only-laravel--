@@ -276,4 +276,46 @@ class AssignmentWorkflowTest extends TestCase
         $this->assertSame([$oldAttachment], Storage::disk('local')->allFiles('assignments/submissions'));
     }
 
+
+    public function test_teacher_cannot_move_assignment_to_another_course_after_submissions_exist(): void
+    {
+        [$teacher, $student, $course, , $assignment] = $this->assignmentFixture();
+        $otherCourse = Course::create([
+            'title' => 'Second Assignment Course',
+            'slug' => 'second-assignment-course',
+            'price' => 1000,
+            'is_published' => true,
+            'instructor_id' => $teacher->id,
+        ]);
+        $submission = AssignmentSubmission::create([
+            'assignment_id' => $assignment->id,
+            'student_id' => $student->id,
+            'answer_text' => 'Student work that must remain with its original course.',
+            'submitted_at' => now(),
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($teacher)
+            ->from(route('teacher.assignments.edit', $assignment))
+            ->put(route('teacher.assignments.update', $assignment), [
+                'course_id' => $otherCourse->id,
+                'title' => $assignment->title,
+                'description' => $assignment->description,
+                'instructions' => $assignment->instructions,
+                'total_marks' => $assignment->total_marks,
+                'is_published' => 1,
+            ])
+            ->assertRedirect(route('teacher.assignments.edit', $assignment))
+            ->assertSessionHasErrors('course_id');
+
+        $this->assertDatabaseHas('assignments', [
+            'id' => $assignment->id,
+            'course_id' => $course->id,
+        ]);
+        $this->assertDatabaseHas('assignment_submissions', [
+            'id' => $submission->id,
+            'assignment_id' => $assignment->id,
+            'student_id' => $student->id,
+        ]);
+    }
 }
