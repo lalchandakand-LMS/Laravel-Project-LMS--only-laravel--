@@ -89,7 +89,7 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
 
         $request = Request::create('/payments/bkash/callback/AEC-ORDER-1002', 'GET', [
             'paymentID' => 'BKASH-PAY-1002',
-            'status' => 'success',
+            'status' => 'cancel',
         ]);
 
         $result = app(BkashTokenizedCheckoutAdapter::class)->verifyCallback($request);
