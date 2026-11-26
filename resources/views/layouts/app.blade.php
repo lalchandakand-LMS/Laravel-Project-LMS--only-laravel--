@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php($brandName = \App\Models\Setting::get('site_name', "Alom's English Center"))
-    @php($brandLogo = \\App\\Models\\Setting::get('logo'))
+    @php($brandLogo = \App\Models\Setting::get('logo'))
     @php($brandLogoUrl = $brandLogo ? (str_starts_with($brandLogo, 'https://') ? $brandLogo : asset('storage/'.$brandLogo)) : asset('images/aec-logo.svg'))
     @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))))
     <meta name="robots" content="index, follow">
