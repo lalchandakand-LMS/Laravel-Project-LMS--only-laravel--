@@ -26,7 +26,7 @@
                     <td class="px-5 py-3">
                         <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $member->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">{{ $member->is_active ? 'Active' : 'Inactive' }}</span>
                     </td>
-                    <td class="px-5 py-3 text-right"><div class="inline-flex items-center gap-3"><a href="{{ route('branch.people.edit', $member) }}" class="font-semibold text-sky-700">Edit</a><form method="POST" action="{{ route('branch.people.destroy', $member) }}" onsubmit="return confirm('Move this staff account to Recycle Bin?')">@csrf @method('DELETE')<button class="font-semibold text-rose-600">Delete</button></form></div></td>
+                    <td class="px-5 py-3 text-right">@if($member->role === 'instructor')<div class="inline-flex items-center gap-3"><a href="{{ route('branch.people.edit', $member) }}" class="font-semibold text-sky-700">Edit</a><form method="POST" action="{{ route('branch.people.destroy', $member) }}" onsubmit="return confirm('Move this staff account to Recycle Bin?')">@csrf @method('DELETE')<button class="font-semibold text-rose-600">Delete</button></form></div>@else<span class="text-xs text-slate-400">Branch manager account</span>@endif</td>
                 </tr>
             @empty
                 <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">No staff assigned to this branch.</td></tr>
