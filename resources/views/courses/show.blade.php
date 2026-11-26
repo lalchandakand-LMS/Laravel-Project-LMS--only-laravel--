@@ -10,7 +10,7 @@
             'description' => $course->meta_description ?: $course->subtitle,
             'url' => route('courses.show', $course),
             'image' => $course->thumbnail ? media_url($course->thumbnail) : null,
-            'provider' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'sameAs' => config('app.url')],
+            'provider' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
             'inLanguage' => $course->language ?: 'en',
             'educationalLevel' => $course->level,
             'offers' => ['@type' => 'Offer', 'priceCurrency' => 'BDT', 'price' => number_format((float) $course->final_price, 2, '.', ''), 'availability' => 'https://schema.org/InStock', 'url' => route('courses.show', $course)],
