@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Http\\Middleware;
+namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\\Http\\Request;
-use Symfony\\Component\\HttpFoundation\\Response;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CaptureMarketingAttribution
 {
@@ -23,7 +23,7 @@ class CaptureMarketingAttribution
             $value = $request->query($field);
             if (is_string($value)) {
                 $value = trim(strip_tags($value));
-                if ($value !== '' && mb_strlen($value) <= $maxLength && ! preg_match('/[\\x00-\\x1F]/', $value)) {
+                if ($value !== '' && mb_strlen($value) <= $maxLength && ! preg_match('/[\x00-\x1F]/', $value)) {
                     $attribution[$field] = $value;
                 }
             }
