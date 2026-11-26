@@ -23,7 +23,7 @@
                 @foreach ($items as [$key, $label])
                     <div>
                         <label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label>
-                        <input name="{{ $key }}" type="{{ in_array($key, ['facebook', 'youtube', 'instagram']) ? 'url' : ($key === 'site_email' ? 'email' : 'text') }}" value="{{ old($key, $settings[$key] ?? ($key === 'physical_return_window_days' ? 14 : (str_starts_with($key, 'physical_') ? 0 : ''))) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                        <input name="{{ $key }}" type="{{ in_array($key, ['facebook', 'youtube', 'instagram']) ? 'url' : ($key === 'site_email' ? 'email' : (in_array($key, ['physical_shipping_fee', 'physical_free_shipping_threshold', 'physical_return_window_days']) ? 'number' : 'text')) }}" step="{{ in_array($key, ['physical_shipping_fee', 'physical_free_shipping_threshold']) ? '0.01' : '1' }}" value="{{ old($key, $settings[$key] ?? ($key === 'physical_return_window_days' ? 14 : (str_starts_with($key, 'physical_') ? 0 : ''))) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                     </div>
                 @endforeach
             </div>
