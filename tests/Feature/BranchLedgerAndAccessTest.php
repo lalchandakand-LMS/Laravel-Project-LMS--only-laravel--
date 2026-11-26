@@ -503,4 +503,40 @@ class BranchLedgerAndAccessTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_branch_manager_cannot_review_or_record_offline_payment_for_another_branch(): void
+    {
+        $manager = User::factory()->create(['role' => 'branch_manager', 'is_active' => true]);
+        $ownBranch = $this->branch('PAY-SCOPE-OWN', $manager);
+        $manager->update(['branch_id' => $ownBranch->id]);
+        $otherBranch = $this->branch('PAY-SCOPE-OTHER');
+        $ownStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $ownBranch->id]);
+        $otherStudent = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $otherBranch->id]);
+        $otherOrder = $this->order($otherStudent, $otherBranch, 1000);
+        $otherOrder->update(['status' => 'pending']);
+        $otherPayment = Payment::create([
+            'order_id' => $otherOrder->id,
+            'gateway' => 'bank',
+            'transaction_id' => 'CROSS-BRANCH-REVIEW',
+            'amount' => 250,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($manager)
+            ->post(route('branch.finance.payments.review', $otherPayment), [
+                'action' => 'verify',
+            ])
+            ->assertNotFound();
+
+        $this->actingAs($manager)
+            ->post(route('branch.finance.orders.offline-payment', $otherOrder), [
+                'gateway' => 'cash',
+                'amount' => 100,
+                'reference' => 'CROSS-BRANCH-OFFLINE',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame('pending', $otherPayment->fresh()->status);
+        $this->assertDatabaseCount('payments', 1);
+    }
+
 }
