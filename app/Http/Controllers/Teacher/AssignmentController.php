@@ -8,6 +8,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AssignmentController extends Controller
@@ -103,7 +104,6 @@ class AssignmentController extends Controller
         $this->authorizeCourse($course);
         $this->assertLessonBelongsToCourse($data);
 
-        $oldAttachment = $assignment->attachment;
         $replaceAttachment = false;
         $newAttachment = null;
         if ($request->hasFile('attachment')) {
@@ -122,7 +122,25 @@ class AssignmentController extends Controller
         unset($data['resource_url']);
 
         try {
-            $assignment->update($data);
+            $oldAttachment = DB::transaction(function () use ($assignment, $data) {
+                // Serialize course changes with student submissions. Once work
+                // exists, moving the assignment would strand its history under
+                // a different course's access rules.
+                $lockedAssignment = Assignment::query()->lockForUpdate()->findOrFail($assignment->id);
+                $this->authorizeAssignment($lockedAssignment);
+
+                if ($lockedAssignment->submissions()->exists()
+                    && (int) $data['course_id'] !== (int) $lockedAssignment->course_id) {
+                    throw ValidationException::withMessages([
+                        'course_id' => 'The course cannot be changed after students have submitted this assignment.',
+                    ]);
+                }
+
+                $previousAttachment = $lockedAssignment->attachment;
+                $lockedAssignment->update($data);
+
+                return $previousAttachment;
+            });
         } catch (\Throwable $exception) {
             if ($newAttachment) {
                 Storage::disk('local')->delete($newAttachment);
