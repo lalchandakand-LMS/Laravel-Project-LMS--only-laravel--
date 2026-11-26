@@ -9,6 +9,7 @@
     <span class="rounded-lg bg-white px-4 py-2 font-semibold shadow-sm">Questions: {{ $exam->questions->count() }}</span>
     <span class="rounded-lg bg-white px-4 py-2 font-semibold shadow-sm">Total marks: {{ $exam->total_marks }}</span>
     <span class="rounded-lg bg-white px-4 py-2 font-semibold shadow-sm">Duration: {{ $exam->duration_minutes }} min</span>
+    <a href="{{ route('admin.question-bank.index', ['exam_id' => $exam->id]) }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 font-semibold text-orange-700">Question Bank</a>
     <a href="{{ route('admin.exams.edit', $exam) }}" class="ml-auto rounded-lg border border-slate-200 bg-white px-4 py-2 font-semibold text-slate-600">Exam settings</a>
 </div>
 
