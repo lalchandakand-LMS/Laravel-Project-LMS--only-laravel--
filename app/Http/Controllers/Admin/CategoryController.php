@@ -109,6 +109,36 @@ class CategoryController extends Controller
             $fallbackParentId = $category->parent_id;
             $category->children()->update(['parent_id' => $fallbackParentId]);
             $category->courses()->update(['category_id' => $fallbackParentId]);
+
+            // Courses are also assigned through the course_category pivot. Move
+            // those links to the fallback parent, preserving other category links
+            // and avoiding duplicate parent assignments before archiving this row.
+            $linkedCourseIds = DB::table('course_category')
+                ->where('category_id', $category->id)
+                ->pluck('course_id');
+
+            if ($fallbackParentId && $linkedCourseIds->isNotEmpty()) {
+                $alreadyLinkedToParent = DB::table('course_category')
+                    ->where('category_id', $fallbackParentId)
+                    ->whereIn('course_id', $linkedCourseIds)
+                    ->pluck('course_id');
+
+                if ($alreadyLinkedToParent->isNotEmpty()) {
+                    DB::table('course_category')
+                        ->where('category_id', $category->id)
+                        ->whereIn('course_id', $alreadyLinkedToParent)
+                        ->delete();
+                }
+
+                DB::table('course_category')
+                    ->where('category_id', $category->id)
+                    ->update(['category_id' => $fallbackParentId]);
+            } else {
+                DB::table('course_category')
+                    ->where('category_id', $category->id)
+                    ->delete();
+            }
+
             $category->delete();
         });
 
