@@ -285,6 +285,9 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('/attach/{exam}', [Admin\QuestionBankController::class, 'attach'])->name('attach');
     });
 
+    Route::get('live-classes/calendar', [Admin\LiveClassController::class, 'calendar'])->name('live-classes.calendar');
+    Route::post('live-classes/{liveClass}/cancel', [Admin\LiveClassController::class, 'cancel'])->name('live-classes.cancel');
+    Route::post('live-classes/{liveClass}/reschedule', [Admin\LiveClassController::class, 'reschedule'])->name('live-classes.reschedule');
     Route::resource('live-classes', Admin\LiveClassController::class)->except('show')
         ->parameters(['live-classes' => 'liveClass']);
 });
@@ -298,6 +301,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
     Route::get('/students/{user}', [Teacher\DashboardController::class, 'student'])->name('students.show');
     Route::get('/earnings', [Teacher\DashboardController::class, 'earnings'])->name('earnings');
     Route::get('/live-classes', [Teacher\DashboardController::class, 'liveClasses'])->name('live-classes');
+    Route::post('/live-classes/{liveClass}/attendance', [AttendanceController::class, 'createFromLiveClass'])->name('live-classes.attendance');
     Route::get('/leave-requests', [Teacher\LeaveRequestController::class, 'index'])->name('leave-requests.index');
     Route::post('/leave-requests', [Teacher\LeaveRequestController::class, 'store'])->name('leave-requests.store');
     Route::post('/leave-requests/{leaveRequest}/cancel', [Teacher\LeaveRequestController::class, 'cancel'])->name('leave-requests.cancel');

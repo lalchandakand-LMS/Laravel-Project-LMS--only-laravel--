@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\LiveClass;
 use App\Models\Batch;
 use App\Models\CoachingBatch;
 use App\Models\CoachingEnrollment;
@@ -34,13 +35,19 @@ class AttendanceController extends Controller
         }
 
         $legacy = Enrollment::query()
-            ->where('batch_id', $session->batch_id)
             ->where('status', 'active')
+            ->where(fn ($q) => $session->batch_id
+                ? $q->where('batch_id', $session->batch_id)
+                : $q->where('course_id', $session->course_id)
+                    ->where(fn ($expiry) => $expiry->whereNull('expires_at')->orWhere('expires_at', '>', now())))
             ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true))
             ->pluck('user_id');
         $online = OnlineBatchEnrollment::query()
-            ->where('batch_id', $session->batch_id)
             ->where('status', 'active')
+            ->whereNull('ended_at')
+            ->where(fn ($q) => $session->batch_id
+                ? $q->where('batch_id', $session->batch_id)
+                : $q->where('course_id', $session->course_id))
             ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
             ->pluck('student_id');
 
@@ -196,6 +203,34 @@ class AttendanceController extends Controller
         $session->load(['batch', 'coachingBatch', 'course', 'instructor', 'reviewer', 'records.student']);
 
         return view('attendance.admin.show', compact('session'));
+    }
+
+    public function createFromLiveClass(Request $request, LiveClass $liveClass)
+    {
+        $user = $request->user();
+        abort_unless($user->isAdmin() || (int) $liveClass->course?->instructor_id === (int) $user->id, 403);
+        abort_if($liveClass->isCancelled(), 422, 'Cancelled live classes cannot create attendance sessions.');
+        $batch = $liveClass->batch;
+        abort_if($liveClass->batch_id && ! $batch, 422, 'The assigned batch no longer exists.');
+
+        $session = AttendanceSession::firstOrCreate(
+            ['live_class_id' => $liveClass->id],
+            [
+                'batch_id' => $batch?->id,
+                'coaching_batch_id' => null,
+                'course_id' => $liveClass->course_id,
+                'branch_id' => $batch?->branch_id,
+                'instructor_id' => $liveClass->course?->instructor_id ?: $user->id,
+                'mode' => 'online',
+                'topic' => $liveClass->title,
+                'starts_at' => $liveClass->starts_at,
+                'ends_at' => $liveClass->endsAt(),
+                'status' => 'draft',
+            ]
+        );
+
+        return redirect()->route('teacher.attendance.show', $session)
+            ->with('success', 'Attendance session is linked to this live class.');
     }
 
     public function studentReport(Request $request)
