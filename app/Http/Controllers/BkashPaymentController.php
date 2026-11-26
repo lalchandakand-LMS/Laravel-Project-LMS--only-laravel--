@@ -18,8 +18,7 @@ class BkashPaymentController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
-        try {
-            $session = DB::transaction(function () use ($request, $order, $adapter) {
+        $session = DB::transaction(function () use ($request, $order, $adapter) {
                 // Serialize checkout creation per order. The pending row must be
                 // checked and inserted while holding the same order lock, otherwise
                 // two parallel requests can create two live provider sessions.
@@ -43,7 +42,14 @@ class BkashPaymentController extends Controller
 
                 // Keep the order lock until the provider session is persisted so a
                 // concurrent request cannot pass the pending-payment check.
-                $session = $adapter->initiate($lockedOrder);
+                try {
+                    $session = $adapter->initiate($lockedOrder);
+                } catch (Throwable $exception) {
+                    report($exception);
+                    throw ValidationException::withMessages([
+                        'gateway' => 'The bKash sandbox checkout could not be started. Check the Admin API configuration and try again.',
+                    ]);
+                }
 
                 Payment::create([
                     'order_id' => $lockedOrder->id,
@@ -61,14 +67,6 @@ class BkashPaymentController extends Controller
 
                 return $session;
             });
-        } catch (ValidationException $exception) {
-            throw $exception;
-        } catch (Throwable $exception) {
-            report($exception);
-            throw ValidationException::withMessages([
-                'gateway' => 'The bKash sandbox checkout could not be started. Check the Admin API configuration and try again.',
-            ]);
-        }
 
         return redirect()->away($session['redirect_url']);
     }
