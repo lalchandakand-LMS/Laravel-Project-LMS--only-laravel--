@@ -608,6 +608,13 @@ class OrderController extends Controller
         try {
             $adjustment = DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedOrder->payments()->where('status', 'pending')->whereNotNull('provider_payment_id')->exists()) {
+                    throw ValidationException::withMessages([
+                        'order' => 'A provider-initiated payment is still being reconciled. Wait for the bKash callback/webhook before recording a refund.',
+                    ]);
+                }
+
                 $refundableAmount = $lockedOrder->refundableAmount();
                 $refundAmount = round((float) $data['amount'], 2);
                 if ($refundAmount > round($refundableAmount, 2)) {

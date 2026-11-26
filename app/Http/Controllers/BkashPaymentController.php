@@ -86,11 +86,27 @@ class BkashPaymentController extends Controller
 
         if (($result['status'] ?? null) !== 'success') {
             if (($result['status'] ?? null) === 'failed') {
-                $payment->update([
-                    'status' => 'rejected',
-                    'rejection_reason' => $result['reason'] ?? 'bKash reported an unsuccessful transaction.',
-                    'payload' => array_merge($payment->payload ?? [], ['provider_status' => $result['provider_status'] ?? 'Failed']),
-                ]);
+                $rejected = DB::transaction(function () use ($payment, $result) {
+                    $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+
+                    // A webhook may have settled the payment while the browser return was in flight.
+                    if ($lockedPayment->status !== 'pending') {
+                        return $lockedPayment->status === 'rejected';
+                    }
+
+                    $lockedPayment->update([
+                        'status' => 'rejected',
+                        'rejection_reason' => $result['reason'] ?? 'bKash reported an unsuccessful transaction.',
+                        'payload' => array_merge($lockedPayment->payload ?? [], ['provider_status' => $result['provider_status'] ?? 'Failed']),
+                    ]);
+
+                    return true;
+                });
+
+                if (! $rejected) {
+                    return redirect()->route('checkout.success', $order->order_no)
+                        ->with('success', 'Your bKash payment was already confirmed.');
+                }
 
                 return redirect()->route('checkout.success', $order->order_no)
                     ->with('error', 'bKash did not complete the payment. You may try again.');

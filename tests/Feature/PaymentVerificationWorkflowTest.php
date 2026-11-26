@@ -970,6 +970,40 @@ class PaymentVerificationWorkflowTest extends TestCase
 
 
 
+    public function test_refund_is_blocked_while_provider_payment_is_pending_reconciliation(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'PROVIDER-SETTLED-CASH',
+            'amount' => 1000,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $providerPayment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'provider_payment_id' => 'BKASH-PENDING-REFUND-GUARD',
+            'amount' => 1000,
+            'status' => 'pending',
+        ]);
+        $order->update(['status' => 'paid']);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'amount' => 1000,
+            'reference' => 'REFUND-BLOCKED-PENDING-PROVIDER',
+            'reason' => 'Must wait for provider reconciliation.',
+        ])->assertRedirect()->assertSessionHasErrors('order');
+
+        $this->assertDatabaseCount('payment_adjustments', 0);
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame('pending', $providerPayment->fresh()->status);
+        $this->assertNull($providerPayment->fresh()->verified_at);
+    }
+
     public function test_offline_payment_cannot_be_recorded_for_paid_failed_cancelled_or_refunded_orders(): void
     {
         foreach (['paid', 'failed', 'cancelled', 'refunded'] as $status) {
