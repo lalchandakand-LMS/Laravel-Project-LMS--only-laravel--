@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -190,6 +191,31 @@ class BranchPaymentAvailabilityTest extends TestCase
         $this->assertDatabaseHas('orders', [
             'user_id' => $student->id,
             'branch_id' => $enabledBranch->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_database_enforces_global_uniqueness_for_payment_transaction_references(): void
+    {
+        [$student, $branch, $order] = $this->studentWithBranch(['nagad']);
+
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'sender_number' => '01700000000',
+            'transaction_id' => 'UNIQUE-REFERENCE-001',
+            'amount' => 100,
+            'status' => 'pending',
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'sender_number' => '01700000000',
+            'transaction_id' => 'UNIQUE-REFERENCE-001',
+            'amount' => 100,
             'status' => 'pending',
         ]);
     }
