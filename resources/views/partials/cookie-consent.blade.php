@@ -70,6 +70,7 @@
         }
         panel.hidden = true;
         applyConsent();
+        window.dispatchEvent(new Event('aec:consent-updated'));
     }
 
     function loadAnalytics() {
