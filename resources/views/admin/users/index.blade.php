@@ -16,8 +16,10 @@
             {{ $label }} ({{ $counts[$value ?: 'all'] }})
         </a>
     @endforeach
-    <form method="GET" class="ml-auto flex gap-2">
+    <form method="GET" class="ml-auto flex flex-wrap gap-2">
         <input type="hidden" name="role" value="{{ request('role') }}">
+        <select name="branch" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All branches</option>@foreach($branches as $branch)<option value="{{ $branch->id }}" @selected(request('branch') == $branch->id)>{{ $branch->name }}</option>@endforeach</select>
+        <select name="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All statuses</option>@foreach(['active'=>'Active','inactive'=>'Inactive','suspended'=>'Suspended','graduated'=>'Graduated','on_leave'=>'On leave','resigned'=>'Resigned','terminated'=>'Terminated'] as $v=>$label)<option value="{{ $v }}" @selected(request('status') === $v)>{{ $label }}</option>@endforeach</select>
         <input name="q" value="{{ request('q') }}" placeholder="Search name / email / phone" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
         <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Search</button>
     </form>
@@ -49,7 +51,7 @@
                     <td class="px-5 py-3">{{ $user->courses_count }}</td>
                     <td class="px-5 py-3">{{ $user->enrollments_count }}</td>
                     <td class="px-5 py-3">{{ $user->orders_count }}</td>
-                    <td class="px-5 py-3"><span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $user->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">{{ $user->is_active ? 'Active' : 'Disabled' }}</span></td>
+                    <td class="px-5 py-3"><span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $user->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">{{ $user->is_active ? 'Login active' : 'Login disabled' }}</span>@if($user->studentProfile)<p class="mt-1 text-xs text-slate-500">Student: {{ ucfirst($user->studentProfile->status) }}</p>@elseif($user->staffProfile)<p class="mt-1 text-xs text-slate-500">Employment: {{ ucfirst(str_replace('_',' ',$user->staffProfile->employment_status)) }}</p>@endif</td>
                     <td class="px-5 py-3 text-right"><div class="inline-flex items-center gap-3"><a href="{{ route('admin.users.edit', $user) }}" class="text-sm font-semibold text-emerald-700">Edit</a><form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Move this account to the Recycle Bin?');">@csrf @method('DELETE')<button class="text-sm font-semibold text-rose-600">Delete</button></form></div></td>
                 </tr>
             @endforeach
