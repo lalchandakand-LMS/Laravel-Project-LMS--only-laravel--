@@ -8,6 +8,7 @@ use App\Models\Batch;
 use App\Models\CoachingBatch;
 use App\Models\CoachingEnrollment;
 use App\Models\Enrollment;
+use App\Models\OnlineBatchEnrollment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,11 +33,18 @@ class AttendanceController extends Controller
                 ->pluck('student_id');
         }
 
-        return Enrollment::query()
+        $legacy = Enrollment::query()
             ->where('batch_id', $session->batch_id)
             ->where('status', 'active')
             ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true))
             ->pluck('user_id');
+        $online = OnlineBatchEnrollment::query()
+            ->where('batch_id', $session->batch_id)
+            ->where('status', 'active')
+            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->pluck('student_id');
+
+        return $legacy->merge($online)->unique()->values();
     }
 
     public function teacherIndex(Request $request)

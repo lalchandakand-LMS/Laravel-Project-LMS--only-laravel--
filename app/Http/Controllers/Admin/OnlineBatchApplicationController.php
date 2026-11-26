@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
-use App\Models\Enrollment;
+use App\Models\OnlineBatchEnrollment;
 use App\Models\OnlineBatchApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,10 +18,10 @@ class OnlineBatchApplicationController extends Controller {
    $batch=$application->batch()->lockForUpdate()->firstOrFail();
    abort_unless(in_array($batch->status,['upcoming','ongoing'],true),422,'এই অনলাইন ব্যাচে ভর্তি বন্ধ।');
    abort_if($batch->capacity&&$batch->activeStudentCount()>=$batch->capacity,422,'এই অনলাইন ব্যাচের আসন পূর্ণ।');
-   $enrollment=Enrollment::where('user_id',$application->student_id)->where('course_id',$application->course_id)->lockForUpdate()->first();
-   if($enrollment&&$enrollment->batch_id&&(int)$enrollment->batch_id!==(int)$batch->id) abort(422,'শিক্ষার্থী এই কোর্সের অন্য অনলাইন ব্যাচে ইতিমধ্যে যুক্ত আছেন।');
-   if($enrollment) $enrollment->update(['batch_id'=>$batch->id,'status'=>'active']);
-   else Enrollment::create(['user_id'=>$application->student_id,'course_id'=>$application->course_id,'batch_id'=>$batch->id,'order_id'=>null,'price_paid'=>0,'status'=>'active','enrolled_at'=>now()]);
+   OnlineBatchEnrollment::firstOrCreate(
+    ['student_id' => $application->student_id, 'batch_id' => $batch->id],
+    ['course_id' => $application->course_id, 'application_id' => $application->id, 'status' => 'active', 'admitted_at' => now()]
+   );
    $application->update(['status'=>'approved','review_note'=>$data['review_note']??null,'reviewed_by'=>auth()->id(),'reviewed_at'=>now(),'approved_at'=>now()]);
   });
   return back()->with('success','অনলাইন ব্যাচের আবেদন অনুমোদিত হয়েছে।');

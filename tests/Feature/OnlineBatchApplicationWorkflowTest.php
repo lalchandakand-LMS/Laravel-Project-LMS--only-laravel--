@@ -27,7 +27,8 @@ class OnlineBatchApplicationWorkflowTest extends TestCase
 
         $this->actingAs($admin)->post(route('admin.online-batch-applications.approve', $application))->assertRedirect();
 
-        $this->assertDatabaseHas('enrollments', ['user_id' => $student->id, 'course_id' => $course->id, 'batch_id' => $batch->id, 'status' => 'active']);
+        $this->assertDatabaseHas('online_batch_enrollments', ['student_id' => $student->id, 'course_id' => $course->id, 'batch_id' => $batch->id, 'status' => 'active']);
+        $this->assertDatabaseCount('enrollments', 0);
         $this->assertDatabaseHas('online_batch_applications', ['id' => $application->id, 'status' => 'approved']);
         $this->assertDatabaseCount('coaching_admissions', 0);
         $this->assertDatabaseCount('student_fee_invoices', 0);
@@ -46,7 +47,8 @@ class OnlineBatchApplicationWorkflowTest extends TestCase
         $this->actingAs($admin)->post(route('admin.online-batch-applications.approve', $application))->assertRedirect();
 
         $this->assertDatabaseCount('enrollments', 1);
-        $this->assertSame($batch->id, $existing->fresh()->batch_id);
+        $this->assertSame(null, $existing->fresh()->batch_id);
+        $this->assertDatabaseHas('online_batch_enrollments', ['student_id' => $student->id, 'batch_id' => $batch->id]);
         $this->assertSame(2000.0, (float) $existing->fresh()->price_paid);
     }
 
