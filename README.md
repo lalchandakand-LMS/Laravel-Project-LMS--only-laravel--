@@ -226,3 +226,13 @@ students outside the manager's branch) instead of relying on seed order.
 - Permanent deletion is guarded. Accounts, courses, lessons, exams, questions, e-books and branches cannot be purged while protected relationships exist; course/ebook order history, enrolments, certificates, exam attempts and progress are preserved. Orders and payments are not part of the Recycle Bin.
 - The updater verifies backups of the database, .env, and uploaded public media before changing the application. It only runs additive Laravel migrations; it never runs destructive fresh/wipe/seed commands.
 - If a critical update step fails, the updater intentionally leaves the site in maintenance mode instead of exposing a partially upgraded application. Restore the verified backups and investigate before bringing the site online.
+
+
+## Media Library and image / document assets
+
+- Admin → System → Media library is the central catalogue for reusable public images and PDFs. Admins can upload JPG, PNG, WebP, GIF and PDF files (up to 25 MB), add external HTTP/HTTPS links, preview images, copy the public URL, filter, and remove library items.
+- Site logo, dashboard banner, slider background, course thumbnail, e-book cover, and user profile photo accept either a local upload or an external HTTP/HTTPS URL.
+- Lesson attachments, teacher assignment reference files, and e-book PDF/EPUB files accept uploads or trusted hosted URLs. Remote lesson/assignment resources and e-book files are only redirected to after the existing lesson, enrollment, or e-book purchase authorization check.
+- Student assignment submissions and payment/admission evidence remain private uploads; they are not converted into public media links.
+- Uploaded public assets are stored on Laravel's `public` disk. After deployment, ensure the public storage symlink exists (`php artisan storage:link`) and that `storage/app/public` is writable by the web server.
+- Paid lesson files, assignment submissions, and uploaded e-book files continue to use private local storage and their protected download routes. Do not move those files into the public Media Library.

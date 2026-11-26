@@ -25,11 +25,18 @@
         </div>
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Cover image</label>
-            <input type="file" name="cover" accept="image/*" class="w-full text-xs">
+            @if ($ebook->cover)<img src="{{ $ebook->coverUrl() }}" alt="E-book cover" class="mb-2 h-28 rounded-lg object-contain">@endif
+            <input type="file" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full text-xs">
+            <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste a cover image URL</label>
+            <input type="url" name="cover_url" value="{{ old('cover_url', str_starts_with((string) $ebook->cover, 'http') ? $ebook->cover : '') }}" placeholder="https://example.com/cover.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
         </div>
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">PDF file</label>
             <input type="file" name="file" accept=".pdf,.epub" class="w-full text-xs">
+            <label class="mt-2 block text-xs font-semibold text-slate-600">Or use a hosted PDF / EPUB URL</label>
+            <input type="url" name="file_url" value="{{ old('file_url', str_starts_with((string) $ebook->file, 'http') ? $ebook->file : '') }}" placeholder="https://example.com/ebook.pdf" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <p class="mt-1 text-xs text-slate-500">External file links are opened only after the learner passes the e-book purchase check.</p>
+            <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library →</a>
         </div>
     </div>
     <div class="flex gap-5 text-sm font-semibold text-slate-700">

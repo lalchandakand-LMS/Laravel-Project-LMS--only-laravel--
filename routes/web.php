@@ -227,6 +227,11 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('recycle-bin/{type}/bulk-restore', [Admin\RecycleBinController::class, 'bulkRestore'])->name('recycle-bin.bulk-restore');
         Route::delete('recycle-bin/{type}/{id}', [Admin\RecycleBinController::class, 'destroy'])->name('recycle-bin.destroy');
 
+        Route::get('media', [Admin\MediaLibraryController::class, 'index'])->name('media.index');
+        Route::post('media', [Admin\MediaLibraryController::class, 'store'])->name('media.store');
+        Route::post('media/links', [Admin\MediaLibraryController::class, 'storeLink'])->name('media.links.store');
+        Route::delete('media/{media}', [Admin\MediaLibraryController::class, 'destroy'])->name('media.destroy');
+
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);

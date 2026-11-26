@@ -43,7 +43,10 @@
         </div>
         <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Background image (optional)</label>
-            <input type="file" name="image" accept="image/*" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste an image URL</label>
+            <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $slider->image, 'http') ? $slider->image : '') }}" placeholder="https://example.com/slider.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library →</a>
             @if ($slider->imageUrl())
                 <img src="{{ $slider->imageUrl() }}" class="mt-2 h-24 rounded-lg object-cover" alt="">
             @endif

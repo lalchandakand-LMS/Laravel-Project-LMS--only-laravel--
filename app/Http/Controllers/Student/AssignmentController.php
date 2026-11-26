@@ -105,7 +105,14 @@ class AssignmentController extends Controller
     {
         $user = auth()->user();
         abort_unless($this->canAccess($user, $assignment), 404);
-        abort_unless($assignment->attachment && Storage::disk('local')->exists($assignment->attachment), 404);
+        abort_unless($assignment->attachment, 404);
+        if ((str_starts_with(strtolower($assignment->attachment), 'http://') || str_starts_with(strtolower($assignment->attachment), 'https://'))) {
+            return redirect()->away($assignment->attachment)->withHeaders([
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Referrer-Policy' => 'no-referrer',
+            ]);
+        }
+        abort_unless(Storage::disk('local')->exists($assignment->attachment), 404);
 
         return response()->download(
             Storage::disk('local')->path($assignment->attachment),

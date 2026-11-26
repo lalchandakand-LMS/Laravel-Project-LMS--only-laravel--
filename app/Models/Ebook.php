@@ -24,7 +24,7 @@ class Ebook extends Model
 
     public function coverUrl(): string
     {
-        return $this->cover ? asset('storage/'.$this->cover) : 'https://picsum.photos/seed/book'.$this->id.'/400/560';
+        return $this->cover ? media_url($this->cover) : 'https://picsum.photos/seed/book'.$this->id.'/400/560';
     }
 
     public function ownedBy(?User $user): bool

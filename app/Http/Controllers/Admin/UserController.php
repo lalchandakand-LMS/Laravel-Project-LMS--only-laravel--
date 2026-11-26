@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -53,8 +54,16 @@ class UserController extends Controller
             'branch_id' => 'nullable|exists:branches,id',
             'designation' => 'nullable|string|max:120',
             'password' => ['required', 'string', Password::min(8)],
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:2048',
+            'avatar_url' => 'nullable|url:http,https|max:2048',
         ]);
 
+        if ($request->hasFile('avatar')) {
+            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->filled('avatar_url')) {
+            $data['avatar'] = $data['avatar_url'];
+        }
+        unset($data['avatar_url']);
         $data['is_active'] = $request->boolean('is_active');
         $user = User::create($data);
 
@@ -108,12 +117,26 @@ class UserController extends Controller
             'designation' => 'nullable|string|max:120',
             'bio' => 'nullable|string|max:1000',
             'password' => ['nullable', 'string', Password::min(8)],
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:2048',
+            'avatar_url' => 'nullable|url:http,https|max:2048',
         ]);
 
         if (blank($data['password'] ?? null)) {
             unset($data['password']);
         }
 
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->filled('avatar_url')) {
+            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $data['avatar_url'];
+        }
+        unset($data['avatar_url']);
         $data['is_active'] = $request->boolean('is_active');
         $user->update($data);
 

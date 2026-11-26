@@ -134,13 +134,17 @@ class LessonController extends Controller
             'duration_minutes' => 'nullable|integer|min:0',
             'position' => 'nullable|integer|min:0',
             'attachment' => 'nullable|file|max:20480',
+            'attachment_url' => 'nullable|url:http,https|max:2048',
             'available_at' => 'nullable|date',
             'prerequisite_lesson_id' => 'nullable|integer|exists:lessons,id',
         ]);
 
         if ($request->hasFile('attachment')) {
             $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
+        } elseif ($request->filled('attachment_url')) {
+            $data['attachment'] = $data['attachment_url'];
         }
+        unset($data['attachment_url']);
 
         $data['is_free_preview'] = $request->boolean('is_free_preview');
         $data['is_published'] = $request->boolean('is_published');

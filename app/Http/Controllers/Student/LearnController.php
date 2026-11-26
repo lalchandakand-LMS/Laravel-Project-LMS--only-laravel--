@@ -200,7 +200,14 @@ class LearnController extends Controller
     {
         abort_unless((int) $lesson->course_id === (int) $course->id, 404);
         $this->guard($course, $lesson);
-        abort_unless($lesson->attachment && Storage::disk('local')->exists($lesson->attachment), 404);
+        abort_unless($lesson->attachment, 404);
+        if ((str_starts_with(strtolower($lesson->attachment), 'http://') || str_starts_with(strtolower($lesson->attachment), 'https://'))) {
+            return redirect()->away($lesson->attachment)->withHeaders([
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Referrer-Policy' => 'no-referrer',
+            ]);
+        }
+        abort_unless(Storage::disk('local')->exists($lesson->attachment), 404);
 
         return response()->download(
             Storage::disk('local')->path($lesson->attachment),

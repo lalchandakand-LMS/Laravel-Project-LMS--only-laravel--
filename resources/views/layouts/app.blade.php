@@ -14,7 +14,7 @@
     <meta property="og:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta property="og:description" content="{{ $brandDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/aec-logo.svg') }}">
+    <meta property="og:image" content="{{ media_url(setting('logo'), asset('images/aec-logo.svg')) }}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta name="twitter:description" content="{{ $brandDescription }}">
@@ -45,7 +45,7 @@
 @if ($brandLoaderEnabled)
 <div id="brand-page-loader" role="status" aria-live="polite" aria-label="Loading website" data-style="{{ \App\Models\Setting::get('brand_loader_style','ring') }}">
     <div class="brand-loader-inner">
-        <img class="brand-loader-logo" src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="">
+        <img class="brand-loader-logo" src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="">
         <div class="brand-loader-name">{{ $brandName }}</div>
         <div class="brand-spinner" aria-hidden="true"></div>
         <p class="brand-loader-message">{{ \App\Models\Setting::get('brand_loader_message','Preparing your learning experience...') }}</p>
@@ -75,7 +75,7 @@
     <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
             <div class="flex items-center gap-2">
-                <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-9 w-9 rounded-lg object-contain">
+                <img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-9 w-9 rounded-lg object-contain">
                 <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
             </div>
             <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>

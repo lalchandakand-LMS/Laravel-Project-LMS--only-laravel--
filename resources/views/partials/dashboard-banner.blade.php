@@ -8,7 +8,7 @@ $fallback = ['student' => route('student.courses'), 'instructor' => route('teach
 $cta = \App\Models\Setting::get('dashboard_banner_button_url') ?: ($fallback[$role] ?? route('home'));
 @endphp
 @if ($bannerEnabled)
-<section class="relative mb-6 overflow-hidden rounded-3xl p-5 text-white shadow-lg sm:p-8" style="background: {{ $bannerImage ? 'linear-gradient(90deg, rgba(15,23,42,.92), rgba(15,23,42,.38)), url('.asset('storage/'.$bannerImage).') center/cover' : 'linear-gradient(115deg, '.$secondary.', '.$primary.')' }}">
+<section class="relative mb-6 overflow-hidden rounded-3xl p-5 text-white shadow-lg sm:p-8" style="background: {{ $bannerImage ? 'linear-gradient(90deg, rgba(15,23,42,.92), rgba(15,23,42,.38)), url('.media_url($bannerImage).') center/cover' : 'linear-gradient(115deg, '.$secondary.', '.$primary.')' }}">
 <div class="relative z-10 max-w-2xl">
 <p class="text-xs font-bold uppercase tracking-widest text-white/70">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</p>
 <h2 class="mt-2 text-xl font-extrabold sm:text-3xl">{{ \App\Models\Setting::get('dashboard_banner_title', 'Welcome back!') }}</h2>
