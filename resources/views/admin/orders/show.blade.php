@@ -13,8 +13,8 @@
                 <tbody class="divide-y divide-slate-100">
                     @foreach ($order->items as $item)
                         <tr>
-                            <td class="py-3"><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }}</td>
-                            <td class="py-3 text-right font-semibold">৳{{ number_format($item->price, 2) }}</td>
+                            <td class="py-3"><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }} @if($item->qty > 1)<span class="text-xs text-slate-500">× {{ $item->qty }}</span>@endif</td>
+                            <td class="py-3 text-right font-semibold">৳{{ number_format($item->price * $item->qty, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
