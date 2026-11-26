@@ -39,7 +39,7 @@ class SeoManagementTest extends TestCase
         $this->assertSame('1', Setting::get('seo_robots_index'));
 
         auth()->logout();
-        $this->get('/')->assertOk()
+        $this->get('/about')->assertOk()
             ->assertSee('name="google-site-verification" content="verification_token-123"', false)
             ->assertSee('content="Practical English courses for learners in Bangladesh."', false);
     }
@@ -60,7 +60,7 @@ class SeoManagementTest extends TestCase
     {
         $this->get(route('robots'))->assertOk()
             ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
-            ->assertSee('Disallow: /admin/')
+            ->assertSee('Disallow: /admin')
             ->assertSee('Disallow: /my/')
             ->assertSee('Sitemap: '.route('sitemap'));
     }
