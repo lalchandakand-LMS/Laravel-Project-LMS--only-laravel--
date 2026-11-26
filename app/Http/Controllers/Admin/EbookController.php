@@ -32,21 +32,25 @@ class EbookController extends Controller
     public function update(Request $request, Ebook $ebook)
     {
         $data = $this->validated($request, $ebook);
-        if (isset($data['cover']) && $data['cover'] !== $ebook->cover) {
-            delete_stored_media('public', $ebook->cover);
-        }
-        if (isset($data['file']) && $data['file'] !== $ebook->file) {
-            delete_stored_media('local', $ebook->file);
-        }
+        $oldCover = $ebook->cover;
+        $oldFile = $ebook->file;
         $ebook->update($data);
+        if (isset($data['cover']) && $data['cover'] !== $oldCover) {
+            delete_stored_media('public', $oldCover);
+        }
+        if (isset($data['file']) && $data['file'] !== $oldFile) {
+            delete_stored_media('local', $oldFile);
+        }
         return redirect()->route('admin.ebooks.index')->with('success', 'E-book updated.');
     }
 
     public function destroy(Ebook $ebook)
     {
-        delete_stored_media('public', $ebook->cover);
-        delete_stored_media('local', $ebook->file);
+        $cover = $ebook->cover;
+        $file = $ebook->file;
         $ebook->delete();
+        delete_stored_media('public', $cover);
+        delete_stored_media('local', $file);
         return back()->with('success', 'E-book deleted.');
     }
 
