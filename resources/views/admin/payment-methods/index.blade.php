@@ -46,6 +46,13 @@
                         @endif
                     </div>
                 </div>
+                @if(!empty($provider['callback_url']))
+                    <div class="border-b border-slate-100 bg-slate-50 px-6 py-3 text-xs">
+                        <span class="font-bold text-slate-700">Merchant callback URL</span>
+                        <code class="mt-1 block break-all text-slate-600">{{ $provider['callback_url'] }}</code>
+                        <span class="mt-1 block text-slate-500">Register this exact HTTPS URL with bKash during merchant onboarding.</span>
+                    </div>
+                @endif
                 <div class="grid gap-4 p-6 md:grid-cols-2">
                     <div class="md:col-span-2">
                         <label class="mb-1 block text-sm font-semibold text-slate-700">Environment</label>
