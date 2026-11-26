@@ -42,7 +42,7 @@ class FinanceController extends Controller
             ->latest('issued_at')->paginate(15, ['*'], 'invoices_page');
 
         $admissions = CoachingAdmission::where('branch_id', $branch->id)
-            ->whereIn('status', ['awaiting_payment', 'admitted'])
+            ->where('status', 'admitted')
             ->with(['student', 'coachingBatch'])
             ->latest()->get();
 
@@ -88,6 +88,7 @@ class FinanceController extends Controller
         $branch = $this->branch();
         abort_unless((int) $admission->branch_id === (int) $branch->id, 404);
 
+        $request->merge(['coaching_admission_id' => $admission->id]);
         return app(AdminStudentFeeController::class)->storeInvoice($request);
     }
 
