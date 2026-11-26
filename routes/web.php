@@ -177,8 +177,13 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('complaints/{complaint}/replies', [Admin\ComplaintController::class, 'reply'])->name('complaints.reply');
 
         Route::get('enrollments', [Admin\EnrollmentController::class, 'index'])->name('enrollments.index');
-        Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
+        Route::get('enrollments/export', [Admin\EnrollmentController::class, 'export'])->name('enrollments.export');
+        Route::post('enrollments/bulk-update', [Admin\EnrollmentController::class, 'bulkUpdate'])->name('enrollments.bulk-update');
         Route::post('enrollments/manual', [Admin\EnrollmentController::class, 'store'])->name('enrollments.store');
+        Route::get('enrollments/{enrollment}/edit', [Admin\EnrollmentController::class, 'edit'])->name('enrollments.edit');
+        Route::put('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'update'])->name('enrollments.update');
+        Route::get('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'show'])->name('enrollments.show');
+        Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 
         Route::prefix('library')->name('library.')->group(function () {
             Route::get('/books', [Admin\LibraryBookController::class, 'index'])->name('books.index');
