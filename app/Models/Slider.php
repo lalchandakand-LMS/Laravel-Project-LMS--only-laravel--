@@ -31,7 +31,7 @@ class Slider extends Model
             return null;
         }
 
-        return str_starts_with($this->image, 'http') ? $this->image : asset('storage/'.$this->image);
+        return media_url($this->image);
     }
 
     /** Tailwind gradient + accent classes per theme (safely whitelisted). */
