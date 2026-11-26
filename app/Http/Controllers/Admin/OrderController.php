@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Branch;
+use App\Models\Course;
+use App\Models\Ebook;
+use App\Models\User;
 use App\Models\Payment;
 use App\Models\PaymentAdjustment;
 use App\Models\Enrollment;
@@ -22,26 +26,158 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'branch'])->withCount('items')->latest();
-
-        if ($status = $request->get('status')) {
-            $query->where('status', $status);
-        }
-        if ($q = $request->get('q')) {
-            $query->where(fn ($w) => $w->where('order_no', 'like', "%{$q}%")
-                ->orWhere('phone', 'like', "%{$q}%")
-                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%")));
-        }
+        $this->validateOrderFilters($request);
+        $query = $this->ordersQuery($request);
+        $totals = [
+            'all' => Order::count(),
+            'paid' => Order::where('status', 'paid')->count(),
+            'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
+            'cancelled' => Order::where('status', 'cancelled')->count(),
+            'revenue' => max(0, (float) Payment::where('status', 'verified')->sum('amount')
+                - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')),
+        ];
 
         return view('admin.orders.index', [
-            'orders' => $query->paginate(20)->withQueryString(),
-            'totals' => [
-                'all' => Order::count(),
-                'paid' => Order::where('status', 'paid')->count(),
-                'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
-                'revenue' => max(0, (float) Payment::where('status', 'verified')->sum('amount') - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')),
-            ],
+            'orders' => $query->paginate(25)->withQueryString(),
+            'totals' => $totals,
+            'branches' => Branch::orderBy('name')->get(),
         ]);
+    }
+
+    private function validateOrderFilters(Request $request): void
+    {
+        $request->validate([
+            'status' => 'nullable|in:pending,partially_paid,paid,failed,cancelled,refunded',
+            'branch_id' => 'nullable|integer|exists:branches,id',
+            'item_type' => 'nullable|in:course,ebook',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+            'q' => 'nullable|string|max:120',
+        ]);
+    }
+
+    private function ordersQuery(Request $request)
+    {
+        return Order::query()->with(['user', 'branch'])->withCount('items')
+            ->withSum(['payments as verified_paid' => fn ($q) => $q->where('status', 'verified')], 'amount')
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')))
+            ->when($request->filled('item_type'), fn ($q) => $q->whereHas('items', fn ($item) => $item->where('item_type', $request->input('item_type'))))
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $term = trim($request->string('q')->toString());
+                $q->where(fn ($w) => $w->where('order_no', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('name', 'like', "%{$term}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%")));
+            })
+            ->latest();
+    }
+
+    public function export(Request $request)
+    {
+        $this->validateOrderFilters($request);
+        $orders = $this->ordersQuery($request)->with(['items', 'payments', 'adjustments'])->get();
+
+        return response()->streamDownload(function () use ($orders) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Order', 'Date', 'Student', 'Phone', 'Email', 'Branch', 'Items', 'Subtotal', 'Discount', 'Total', 'Verified received', 'Refunds', 'Due', 'Status']);
+            foreach ($orders as $order) {
+                $received = (float) $order->payments->where('status', 'verified')->sum('amount');
+                $refunds = (float) $order->adjustments->where('type', 'refund')->sum('amount');
+                fputcsv($out, [
+                    $order->order_no, optional($order->created_at)->toDateTimeString(),
+                    $order->name, $order->phone, $order->email, $order->branch?->name,
+                    $order->items->count(), $order->subtotal, $order->discount, $order->total,
+                    number_format($received, 2, '.', ''), number_format($refunds, 2, '.', ''),
+                    number_format(max(0, $order->total - $received + $refunds), 2, '.', ''), $order->status,
+                ]);
+            }
+            fclose($out);
+        }, 'orders-'.now()->format('Ymd-His').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function create()
+    {
+        return view('admin.orders.form', [
+            'order' => new Order(),
+            'students' => User::where('role', 'student')->where('is_active', true)->orderBy('name')->get(),
+            'branches' => Branch::where('is_active', true)->orderBy('name')->get(),
+            'courses' => Course::where('is_published', true)->orderBy('title')->get(),
+            'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'branch_id' => 'required|integer|exists:branches,id',
+            'name' => 'required|string|max:100',
+            'phone' => 'required|string|max:30',
+            'email' => 'required|email|max:150',
+            'address' => 'nullable|string|max:2000',
+            'note' => 'nullable|string|max:1000',
+            'items' => 'required|array|min:1',
+            'items.*.type' => 'required|in:course,ebook',
+            'items.*.id' => 'required|integer',
+        ]);
+        $student = User::where('role', 'student')->where('is_active', true)->findOrFail($data['user_id']);
+        $branch = Branch::where('is_active', true)->findOrFail($data['branch_id']);
+        if ($student->branch_id && (int) $student->branch_id !== $branch->id) {
+            throw ValidationException::withMessages(['branch_id' => 'Select the student’s assigned branch.']);
+        }
+
+        $lines = [];
+        foreach ($data['items'] as $line) {
+            $product = $line['type'] === 'course'
+                ? Course::where('is_published', true)->findOrFail($line['id'])
+                : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
+            $price = $line['type'] === 'course' ? $product->final_price : (float) $product->price;
+            if ($price <= 0) {
+                throw ValidationException::withMessages(['items' => 'Free items should be enrolled or granted through the free access workflow, not an unpaid order.']);
+            }
+            $lines[] = ['type' => $line['type'], 'id' => $product->id, 'title' => $product->title, 'price' => $price];
+        }
+
+        $subtotal = round(array_sum(array_column($lines, 'price')), 2);
+        $order = DB::transaction(function () use ($student, $branch, $data, $lines, $subtotal) {
+            $order = Order::create([
+                'user_id' => $student->id, 'branch_id' => $branch->id,
+                'subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal,
+                'status' => 'pending', 'name' => $data['name'], 'phone' => $data['phone'],
+                'email' => $data['email'], 'address' => $data['address'] ?? null, 'note' => $data['note'] ?? null,
+            ]);
+            foreach ($lines as $line) {
+                $order->items()->create([
+                    'item_type' => $line['type'], 'item_id' => $line['id'],
+                    'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
+                ]);
+            }
+            return $order;
+        });
+
+        return redirect()->route('admin.orders.show', $order)->with('success', 'Order created. It is awaiting payment; no payment was recorded.');
+    }
+
+    public function edit(Order $order)
+    {
+        abort_if($order->payments()->exists(), 403, 'Orders with payment records cannot be edited. Use the payment/refund ledger.');
+        return view('admin.orders.form', ['order' => $order, 'students' => collect(), 'branches' => collect(), 'courses' => collect(), 'ebooks' => collect()]);
+    }
+
+    public function update(Request $request, Order $order)
+    {
+        abort_if($order->payments()->exists(), 403, 'Orders with payment records cannot be edited. Use the payment/refund ledger.');
+        $data = $request->validate([
+            'name' => 'required|string|max:100', 'phone' => 'required|string|max:30',
+            'email' => 'required|email|max:150', 'address' => 'nullable|string|max:2000',
+            'note' => 'nullable|string|max:1000',
+        ]);
+        $order->update($data);
+        return redirect()->route('admin.orders.show', $order)->with('success', 'Order customer details updated.');
     }
 
     public function show(Order $order)
