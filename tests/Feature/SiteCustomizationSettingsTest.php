@@ -175,7 +175,8 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('--aec-primary: #ea580c', false)
-            ->assertSee('--aec-primary-dark: #9a3412', false);
+            ->assertSee('--aec-primary-dark: #9a3412', false)
+            ->assertSee('.bg-orange-700,.bg-orange-600,.bg-orange-500', false);
     }
 
     public function test_admin_can_save_and_render_homepage_section_order(): void
