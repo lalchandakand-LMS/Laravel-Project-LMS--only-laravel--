@@ -4,13 +4,13 @@
 @section('content')
 @include('partials.dashboard-banner')
 @include('partials.phone-verification')
-<div class="mb-5 flex flex-wrap gap-3"><a href="{{ route('teacher.attendance.index') }}" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Take / submit attendance</a></div>@if(auth()->user()->isInstructor())<a href="{{ route('teacher.id-card') }}" class="rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-700">My staff ID card</a>@endif
+<div class="mb-5 flex flex-wrap gap-3"><a href="{{ route('teacher.attendance.index') }}" class="rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-700">Take / submit attendance</a></div>@if(auth()->user()->isInstructor())<a href="{{ route('teacher.id-card') }}" class="rounded-xl border border-orange-600 px-4 py-2.5 text-sm font-bold text-orange-700">My staff ID card</a>@endif
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 @if (\App\Models\Setting::get('dashboard_widget_teacher_stats', '1') === '1')
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ([
-        ['Courses', $stats['courses'], 'emerald'],
+        ['Courses', $stats['courses'], 'orange'],
         ['Students', $stats['students'], 'indigo'],
         ['Active enrolments', $stats['active'], 'sky'],
         ['Revenue', $cur.number_format($stats['revenue']), 'amber'],
@@ -54,10 +54,10 @@
                     <p class="text-xs text-slate-500">{{ $class->starts_at?->format('d M, h:i A') }} · {{ $class->platform }}</p>
                 </li>
             @empty
-                <li class="text-slate-500">Nothing scheduled. <a href="{{ route('admin.live-classes.create') }}" class="font-semibold text-emerald-700">Schedule one</a>.</li>
+                <li class="text-slate-500">Nothing scheduled. <a href="{{ route('admin.live-classes.create') }}" class="font-semibold text-orange-700">Schedule one</a>.</li>
             @endforelse
         </ul>
-        <a href="{{ route('admin.live-classes.index') }}" class="mt-4 inline-block text-sm font-bold text-emerald-700">Manage live classes →</a>
+        <a href="{{ route('admin.live-classes.index') }}" class="mt-4 inline-block text-sm font-bold text-orange-700">Manage live classes →</a>
     </div>@endif
 
 </div>
@@ -73,7 +73,7 @@
                         <p class="font-semibold text-slate-800">{{ \Illuminate\Support\Str::limit($course->title, 45) }}</p>
                         <p class="text-xs text-slate-500">{{ $course->lessons_count }} lessons</p>
                     </div>
-                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">{{ $course->enrollments_count }} students</span>
+                    <span class="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-800">{{ $course->enrollments_count }} students</span>
                 </li>
             @empty
                 <li class="py-3 text-slate-500">No courses assigned to you yet.</li>

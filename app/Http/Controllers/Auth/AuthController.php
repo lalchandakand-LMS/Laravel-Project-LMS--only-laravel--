@@ -34,12 +34,14 @@ class AuthController extends Controller
             'phone' => $data['phone'] ?? null,
             'password' => Hash::make($data['password']),
             'role' => 'student',
+            'email_verification_required' => true,
         ]);
 
         Auth::login($user);
         $request->session()->regenerate();
+        $user->sendEmailVerificationNotification();
 
-        return redirect()->route('student.dashboard')
+        return redirect()->route('verification.notice')
             ->with('success', "Welcome to ".config('app.name', "Alom's English Center")."!");
     }
 

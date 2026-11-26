@@ -15,7 +15,7 @@
         <ul class="mt-6 divide-y divide-slate-100 border-y border-slate-100">
             @foreach ($order->items as $item)
                 <li class="flex justify-between py-3 text-sm">
-                    <span><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }}</span>
+                    <span><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }} @if($item->qty > 1)<span class="text-xs text-slate-500">× {{ $item->qty }}</span>@endif</span>
                     <span class="font-semibold">৳{{ number_format($item->price, 2) }}</span>
                 </li>
             @endforeach
@@ -31,8 +31,23 @@
         @endif
 
         @if ($order->status === 'paid')
-            <div class="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Payment fully confirmed — your course and e-book access is active.</div>
+            <div class="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Payment fully confirmed. Your digital access is active and physical products are ready for order processing.</div>
             <a href="{{ route('student.courses') }}" class="mt-4 inline-block rounded-xl bg-emerald-700 px-5 py-3 font-bold text-white">Go to my courses</a>
+            @if($order->items->contains('item_type', 'product'))
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+                    <b>Delivery address</b>
+                    <p class="mt-1 whitespace-pre-line">{{ $order->address }}</p>
+                    @if($order->shipping_status)
+                        <p class="mt-3 text-sm"><b>Delivery status:</b> {{ ucfirst($order->shipping_status) }}</p>
+                        @if($order->shipping_carrier || $order->tracking_number)
+                            <p class="mt-1 text-sm">Carrier: {{ $order->shipping_carrier ?: '—' }} · Tracking: {{ $order->tracking_number ?: '—' }}</p>
+                        @endif
+                        @if($order->shipped_at)<p class="mt-1 text-xs text-slate-500">Shipped {{ $order->shipped_at->format('d M Y, h:i A') }}</p>@endif
+                        @if($order->delivered_at)<p class="mt-1 text-xs text-slate-500">Delivered {{ $order->delivered_at->format('d M Y, h:i A') }}</p>@endif
+                    @endif
+                    <p class="mt-2 text-xs text-slate-500">The branch will process and dispatch your physical items.</p>
+                </div>
+            @endif
         @else
             @if (count($enabledMethods) && $order->dueAmount() > 0)
                 <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
@@ -62,6 +77,15 @@
                 </div>
 
                 @if (! $order->payments->where('status', 'pending')->count())
+                    @if(($bkashReady ?? false) && in_array('bkash', $enabledMethods, true))
+                        <form method="POST" action="{{ route('checkout.bkash', $order->order_no) }}" class="mt-4 rounded-xl border border-pink-200 bg-pink-50 p-4">
+                            @csrf
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div><p class="font-bold text-pink-950">Secure bKash checkout</p><p class="mt-1 text-xs text-pink-800">Sandbox test only — the provider confirms the payment before course access is granted.</p></div>
+                                <button class="rounded-lg bg-pink-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-pink-700">Pay with bKash</button>
+                            </div>
+                        </form>
+                    @endif
                     <form method="POST" enctype="multipart/form-data" action="{{ route('checkout.pay', $order->order_no) }}" class="mt-4 grid gap-3 rounded-xl border border-slate-200 p-5">
                         @csrf
                         <label class="text-sm font-semibold text-slate-700">Payment method</label>

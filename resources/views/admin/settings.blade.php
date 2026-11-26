@@ -171,6 +171,26 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2" data-settings-group="design">
+        <h3 class="font-bold text-slate-900">Admin Design Studio</h3>
+        <p class="mt-1 text-sm text-slate-500">Customize the Admin workspace palette, card corners, brand text and sidebar promotion panel.</p>
+        <div class="mt-4 grid gap-4 rounded-xl border border-orange-200 bg-orange-50/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Admin theme preset</label><select name="admin_theme_preset" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">@foreach (['navy'=>'Royal navy','orange'=>'Orange','teal'=>'Teal','purple'=>'Purple'] as $value=>$label)<option value="{{ $value }}" @selected(($settings['admin_theme_preset'] ?? 'navy') === $value)>{{ $label }}</option>@endforeach</select></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Card corner radius</label><select name="admin_card_radius" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">@foreach ([10,14,18,22] as $radius)<option value="{{ $radius }}" @selected((int) ($settings['admin_card_radius'] ?? 18) === $radius)>{{ $radius }} px</option>@endforeach</select></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Admin brand title</label><input name="admin_brand_title" value="{{ old('admin_brand_title', $settings['admin_brand_title'] ?? "Alom's LMS") }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Brand subtitle</label><input name="admin_brand_subtitle" value="{{ old('admin_brand_subtitle', $settings['admin_brand_subtitle'] ?? 'Admin workspace') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            <div class="sm:col-span-2 lg:col-span-4"><label class="mb-1 block text-sm font-semibold text-slate-700">Separate Admin logo</label>
+                @if (!empty($settings['admin_logo']))<img src="{{ media_url($settings['admin_logo']) }}" alt="Current Admin logo" class="mb-2 h-14 w-14 rounded-lg border border-slate-200 bg-white object-contain p-1">@endif
+                <input type="file" name="admin_logo" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
+                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP · Maximum 2 MB. If empty, the website logo is used.</p>
+                @if (!empty($settings['admin_logo']))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_admin_logo" value="1"> Remove separate Admin logo</label>@endif
+            </div>
+            <div class="sm:col-span-2"><label class="mb-1 block text-sm font-semibold text-slate-700">Sidebar promo title</label><input name="admin_sidebar_promo_title" value="{{ old('admin_sidebar_promo_title', $settings['admin_sidebar_promo_title'] ?? 'Grow your academy') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            <div class="sm:col-span-2"><label class="mb-1 block text-sm font-semibold text-slate-700">Sidebar promo message</label><input name="admin_sidebar_promo_body" value="{{ old('admin_sidebar_promo_body', $settings['admin_sidebar_promo_body'] ?? 'Keep your courses, learners and live classes moving forward.') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Promo button text</label><input name="admin_sidebar_promo_button" value="{{ old('admin_sidebar_promo_button', $settings['admin_sidebar_promo_button'] ?? 'Explore settings') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold text-slate-700">Promo button URL</label><input name="admin_sidebar_promo_url" value="{{ old('admin_sidebar_promo_url', $settings['admin_sidebar_promo_url'] ?? '/admin/settings') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 sm:col-span-2"><input type="checkbox" name="admin_sidebar_promo_enabled" value="1" @checked(($settings['admin_sidebar_promo_enabled'] ?? '1') === '1')> Show sidebar promotion panel</label>
+        </div>
+        <div class="mt-6 border-t border-slate-200 pt-6">
         <h3 class="font-bold text-slate-900">Homepage, footer & developer design</h3>
         <p class="mt-1 text-sm text-slate-500">Customize section titles, backgrounds and text colors. Leave content fields blank to use the built-in defaults.</p>
         <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
@@ -203,6 +223,16 @@
                 'homepage_featured_title' => ['Featured courses heading', 'text', 'Featured courses'],
                 'homepage_featured_subtitle' => ['Featured courses description', 'text', 'Hand-picked by our academic team.'],
                 'homepage_online_batches_title' => ['Online batches heading', 'text', 'Online batches are ongoing!'],
+                'homepage_online_batches_badge' => ['Online batches badge', 'text', 'Online Course'],
+                'homepage_stats_title' => ['Statistics heading', 'text', 'See the stats!'],
+                'homepage_stats_students_label' => ['Students statistic label', 'text', 'Students'],
+                'homepage_stats_students_icon' => ['Students statistic icon (emoji)', 'text', '♙'],
+                'homepage_stats_courses_label' => ['Courses statistic label', 'text', 'Courses'],
+                'homepage_stats_courses_icon' => ['Courses statistic icon (emoji)', 'text', '▤'],
+                'homepage_stats_teachers_label' => ['Teachers statistic label', 'text', 'Teachers'],
+                'homepage_stats_teachers_icon' => ['Teachers statistic icon (emoji)', 'text', '♧'],
+                'homepage_stats_lessons_label' => ['Lessons statistic label', 'text', 'Videos / Lessons'],
+                'homepage_stats_lessons_icon' => ['Lessons statistic icon (emoji)', 'text', '▷'],
                 'homepage_online_batches_subtitle' => ['Online batches description', 'text', 'Book your seat in an upcoming live learning batch.'],
                 'homepage_latest_title' => ['Latest courses heading', 'text', 'Latest courses'],
                 'homepage_latest_subtitle' => ['Latest courses description', 'text', 'Explore our newest learning opportunities.'],

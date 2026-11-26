@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Ebook;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
@@ -34,6 +36,16 @@ class CartController extends Controller
                     'image' => $e->coverUrl(), 'url' => route('ebooks.show', $e->slug),
                 ];
             }
+
+            if ($type === 'product' && ($p = Product::published()->find($id))) {
+                $rows[] = [
+                    'key' => $key, 'type' => 'product', 'id' => $id, 'title' => $p->title,
+                    'price' => (float) $p->price, 'original_price' => (float) $p->price,
+                    'has_discount' => false, 'flash_sale_name' => null,
+                    'image' => $p->imageUrl(), 'url' => route('products.show', $p->slug),
+                    'qty' => max(1, (int) data_get(session('cart_quantities', []), $key, 1)),
+                ];
+            }
         }
         return $rows;
     }
@@ -41,7 +53,7 @@ class CartController extends Controller
     public static function totals(?int $branchId = null, ?Coupon $lockedCoupon = null): array
     {
         $items = self::items();
-        $subtotal = round(array_sum(array_column($items, 'price')), 2);
+        $subtotal = round(array_sum(array_map(fn (array $item) => (float) $item['price'] * (int) ($item['qty'] ?? 1), $items)), 2);
         $coupon = null;
         $discount = 0.0;
         $eligibleSubtotal = 0.0;
@@ -76,7 +88,7 @@ class CartController extends Controller
 
     public function add(Request $request, string $type, int $id)
     {
-        abort_unless(in_array($type, ['course', 'ebook'], true), 404);
+        abort_unless(in_array($type, ['course', 'ebook', 'product'], true), 404);
 
         if ($type === 'course') {
             $course = Course::published()->findOrFail($id);
@@ -86,11 +98,13 @@ class CartController extends Controller
             if ($course->final_price <= 0) {
                 return redirect()->route('courses.enroll-free', $course->slug);
             }
-        } else {
+        } elseif ($type === 'ebook') {
             $ebook = Ebook::where('is_published', true)->findOrFail($id);
             if ($ebook->ownedBy($request->user())) {
                 return back()->with('info', 'You already own this e-book.');
             }
+        } else {
+            Product::published()->findOrFail($id);
         }
 
         $key = "{$type}:{$id}";
@@ -103,9 +117,29 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('success', 'Added to cart.');
     }
 
+    public function updateQuantity(Request $request, string $key)
+    {
+        abort_unless(preg_match('/^product:\\d+$/', $key) === 1, 404);
+        $data = $request->validate(['quantity' => 'required|integer|min:1|max:20']);
+        [, $id] = explode(':', $key, 2);
+        $product = Product::published()->findOrFail((int) $id);
+        if ($data['quantity'] > $product->stock_quantity) {
+            throw ValidationException::withMessages(['quantity' => 'Requested quantity exceeds available stock.']);
+        }
+        abort_unless(in_array($key, (array) session('cart', []), true), 404);
+        $quantities = (array) session('cart_quantities', []);
+        $quantities[$key] = (int) $data['quantity'];
+        session(['cart_quantities' => $quantities]);
+
+        return back()->with('success', 'Cart quantity updated.');
+    }
+
     public function remove(string $key)
     {
         session(['cart' => array_values(array_diff((array) session('cart', []), [$key]))]);
+        $quantities = (array) session('cart_quantities', []);
+        unset($quantities[$key]);
+        session(['cart_quantities' => $quantities]);
         return back()->with('success', 'Removed from cart.');
     }
 

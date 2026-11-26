@@ -2,15 +2,22 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Branch;
 use App\Http\Controllers\Guardian;
 use App\Http\Controllers\Teacher;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\BkashPaymentController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\BoardResultController;
 use App\Http\Controllers\CoachingAdmissionController;
 use App\Http\Controllers\CoachingFeeReportController;
 use App\Http\Controllers\OnlineBatchApplicationController;
@@ -22,6 +29,7 @@ use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Student;
 use App\Http\Controllers\AiAgentController;
@@ -33,16 +41,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/board-result', [BoardResultController::class, 'index'])->name('board-results.index');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/instructors', [InstructorController::class, 'index'])->name('instructors.index');
 Route::get('/instructors/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('instructors.show');
+Route::get('/teacher/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('teachers.public.show');
 Route::post('/contact', [PageController::class, 'sendContact'])->name('contact.send');
 
 Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Conditions', 'policy' => 'terms'])->name('legal.terms');
 Route::view('/privacy-policy', 'legal.policy', ['title' => 'Privacy Policy', 'policy' => 'privacy'])->name('legal.privacy');
 Route::view('/refund-policy', 'legal.policy', ['title' => 'Refund Policy', 'policy' => 'refund'])->name('legal.refunds');
+
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/coaching-admission', [CoachingAdmissionController::class, 'create'])->name('coaching-admission.create');
@@ -53,19 +66,40 @@ Route::get('/category/{category:slug}', [CourseController::class, 'category'])->
 Route::get('/ebooks', [EbookController::class, 'index'])->name('ebooks.index');
 Route::get('/ebooks/{ebook:slug}', [EbookController::class, 'show'])->name('ebooks.show');
 Route::get('/verify/{code}', [CertificateVerifyController::class, 'show'])->name('certificates.verify');
+Route::post('/payments/bkash/webhook', [BkashPaymentController::class, 'webhook'])
+    ->middleware('throttle:120,1')->name('payments.bkash.webhook');
+Route::get('/payments/bkash/callback', [BkashPaymentController::class, 'callback'])
+    ->middleware('throttle:20,1')->name('payments.bkash.callback');
 Route::get('/id/verify/{token}', [Admin\IdentityCardController::class, 'verify'])->name('identity.verify');
 
 /* ------------------------------------------------------------------
  |  GUEST AUTH
  |------------------------------------------------------------------*/
 Route::middleware('guest')->group(function () {
+    Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('throttle:10,1')->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->middleware('throttle:10,1')->name('auth.google.callback');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->middleware('throttle:5,1')->name('password.update');
+});
+
+Route::middleware(['auth', 'required.email.verified'])->group(function () {
+    Route::get('/email/verify', fn () => auth()->user()->hasVerifiedEmail()
+        ? redirect()->intended(auth()->user()->dashboardRoute())
+        : view('auth.verify-email'))->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')->name('verification.send');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::post('/account/phone-verification/send', [App\Http\Controllers\PhoneVerificationController::class, 'send'])->middleware('throttle:3,10')->name('account.phone.send');
     Route::post('/account/phone-verification/verify', [App\Http\Controllers\PhoneVerificationController::class, 'verify'])->middleware('throttle:10,10')->name('account.phone.verify');
 });
@@ -73,9 +107,10 @@ Route::middleware('auth')->group(function () {
 /* ------------------------------------------------------------------
  |  AUTHENTICATED (cart / checkout / reviews)
  |------------------------------------------------------------------*/
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add/{type}/{id}', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/quantity/{key}', [CartController::class, 'updateQuantity'])->name('cart.quantity');
     Route::post('/cart/remove/{key}', [CartController::class, 'remove'])->name('cart.remove');
     Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon');
     Route::post('/cart/coupon/remove', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
@@ -85,6 +120,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/success/{order:order_no}', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
+    Route::post('/orders/{order:order_no}/payments/bkash', [BkashPaymentController::class, 'initiate'])
+        ->middleware('throttle:5,1')->name('checkout.bkash');
 
     Route::get('/online-batches', [OnlineBatchApplicationController::class, 'index'])->name('student.online-batches');
     Route::post('/online-batches/apply', [OnlineBatchApplicationController::class, 'store'])->name('student.online-batches.apply');
@@ -113,7 +150,7 @@ Route::middleware('auth')->group(function () {
 /* ------------------------------------------------------------------
  |  STUDENT
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name('student.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:student,instructor,admin'])->prefix('my')->name('student.')->group(function () {
     Route::get('/', [Student\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-courses', [Student\DashboardController::class, 'courses'])->name('courses');
     Route::get('/live-classes', [Student\LiveClassController::class, 'index'])->name('live-classes');
@@ -161,7 +198,7 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
 /* ------------------------------------------------------------------
  |  ADMIN / INSTRUCTOR PANEL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])->prefix('admin')->name('admin.')->group(function () {
     // Instructors may use the teaching workspace only. The admin dashboard and
     // all organisation, account, finance, and site-wide management stay admin-only.
     Route::middleware('role:admin')->group(function () {
@@ -193,6 +230,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('batches/{batch}/students', [Admin\BatchController::class, 'assignStudent'])->name('batches.students.store');
         Route::delete('batches/{batch}/students/{enrollment}', [Admin\BatchController::class, 'removeStudent'])->name('batches.students.destroy');
         Route::resource('ebooks', Admin\EbookController::class)->except('show');
+        Route::resource('products', Admin\ProductController::class)->except('show');
+        Route::post('products/{product}/restore', [Admin\ProductController::class, 'restore'])->name('products.restore');
         Route::get('coupons/usage', [Admin\CouponController::class, 'usage'])->name('coupons.usage');
         Route::get('coupons/usage/export', [Admin\CouponController::class, 'exportUsage'])->name('coupons.usage.export');
         Route::resource('coupons', Admin\CouponController::class)->except('show');
@@ -261,6 +300,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::put('orders/{order:order_no}', [Admin\OrderController::class, 'update'])->name('orders.update');
         Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{order:order_no}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('orders/{order:order_no}/shipping', [Admin\OrderController::class, 'updateShipping'])->name('orders.shipping');
         Route::post('payments/{payment}/verify', [Admin\OrderController::class, 'verifyPayment'])->name('payments.verify');
         Route::get('payments/{payment}/proof', [Admin\OrderController::class, 'paymentProof'])->name('payments.proof');
         Route::post('orders/{order:order_no}/offline-payment', [Admin\OrderController::class, 'recordOfflinePayment'])->name('orders.offline-payment');
@@ -350,7 +390,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
 /* ------------------------------------------------------------------
  |  TEACHER PORTAL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('teacher.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:instructor,admin'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/', [Teacher\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/courses', [Teacher\DashboardController::class, 'courses'])->name('courses');
@@ -382,7 +422,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
 /* ------------------------------------------------------------------
  |  GUARDIAN PORTAL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('guardian.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:guardian,admin'])->prefix('guardian')->name('guardian.')->group(function () {
     Route::get('/', [Guardian\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/children/{child}', [Guardian\DashboardController::class, 'child'])->name('child');
     Route::get('/children/{child}/attendance', [AttendanceController::class, 'guardianReport'])->name('child.attendance');
@@ -392,7 +432,7 @@ Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('gu
 /* ------------------------------------------------------------------
  |  BRANCH MANAGER PORTAL
  |------------------------------------------------------------------*/
-Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
+Route::middleware(['auth', 'required.email.verified', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/', [Branch\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/people/{type}/create', [Branch\PeopleController::class, 'create'])->whereIn('type', ['student', 'staff'])->name('people.create');
@@ -428,7 +468,7 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
 /* ------------------------------------------------------------------
  |  AI AGENT WORKSPACE
  |------------------------------------------------------------------*/
-Route::middleware('auth')->prefix('ai-agent')->name('ai-agent.')->group(function () {
+Route::middleware(['auth', 'required.email.verified'])->prefix('ai-agent')->name('ai-agent.')->group(function () {
     Route::get('/', [AiAgentController::class, 'index'])->name('index');
     Route::post('/', [AiAgentController::class, 'ask'])->middleware('throttle:10,1')->name('ask');
     Route::post('/actions/{proposal}/approve', [AiAgentController::class, 'approve'])->name('approve');

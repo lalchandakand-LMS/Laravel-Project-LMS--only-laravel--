@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use App\Models\Concerns\TracksDeletionActor;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, TracksDeletionActor;
+    use HasFactory, Notifiable, TracksDeletionActor, MustVerifyEmailTrait;
 
     /** Every role the platform understands. */
     public const ROLES = [
@@ -23,7 +25,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'branch_id', 'phone', 'phone_verified_at', 'avatar', 'bio',
-        'designation', 'is_active', 'provider',
+        'designation', 'is_active', 'provider', 'provider_id', 'email_verified_at', 'email_verification_required',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -32,6 +34,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_verification_required' => 'boolean',
             'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',

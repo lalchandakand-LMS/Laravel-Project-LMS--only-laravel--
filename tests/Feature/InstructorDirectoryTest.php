@@ -125,6 +125,9 @@ class InstructorDirectoryTest extends TestCase
             ->assertSee('Higher Math')
             ->assertSee('Publicly Published Teacher Course')
             ->assertDontSee('Private Draft Teacher Course');
+        $this->get(route('teachers.public.show', $teacher))
+            ->assertOk()
+            ->assertSee('A full professional biography.');
     }
 
     public function test_inactive_or_non_teacher_accounts_cannot_be_opened_as_public_instructor_profiles(): void

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-admin-preset="{{ \App\Models\Setting::get('admin_theme_preset', 'navy') }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
     <script>(function(){var t=localStorage.getItem('aec-admin-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';})();</script>
@@ -19,6 +19,14 @@
       #admin-sidebar .nav-link:hover{background:rgba(125,211,252,.12);color:white;transform:translateX(2px)}
       #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(14,165,233,.28),rgba(59,130,246,.12));color:white;box-shadow:inset 3px 0 #38bdf8}
       @media(min-width:1024px){#admin-sidebar[data-collapsed="true"]{width:5.25rem}#admin-sidebar[data-collapsed="true"] .sidebar-label,#admin-sidebar[data-collapsed="true"] .sidebar-group,#admin-sidebar[data-collapsed="true"] .sidebar-promo,#admin-sidebar[data-collapsed="true"] .sidebar-version{display:none}#admin-sidebar[data-collapsed="true"] .nav-link{justify-content:center;padding-left:.7rem;padding-right:.7rem}#admin-sidebar[data-collapsed="true"] .nav-icon{font-size:1.2rem}}
+      :root{--admin-card-radius:{{ (int) \App\Models\Setting::get('admin_card_radius', 18) }}px}
+      body main .rounded-2xl{border-radius:var(--admin-card-radius)!important}
+      html[data-admin-preset="orange"] #admin-sidebar{background:linear-gradient(165deg,#431407 0%,#9a3412 48%,#431407 100%)}
+      html[data-admin-preset="orange"] #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(251,146,60,.32),rgba(249,115,22,.12));box-shadow:inset 3px 0 #fb923c}
+      html[data-admin-preset="teal"] #admin-sidebar{background:linear-gradient(165deg,#042f2e 0%,#0f766e 48%,#042f2e 100%)}
+      html[data-admin-preset="teal"] #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(45,212,191,.28),rgba(20,184,166,.12));box-shadow:inset 3px 0 #2dd4bf}
+      html[data-admin-preset="purple"] #admin-sidebar{background:linear-gradient(165deg,#2e1065 0%,#6b21a8 48%,#2e1065 100%)}
+      html[data-admin-preset="purple"] #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(192,132,252,.28),rgba(168,85,247,.12));box-shadow:inset 3px 0 #c084fc}
       #admin-search-results{max-height:360px;overflow:auto}
     </style>
 </head>
@@ -28,8 +36,8 @@
     <aside id="admin-sidebar" data-collapsed="false" class="fixed inset-y-0 left-0 z-50 flex h-screen w-72 -translate-x-full flex-col border-r border-white/10 p-4 text-slate-200 transition-transform duration-200 lg:sticky lg:top-0 lg:w-64 lg:translate-x-0">
         <div class="flex items-center justify-between gap-2 px-1 py-2">
             <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                <img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-10 w-10 shrink-0 rounded-xl bg-white/95 p-1 object-contain shadow-lg">
-                <span class="sidebar-label min-w-0"><b class="block truncate text-sm font-black tracking-wide text-white">Alom's LMS</b><span class="block text-[10px] font-medium text-blue-200">Admin workspace</span></span>
+                <img src="{{ \App\Models\Setting::get('admin_logo') ? media_url(\App\Models\Setting::get('admin_logo')) : (\App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg')) }}" alt="{{ \App\Models\Setting::get('admin_brand_title', 'Admin workspace') }}" class="h-10 w-10 shrink-0 rounded-xl bg-white/95 p-1 object-contain shadow-lg">
+                <span class="sidebar-label min-w-0"><b class="block truncate text-sm font-black tracking-wide text-white">{{ \App\Models\Setting::get('admin_brand_title', \App\Models\Setting::get('site_name', "Alom's LMS")) }}</b><span class="block text-[10px] font-medium text-blue-200">{{ \App\Models\Setting::get('admin_brand_subtitle', 'Admin workspace') }}</span></span>
             </a>
             <span class="sidebar-version rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-[9px] font-black tracking-wider text-cyan-200">v3.0</span>
         </div>
@@ -44,6 +52,7 @@
                 ['admin.exams.index','Exams','✎','admin.exams.*'],
                 ['admin.attendance.index','Attendance','◷','admin.attendance.*'],
                 ['admin.orders.index','Payments','৳','admin.orders.*'],
+                ['admin.products.index','Physical Products','▣','admin.products.*'],
                 ['admin.certificates.index','Certificates','✧','admin.certificates.*'],
                 ['admin.reports.index','Reports','▥','admin.reports.*'],
                 ['messages.index','Messages','✉','messages.*'],
@@ -62,11 +71,13 @@
                 </a>
             @endforeach
         </nav>
+        @if (\App\Models\Setting::get('admin_sidebar_promo_enabled', '1') === '1')
         <div class="sidebar-promo mt-4 rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-blue-500/25 to-cyan-400/10 p-4 shadow-lg">
-            <div class="flex items-center gap-2"><span class="grid h-8 w-8 place-items-center rounded-lg bg-cyan-300/15 text-lg text-cyan-200">✦</span><span class="text-xs font-extrabold text-white">Grow your academy</span></div>
-            <p class="mt-2 text-[11px] leading-5 text-blue-100/80">Keep your courses, learners and live classes moving forward.</p>
-            <a href="{{ route('admin.settings.index') }}" class="mt-3 inline-flex rounded-lg bg-cyan-300 px-3 py-2 text-[10px] font-black text-blue-950 hover:bg-cyan-200">Explore settings →</a>
+            <div class="flex items-center gap-2"><span class="grid h-8 w-8 place-items-center rounded-lg bg-cyan-300/15 text-lg text-cyan-200">✦</span><span class="text-xs font-extrabold text-white">{{ \App\Models\Setting::get('admin_sidebar_promo_title', 'Grow your academy') }}</span></div>
+            <p class="mt-2 text-[11px] leading-5 text-blue-100/80">{{ \App\Models\Setting::get('admin_sidebar_promo_body', 'Keep your courses, learners and live classes moving forward.') }}</p>
+            <a href="{{ \App\Models\Setting::get('admin_sidebar_promo_url', route('admin.settings.index')) }}" class="mt-3 inline-flex rounded-lg bg-cyan-300 px-3 py-2 text-[10px] font-black text-blue-950 hover:bg-cyan-200">{{ \App\Models\Setting::get('admin_sidebar_promo_button', 'Explore settings') }} →</a>
         </div>
+        @endif
         <div class="mt-4 border-t border-white/10 pt-3">
             <a href="{{ route('home') }}" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold text-blue-100"><span class="nav-icon">↗</span><span class="sidebar-label">View website</span></a>
             <form method="POST" action="{{ route('logout') }}">@csrf<button class="nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-bold text-rose-300"><span class="nav-icon">⇥</span><span class="sidebar-label">Logout</span></button></form>

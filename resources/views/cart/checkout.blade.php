@@ -42,8 +42,8 @@
                     <input type="email" name="email" value="{{ old('email', auth()->user()->email) }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                 </div>
                 <div class="sm:col-span-2">
-                    <label class="mb-1 block text-sm font-semibold text-slate-700">Address (optional)</label>
-                    <input name="address" value="{{ old('address') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                    <label class="mb-1 block text-sm font-semibold text-slate-700">Shipping address @if(collect($items)->contains('type', 'product'))<span class="text-rose-600">*</span>@else (optional)@endif</label>
+                    <textarea name="address" rows="2" @if(collect($items)->contains('type', 'product')) required @endif class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">{{ old('address') }}</textarea>
                 </div>
                 <div class="sm:col-span-2">
                     <label class="mb-1 block text-sm font-semibold text-slate-700">Note (optional)</label>
@@ -57,7 +57,7 @@
             <ul class="mt-4 space-y-3 text-sm">
                 @foreach ($items as $item)
                     <li class="flex justify-between gap-3">
-                        <span class="line-clamp-2 text-slate-600">{{ $item['title'] }}</span>
+                        <span class="line-clamp-2 text-slate-600">{{ $item['title'] }} @if(($item['qty'] ?? 1) > 1)<span class="text-xs text-slate-500">× {{ $item['qty'] }}</span>@endif</span>
                         <span class="font-semibold text-slate-900">{{ $item['price'] <= 0 ? 'Free' : '৳'.number_format($item['price']) }}</span>
                     </li>
                 @endforeach

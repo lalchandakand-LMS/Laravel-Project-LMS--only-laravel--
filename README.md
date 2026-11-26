@@ -19,15 +19,17 @@ to the CDN if you delete that folder).
 
 ## 2. Installation
 
+The root `.env.example` is a secret-free, production-safe MySQL/SMTP template. For local development, copy `.env.local.example` instead. For cPanel production, follow `docs/CPANEL_PRODUCTION_CHECKLIST.md` and copy `.env.example` into the private server environment.
+
 ```bash
 # 1. dependencies
 composer install
 
 # 2. environment
-cp .env.example .env
+cp .env.local.example .env
 php artisan key:generate
 
-# 3. database — SQLite (already configured in .env.example)
+# 3. database — SQLite (already configured in .env.local.example)
 touch database/database.sqlite
 #    …or MySQL: set DB_CONNECTION=mysql + DB_DATABASE/DB_USERNAME/DB_PASSWORD in .env
 

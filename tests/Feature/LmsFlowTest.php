@@ -140,6 +140,8 @@ class LmsFlowTest extends TestCase
 
     public function test_registration_welcome_message_uses_application_brand(): void
     {
+        config(['mail.from.address' => 'noreply@example.test']);
+
         $response = $this->post('/register', [
             'name' => 'New Demo Student',
             'email' => 'new-student@example.test',
@@ -148,7 +150,7 @@ class LmsFlowTest extends TestCase
             'password_confirmation' => 'StrongPass123!',
         ]);
 
-        $response->assertRedirect('/my');
+        $response->assertRedirect(route('verification.notice'));
         $response->assertSessionHas('success', "Welcome to ".config('app.name')."!");
         $this->assertDatabaseHas('users', [
             'email' => 'new-student@example.test',

@@ -38,7 +38,7 @@
             @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
             <section class="home-glass-card">
                 <div class="flex items-center justify-between gap-3">
-                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">Online Course</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
+                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">{{ $homepageSettings['homepage_online_batches_badge'] ?? 'Online Course' }}</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
                     <a href="{{ route('courses.index') }}" class="shrink-0 text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a>
                 </div>
                 <div class="mt-5 grid gap-3 sm:grid-cols-2">
@@ -55,9 +55,14 @@
             @endif
             @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
             <section class="home-glass-card">
-                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">See the stats!</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
+                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_stats_title'] ?? 'See the stats!' }}</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
                 <div class="mt-5 grid grid-cols-2 gap-3">
-                    @foreach ([['Students', $stats['students'], '♙'], ['Courses', $stats['courses'], '▤'], ['Teachers', $stats['instructors'], '♧'], ['Videos / Lessons', $stats['lessons'], '▷']] as [$label, $value, $icon])
+                    @foreach ([
+                        [$homepageSettings['homepage_stats_students_label'] ?? 'Students', $stats['students'], $homepageSettings['homepage_stats_students_icon'] ?? '♙'],
+                        [$homepageSettings['homepage_stats_courses_label'] ?? 'Courses', $stats['courses'], $homepageSettings['homepage_stats_courses_icon'] ?? '▤'],
+                        [$homepageSettings['homepage_stats_teachers_label'] ?? 'Teachers', $stats['instructors'], $homepageSettings['homepage_stats_teachers_icon'] ?? '♧'],
+                        [$homepageSettings['homepage_stats_lessons_label'] ?? 'Videos / Lessons', $stats['lessons'], $homepageSettings['homepage_stats_lessons_icon'] ?? '▷'],
+                    ] as [$label, $value, $icon])
                         <div class="rounded-xl border border-white/10 bg-white/[.045] p-4"><div class="flex items-center justify-between"><span class="text-xl text-cyan-300">{{ $icon }}</span><strong class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</strong></div><p class="mt-1 text-xs font-semibold text-slate-300">{{ $label }}</p></div>
                     @endforeach
                 </div>
@@ -257,21 +262,16 @@
             <p class="mt-3 text-sm text-slate-300">{{ $homepageSettings['homepage_reviews_subtitle'] ?? 'Real feedback from our learning community.' }}</p>
             <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-bold text-amber-200"><span>★★★★★</span><strong>{{ number_format((float) $reviews->avg('rating'), 1) }}</strong><span class="text-slate-300">Average rating</span></div>
         </div>
-        @php($reviewRows = $reviews->values()->chunk((int) ceil($reviews->count() / 2)))
-        <div class="mt-9 space-y-4">
-            @foreach ($reviewRows as $row)
-                <div class="testimonial-track flex gap-4 overflow-x-auto pb-3">
-                    @foreach ($row as $review)
-                        <figure class="testimonial-card min-w-[min(88vw,340px)] max-w-[340px] flex-1 rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
-                            <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
-                            <blockquote class="mt-2 min-h-20 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
-                            <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
-                                <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
-                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
-                            </figcaption>
-                        </figure>
-                    @endforeach
-                </div>
+        <div class="mx-auto mt-9 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3 {{ $reviews->count() === 1 ? 'max-w-xl' : '' }}">
+            @foreach ($reviews as $review)
+                <figure class="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
+                    <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
+                    <blockquote class="mt-2 flex-1 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
+                    <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
+                        <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
+                        <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
+                    </figcaption>
+                </figure>
             @endforeach
         </div>
     </div>
@@ -279,9 +279,6 @@
 @push('scripts')
 <style>
 .student-testimonials{background:linear-gradient(135deg,#111827 0%,#172554 55%,#0f172a 100%)}
-.testimonial-track{scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#475569 transparent}
-.testimonial-card{scroll-snap-align:start}
-@media(prefers-reduced-motion:reduce){.testimonial-track{scroll-behavior:auto}}
 </style>
 @endpush
 @endif

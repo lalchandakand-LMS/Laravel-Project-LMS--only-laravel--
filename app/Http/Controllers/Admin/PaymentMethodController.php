@@ -22,7 +22,7 @@ class PaymentMethodController extends Controller
     private const PROVIDERS = [
         'bkash' => [
             'label' => 'bKash',
-            'fields' => ['merchant_number' => 'Merchant number', 'app_key' => 'App key', 'app_secret' => 'App secret', 'username' => 'API username', 'password' => 'API password', 'base_url' => 'API base URL', 'webhook_secret' => 'Webhook secret'],
+            'fields' => ['merchant_number' => 'Merchant number', 'app_key' => 'App key', 'app_secret' => 'App secret', 'username' => 'API username', 'password' => 'API password', 'base_url' => 'API base URL', 'webhook_topic_arn' => 'bKash SNS webhook Topic ARN'],
         ],
         'nagad' => [
             'label' => 'Nagad',
@@ -49,6 +49,11 @@ class PaymentMethodController extends Controller
                 'mode' => 'sandbox',
                 'configured_mode' => $credentials['mode'] ?? 'sandbox',
                 'saved' => collect($credentials['credentials'] ?? [])->filter(fn ($value) => filled($value))->isNotEmpty(),
+                'callback_url' => $key === 'bkash' ? route('payments.bkash.callback') : null,
+                'ready' => $key === 'bkash'
+                    && ($credentials['mode'] ?? 'sandbox') === 'sandbox'
+                    && collect(['app_key', 'app_secret', 'username', 'password'])
+                        ->every(fn ($field) => filled(data_get($credentials, 'credentials.'.$field))),
             ];
         }
 
@@ -87,6 +92,23 @@ class PaymentMethodController extends Controller
             }
         }
 
+        $bkashBaseUrl = data_get($submittedProviders, 'bkash.credentials.base_url');
+        if (filled($bkashBaseUrl) && ! in_array(rtrim($bkashBaseUrl, '/'), [
+            'https://checkout.sandbox.bka.sh',
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta',
+        ], true)) {
+            throw ValidationException::withMessages([
+                'providers.bkash.credentials.base_url' => 'Only the official bKash Checkout sandbox base URL is accepted.',
+            ]);
+        }
+
+        $bkashTopicArn = data_get($submittedProviders, 'bkash.credentials.webhook_topic_arn');
+        if (filled($bkashTopicArn) && ! preg_match('/^arn:aws:sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_-]+$/', $bkashTopicArn)) {
+            throw ValidationException::withMessages([
+                'providers.bkash.credentials.webhook_topic_arn' => 'Enter the exact AWS SNS Topic ARN supplied by bKash.',
+            ]);
+        }
+
         DB::transaction(function () use ($request, $submittedProviders) {
             $enabled = array_values(array_unique($request->input('methods', [])));
             Setting::set('payment_methods.global_enabled', json_encode($enabled, JSON_THROW_ON_ERROR));
@@ -117,7 +139,7 @@ class PaymentMethodController extends Controller
         });
 
         return redirect()->route('admin.payment-methods.index')
-            ->with('success', 'Payment method settings saved. Gateway API processing remains inactive until its adapter and provider tests are completed.');
+            ->with('success', 'Payment settings saved. bKash Checkout sandbox is available when its required credentials are complete; Live mode and other provider APIs remain locked pending their official integration and certification.');
     }
 
     private function credentials(string $provider): array

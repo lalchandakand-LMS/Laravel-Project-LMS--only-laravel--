@@ -6,7 +6,9 @@ use App\Models\Branch;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Services\OrderService;
+use App\Services\Payments\BkashCheckoutAdapter;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +40,7 @@ class CheckoutController extends Controller
             'name' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:150',
-            'address' => 'nullable|string|max:255',
+            'address' => collect(CartController::totals()['items'])->contains('type', 'product') ? 'required|string|max:1000' : 'nullable|string|max:1000',
             'note' => 'nullable|string|max:255',
             'branch_id' => 'required|integer|exists:branches,id',
         ]);
@@ -69,6 +71,23 @@ class CheckoutController extends Controller
                 throw ValidationException::withMessages(['cart' => 'Your cart is empty.']);
             }
 
+            foreach ($totals['items'] as $cartItem) {
+                if ($cartItem['type'] !== 'product') {
+                    continue;
+                }
+
+                $stockItem = Product::whereKey($cartItem['id'])
+                    ->where('is_published', true)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $stockItem || $stockItem->stock_quantity < (int) ($cartItem['qty'] ?? 1)) {
+                    throw ValidationException::withMessages([
+                        'cart' => 'The available stock for '.$cartItem['title'].' has changed. Update your cart before placing the order.',
+                    ]);
+                }
+            }
+
             $order = Order::create($data + [
                 'user_id' => $request->user()->id,
                 'coupon_id' => $totals['coupon']?->id,
@@ -84,7 +103,7 @@ class CheckoutController extends Controller
                     'item_id' => $item['id'],
                     'title' => $item['title'],
                     'price' => $item['price'],
-                    'qty' => 1,
+                    'qty' => (int) ($item['qty'] ?? 1),
                 ]);
             }
 
@@ -104,7 +123,7 @@ class CheckoutController extends Controller
             }
         }
 
-        session()->forget(['cart', 'coupon']);
+        session()->forget(['cart', 'cart_quantities', 'coupon']);
 
         return redirect()->route('checkout.success', $order->order_no);
     }
@@ -120,6 +139,7 @@ class CheckoutController extends Controller
             'order' => $order->load('items', 'payments'),
             'branch' => $branch,
             'enabledMethods' => $enabledMethods,
+            'bkashReady' => $order->user_id === auth()->id() && ! app()->environment('production') && app(BkashCheckoutAdapter::class)->isConfigured(),
             'paymentNumbers' => [
                 'bkash' => \App\Models\Setting::get('bkash_number', ''),
                 'nagad' => \App\Models\Setting::get('nagad_number', ''),

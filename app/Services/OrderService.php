@@ -8,6 +8,7 @@ use App\Models\Ebook;
 use App\Models\EbookPurchase;
 use App\Models\Enrollment;
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +19,9 @@ class OrderService
     {
         DB::transaction(function () use ($order) {
             $order = Order::with('items')->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($order->status === 'paid') {
+                return;
+            }
 
             foreach ($order->items as $item) {
                 if ($item->item_type === 'course') {
@@ -76,9 +80,23 @@ class OrderService
                         ['order_id' => $order->id]
                     );
                 }
+
+                if ($item->item_type === 'product') {
+                    $product = Product::withTrashed()->whereKey($item->item_id)->lockForUpdate()->first();
+                    if (! $product || $product->stock_quantity < $item->qty) {
+                        throw ValidationException::withMessages([
+                            'product' => "Insufficient stock for {$item->title}. The payment cannot be approved until stock is reconciled.",
+                        ]);
+                    }
+
+                    $product->decrement('stock_quantity', $item->qty);
+                }
             }
 
-            $order->update(['status' => 'paid']);
+            $order->update([
+                'status' => 'paid',
+                'shipping_status' => $order->items->contains('item_type', 'product') ? ($order->shipping_status ?: 'processing') : $order->shipping_status,
+            ]);
         });
     }
 

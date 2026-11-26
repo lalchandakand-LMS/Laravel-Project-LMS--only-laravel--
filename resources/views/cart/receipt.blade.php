@@ -24,11 +24,21 @@
             <div><p class="text-xs text-slate-500">Order number</p><p class="font-bold">{{ $order->order_no }}</p><p class="mt-1 text-xs text-slate-500">Order date: {{ $order->created_at->format('d M Y') }}</p><p class="mt-1 text-xs font-bold uppercase text-slate-600">Status: {{ str_replace('_', ' ', $order->status) }}</p></div>
         </div>
 
+        @if($order->items->contains('item_type', 'product'))<div class="mt-4 rounded-xl bg-slate-50 p-4 text-sm"><b>Delivery address</b><p class="mt-1 whitespace-pre-line">{{ $order->address }}</p>
+                    @if($order->shipping_status)
+                        <p class="mt-3 text-sm"><b>Delivery status:</b> {{ ucfirst($order->shipping_status) }}</p>
+                        @if($order->shipping_carrier || $order->tracking_number)
+                            <p class="mt-1 text-sm">Carrier: {{ $order->shipping_carrier ?: '—' }} · Tracking: {{ $order->tracking_number ?: '—' }}</p>
+                        @endif
+                        @if($order->shipped_at)<p class="mt-1 text-xs text-slate-500">Shipped {{ $order->shipped_at->format('d M Y, h:i A') }}</p>@endif
+                        @if($order->delivered_at)<p class="mt-1 text-xs text-slate-500">Delivered {{ $order->delivered_at->format('d M Y, h:i A') }}</p>@endif
+                    @endif</div>@endif
+
         <table class="mt-6 w-full text-sm">
             <thead><tr class="border-y border-slate-200 text-left text-xs uppercase text-slate-500"><th class="py-2">Description</th><th class="py-2 text-right">Amount</th></tr></thead>
             <tbody class="divide-y divide-slate-100">
                 @foreach ($order->items as $item)
-                    <tr><td class="py-3">{{ $item->title }}</td><td class="py-3 text-right">৳{{ number_format($item->price, 2) }}</td></tr>
+                    <tr><td class="py-3">{{ $item->title }} @if($item->qty > 1)<span class="text-xs text-slate-500">× {{ $item->qty }}</span>@endif</td><td class="py-3 text-right">৳{{ number_format($item->price * $item->qty, 2) }}</td></tr>
                 @endforeach
             </tbody>
         </table>
@@ -63,7 +73,7 @@
             </div>
         @endif
 
-        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">This is a computer-generated receipt. Please retain it for your records.</p>        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">This is a computer-generated receipt. Please retain it for your records.</p>
+        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">This is a computer-generated receipt. Please retain it for your records.</p>
     </article>
 </div>
 @endsection

@@ -13,8 +13,8 @@
                 <tbody class="divide-y divide-slate-100">
                     @foreach ($order->items as $item)
                         <tr>
-                            <td class="py-3"><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }}</td>
-                            <td class="py-3 text-right font-semibold">৳{{ number_format($item->price, 2) }}</td>
+                            <td class="py-3"><span class="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">{{ $item->item_type }}</span>{{ $item->title }} @if($item->qty > 1)<span class="text-xs text-slate-500">× {{ $item->qty }}</span>@endif</td>
+                            <td class="py-3 text-right font-semibold">৳{{ number_format($item->price * $item->qty, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -35,7 +35,7 @@
                     <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="min-w-0">
-                                <p class="font-semibold uppercase text-slate-700">{{ $payment->gateway }} · {{ $payment->transaction_id }}</p>
+                                <p class="font-semibold uppercase text-slate-700">{{ $payment->gateway }} · {{ $payment->transaction_id ?: ('Provider ref '.$payment->provider_payment_id) }}</p>
                                 <p class="text-xs text-slate-500">From/received by: {{ $payment->sender_number ?: '—' }} · ৳{{ number_format($payment->amount, 2) }}</p>
                                 <p class="mt-1 text-xs text-slate-500">Submitted {{ $payment->created_at->format('d M Y, h:i A') }}
                                     @if ($payment->verifier) · Reviewed by {{ $payment->verifier->name }} at {{ optional($payment->verified_at)->format('d M Y, h:i A') }} @endif
@@ -101,8 +101,39 @@
                 <div class="flex justify-between"><dt class="text-slate-500">Email</dt><dd class="font-semibold">{{ $order->email }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-500">Branch</dt><dd class="font-semibold">{{ $order->branch?->name ?? '—' }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-500">Account</dt><dd class="font-semibold"><a href="{{ route('admin.users.show', $order->user_id) }}" class="text-emerald-700">{{ optional($order->user)->name }}</a></dd></div>
+                @if($order->items->contains('item_type', 'product'))
+                    <div class="border-t border-slate-100 pt-2"><dt class="text-slate-500">Shipping address</dt><dd class="mt-1 whitespace-pre-line font-semibold">{{ $order->address ?: 'Not provided' }}</dd></div>
+                @endif
             </dl>
         </section>
+
+        @if($order->status === 'paid' && $order->items->contains('item_type', 'product'))
+            <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 class="font-bold text-slate-900">Physical order fulfillment</h3>
+                <p class="mt-1 text-xs text-slate-500">Current status: <b class="uppercase">{{ $order->shipping_status ?: 'processing' }}</b></p>
+                @if($order->tracking_number)
+                    <p class="mt-2 text-sm">Carrier: {{ $order->shipping_carrier ?: '—' }} · Tracking: <b>{{ $order->tracking_number }}</b></p>
+                @endif
+                <form method="POST" action="{{ route('admin.orders.shipping', $order->order_no) }}" class="mt-4 space-y-3">
+                    @csrf
+                    <label class="block text-sm font-semibold">Update status
+                        <select name="shipping_status" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                            @foreach(['processing', 'packed', 'shipped', 'delivered', 'returned'] as $status)
+                                <option value="{{ $status }}" @selected(($order->shipping_status ?: 'processing') === $status)>{{ ucfirst($status) }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="block text-sm font-semibold">Delivery carrier
+                        <input name="shipping_carrier" value="{{ old('shipping_carrier', $order->shipping_carrier) }}" maxlength="100" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </label>
+                    <label class="block text-sm font-semibold">Tracking number
+                        <input name="tracking_number" value="{{ old('tracking_number', $order->tracking_number) }}" maxlength="120" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </label>
+                    <p class="text-xs text-slate-500">Carrier and tracking number are mandatory before marking an order as shipped. Delivery states cannot move backwards.</p>
+                    <button class="rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-bold text-white">Save fulfillment update</button>
+                </form>
+            </section>
+        @endif
 
         @if ($order->dueAmount() > 0 && $order->branch && $order->branch->is_active && count(array_intersect(['cash', 'office'], $order->branch->payment_methods ?? [])))
             <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -36,6 +36,7 @@
             <option value="">All item types</option>
             <option value="course" @selected(request('item_type') === 'course')>Courses</option>
             <option value="ebook" @selected(request('item_type') === 'ebook')>E-books</option>
+            <option value="product" @selected(request('item_type') === 'product')>Physical products</option>
         </select>
         <label class="text-xs text-slate-500">From date<input type="date" name="from" value="{{ request('from') }}" class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></label>
         <label class="text-xs text-slate-500">To date<input type="date" name="to" value="{{ request('to') }}" class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></label>

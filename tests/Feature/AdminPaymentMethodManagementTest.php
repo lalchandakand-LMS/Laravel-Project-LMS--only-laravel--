@@ -34,14 +34,15 @@ class AdminPaymentMethodManagementTest extends TestCase
                         'app_secret' => 'test-app-secret',
                         'username' => 'test-user',
                         'password' => 'test-password',
-                        'base_url' => 'https://sandbox.example.test',
+                        'base_url' => 'https://checkout.sandbox.bka.sh/v1.2.0-beta',
+                        'webhook_topic_arn' => 'arn:aws:sns:ap-southeast-1:123456789012:aec-test-topic',
                         'webhook_secret' => 'test-webhook-secret',
                     ],
                 ],
                 'nagad' => ['mode' => 'sandbox', 'credentials' => ['merchant_id' => 'NAGAD-MERCHANT-1']],
                 'rocket' => ['mode' => 'sandbox', 'credentials' => []],
             ],
-        ])->assertRedirect(route('admin.payment-methods.index'));
+        ])->assertRedirect(route('admin.payment-methods.index'))->assertSessionHasNoErrors();
 
         $this->assertSame(
             ['bkash', 'nagad', 'bank'],
@@ -59,7 +60,7 @@ class AdminPaymentMethodManagementTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.payment-methods.index'))
             ->assertOk()
-            ->assertSee('Credentials saved')
+            ->assertSee('Sandbox credentials complete')
             ->assertDontSee('test-app-secret');
     }
 

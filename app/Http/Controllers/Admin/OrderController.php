@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Branch;
 use App\Models\Course;
 use App\Models\Ebook;
+use App\Models\Product;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\PaymentAdjustment;
@@ -53,7 +54,7 @@ class OrderController extends Controller
         $request->validate([
             'status' => 'nullable|in:pending,partially_paid,paid,failed,cancelled,refunded',
             'branch_id' => 'nullable|integer|exists:branches,id',
-            'item_type' => 'nullable|in:course,ebook',
+            'item_type' => 'nullable|in:course,ebook,product',
             'from' => 'nullable|date',
             'to' => 'nullable|date|after_or_equal:from',
             'q' => 'nullable|string|max:120',
@@ -115,6 +116,7 @@ class OrderController extends Controller
             'branches' => Branch::where('is_active', true)->orderBy('name')->get(),
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
+            'products' => Product::published()->orderBy('title')->get(),
         ]);
     }
 
@@ -126,10 +128,10 @@ class OrderController extends Controller
             'name' => 'required|string|max:100',
             'phone' => 'required|string|max:30',
             'email' => 'required|email|max:150',
-            'address' => 'nullable|string|max:2000',
+            'address' => collect($request->input('items', []))->contains(fn ($line) => ($line['type'] ?? null) === 'product') ? 'required|string|max:2000' : 'nullable|string|max:2000',
             'note' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:course,ebook',
+            'items.*.type' => 'required|in:course,ebook,product',
             'items.*.id' => 'required|integer',
         ]);
         $student = User::where('role', 'student')->where('is_active', true)->findOrFail($data['user_id']);
@@ -141,16 +143,18 @@ class OrderController extends Controller
         $this->assertUniqueOrderItems($data['items']);
         $lines = [];
         foreach ($data['items'] as $line) {
-            $product = $line['type'] === 'course'
-                ? Course::where('is_published', true)->findOrFail($line['id'])
-                : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
+            $product = match ($line['type']) {
+                'course' => Course::where('is_published', true)->findOrFail($line['id']),
+                'ebook' => Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']),
+                'product' => Product::published()->findOrFail($line['id']),
+            };
             if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($student, $product)) {
                 throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
             }
             if ($line['type'] === 'ebook' && $product->ownedBy($student)) {
                 throw ValidationException::withMessages(['items' => 'The student already owns this e-book.']);
             }
-            $price = $product->final_price;
+            $price = $line['type'] === 'product' ? (float) $product->price : $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items should be enrolled or granted through the free access workflow, not an unpaid order.']);
             }
@@ -185,6 +189,10 @@ class OrderController extends Controller
             'students' => collect(), 'branches' => collect(),
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
+            'products' => Product::withTrashed()->where(function ($query) use ($order) {
+                $query->where(fn ($published) => $published->where('is_published', true)->where('stock_quantity', '>', 0))
+                    ->orWhereIn('id', $order->items->where('item_type', 'product')->pluck('item_id'));
+            })->orderBy('title')->get(),
         ]);
     }
 
@@ -193,25 +201,27 @@ class OrderController extends Controller
         abort_if($order->payments()->exists(), 403, 'Orders with payment records cannot be edited. Use the payment/refund ledger.');
         $data = $request->validate([
             'name' => 'required|string|max:100', 'phone' => 'required|string|max:30',
-            'email' => 'required|email|max:150', 'address' => 'nullable|string|max:2000',
+            'email' => 'required|email|max:150', 'address' => collect($request->input('items', []))->contains(fn ($line) => ($line['type'] ?? null) === 'product') ? 'required|string|max:2000' : 'nullable|string|max:2000',
             'note' => 'nullable|string|max:1000',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:course,ebook',
+            'items.*.type' => 'required|in:course,ebook,product',
             'items.*.id' => 'required|integer',
         ]);
         $this->assertUniqueOrderItems($data['items']);
         $lines = [];
         foreach ($data['items'] as $line) {
-            $product = $line['type'] === 'course'
-                ? Course::where('is_published', true)->findOrFail($line['id'])
-                : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
+            $product = match ($line['type']) {
+                'course' => Course::where('is_published', true)->findOrFail($line['id']),
+                'ebook' => Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']),
+                'product' => Product::published()->findOrFail($line['id']),
+            };
             if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($order->user, $product)) {
                 throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
             }
             if ($line['type'] === 'ebook' && $product->ownedBy($order->user)) {
                 throw ValidationException::withMessages(['items' => 'The student already owns this e-book.']);
             }
-            $price = (float) $product->final_price;
+            $price = $line['type'] === 'product' ? (float) $product->price : (float) $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items cannot be added to a paid order.']);
             }
@@ -244,7 +254,7 @@ class OrderController extends Controller
             $key = $item['type'].':'.(int) $item['id'];
             if (isset($seen[$key])) {
                 throw ValidationException::withMessages([
-                    'items' => 'The same course or e-book cannot be added to an order more than once.',
+                    'items' => 'The same item cannot be added to an order more than once.',
                 ]);
             }
             $seen[$key] = true;
@@ -345,6 +355,12 @@ class OrderController extends Controller
 
                 if ($lockedPayment->status !== 'pending') {
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
+                }
+
+                if ($data['action'] === 'verify' && filled($lockedPayment->provider_payment_id)) {
+                    throw ValidationException::withMessages([
+                        'payment' => 'Provider-initiated payments must be confirmed by the provider callback and server-side status query, not manual approval.',
+                    ]);
                 }
 
                 if ($data['action'] === 'verify' && ! in_array($order->status, ['pending', 'partially_paid'], true)) {
@@ -487,6 +503,57 @@ class OrderController extends Controller
         ));
 
         return back()->with('success', 'Offline payment recorded in the ledger.');
+    }
+
+    /** Update fulfillment progress for a paid physical-product order. */
+    public function updateShipping(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'shipping_status' => 'required|in:processing,packed,shipped,delivered,returned',
+            'shipping_carrier' => 'nullable|string|max:100',
+            'tracking_number' => 'nullable|string|max:120',
+        ]);
+
+        DB::transaction(function () use ($request, $order, $data) {
+            $locked = Order::with('items')->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'paid' || ! $locked->items->contains('item_type', 'product')) {
+                throw ValidationException::withMessages([
+                    'shipping_status' => 'Only paid orders containing physical products can enter fulfillment.',
+                ]);
+            }
+
+            $current = $locked->shipping_status ?: 'processing';
+            $transitions = [
+                'processing' => ['processing', 'packed'],
+                'packed' => ['packed', 'shipped'],
+                'shipped' => ['shipped', 'delivered'],
+                'delivered' => ['delivered', 'returned'],
+                'returned' => ['returned'],
+            ];
+
+            if (! in_array($data['shipping_status'], $transitions[$current] ?? [], true)) {
+                throw ValidationException::withMessages([
+                    'shipping_status' => 'Invalid fulfillment transition. Orders cannot move backwards in the delivery lifecycle.',
+                ]);
+            }
+
+            if ($data['shipping_status'] === 'shipped'
+                && (blank($data['shipping_carrier'] ?? null) || blank($data['tracking_number'] ?? null))) {
+                throw ValidationException::withMessages([
+                    'tracking_number' => 'Carrier and tracking number are required before marking an order as shipped.',
+                ]);
+            }
+
+            $locked->update([
+                'shipping_status' => $data['shipping_status'],
+                'shipping_carrier' => $data['shipping_carrier'] ?? $locked->shipping_carrier,
+                'tracking_number' => $data['tracking_number'] ?? $locked->tracking_number,
+                'shipped_at' => $data['shipping_status'] === 'shipped' ? ($locked->shipped_at ?: now()) : $locked->shipped_at,
+                'delivered_at' => $data['shipping_status'] === 'delivered' ? ($locked->delivered_at ?: now()) : $locked->delivered_at,
+            ]);
+        });
+
+        return back()->with('success', 'Physical order fulfillment status updated.');
     }
 
     /** Record a refund as a separate immutable ledger adjustment. */

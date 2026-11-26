@@ -25,7 +25,7 @@ class HomeController extends Controller
             'featured' => Course::published()->featured()->with(['instructor', 'category'])->withCount('lessons', 'enrollments')->latest()->take(6)->get(),
             'latest' => Course::published()->with(['instructor', 'category'])->withCount('lessons', 'enrollments')->latest()->take(8)->get(),
             'ebooks' => Ebook::where('is_published', true)->latest()->take(4)->get(),
-            'reviews' => Review::with(['user', 'course'])->where('is_approved', true)->latest()->take(6)->get(),
+            'reviews' => Review::with(['user', 'course'])->where('is_approved', true)->whereNotNull('comment')->where('comment', '!=', '')->orderByDesc('rating')->latest()->take(12)->get(),
             'teachers' => User::where('role', 'instructor')->where('is_active', true)->withCount(['courses' => fn ($query) => $query->where('is_published', true)])->where(function ($query) { $query->whereNotNull('bio')->orWhereNotNull('designation'); })->orderByDesc('courses_count')->take(6)->get(),
             'upcomingLiveClasses' => LiveClass::published()->where('starts_at', '>=', now())->whereHas('course', fn ($query) => $query->where('is_published', true))->with('course')->orderBy('starts_at')->take(6)->get(),
             'upcomingExams' => Exam::where('is_published', true)->where(function ($query) { $query->whereNull('starts_at')->orWhere('starts_at', '>=', now()); })->whereHas('course', fn ($query) => $query->where('is_published', true))->with('course')->orderByRaw('starts_at is null')->orderBy('starts_at')->take(6)->get(),
