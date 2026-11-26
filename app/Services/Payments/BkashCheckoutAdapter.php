@@ -44,9 +44,6 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
 
         $config = $this->configuration();
         $response = $this->api($config)->post($config['base_url'].self::CREATE_PATH, [
-            'mode' => '0011',
-            'payerReference' => substr((string) $order->order_no, 0, 30),
-            'callbackURL' => route('payments.bkash.callback', ['order' => $order->order_no]),
             'amount' => number_format($order->dueAmount(), 2, '.', ''),
             'currency' => 'BDT',
             'intent' => 'sale',
@@ -204,7 +201,7 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
             'status' => $completed ? 'success' : (in_array($providerStatus, ['failed', 'cancelled', 'canceled', 'rejected'], true) ? 'failed' : 'pending'),
             'payment_id' => (string) ($result['paymentID'] ?? ''),
             'transaction_id' => (string) ($result['trxID'] ?? $transactionId),
-            'invoice' => (string) ($result['merchantInvoiceNumber'] ?? ''),
+            'invoice' => (string) ($result['merchantInvoiceNumber'] ?? $result['merchantInvoice'] ?? ''),
             'amount' => (string) ($result['amount'] ?? ''),
             'currency' => strtoupper((string) ($result['currency'] ?? '')),
             'customer_msisdn' => (string) ($result['customerMsisdn'] ?? ''),
@@ -260,6 +257,9 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
         if (! is_array($json)) {
             throw new RuntimeException('bKash returned an unreadable response.');
         }
+        if (isset($json['statusCode']) && (string) $json['statusCode'] !== '0000') {
+            throw new RuntimeException('bKash API returned provider status '.(string) $json['statusCode'].'.');
+        }
 
         return $json;
     }
@@ -298,7 +298,6 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
                 ->withHeaders([
                     'username' => $credentials['username'],
                     'password' => $credentials['password'],
-                    'X-App-Key' => $credentials['app_key'],
                 ])
                 ->post($configuration['base_url'].self::TOKEN_PATH, [
                     'app_key' => $credentials['app_key'],
@@ -370,7 +369,7 @@ class BkashCheckoutAdapter implements PaymentGatewayAdapter
 
         return [
             'credentials' => $credentials,
-            'base_url' => 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+            'base_url' => 'https://checkout.sandbox.bka.sh/v1.2.0-beta',
         ];
     }
 
