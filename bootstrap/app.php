@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [\App\Http\Middleware\RecordActivity::class]);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'required.email.verified' => \App\Http\Middleware\EnsureRequiredEmailIsVerified::class,
         ]);
         $middleware->redirectUsersTo(function () {
             return auth()->user()?->dashboardRoute() ?? '/';
