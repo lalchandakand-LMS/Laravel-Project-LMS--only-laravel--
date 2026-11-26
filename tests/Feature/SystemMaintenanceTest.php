@@ -90,7 +90,7 @@ class SystemMaintenanceTest extends TestCase
         try {
             new \PDO('sqlite:'.$source);
             $targetBefore = file_get_contents($target);
-            $controller = app(\App\Http\Controllers\Admin\SystemBackupController::class);
+            $controller = app('App\Http\Controllers\Admin\SystemBackupController');
             $method = new \ReflectionMethod($controller, 'replaceSqliteDatabase');
 
             try {
