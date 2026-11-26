@@ -26,4 +26,9 @@ class StaffProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function documents()
+    {
+        return $this->morphMany(ProfileDocument::class, 'documentable')->latest();
+    }
 }
