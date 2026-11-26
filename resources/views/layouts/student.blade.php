@@ -24,7 +24,7 @@
     {{-- SIDEBAR --}}
     <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 p-4 text-slate-300 lg:flex">
         <a href="{{ route('home') }}" class="flex items-center gap-2 px-2 py-2">
-            <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain">
+            <img src="{{ \App\Models\Setting::get('logo') ? media_url(.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-9 w-9 rounded-lg object-contain">
             <span class="font-extrabold text-white">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
         </a>
 
