@@ -60,7 +60,7 @@
                 <div>
                     <label for="gtm_container_id" class="mb-1 block text-sm font-semibold text-slate-700">Google Tag Manager Container ID</label>
                     <input id="gtm_container_id" name="gtm_container_id" value="{{ old('gtm_container_id', $settings['gtm_container_id'] ?? '') }}" placeholder="GTM-XXXXXXX" pattern="GTM-[A-Za-z0-9]{4,12}" maxlength="16" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-                    <p class="mt-1 text-xs text-slate-500">GTM loads only after Analytics or Marketing consent. Configure tags in GTM to respect Google Consent Mode.</p>
+                    <p class="mt-1 text-xs text-slate-500">GTM loads only after Analytics or Marketing consent. Configure every tag in GTM to respect Google Consent Mode.</p>
                 </div>
                 <div>
                     <label for="meta_pixel_id" class="mb-1 block text-sm font-semibold text-slate-700">Meta / Facebook Pixel ID</label>
