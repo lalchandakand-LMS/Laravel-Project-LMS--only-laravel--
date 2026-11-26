@@ -45,7 +45,13 @@ Configure Laravel's scheduler once per minute:
 * * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Confirm the actual PHP binary and project path in the hosting account before saving cron entries.
+The Laravel scheduler already runs `system:backup --keep=14` daily at 02:00 and Recycle Bin pruning at 02:30. Also schedule the repository's full backup script once daily to capture the private `.env`, database and uploaded files:
+
+```cron
+0 3 * * * cd /home/CPANEL_USER/path/to/project && /bin/bash backup.sh >> storage/logs/backup.log 2>&1
+```
+
+The script writes restricted local backup files under `storage/backups/`; it is not an off-site or encrypted backup by itself. Configure a separate encrypted off-site copy using your hosting provider's supported backup destination, and perform a restore drill. Confirm the actual PHP binary, shell path and project path in the hosting account before saving cron entries.
 
 ## Backup and recovery
 
