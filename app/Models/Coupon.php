@@ -53,7 +53,7 @@ class Coupon extends Model
         $hasTargets = filled($this->course_ids) || filled($this->category_ids) || filled($this->ebook_ids);
 
         if (! $hasTargets) {
-            return round((float) $items->sum('price'), 2);
+            return round((float) $items->sum(fn (array $item) => (float) $item['price'] * (int) ($item['qty'] ?? 1)), 2);
         }
 
         $courseIds = collect($this->course_ids ?? [])->map(fn ($id) => (int) $id);
@@ -90,7 +90,7 @@ class Coupon extends Model
             return count(array_intersect($ids, $categoryIds->all())) > 0;
         });
 
-        return round((float) $eligible->sum('price'), 2);
+        return round((float) $eligible->sum(fn (array $item) => (float) $item['price'] * (int) ($item['qty'] ?? 1)), 2);
     }
 
     public function isValidFor(
