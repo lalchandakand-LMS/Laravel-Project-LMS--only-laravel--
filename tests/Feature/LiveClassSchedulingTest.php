@@ -298,7 +298,7 @@ class LiveClassSchedulingTest extends TestCase
 
         $attendanceSession = AttendanceSession::where('live_class_id', $liveClass->id)->firstOrFail();
         $this->assertSame($newStart->timestamp, $attendanceSession->starts_at->timestamp);
-        $this->assertSame(90, $attendanceSession->ends_at->diffInMinutes($attendanceSession->starts_at));
+        $this->assertEquals(90, $attendanceSession->ends_at->diffInMinutes($attendanceSession->starts_at));
     }
 
 }
