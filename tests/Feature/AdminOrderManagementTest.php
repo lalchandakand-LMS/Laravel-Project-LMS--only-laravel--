@@ -81,7 +81,7 @@ class AdminOrderManagementTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.orders.export', ['branch_id' => $branch->id]));
         $response->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        $response->assertStreamedContentContains($order->order_no);
+        $this->assertStringContainsString($order->order_no, $response->streamedContent());
     }
 
     public function test_orders_with_payment_history_cannot_be_edited(): void
