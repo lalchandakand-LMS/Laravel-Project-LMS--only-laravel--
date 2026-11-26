@@ -45,6 +45,41 @@
             </section>
         @endif
 
+        @if ($user->studentProfile)
+            <section class="rounded-2xl border border-sky-200 bg-white shadow-sm">
+                <h3 class="border-b border-slate-100 px-5 py-4 font-bold">Student attendance history</h3>
+                <div class="divide-y divide-slate-100">
+                    @forelse ($user->studentProfile->attendanceRecords->take(8) as $attendance)
+                        <div class="flex justify-between px-5 py-3 text-sm"><span>{{ $attendance->session?->topic ?? 'Class attendance' }} · {{ $attendance->attendance_date ?? $attendance->created_at->format('Y-m-d') }}</span><strong class="capitalize">{{ $attendance->status }}</strong></div>
+                    @empty
+                        <p class="px-5 py-4 text-sm text-slate-500">No attendance records.</p>
+                    @endforelse
+                </div>
+            </section>
+        @endif
+
+        @if ($user->staffProfile)
+            <section class="rounded-2xl border border-amber-200 bg-white shadow-sm">
+                <h3 class="border-b border-slate-100 px-5 py-4 font-bold">Staff attendance & payroll history</h3>
+                <div class="grid gap-4 p-5 lg:grid-cols-2">
+                    <div><h4 class="mb-2 text-sm font-bold">Recent attendance</h4>
+                        @forelse ($user->staffProfile->attendances->take(8) as $attendance)
+                            <div class="flex justify-between border-b py-2 text-xs"><span>{{ $attendance->attendance_date->format('d M Y') }}</span><strong class="capitalize">{{ str_replace('_',' ',$attendance->status) }}</strong></div>
+                        @empty
+                            <p class="text-sm text-slate-500">No staff attendance records.</p>
+                        @endforelse
+                    </div>
+                    <div><h4 class="mb-2 text-sm font-bold">Payroll history</h4>
+                        @forelse ($user->staffProfile->payrolls->take(8) as $payroll)
+                            <div class="flex justify-between border-b py-2 text-xs"><span>{{ $payroll->payroll_month }} · {{ ucfirst($payroll->status) }}</span><strong>৳{{ number_format((float)$payroll->net_salary, 2) }}</strong></div>
+                        @empty
+                            <p class="text-sm text-slate-500">No payroll records.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if (in_array($user->role, ['student', 'instructor', 'branch_manager'], true))
             @php($profile = $user->studentProfile ?? $user->staffProfile)
             <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
