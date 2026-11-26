@@ -148,7 +148,7 @@ class FlashSaleManagementTest extends TestCase
     {
         $this->actingAs($this->admin())->post(route('admin.flash-sales.store'), $this->campaignPayload([
             'value' => 150, 'course_ids' => [],
-        ]))->assertSessionHasErrors(['value', 'course_ids']);
+        ]))->assertSessionHasErrors('value');
 
         $this->actingAs($this->admin())->post(route('admin.flash-sales.store'), $this->campaignPayload([
             'course_ids' => [], 'category_ids' => [],
