@@ -102,6 +102,65 @@ class BkashTokenizedCheckoutAdapterTest extends TestCase
         Http::assertSent(fn ($httpRequest) => str_ends_with($httpRequest->url(), '/tokenized/checkout/payment/status'));
     }
 
+    public function test_callback_settles_the_order_only_after_provider_query_and_is_idempotent(): void
+    {
+        Http::fake([
+            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+                'id_token' => 'sandbox-id-token',
+                'expires_in' => 3600,
+            ]),
+            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/execute' => Http::response([
+                'paymentID' => 'BKASH-PAY-1003',
+                'transactionStatus' => 'Completed',
+            ]),
+            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/payment/status' => Http::response([
+                'paymentID' => 'BKASH-PAY-1003',
+                'trxID' => 'BKASH-TRX-2003',
+                'merchantInvoiceNumber' => 'AEC-ORDER-1003',
+                'amount' => '500.00',
+                'currency' => 'BDT',
+                'customerMsisdn' => '01712345678',
+                'transactionStatus' => 'Completed',
+            ]),
+        ]);
+
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $order = Order::create([
+            'order_no' => 'AEC-ORDER-1003',
+            'user_id' => $student->id,
+            'subtotal' => 500,
+            'discount' => 0,
+            'total' => 500,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+        ]);
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'provider_payment_id' => 'BKASH-PAY-1003',
+            'amount' => 500,
+            'status' => 'pending',
+            'payload' => ['provider' => 'bkash'],
+        ]);
+
+        $url = route('payments.bkash.callback', [
+            'order' => $order->order_no,
+            'paymentID' => 'BKASH-PAY-1003',
+            'status' => 'success',
+        ]);
+
+        $this->get($url);
+        $this->get($url);
+
+        $this->assertSame('verified', $payment->fresh()->status);
+        $this->assertSame('BKASH-TRX-2003', $payment->fresh()->transaction_id);
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame(500.0, $order->fresh()->amountPaid());
+        Http::assertSentCount(3);
+    }
+
     public function test_adapter_refuses_live_mode_and_non_official_api_hosts(): void
     {
         Setting::set('payment_gateway_credentials.bkash', Crypt::encryptString(json_encode([
