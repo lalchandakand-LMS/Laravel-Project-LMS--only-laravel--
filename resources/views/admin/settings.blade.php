@@ -149,6 +149,28 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2" data-settings-group="design">
         <h3 class="font-bold text-slate-900">Homepage, footer & developer design</h3>
         <p class="mt-1 text-sm text-slate-500">Customize section titles, backgrounds and text colors. Leave content fields blank to use the built-in defaults.</p>
+        <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+            <h4 class="font-bold text-slate-900">Homepage section layout</h4>
+            <p class="mt-1 text-sm text-slate-600">Choose a responsive carousel or a traditional grid for each content section. The hero slider remains managed separately in Slider Settings.</p>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach ([
+                    'homepage_learning_layout' => 'Learning categories',
+                    'homepage_featured_layout' => 'Featured courses',
+                    'homepage_latest_layout' => 'Latest courses',
+                    'homepage_live_classes_layout' => 'Upcoming live classes',
+                    'homepage_exams_layout' => 'Exams & assessments',
+                    'homepage_teachers_layout' => 'Teachers',
+                    'homepage_reviews_layout' => 'Student reviews',
+                    'homepage_ebooks_layout' => 'E-books & notes',
+                ] as $key => $label)
+                    <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><select name="{{ $key }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="carousel" @selected(($settings[$key] ?? 'carousel') === 'carousel')>Carousel</option><option value="grid" @selected(($settings[$key] ?? 'carousel') === 'grid')>Grid</option></select></div>
+                @endforeach
+            </div>
+            <div class="mt-4 flex flex-wrap items-end gap-5">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="homepage_carousel_autoplay" value="1" @checked(($settings['homepage_carousel_autoplay'] ?? '0') === '1')> Enable carousel autoplay</label>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Autoplay interval (seconds)</label><input type="number" min="3" max="20" name="homepage_carousel_speed" value="{{ old('homepage_carousel_speed', $settings['homepage_carousel_speed'] ?? '6') }}" class="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
+            </div>
+        </div>
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ([
                 'homepage_learning_title' => ['Learning path heading', 'text', 'Choose your learning path'],
