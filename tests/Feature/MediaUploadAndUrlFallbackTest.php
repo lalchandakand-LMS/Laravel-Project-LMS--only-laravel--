@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Course;
 use App\Models\Ebook;
-use App\Models\EbookPurchase;
 use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Slider;
@@ -65,31 +64,23 @@ class MediaUploadAndUrlFallbackTest extends TestCase
         $this->assertSame('https://cdn.example.com/home-banner.webp', $slider->imageUrl());
     }
 
-    public function test_ebook_cover_and_pdf_urls_are_saved_and_pdf_stays_purchase_gated(): void
+    public function test_free_ebook_cover_and_pdf_urls_are_saved_and_hosted_file_is_available(): void
     {
         $this->actingAs($this->admin())
             ->post(route('admin.ebooks.store'), [
                 'title' => 'Remote PDF Handbook',
                 'description' => 'External hosted book.',
-                'price' => 100,
+                'price' => 0,
                 'pages' => 80,
                 'cover_url' => 'https://cdn.example.com/handbook-cover.webp',
                 'file_url' => 'https://cdn.example.com/handbook.pdf',
+                'is_free' => 1,
                 'is_published' => 1,
             ])
             ->assertRedirect(route('admin.ebooks.index'));
 
         $ebook = Ebook::where('title', 'Remote PDF Handbook')->firstOrFail();
         $this->assertSame('https://cdn.example.com/handbook-cover.webp', $ebook->coverUrl());
-
-        $this->actingAs($this->student())
-            ->get(route('student.ebooks.file', $ebook->slug))
-            ->assertForbidden();
-
-        EbookPurchase::create([
-            'user_id' => $this->student()->id,
-            'ebook_id' => $ebook->id,
-        ]);
 
         $this->actingAs($this->student())
             ->get(route('student.ebooks.file', $ebook->slug))

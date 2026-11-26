@@ -37,6 +37,9 @@ class EbookController extends Controller
         abort_unless($ebook->file, 404, 'E-book file not found.');
 
         if ((str_starts_with(strtolower($ebook->file), 'http://') || str_starts_with(strtolower($ebook->file), 'https://'))) {
+            // A redirect exposes the origin URL and bypasses this application's
+            // purchase checks. Hosted links are therefore supported only for free titles.
+            abort_unless($ebook->is_free, 403, 'Paid e-books must be stored in private application storage.');
             return redirect()->away($ebook->file)->withHeaders([
                 'Cache-Control' => 'private, no-store, max-age=0',
                 'Referrer-Policy' => 'no-referrer',
@@ -46,7 +49,14 @@ class EbookController extends Controller
         abort_unless(Storage::disk('local')->exists($ebook->file), 404, 'E-book file not found.');
 
         if ($request->boolean('download')) {
-            return Storage::disk('local')->download($ebook->file);
+            $response = Storage::disk('local')->download($ebook->file);
+            $response->headers->add([
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Referrer-Policy' => 'no-referrer',
+            ]);
+
+            return $response;
         }
 
         return response()->file(Storage::disk('local')->path($ebook->file), [
