@@ -57,11 +57,18 @@ class IdentityAndPayrollReportsTest extends TestCase
         $this->configureSms();
 
         $this->actingAs($student)->post(route('account.phone.send'))->assertRedirect();
+        $actualOtp = null;
+        Http::assertSent(function (HttpRequest $request) use (&$actualOtp) {
+            preg_match('/code is ([0-9]{6})/', $request['message'], $matches);
+            $actualOtp = $matches[1] ?? null;
+            return $actualOtp !== null;
+        });
+        $wrongOtp = $actualOtp === '999999' ? '888888' : '999999';
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $this->post(route('account.phone.verify'), ['otp' => '000000'])->assertSessionHasErrors('otp');
+            $this->post(route('account.phone.verify'), ['otp' => $wrongOtp])->assertSessionHasErrors('otp');
         }
 
-        $this->post(route('account.phone.verify'), ['otp' => '000000'])->assertSessionHasErrors('otp');
+        $this->post(route('account.phone.verify'), ['otp' => $wrongOtp])->assertSessionHasErrors('otp');
         $this->assertNull($student->fresh()->phone_verified_at);
         $this->assertFalse(Cache::has('phone-verification:'.$student->id));
     }
