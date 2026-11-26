@@ -246,7 +246,7 @@ class ExamController extends Controller
         abort_if($attempt->status !== 'in_progress', 403);
 
         $answers = (array) $request->input('answers', []);
-        foreach ($attempt->exam->questions as $question) {
+        foreach ($this->attemptQuestions($attempt) as $question) {
             $value = $answers[$question->id] ?? null;
             if ($value === null || $value === '') {
                 continue;
