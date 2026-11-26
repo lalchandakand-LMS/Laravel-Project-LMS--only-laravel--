@@ -163,6 +163,16 @@ class OrderController extends Controller
 
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
         $order = DB::transaction(function () use ($student, $branch, $data, $lines, $subtotal) {
+            foreach ($lines as $line) {
+                if ($line['type'] !== 'product') {
+                    continue;
+                }
+                $stockItem = Product::whereKey($line['id'])->lockForUpdate()->first();
+                if (! $stockItem || ! $stockItem->is_published || $stockItem->availableQuantity() < 1) {
+                    throw ValidationException::withMessages(['items' => 'Product stock changed while the Admin order was being created.']);
+                }
+            }
+
             $order = Order::create([
                 'user_id' => $student->id, 'branch_id' => $branch->id,
                 'subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal,
@@ -173,8 +183,10 @@ class OrderController extends Controller
                 $order->items()->create([
                     'item_type' => $line['type'], 'item_id' => $line['id'],
                     'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
+                    'stock_reserved' => false,
                 ]);
             }
+            OrderService::reserveProducts($order);
             return $order;
         });
 
@@ -190,7 +202,7 @@ class OrderController extends Controller
             'courses' => Course::where('is_published', true)->orderBy('title')->get(),
             'ebooks' => Ebook::where('is_published', true)->where('is_free', false)->orderBy('title')->get(),
             'products' => Product::withTrashed()->where(function ($query) use ($order) {
-                $query->where(fn ($published) => $published->where('is_published', true)->where('stock_quantity', '>', 0))
+                $query->where(fn ($published) => $published->where('is_published', true)->whereColumn('stock_quantity', '>', 'reserved_quantity'))
                     ->orWhereIn('id', $order->items->where('item_type', 'product')->pluck('item_id'));
             })->orderBy('title')->get(),
         ]);
@@ -208,12 +220,15 @@ class OrderController extends Controller
             'items.*.id' => 'required|integer',
         ]);
         $this->assertUniqueOrderItems($data['items']);
+        $existingProductIds = $order->items()->where('item_type', 'product')->pluck('item_id')->map(fn ($id) => (int) $id)->all();
         $lines = [];
         foreach ($data['items'] as $line) {
             $product = match ($line['type']) {
                 'course' => Course::where('is_published', true)->findOrFail($line['id']),
                 'ebook' => Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']),
-                'product' => Product::published()->findOrFail($line['id']),
+                'product' => in_array((int) $line['id'], $existingProductIds, true)
+                    ? Product::withTrashed()->findOrFail($line['id'])
+                    : Product::published()->findOrFail($line['id']),
             };
             if ($line['type'] === 'course' && \App\Services\EnrollmentEligibility::hasCourse($order->user, $product)) {
                 throw ValidationException::withMessages(['items' => 'The student already has active access to this course.']);
@@ -229,19 +244,31 @@ class OrderController extends Controller
         }
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
         $customerData = collect($data)->except('items')->all();
-        DB::transaction(function () use ($order, $customerData, $lines, $subtotal) {
+        DB::transaction(function () use ($order, $customerData, $lines, $subtotal, $existingProductIds) {
             $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
             if ($locked->payments()->exists()) {
                 abort(403, 'Orders with payment records cannot be edited.');
             }
+            foreach ($lines as $line) {
+                if ($line['type'] !== 'product' || in_array((int) $line['id'], $existingProductIds, true)) {
+                    continue;
+                }
+                $stockItem = Product::whereKey($line['id'])->lockForUpdate()->first();
+                if (! $stockItem || ! $stockItem->is_published || $stockItem->availableQuantity() < 1) {
+                    throw ValidationException::withMessages(['items' => 'Product stock changed while the Admin order was being edited.']);
+                }
+            }
+            OrderService::releaseReservations($locked);
             $locked->items()->delete();
             foreach ($lines as $line) {
                 $locked->items()->create([
                     'item_type' => $line['type'], 'item_id' => $line['id'],
                     'title' => $line['title'], 'price' => $line['price'], 'qty' => 1,
+                    'stock_reserved' => false,
                 ]);
             }
             $locked->update($customerData + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
+            OrderService::reserveProducts($locked);
         });
         return redirect()->route('admin.orders.show', $order)->with('success', 'Order details and items updated.');
     }
@@ -276,12 +303,23 @@ class OrderController extends Controller
             DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
+                if (in_array($data['status'], ['paid', 'failed', 'cancelled'], true)
+                    && $lockedOrder->payments()->where('status', 'pending')->whereNotNull('provider_payment_id')->exists()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'A provider-initiated payment is still being reconciled. Wait for the bKash callback/webhook before changing the order status.',
+                    ]);
+                }
+
                 if ($lockedOrder->amountPaid() > 0
                     && $data['status'] !== 'paid'
                     && $data['status'] !== $lockedOrder->status) {
                     throw ValidationException::withMessages([
                         'status' => 'An order with verified money cannot be downgraded outside the payment ledger. Record a refund or adjustment first.',
                     ]);
+                }
+
+                if ($data['status'] === 'pending' && in_array($lockedOrder->status, ['failed', 'cancelled'], true)) {
+                    OrderService::reserveProducts($lockedOrder);
                 }
 
                 if ($data['status'] === 'paid' && $lockedOrder->status !== 'paid') {
@@ -316,6 +354,7 @@ class OrderController extends Controller
                 }
 
                 if (in_array($data['status'], ['failed', 'cancelled'], true)) {
+                    OrderService::releaseReservations($lockedOrder);
                     $lockedOrder->payments()
                         ->where('status', 'pending')
                         ->update([
@@ -357,9 +396,9 @@ class OrderController extends Controller
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
                 }
 
-                if ($data['action'] === 'verify' && filled($lockedPayment->provider_payment_id)) {
+                if (filled($lockedPayment->provider_payment_id)) {
                     throw ValidationException::withMessages([
-                        'payment' => 'Provider-initiated payments must be confirmed by the provider callback and server-side status query, not manual approval.',
+                        'payment' => 'Provider-initiated payments can only be settled or rejected by the provider callback/webhook after server-side status verification.',
                     ]);
                 }
 
@@ -623,6 +662,7 @@ class OrderController extends Controller
                     ]);
 
                     if ($netAfterRefund <= 0) {
+                        OrderService::releaseReservations($lockedOrder);
                         $lockedOrder->payments()
                             ->where('status', 'pending')
                             ->update([

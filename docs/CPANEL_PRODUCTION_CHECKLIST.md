@@ -45,7 +45,7 @@ Configure Laravel's scheduler once per minute:
 * * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
 
-The Laravel scheduler already runs `system:backup --keep=14` daily at 02:00 and Recycle Bin pruning at 02:30. Also schedule the repository's full backup script once daily to capture the private `.env`, database and uploaded files:
+The Laravel scheduler already runs `system:backup --keep=14` daily at 02:00, Recycle Bin pruning at 02:30, and `orders:expire-unpaid --hours=24` at 03:00 to cancel stale unpaid orders and release their reserved physical stock. Also schedule the repository's full backup script once daily to capture the private `.env`, database and uploaded files:
 
 ```cron
 0 3 * * * cd /home/CPANEL_USER/path/to/project && /bin/bash backup.sh >> storage/logs/backup.log 2>&1

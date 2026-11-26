@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 Schedule::command('system:backup --keep=14')->dailyAt('02:00')->withoutOverlapping();
 
 Schedule::command('recycle-bin:prune')->dailyAt('02:30')->withoutOverlapping();
+
+// Release stock held by unpaid orders after the 24-hour checkout window.
+Schedule::command('orders:expire-unpaid --hours=24')->dailyAt('03:00')->withoutOverlapping();

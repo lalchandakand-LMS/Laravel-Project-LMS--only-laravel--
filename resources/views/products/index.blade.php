@@ -12,7 +12,7 @@
             @foreach($products as $product)
                 <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                     <a href="{{ route('products.show', $product->slug) }}"><img src="{{ $product->imageUrl() }}" alt="{{ $product->title }}" class="h-52 w-full object-cover"></a>
-                    <div class="p-5"><h2 class="line-clamp-2 font-bold text-slate-900"><a href="{{ route('products.show', $product->slug) }}">{{ $product->title }}</a></h2><p class="mt-2 text-xl font-black text-orange-700">৳{{ number_format($product->price, 2) }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->stock_quantity }} in stock</p>
+                    <div class="p-5"><h2 class="line-clamp-2 font-bold text-slate-900"><a href="{{ route('products.show', $product->slug) }}">{{ $product->title }}</a></h2><p class="mt-2 text-xl font-black text-orange-700">৳{{ number_format($product->price, 2) }}</p><p class="mt-1 text-xs text-slate-500">{{ $product->availableQuantity() }} in stock</p>
                         <form method="POST" action="{{ route('cart.add', ['type' => 'product', 'id' => $product->id]) }}" class="mt-4">@csrf<button class="w-full rounded-xl bg-slate-950 px-4 py-3 font-bold text-white hover:bg-orange-600">Add to cart</button></form>
                     </div>
                 </article>
