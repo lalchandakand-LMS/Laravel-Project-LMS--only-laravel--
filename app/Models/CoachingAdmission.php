@@ -28,7 +28,7 @@ class CoachingAdmission extends Model
     public function course() { return $this->belongsTo(Course::class); }
     public function batch() { return $this->belongsTo(Batch::class); }
     public function reviewer() { return $this->belongsTo(User::class, 'reviewed_by'); }
-    public function invoices() { return $this->hasMany(StudentFeeInvoice::class, 'student_id', 'student_id'); }
+    public function invoices() { return $this->hasMany(StudentFeeInvoice::class, 'coaching_admission_id'); }
 
     public function isActive(): bool
     {
