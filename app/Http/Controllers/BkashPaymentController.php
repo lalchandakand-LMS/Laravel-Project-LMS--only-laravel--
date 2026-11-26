@@ -98,10 +98,13 @@ class BkashPaymentController extends Controller
 
         if (($result['status'] ?? null) !== 'success') {
             if (($result['status'] ?? null) === 'failed') {
-                $rejected = DB::transaction(function () use ($payment, $result) {
+                $rejected = DB::transaction(function () use ($payment, $order, $result) {
+                    // Use the same order-then-payment lock order as webhook settlement.
+                    // This prevents a stale browser failure from winning the payment lock
+                    // while a successful webhook is holding the order lock.
+                    Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
                     $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
-                    // A webhook may have settled the payment while the browser return was in flight.
                     if ($lockedPayment->status !== 'pending') {
                         return $lockedPayment->status === 'rejected';
                     }
