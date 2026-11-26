@@ -205,7 +205,24 @@ class LessonController extends Controller
             'section_id' => 'nullable|exists:sections,id',
             'title' => 'required|string|max:180',
             'type' => 'required|in:video,text,pdf,live,exam',
-            'video_url' => 'nullable|string|max:255',
+            'video_url' => ['nullable', 'string', 'max:255', function ($attribute, $value, $fail) {
+                if (blank($value)) {
+                    return;
+                }
+
+                $parts = parse_url(trim((string) $value));
+                $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+                $host = strtolower((string) ($parts['host'] ?? ''));
+                $path = (string) ($parts['path'] ?? '');
+                $youtubeHosts = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com', 'www.youtube-nocookie.com'];
+                $vimeoHosts = ['vimeo.com', 'www.vimeo.com', 'player.vimeo.com'];
+                $supportedProvider = in_array($host, $youtubeHosts, true) || in_array($host, $vimeoHosts, true);
+                $directVideo = (bool) preg_match('/\\.(mp4|webm|ogg)$/i', $path);
+
+                if (! in_array($scheme, ['http', 'https'], true) || $host === '' || (! $supportedProvider && ! $directVideo)) {
+                    $fail('Use a YouTube, Vimeo, or direct MP4/WebM/OGG video URL.');
+                }
+            }],
             'content' => 'nullable|string',
             'duration_minutes' => 'nullable|integer|min:0',
             'position' => 'nullable|integer|min:0',
