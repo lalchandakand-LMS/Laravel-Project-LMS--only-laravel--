@@ -38,7 +38,7 @@ class CheckoutController extends Controller
             'name' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:150',
-            'address' => 'nullable|string|max:255',
+            'address' => collect(CartController::totals()['items'])->contains('type', 'product') ? 'required|string|max:1000' : 'nullable|string|max:1000',
             'note' => 'nullable|string|max:255',
             'branch_id' => 'required|integer|exists:branches,id',
         ]);
@@ -84,7 +84,7 @@ class CheckoutController extends Controller
                     'item_id' => $item['id'],
                     'title' => $item['title'],
                     'price' => $item['price'],
-                    'qty' => 1,
+                    'qty' => (int) ($item['qty'] ?? 1),
                 ]);
             }
 
