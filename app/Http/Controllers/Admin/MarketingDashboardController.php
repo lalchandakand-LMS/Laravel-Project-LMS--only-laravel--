@@ -1,12 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\MarketingCampaign;
-use App\\Models\\MarketingLead;
-use Carbon\\Carbon;
-use Illuminate\\Http\\Request;
+use App\Http\Controllers\Controller;
+use App\Models\MarketingCampaign;
+use App\Models\MarketingLead;
+use Illuminate\Http\Request;
 
 class MarketingDashboardController extends Controller
 {
