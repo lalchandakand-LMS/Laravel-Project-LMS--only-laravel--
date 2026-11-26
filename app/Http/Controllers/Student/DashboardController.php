@@ -12,6 +12,7 @@ use App\Models\Exam;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Services\GamificationService;
 
 class DashboardController extends Controller
@@ -103,12 +104,22 @@ class DashboardController extends Controller
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string|max:1000',
-            'avatar' => 'nullable|image|max:2048',
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:2048',
+            'avatar_url' => 'nullable|url:http,https|max:2048',
         ]);
 
         if ($request->hasFile('avatar')) {
+            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->filled('avatar_url')) {
+            if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $data['avatar'] = $data['avatar_url'];
         }
+        unset($data['avatar_url']);
 
         $user->update($data);
 
