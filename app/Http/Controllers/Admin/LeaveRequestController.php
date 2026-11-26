@@ -28,7 +28,7 @@ class LeaveRequestController extends Controller
             abort_if($locked->status !== 'pending', 409, 'This leave request has already been reviewed.');
 
             $overlap = StaffLeaveRequest::where('user_id', $locked->user_id)
-                ->whereKeyNot($locked->id)
+                ->where('id', '!=', $locked->id)
                 ->where('status', 'approved')
                 ->whereDate('start_date', '<=', $locked->end_date)
                 ->whereDate('end_date', '>=', $locked->start_date)
