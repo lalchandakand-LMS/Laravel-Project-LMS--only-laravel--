@@ -7,6 +7,7 @@
      role="dialog" aria-modal="false" aria-labelledby="aec-cookie-title"
      data-ga-id="{{ $gaMeasurementId }}"
      data-meta-pixel-id="{{ $metaPixelId }}"
+     data-disable-pageview="{{ request()->routeIs('checkout.success') ? '1' : '0' }}"
      hidden>
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="max-w-2xl">
@@ -79,7 +80,7 @@
         window.gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
         window.gtag('consent', 'update', { analytics_storage: 'granted' });
         window.gtag('js', new Date());
-        window.gtag('config', gaId, { anonymize_ip: true });
+        window.gtag('config', gaId, { anonymize_ip: true, send_page_view: panel.dataset.disablePageview !== '1' });
         var script = document.createElement('script');
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaId);
@@ -98,7 +99,7 @@
             s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
         }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
         window.fbq('init', pixelId);
-        window.fbq('track', 'PageView');
+        if (panel.dataset.disablePageview !== '1') window.fbq('track', 'PageView');
     }
 
     function sendPendingConversions() {
@@ -108,17 +109,23 @@
         if (!transactionId) return;
         if (consent && consent.analytics && window.gtag && !window.__aecGaPurchaseSent) {
             var gaKey = 'aec_ga_purchase_' + transactionId;
-            try { if (window.localStorage.getItem(gaKey)) return; } catch (error) {}
-            window.gtag('event', 'purchase', event);
-            window.__aecGaPurchaseSent = true;
-            try { window.localStorage.setItem(gaKey, '1'); } catch (error) {}
+            var gaAlreadySent = false;
+            try { gaAlreadySent = !!window.localStorage.getItem(gaKey); } catch (error) {}
+            if (!gaAlreadySent) {
+                window.gtag('event', 'purchase', event);
+                window.__aecGaPurchaseSent = true;
+                try { window.localStorage.setItem(gaKey, '1'); } catch (error) {}
+            }
         }
         if (consent && consent.marketing && window.fbq && !window.__aecMetaPurchaseSent) {
             var metaKey = 'aec_meta_purchase_' + transactionId;
-            try { if (window.localStorage.getItem(metaKey)) return; } catch (error) {}
-            window.fbq('track', 'Purchase', { value: event.value, currency: event.currency });
-            window.__aecMetaPurchaseSent = true;
-            try { window.localStorage.setItem(metaKey, '1'); } catch (error) {}
+            var metaAlreadySent = false;
+            try { metaAlreadySent = !!window.localStorage.getItem(metaKey); } catch (error) {}
+            if (!metaAlreadySent) {
+                window.fbq('track', 'Purchase', { value: event.value, currency: event.currency });
+                window.__aecMetaPurchaseSent = true;
+                try { window.localStorage.setItem(metaKey, '1'); } catch (error) {}
+            }
         }
     }
 
