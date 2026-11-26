@@ -25,20 +25,46 @@ class Lesson extends Model
     public function progress() { return $this->hasMany(LessonProgress::class); }
     public function exams()    { return $this->hasMany(Exam::class); }
 
-    /** Extract the youtube/vimeo embed url when possible. */
+    /** Return an embed URL only for supported video providers or direct video files. */
     public function embedUrl(): ?string
     {
-        $url = $this->video_url;
-        if (! $url) {
+        $url = trim((string) $this->video_url);
+        if ($url === '') {
             return null;
         }
-        if (preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/', $url, $m)) {
-            return 'https://www.youtube.com/embed/'.$m[1];
+
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $path = (string) ($parts['path'] ?? '');
+
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return null;
         }
-        if (preg_match('/vimeo\.com\/(\d+)/', $url, $m)) {
-            return 'https://player.vimeo.com/video/'.$m[1];
+
+        $youtubeHosts = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com', 'www.youtube-nocookie.com'];
+        if (in_array($host, $youtubeHosts, true)) {
+            $videoId = null;
+            if ($host === 'youtu.be') {
+                $videoId = trim($path, '/');
+            } elseif (preg_match('~^/(?:embed|shorts|live)/([\\w-]{6,})~', $path, $match)) {
+                $videoId = $match[1];
+            } elseif ($path === '/watch') {
+                parse_str((string) ($parts['query'] ?? ''), $query);
+                $videoId = $query['v'] ?? null;
+            }
+
+            return is_string($videoId) && preg_match('/^[\\w-]{6,}$/', $videoId)
+                ? 'https://www.youtube.com/embed/'.$videoId
+                : null;
         }
-        return $url;
+
+        if (in_array($host, ['vimeo.com', 'www.vimeo.com', 'player.vimeo.com'], true)
+            && preg_match('~/(?:video/)?(\\d+)$~', rtrim($path, '/'), $match)) {
+            return 'https://player.vimeo.com/video/'.$match[1];
+        }
+
+        return preg_match('/\\.(mp4|webm|ogg)$/i', $path) ? $url : null;
     }
 
     public function isCompletedBy(?User $user): bool
