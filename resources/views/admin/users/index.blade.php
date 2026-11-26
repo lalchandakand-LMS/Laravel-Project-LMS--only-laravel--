@@ -3,6 +3,7 @@
 @section('heading', 'Students & staff')
 @section('actions')
     @if (auth()->user()->isAdmin())
+        <a href="{{ route('admin.staff-payroll.index') }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Staff Payroll</a>
         <a href="{{ route('admin.users.create') }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">+ New user</a>
     @endif
 @endsection
