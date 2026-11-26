@@ -108,4 +108,80 @@ class MediaLibraryTest extends TestCase
         $this->assertSame('https://cdn.example.com/brand/logo.webp', Setting::get('logo'));
         $this->assertSame('https://cdn.example.com/brand/dashboard.jpg', Setting::get('dashboard_banner'));
     }
+
+    public function test_media_library_prevents_deleting_an_asset_referenced_by_site_settings(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $path = 'media-library/site-logo.png';
+        Storage::disk('public')->put($path, 'fake-image');
+
+        $asset = MediaAsset::create([
+            'title' => 'Shared site logo',
+            'source_type' => 'upload',
+            'disk' => 'public',
+            'path' => $path,
+            'mime_type' => 'image/png',
+            'uploaded_by' => $admin->id,
+        ]);
+        Setting::set('logo', $asset->publicUrl());
+
+        $this->actingAs($admin)
+            ->delete(route('admin.media.destroy', $asset))
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('media_assets', ['id' => $asset->id]);
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_admin_can_delete_unused_media_and_its_uploaded_file(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $path = 'media-library/unused-banner.webp';
+        Storage::disk('public')->put($path, 'fake-image');
+
+        $asset = MediaAsset::create([
+            'title' => 'Unused banner',
+            'source_type' => 'upload',
+            'disk' => 'public',
+            'path' => $path,
+            'mime_type' => 'image/webp',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.media.destroy', $asset))
+            ->assertRedirect(route('admin.media.index'));
+
+        $this->assertDatabaseMissing('media_assets', ['id' => $asset->id]);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_media_cleanup_preserves_a_shared_file_until_its_last_setting_reference_is_removed(): void
+    {
+        Storage::fake('public');
+        $path = 'courses/shared-brand-banner.jpg';
+        Storage::disk('public')->put($path, 'shared-image');
+        Setting::set('dashboard_banner', asset('storage/'.$path));
+
+        delete_stored_media('public', $path);
+        Storage::disk('public')->assertExists($path);
+
+        Setting::set('dashboard_banner', '');
+        delete_stored_media('public', $path);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_media_cleanup_does_not_delete_shared_library_files_or_remote_urls(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('media-library/shared-logo.png', 'shared-image');
+
+        delete_stored_media('public', 'media-library/shared-logo.png');
+        delete_stored_media('public', 'https://cdn.example.com/external.jpg');
+
+        Storage::disk('public')->assertExists('media-library/shared-logo.png');
+    }
+
 }
