@@ -105,12 +105,14 @@ class StudentCoursePlayerVisibilityTest extends TestCase
             'lesson_id' => $lessons[0]->id,
             'completed_at' => now(),
         ]);
-        \App\Models\LessonProgress::create([
+        $olderProgress = \App\Models\LessonProgress::create([
             'user_id' => $student->id,
             'lesson_id' => $lessons[1]->id,
             'watched_seconds' => 45,
-            'updated_at' => now()->subMinutes(5),
         ]);
+        \Illuminate\Support\Facades\DB::table('lesson_progress')
+            ->where('id', $olderProgress->id)
+            ->update(['updated_at' => now()->subMinutes(5)]);
         \App\Models\LessonProgress::create([
             'user_id' => $student->id,
             'lesson_id' => $lessons[2]->id,
