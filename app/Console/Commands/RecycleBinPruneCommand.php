@@ -128,7 +128,11 @@ class RecycleBinPruneCommand extends Command
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
             'coupons' => [['orders', 'coupon_id']],
-            'branches' => [\n                ['users', 'branch_id'], ['orders', 'branch_id'], ['batches', 'branch_id'],\n                ['coaching_batches', 'branch_id'], ['coaching_admissions', 'branch_id'],\n                ['student_fee_invoices', 'branch_id'], ['fee_plans', 'branch_id'],\n            ],
+            'branches' => [
+                ['users', 'branch_id'], ['orders', 'branch_id'], ['batches', 'branch_id'],
+                ['coaching_batches', 'branch_id'], ['coaching_admissions', 'branch_id'],
+                ['student_fee_invoices', 'branch_id'], ['fee_plans', 'branch_id'],
+            ],
             'batches' => [['enrollments', 'batch_id'], ['online_batch_enrollments', 'batch_id'], ['live_classes', 'batch_id'], ['attendance_sessions', 'batch_id']],
             'levels' => [['courses', 'level_id'], ['batches', 'level_id'], ['coaching_batches', 'level_id']],
             'menu-items' => [['menu_items', 'parent_id']],
