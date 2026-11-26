@@ -25,7 +25,7 @@ class EnrollmentController extends Controller
 
     private function filteredQuery(Request $request): Builder
     {
-        $query = Enrollment::query()->with(['user.branch', 'course', 'batch'])->latest('enrolled_at')->latest('id');
+        $query = Enrollment::query()->with(['user.branch', 'course', 'batch.branch', 'branch'])->latest('enrolled_at')->latest('id');
 
         if ($request->filled('type') && $request->input('type') !== 'course') {
             $query->whereRaw('1 = 0');
@@ -49,7 +49,18 @@ class EnrollmentController extends Controller
         }
 
         if ($request->filled('branch_id')) {
-            $query->whereHas('user', fn ($user) => $user->where('branch_id', $request->integer('branch_id')));
+            $branchId = $request->integer('branch_id');
+            $query->where(function (Builder $branchQuery) use ($branchId) {
+                $branchQuery->where('branch_id', $branchId)
+                    ->orWhere(function (Builder $legacy) use ($branchId) {
+                        $legacy->whereNull('branch_id')
+                            ->where(function (Builder $fallback) use ($branchId) {
+                                $fallback->whereHas('batch', fn ($batch) => $batch->where('branch_id', $branchId))
+                                    ->orWhere(fn (Builder $unbatched) => $unbatched->whereNull('batch_id')
+                                        ->whereHas('user', fn ($user) => $user->where('branch_id', $branchId)));
+                            });
+                    });
+            });
         }
         if ($request->filled('from')) {
             $query->whereDate('enrolled_at', '>=', $request->date('from'));
@@ -120,9 +131,11 @@ class EnrollmentController extends Controller
             return back()->withErrors(['user_id' => 'This student already has an active enrollment in this course.'])->withInput();
         }
 
-        $before = $enrollment->exists ? $enrollment->only(['batch_id', 'price_paid', 'status', 'enrolled_at', 'expires_at', 'admin_note']) : [];
+        $branchId = ! empty($data['batch_id']) ? (Batch::find($data['batch_id'])?->branch_id ?? $student->branch_id) : $student->branch_id;
+        $before = $enrollment->exists ? $enrollment->only(['batch_id', 'branch_id', 'price_paid', 'status', 'enrolled_at', 'expires_at', 'admin_note']) : [];
         $enrollment->fill([
             'batch_id' => $data['batch_id'] ?? null,
+            'branch_id' => $branchId,
             'price_paid' => $data['price_paid'],
             'status' => $data['status'],
             'enrolled_at' => $data['enrolled_at'],
@@ -133,7 +146,7 @@ class EnrollmentController extends Controller
 
         DB::transaction(function () use ($enrollment, $before, $data) {
             $enrollment->save();
-            $this->recordHistory($enrollment, $before ? 'reactivated' : 'manually_created', $before, $enrollment->only(['batch_id', 'price_paid', 'status', 'enrolled_at', 'expires_at', 'admin_note']));
+            $this->recordHistory($enrollment, $before ? 'reactivated' : 'manually_created', $before, $enrollment->only(['batch_id', 'branch_id', 'price_paid', 'status', 'enrolled_at', 'expires_at', 'admin_note']));
         });
 
         return redirect()->route('admin.enrollments.index')->with('success', 'Student enrollment saved successfully.');
@@ -165,9 +178,11 @@ class EnrollmentController extends Controller
         $course = Course::findOrFail($enrollment->course_id);
         $this->validateBatch($data, $student, $course, $enrollment);
 
-        $before = $enrollment->only(['batch_id', 'price_paid', 'status', 'enrolled_at', 'expires_at', 'admin_note', 'completed_at']);
+        $branchId = ! empty($data['batch_id']) ? (Batch::find($data['batch_id'])?->branch_id ?? $student->branch_id) : $student->branch_id;
+        $before = $enrollment->only(['batch_id', 'branch_id', 'price_paid', 'status', 'enrolled_at', 'expires_at', 'admin_note', 'completed_at']);
         $enrollment->fill([
             'batch_id' => $data['batch_id'] ?? null,
+            'branch_id' => $branchId,
             'price_paid' => $data['price_paid'],
             'status' => $data['status'],
             'enrolled_at' => $data['enrolled_at'],
@@ -224,7 +239,7 @@ class EnrollmentController extends Controller
                     $enrollment->user?->email,
                     $enrollment->course?->title,
                     $enrollment->batch?->name,
-                    $enrollment->user?->branch?->name,
+                    $enrollment->branch?->name ?? $enrollment->batch?->branch?->name ?? $enrollment->user?->branch?->name,
                     $enrollment->course && $enrollment->user ? $enrollment->course->progressFor($enrollment->user) : 0,
                     $enrollment->status,
                     $enrollment->price_paid,
