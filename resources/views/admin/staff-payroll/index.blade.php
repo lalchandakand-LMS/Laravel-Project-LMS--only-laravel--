@@ -8,9 +8,9 @@
         <p class="mb-4 text-xs text-slate-500">New entries start as drafts. Approve before recording payment.</p>
         <form method="POST" action="{{ route('admin.staff-payroll.store') }}" class="space-y-3">
             @csrf
-            <div><label class="mb-1 block text-sm font-semibold">Staff member</label><select name="staff_user_id" required class="w-full rounded-lg border px-3 py-2 text-sm"><option value="">Select staff</option>@foreach ($staff as $member)<option value="{{ $member->id }}" @selected(old('staff_user_id') == $member->id)>{{ $member->name }} — {{ $member->staffProfile?->employee_code ?? 'No ID' }}</option>@endforeach</select></div>
+            <div><label class="mb-1 block text-sm font-semibold">Staff member</label><select id="payroll-staff" name="staff_user_id" required class="w-full rounded-lg border px-3 py-2 text-sm"><option value="">Select staff</option>@foreach ($staff as $member)<option value="{{ $member->id }}" data-base-salary="{{ $member->staffProfile?->base_salary ?? 0 }}" @selected(old('staff_user_id') == $member->id)>{{ $member->name }} — {{ $member->staffProfile?->employee_code ?? 'No ID' }}</option>@endforeach</select></div>
             <div><label class="mb-1 block text-sm font-semibold">Payroll month</label><input type="month" name="payroll_month" value="{{ old('payroll_month', now()->format('Y-m')) }}" required class="w-full rounded-lg border px-3 py-2 text-sm"></div>
-            <div><label class="mb-1 block text-sm font-semibold">Basic salary (৳)</label><input type="number" name="basic_salary" min="0" step="0.01" value="{{ old('basic_salary') }}" required class="w-full rounded-lg border px-3 py-2 text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold">Basic salary (৳)</label><input id="payroll-basic-salary" type="number" name="basic_salary" min="0" step="0.01" value="{{ old('basic_salary') }}" required class="w-full rounded-lg border px-3 py-2 text-sm"></div>
             <div><label class="mb-1 block text-sm font-semibold">Allowances (৳)</label><input type="number" name="allowances" min="0" step="0.01" value="{{ old('allowances', 0) }}" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
             <div><label class="mb-1 block text-sm font-semibold">Deductions (৳)</label><input type="number" name="deductions" min="0" step="0.01" value="{{ old('deductions', 0) }}" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
             <div><label class="mb-1 block text-sm font-semibold">Notes</label><textarea name="notes" rows="2" class="w-full rounded-lg border px-3 py-2 text-sm">{{ old('notes') }}</textarea></div>
@@ -57,4 +57,16 @@
         <div class="p-4">{{ $payrolls->links() }}</div>
     </section>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const staff = document.getElementById('payroll-staff');
+    const salary = document.getElementById('payroll-basic-salary');
+    staff?.addEventListener('change', () => {
+        const selected = staff.options[staff.selectedIndex];
+        if (selected && salary && (!salary.value || Number(salary.value) === 0)) {
+            salary.value = selected.dataset.baseSalary || '0';
+        }
+    });
+});
+</script>
 @endsection
