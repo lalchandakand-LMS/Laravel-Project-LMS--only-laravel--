@@ -178,12 +178,26 @@ class AttendanceController extends Controller
     public function submit(Request $request, AttendanceSession $session)
     {
         abort_unless($this->canManage($request, $session), 403);
-        abort_unless(in_array($session->status, ['draft', 'returned'], true), 422);
-        $expected = $this->activeStudentIds($session)->count();
-        $actual = $session->records()->count();
-        abort_if($expected === 0 || $actual !== $expected, 422, 'Mark attendance for every active student before submitting.');
 
-        $session->update(['status' => 'submitted', 'submitted_at' => now(), 'review_note' => null]);
+        DB::transaction(function () use ($session) {
+            $lockedSession = AttendanceSession::query()->lockForUpdate()->findOrFail($session->id);
+            abort_unless(in_array($lockedSession->status, ['draft', 'returned'], true), 422);
+
+            $expectedIds = $this->activeStudentIds($lockedSession)
+                ->map(fn ($id) => (int) $id)
+                ->sort()->values()->all();
+            $recordedIds = $lockedSession->records()->pluck('student_id')
+                ->map(fn ($id) => (int) $id)
+                ->sort()->values()->all();
+
+            abort_if(
+                $expectedIds === [] || $recordedIds !== $expectedIds,
+                422,
+                'Attendance must match the current active student list before submitting.'
+            );
+
+            $lockedSession->update(['status' => 'submitted', 'submitted_at' => now(), 'review_note' => null]);
+        });
 
         return back()->with('success', 'Attendance submitted to admin for review.');
     }
