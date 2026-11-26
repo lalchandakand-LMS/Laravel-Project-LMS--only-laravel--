@@ -98,6 +98,10 @@ class RecycleBinController extends Controller
     {
         $class = $this->modelClass($type);
         $record = $class::onlyTrashed()->findOrFail($id);
+        if ($this->hasArchivedPrerequisite($record)) {
+            return back()->with('error', 'Restore this lesson’s prerequisite before restoring the dependent lesson.');
+        }
+
         try {
             $record->restore();
         } catch (QueryException $exception) {
@@ -122,6 +126,10 @@ class RecycleBinController extends Controller
         $restored = $class::onlyTrashed()->whereIn('id', $data['ids'])->get();
         $restoredCount = 0;
         foreach ($restored as $record) {
+            if ($this->hasArchivedPrerequisite($record)) {
+                continue;
+            }
+
             try {
                 $record->restore();
                 $this->afterRestore($record);
@@ -166,6 +174,13 @@ class RecycleBinController extends Controller
         }
 
         return back()->with('success', class_basename($class).' permanently deleted.');
+    }
+
+    private function hasArchivedPrerequisite($record): bool
+    {
+        return $record instanceof Lesson
+            && $record->prerequisite_lesson_id !== null
+            && Lesson::onlyTrashed()->whereKey($record->prerequisite_lesson_id)->exists();
     }
 
     private function afterRestore($record): void
