@@ -6,6 +6,7 @@ use App\Models\Slider;
 use App\Models\Course;
 use App\Models\Branch;
 use App\Models\CoachingBatch;
+use App\Models\Lesson;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -159,6 +160,35 @@ class RecycleBinTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success');
         Storage::disk('public')->assertMissing($image);
+    }
+
+
+    public function test_lesson_attachment_is_retained_on_archive_and_removed_only_on_permanent_delete(): void
+    {
+        Storage::fake('local');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Lesson Media Course', 'slug' => 'lesson-media-course']);
+        $path = 'lessons/recycle-bin-lesson.pdf';
+        Storage::disk('local')->put($path, 'private lesson file');
+        $lesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Recoverable PDF lesson',
+            'type' => 'pdf',
+            'attachment' => $path,
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.lessons.destroy', $lesson))->assertRedirect();
+        Storage::disk('local')->assertExists($path);
+
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $lesson->id]))
+            ->assertRedirect();
+        Storage::disk('local')->assertExists($path);
+
+        $this->delete(route('admin.lessons.destroy', $lesson))->assertRedirect();
+        $this->delete(route('admin.recycle-bin.destroy', ['type' => 'lessons', 'id' => $lesson->id]))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+        Storage::disk('local')->assertMissing($path);
     }
 
     public function test_expired_slider_pruning_deletes_its_media_file(): void
