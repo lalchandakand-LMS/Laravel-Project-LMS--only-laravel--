@@ -116,7 +116,7 @@
 
 {{-- LEARNING PATH CATEGORIES --}}
 @if (($homepageSettings['homepage_show_categories'] ?? '1') === '1')
-<section data-home-section="categories" class="learning-path-section py-16" style="background:{{ (($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') === '#ffffff') ? '#f1f3ff' : $homepageSettings['homepage_learning_bg'] }}">
+<section data-home-section="categories" class="learning-path-section py-16" style="background:{{ (($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') === '#ffffff') ? '#f1f3ff' : ($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') }}">
     <div class="mx-auto max-w-7xl px-4">
         <div class="mx-auto max-w-2xl text-center">
             <p class="text-xs font-extrabold uppercase tracking-[.22em] text-teal-600">Explore your interests</p>
