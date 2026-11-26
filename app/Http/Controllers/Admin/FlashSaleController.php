@@ -62,6 +62,14 @@ class FlashSaleController extends Controller
         return redirect()->route('admin.flash-sales.index')->with('success', 'Flash sale updated.');
     }
 
+    public function toggle(FlashSale $flashSale)
+    {
+        $this->ensureAdmin();
+        $flashSale->update(['is_active' => ! $flashSale->is_active]);
+
+        return back()->with('success', $flashSale->is_active ? 'Flash sale enabled.' : 'Flash sale disabled.');
+    }
+
     public function destroy(FlashSale $flashSale)
     {
         $this->ensureAdmin();
