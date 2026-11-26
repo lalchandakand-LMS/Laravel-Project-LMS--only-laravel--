@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="{{ csrf_token() }}">
     <script>(function(){var t=localStorage.getItem('aec-admin-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';})();</script>
-    <title>@yield('title', 'Admin') — {{ \\App\\Models\\Setting::get('site_name', "Alom's English Center") }}</title>
+    <title>@yield('title', 'Admin') — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     @include('partials.assets')
     <style>
       html[data-theme="dark"] body{background:#071326!important;color:#e2e8f0!important}
@@ -28,7 +28,7 @@
     <aside id="admin-sidebar" data-collapsed="false" class="fixed inset-y-0 left-0 z-50 flex h-screen w-72 -translate-x-full flex-col border-r border-white/10 p-4 text-slate-200 transition-transform duration-200 lg:sticky lg:top-0 lg:w-64 lg:translate-x-0">
         <div class="flex items-center justify-between gap-2 px-1 py-2">
             <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                <img src="{{ \\App\\Models\\Setting::get('logo') ? media_url(\\App\\Models\\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-10 w-10 shrink-0 rounded-xl bg-white/95 p-1 object-contain shadow-lg">
+                <img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="Alom's English Center" class="h-10 w-10 shrink-0 rounded-xl bg-white/95 p-1 object-contain shadow-lg">
                 <span class="sidebar-label min-w-0"><b class="block truncate text-sm font-black tracking-wide text-white">Alom's LMS</b><span class="block text-[10px] font-medium text-blue-200">Admin workspace</span></span>
             </a>
             <span class="sidebar-version rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-[9px] font-black tracking-wider text-cyan-200">v3.0</span>
