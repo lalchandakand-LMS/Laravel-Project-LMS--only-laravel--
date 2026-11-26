@@ -158,8 +158,15 @@ class BkashPaymentController extends Controller
             return response()->json(['received' => false], 503);
         }
 
-        $sameEvent = ($result['status'] ?? null) === 'success'
-            && ($result['transaction_id'] ?? '') === (string) $notification['trxID']
+        if (($result['status'] ?? null) === 'pending') {
+            // Provider search can lag behind an SNS notification; ask SNS to retry later.
+            return response()->json(['received' => false], 503);
+        }
+        if (($result['status'] ?? null) !== 'success') {
+            return response()->noContent();
+        }
+
+        $sameEvent = ($result['transaction_id'] ?? '') === (string) $notification['trxID']
             && (blank($result['invoice'] ?? null) || ($result['invoice'] ?? '') === (string) $notification['merchantInvoiceNumber'])
             && strtoupper((string) ($result['currency'] ?? '')) === 'BDT'
             && strtoupper((string) ($notification['currency'] ?? '')) === 'BDT'
