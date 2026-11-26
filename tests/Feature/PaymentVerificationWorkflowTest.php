@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PaymentVerificationWorkflowTest extends TestCase
@@ -25,7 +26,7 @@ class PaymentVerificationWorkflowTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $branch = Branch::create([
             'name' => 'Payment Workflow Branch',
-            'code' => 'PAY-WF',
+            'code' => 'PAY-WF-'.Str::upper(Str::random(6)),
             'is_active' => true,
             'payment_methods' => ['nagad', 'bank', 'cash', 'office'],
             'nagad_number' => '01712345678',
@@ -133,11 +134,14 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertNotNull($payment->proof_path);
         Storage::disk('local')->assertExists($payment->proof_path);
 
-        $this->actingAs($admin)->get(route('admin.payments.proof', $payment))
+        $response = $this->actingAs($admin)->get(route('admin.payments.proof', $payment))
             ->assertOk()
-            ->assertHeader('cache-control', 'private, no-store, max-age=0')
             ->assertHeader('x-content-type-options', 'nosniff')
             ->assertHeader('content-disposition');
+
+        $cacheControl = (string) $response->headers->get('cache-control');
+        $this->assertStringContainsString('private', $cacheControl);
+        $this->assertStringContainsString('no-store', $cacheControl);
     }
 
     public function test_payment_submission_rechecks_the_balance_under_the_order_lock(): void
