@@ -9,6 +9,9 @@ use App\Models\StudentFeeCreditApplication;
 use App\Models\StudentFeeInvoice;
 use App\Models\StudentFeePayment;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -95,50 +98,68 @@ class StudentFeeController extends Controller
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'gt:0', 'max:99999999.99'],
             'method' => ['required', Rule::in(['cash', 'office', 'bank', 'bkash', 'nagad', 'rocket'])],
-            'reference' => ['nullable', 'string', 'max:120'],
+            'reference' => ['nullable', 'string', 'max:120', Rule::unique('student_fee_payments', 'reference')],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($invoice, $data) {
-            $invoice = StudentFeeInvoice::query()->with('coachingAdmission')->lockForUpdate()->findOrFail($invoice->id);
-            $admission = $invoice->coachingAdmission;
-            abort_unless($admission && (int) $invoice->student_id === (int) $admission->student_id, 422, 'এটি coaching admission-এর invoice নয়।');
-            abort_unless(in_array($admission->status, ['awaiting_payment', 'admitted'], true), 422, 'এই coaching admission-এ payment নেওয়া যাবে না।');
-            abort_if($invoice->invoice_type !== 'admission' && ! $admission->isActive(), 422, 'শুধু সক্রিয় coaching admission-এর recurring fee নেওয়া যাবে।');
-            abort_if($invoice->dueAmount() <= 0, 422, 'এই invoice ইতিমধ্যে সম্পূর্ণ পরিশোধ হয়েছে।');
+        try {
+            DB::transaction(function () use ($invoice, $data) {
+                $invoice = StudentFeeInvoice::query()->with('coachingAdmission')->lockForUpdate()->findOrFail($invoice->id);
+                $admission = $invoice->coachingAdmission;
+                abort_unless($admission && (int) $invoice->student_id === (int) $admission->student_id, 422, 'এটি coaching admission-এর invoice নয়।');
+                abort_unless(in_array($admission->status, ['awaiting_payment', 'admitted'], true), 422, 'এই coaching admission-এ payment নেওয়া যাবে না।');
+                abort_if($invoice->invoice_type !== 'admission' && ! $admission->isActive(), 422, 'শুধু সক্রিয় coaching admission-এর recurring fee নেওয়া যাবে।');
+                abort_if($invoice->dueAmount() <= 0, 422, 'এই invoice ইতিমধ্যে সম্পূর্ণ পরিশোধ হয়েছে।');
 
-            $amount = round((float) $data['amount'], 2);
-            $applied = min($amount, $invoice->dueAmount());
-            $advance = round($amount - $applied, 2);
+                $amount = round((float) $data['amount'], 2);
+                $applied = min($amount, $invoice->dueAmount());
+                $advance = round($amount - $applied, 2);
 
-            $payment = StudentFeePayment::create([
-                'invoice_id' => $invoice->id,
-                'student_id' => $invoice->student_id,
-                'amount' => $amount,
-                'applied_amount' => $applied,
-                'advance_amount' => $advance,
-                'method' => $data['method'],
-                'reference' => $data['reference'] ?? null,
-                'note' => $data['note'] ?? null,
-                'collected_by' => auth()->id(),
-                'received_at' => now(),
-            ]);
-
-            if ($advance > 0) {
-                StudentFeeCredit::create([
+                $payment = StudentFeePayment::create([
+                    'invoice_id' => $invoice->id,
                     'student_id' => $invoice->student_id,
-                    'payment_id' => $payment->id,
-                    'amount' => $advance,
-                    'note' => 'Advance coaching fee credit from '.$payment->receipt_no,
+                    'amount' => $amount,
+                    'applied_amount' => $applied,
+                    'advance_amount' => $advance,
+                    'method' => $data['method'],
+                    'reference' => $data['reference'] ?? null,
+                    'note' => $data['note'] ?? null,
+                    'collected_by' => auth()->id(),
+                    'received_at' => now(),
+                ]);
+
+                if ($advance > 0) {
+                    StudentFeeCredit::create([
+                        'student_id' => $invoice->student_id,
+                        'payment_id' => $payment->id,
+                        'amount' => $advance,
+                        'note' => 'Advance coaching fee credit from '.$payment->receipt_no,
+                    ]);
+                }
+
+                $invoice->syncStatus();
+                if ($invoice->invoice_type === 'admission' && $invoice->dueAmount() <= 0) {
+                    $admission->activateAfterAdmissionFee();
+                }
+            });
+        } catch (QueryException $exception) {
+            if ($this->isDuplicatePaymentReference($exception)) {
+                throw ValidationException::withMessages([
+                    'reference' => 'এই transaction reference দিয়ে payment আগেই record করা হয়েছে।',
                 ]);
             }
 
-            $invoice->syncStatus();
-            if ($invoice->invoice_type === 'admission' && $invoice->dueAmount() <= 0) {
-                $admission->activateAfterAdmissionFee();
-            }
-        });
+            throw $exception;
+        }
 
         return back()->with('success', 'পেমেন্ট রেকর্ড হয়েছে। ভর্তি ফি সম্পূর্ণ পরিশোধ হলে coaching enrollment সক্রিয় হবে; অতিরিক্ত টাকা advance credit হিসেবে থাকবে।');
+    }
+
+    private function isDuplicatePaymentReference(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'student_fee_payments_reference_unique')
+            || str_contains($message, 'student_fee_payments.reference');
     }
 }
