@@ -23,18 +23,18 @@
     @include('partials.assets')
     <style>
         :root {
-            --aec-primary: {{ \\App\\Models\\Setting::get('site_primary_color', '#ea580c') }};
-            --aec-primary-dark: {{ \\App\\Models\\Setting::get('site_secondary_color', '#9a3412') }};
+            --aec-primary: {{ setting('site_primary_color', '#ea580c') }};
+            --aec-primary-dark: {{ setting('site_secondary_color', '#9a3412') }};
         }
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
         .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
-        .bg-emerald-50,.bg-emerald-400\\/10 { background-color: color-mix(in srgb, var(--aec-primary) 9%, white) !important; }
+        .bg-emerald-50,[class~="bg-emerald-400/10"] { background-color: color-mix(in srgb, var(--aec-primary) 9%, white) !important; }
         .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500,.text-emerald-400,.text-emerald-300 { color: var(--aec-primary-dark) !important; }
-        .border-emerald-400,.border-emerald-400\\/30,.border-emerald-500 { border-color: color-mix(in srgb, var(--aec-primary) 42%, transparent) !important; }
-        .hover\\:bg-emerald-800:hover,.hover\\:bg-emerald-700:hover,.hover\\:bg-emerald-400:hover { background-color: var(--aec-primary-dark) !important; }
-        .hover\\:text-emerald-700:hover,.hover\\:text-emerald-800:hover { color: var(--aec-primary-dark) !important; }
+        .border-emerald-400,[class~="border-emerald-400/30"],.border-emerald-500 { border-color: color-mix(in srgb, var(--aec-primary) 42%, transparent) !important; }
+        [class~="hover:bg-emerald-800"]:hover,[class~="hover:bg-emerald-700"]:hover,[class~="hover:bg-emerald-400"]:hover { background-color: var(--aec-primary-dark) !important; }
+        [class~="hover:text-emerald-700"]:hover,[class~="hover:text-emerald-800"]:hover { color: var(--aec-primary-dark) !important; }
         .to-emerald-950 { --tw-gradient-to: var(--aec-primary-dark) var(--tw-gradient-to-position) !important; }
-        .shadow-emerald-500\\/20 { --tw-shadow-color: color-mix(in srgb, var(--aec-primary) 20%, transparent) !important; }
+        [class~="shadow-emerald-500/20"] { --tw-shadow-color: color-mix(in srgb, var(--aec-primary) 20%, transparent) !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
