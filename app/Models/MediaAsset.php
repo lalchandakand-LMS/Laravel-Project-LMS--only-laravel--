@@ -73,6 +73,7 @@ class MediaAsset extends Model
             'lessons' => ['attachment'],
             'assignments' => ['attachment'],
             'users' => ['avatar'],
+            'posts' => ['thumbnail'],
         ];
 
         foreach ($references as $table => $columns) {
@@ -83,6 +84,15 @@ class MediaAsset extends Model
             foreach ($columns as $column) {
                 if (Schema::hasColumn($table, $column)
                     && DB::table($table)->whereIn($column, $values)->exists()) {
+                    return true;
+                }
+            }
+        }
+
+        // Blog post bodies may embed copied Media Library URLs inside rich text.
+        if (Schema::hasTable('posts') && Schema::hasColumn('posts', 'content')) {
+            foreach ($values as $value) {
+                if (DB::table('posts')->where('content', 'like', '%'.$value.'%')->exists()) {
                     return true;
                 }
             }
