@@ -22,9 +22,15 @@ class LiveClassChanged extends Notification
     {
         $channels = ['database'];
 
-        $mailer = (string) config('mail.default', 'log');
+        $smtp = (array) config('mail.mailers.smtp', []);
+        $smtpReady = config('mail.default') === 'smtp'
+            && filled($smtp['host'] ?? null)
+            && filled($smtp['username'] ?? null)
+            && filled($smtp['password'] ?? null)
+            && filled(config('mail.from.address'));
+
         if (config('live_classes.email_notifications')
-            && ! in_array($mailer, ['log', 'array'], true)
+            && $smtpReady
             && filled($notifiable->routeNotificationFor('mail'))) {
             $channels[] = QueuedMailChannel::class;
         }
