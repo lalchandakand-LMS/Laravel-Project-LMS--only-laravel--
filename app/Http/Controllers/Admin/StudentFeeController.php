@@ -24,10 +24,13 @@ class StudentFeeController extends Controller
         $admissions = CoachingAdmission::with(['student', 'course', 'coachingBatch', 'branch'])
             ->where('status', 'admitted')->whereNotNull('student_id')->latest('admitted_at')->get();
 
+        $invoiced = (float) StudentFeeInvoice::sum(DB::raw('amount - discount'));
+        $collected = (float) StudentFeePayment::sum('amount');
+        $applied = (float) StudentFeePayment::sum('applied_amount') + (float) DB::table('student_fee_credit_applications')->sum('amount');
         $totals = [
-            'invoiced' => (float) StudentFeeInvoice::sum(DB::raw('amount - discount')),
-            'collected' => (float) StudentFeePayment::sum('amount'),
-            'due' => max(0, (float) StudentFeeInvoice::sum(DB::raw('amount - discount')) - (float) StudentFeePayment::sum('applied_amount') - (float) DB::table('student_fee_credit_applications')->sum('amount')),
+            'invoiced' => $invoiced,
+            'collected' => $collected,
+            'due' => max(0, round($invoiced - $applied, 2)),
             'advance' => max(0, (float) StudentFeeCredit::sum('amount') - (float) DB::table('student_fee_credit_applications')->sum('amount')),
         ];
 
@@ -37,7 +40,7 @@ class StudentFeeController extends Controller
     public function storeInvoice(Request $request)
     {
         $data = $request->validate([
-            'coaching_admission_id' => ['required', 'integer', Rule::exists('coaching_admissions', 'id')->where(fn ($q) => $q->where('status', 'approved')->whereNotNull('student_id'))],
+            'coaching_admission_id' => ['required', 'integer', Rule::exists('coaching_admissions', 'id')->where(fn ($q) => $q->where('status', 'admitted')->whereNotNull('student_id'))],
             'description' => ['required', 'string', 'max:180'],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:99999999.99'],
             'discount' => ['nullable', 'numeric', 'min:0'],
@@ -45,17 +48,18 @@ class StudentFeeController extends Controller
         ]);
 
         DB::transaction(function () use ($data) {
-            $admission = CoachingAdmission::whereKey($data['coaching_admission_id'])->lockForUpdate()->firstOrFail();
-            abort_unless($admission->isActive(), 422, 'শুধু অনুমোদিত coaching admission-এর জন্য ফি invoice করা যাবে।');
+            $admission = CoachingAdmission::query()->whereKey($data['coaching_admission_id'])->lockForUpdate()->firstOrFail();
+            abort_unless($admission->isActive(), 422, 'শুধু ভর্তি সম্পন্ন হওয়া coaching student-এর recurring invoice করা যাবে।');
             $discount = (float) ($data['discount'] ?? 0);
             abort_if($discount > (float) $data['amount'], 422, 'Discount invoice amount-এর বেশি হতে পারবে না।');
 
             $invoice = StudentFeeInvoice::create([
                 'coaching_admission_id' => $admission->id,
                 'student_id' => $admission->student_id,
+                'coaching_batch_id' => $admission->coaching_batch_id,
                 'course_id' => $admission->course_id,
-                'coaching_batch_id' => $admission->coaching_batch_id,\n                'invoice_type' => 'recurring',
                 'branch_id' => $admission->branch_id,
+                'invoice_type' => 'recurring',
                 'description' => $data['description'],
                 'issued_at' => now()->toDateString(),
                 'due_at' => $data['due_at'] ?? null,
@@ -65,14 +69,15 @@ class StudentFeeController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
-            $credits = StudentFeeCredit::where('student_id', $admission->student_id)->orderBy('id')->lockForUpdate()->get();
+            $credits = StudentFeeCredit::query()->where('student_id', $admission->student_id)->orderBy('id')->lockForUpdate()->get();
             foreach ($credits as $credit) {
-                $available = $credit->remainingAmount();
-                $toApply = min($available, $invoice->dueAmount());
+                $toApply = min($credit->remainingAmount(), $invoice->dueAmount());
                 if ($toApply <= 0) { continue; }
                 StudentFeeCreditApplication::create([
-                    'credit_id' => $credit->id, 'invoice_id' => $invoice->id,
-                    'amount' => $toApply, 'applied_by' => auth()->id(),
+                    'credit_id' => $credit->id,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $toApply,
+                    'applied_by' => auth()->id(),
                 ]);
                 $invoice->refresh();
                 if ($invoice->dueAmount() <= 0) { break; }
@@ -93,8 +98,13 @@ class StudentFeeController extends Controller
         ]);
 
         DB::transaction(function () use ($invoice, $data) {
-            $invoice = StudentFeeInvoice::with('coachingAdmission')->lockForUpdate()->findOrFail($invoice->id);
-            $admission = $invoice->coachingAdmission;\n            abort_unless($admission && (int) $invoice->student_id === (int) $admission->student_id, 422, 'এটি coaching admission-এর invoice নয়।');\n            abort_unless(in_array($admission->status, ['awaiting_payment', 'admitted'], true), 422, 'এই coaching admission-এ payment নেওয়া যাবে না।');\n            abort_if($invoice->invoice_type !== 'admission' && ! $admission->isActive(), 422, 'শুধু সক্রিয় coaching admission-এর recurring fee নেওয়া যাবে।');
+            $invoice = StudentFeeInvoice::query()->with('coachingAdmission')->lockForUpdate()->findOrFail($invoice->id);
+            $admission = $invoice->coachingAdmission;
+            abort_unless($admission && (int) $invoice->student_id === (int) $admission->student_id, 422, 'এটি coaching admission-এর invoice নয়।');
+            abort_unless(in_array($admission->status, ['awaiting_payment', 'admitted'], true), 422, 'এই coaching admission-এ payment নেওয়া যাবে না।');
+            abort_if($invoice->invoice_type !== 'admission' && ! $admission->isActive(), 422, 'শুধু সক্রিয় coaching admission-এর recurring fee নেওয়া যাবে।');
+            abort_if($invoice->dueAmount() <= 0, 422, 'এই invoice ইতিমধ্যে সম্পূর্ণ পরিশোধ হয়েছে।');
+
             $amount = round((float) $data['amount'], 2);
             $applied = min($amount, $invoice->dueAmount());
             $advance = round($amount - $applied, 2);
@@ -122,8 +132,11 @@ class StudentFeeController extends Controller
             }
 
             $invoice->syncStatus();
+            if ($invoice->invoice_type === 'admission' && $invoice->dueAmount() <= 0) {
+                $admission->activateAfterAdmissionFee();
+            }
         });
 
-        return back()->with('success', 'পেমেন্ট রেকর্ড হয়েছে। অতিরিক্ত টাকা student advance credit হিসেবে সংরক্ষিত হয়েছে।');
+        return back()->with('success', 'পেমেন্ট রেকর্ড হয়েছে। ভর্তি ফি সম্পূর্ণ পরিশোধ হলে coaching enrollment সক্রিয় হবে; অতিরিক্ত টাকা advance credit হিসেবে থাকবে।');
     }
 }
