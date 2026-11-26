@@ -29,6 +29,15 @@
                         @if($lead->phone)<p class="text-sm text-slate-600">{{ $lead->phone }}</p>@endif
                         @if($lead->subject)<p class="mt-2 text-sm font-semibold text-slate-700">{{ $lead->subject }}</p>@endif
                         <p class="mt-2 whitespace-pre-line text-sm text-slate-600">{{ $lead->message }}</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <a href="mailto:{{ $lead->email }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Email</a>
+                            @if($lead->phone)
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $lead->phone) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Call</a>
+                            @endif
+                            @if($lead->whatsapp_url)
+                                <a href="{{ $lead->whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700">WhatsApp follow-up ↗</a>
+                            @endif
+                        </div>
                         <p class="mt-2 text-[11px] text-slate-400">{{ $lead->created_at->format('d M Y, h:i A') }}</p>
                     </div>
                     <div class="rounded-xl bg-slate-50 p-3 text-xs">
