@@ -106,6 +106,34 @@ class CoachingAdmissionWorkflowTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
     }
 
+    public function test_approved_coaching_admission_cannot_be_rejected_after_approval(): void
+    {
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin-reject@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
+        [$branch, $course, $batch] = $this->setupCoaching();
+        $batch->update(['admission_fee' => 0]);
+        $application = CoachingAdmission::create([
+            'student_name' => 'Approved Student',
+            'student_email' => 'approved-student@example.com',
+            'student_phone' => '01700000002',
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'coaching_batch_id' => $batch->id,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.coaching-admissions.approve', $application))
+            ->assertRedirect();
+
+        $this->post(route('admin.coaching-admissions.reject', $application), [
+            'admin_note' => 'This must not overwrite an approved admission.',
+        ])->assertStatus(422);
+
+        $this->assertSame('admitted', $application->fresh()->status);
+        $this->assertDatabaseHas('coaching_enrollments', [
+            'coaching_admission_id' => $application->id,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_zero_admission_fee_allows_admin_approval_to_activate_physical_coaching_enrollment(): void
     {
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);

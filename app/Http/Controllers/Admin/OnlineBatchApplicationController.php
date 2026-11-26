@@ -28,8 +28,16 @@ class OnlineBatchApplicationController extends Controller {
  }
  public function reject(Request $request,OnlineBatchApplication $application) {
   $data=$request->validate(['review_note'=>['required','string','max:2000']]);
-  abort_unless($application->status==='pending',422);
-  $application->update(['status'=>'rejected','review_note'=>$data['review_note'],'reviewed_by'=>auth()->id(),'reviewed_at'=>now()]);
+  DB::transaction(function() use ($application, $data, $request) {
+   $lockedApplication=OnlineBatchApplication::query()->lockForUpdate()->findOrFail($application->id);
+   abort_unless($lockedApplication->status==='pending',422,'এই আবেদনটি আর pending নেই।');
+   $lockedApplication->update([
+    'status'=>'rejected',
+    'review_note'=>$data['review_note'],
+    'reviewed_by'=>$request->user()->id,
+    'reviewed_at'=>now(),
+   ]);
+  });
   return back()->with('success','অনলাইন ব্যাচের আবেদন প্রত্যাখ্যান করা হয়েছে।');
  }
 }

@@ -34,6 +34,30 @@ class OnlineBatchApplicationWorkflowTest extends TestCase
         $this->assertDatabaseCount('student_fee_invoices', 0);
     }
 
+    public function test_approved_online_batch_application_cannot_be_rejected_after_approval(): void
+    {
+        $student = User::create(['name' => 'Online Student', 'email' => 'online-approved@example.com', 'password' => 'password', 'role' => 'student', 'is_active' => true]);
+        $admin = User::create(['name' => 'Admin', 'email' => 'online-admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
+        $course = Course::create(['title' => 'Approved Online Course', 'price' => 1500, 'is_published' => true]);
+        $batch = Batch::create(['name' => 'Approved Online Batch', 'code' => 'ONL-APPROVED', 'course_id' => $course->id, 'status' => 'upcoming']);
+        $this->actingAs($student)->post(route('student.online-batches.apply'), ['batch_id' => $batch->id])->assertRedirect();
+        $application = OnlineBatchApplication::firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.online-batch-applications.approve', $application))->assertRedirect();
+
+        $this->post(route('admin.online-batch-applications.reject', $application), [
+            'review_note' => 'This must not overwrite an approved admission.',
+        ])->assertStatus(422);
+
+        $this->assertSame('approved', $application->fresh()->status);
+        $this->assertDatabaseHas('online_batch_enrollments', [
+            'application_id' => $application->id,
+            'student_id' => $student->id,
+            'batch_id' => $batch->id,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_existing_online_course_buyer_can_apply_for_a_live_batch_without_creating_a_second_course_enrollment(): void
     {
         $student = User::create(['name' => 'Student', 'email' => 'buyer@example.com', 'password' => 'password', 'role' => 'student', 'is_active' => true]);
