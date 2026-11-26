@@ -2,7 +2,7 @@
 @section('title', 'Dashboard')
 @section('heading', 'Dashboard')
 @section('content')
-<div class="mb-5"><a href="{{ route('student.attendance') }}" class="inline-flex rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">My attendance report</a></div>
+<div class="mb-5"><a href="{{ route('student.attendance') }}" class="inline-flex rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-700">My attendance report</a></div>
 @include('partials.dashboard-banner')
 
 <div class="mt-6 flex flex-wrap gap-2">
@@ -27,14 +27,14 @@
 @endif
 
 @if($coachingEnrollments->isNotEmpty() || $coachingDue > 0)
-<section class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+<section class="mt-6 rounded-2xl border border-orange-200 bg-orange-50 p-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <div><h3 class="font-bold text-emerald-950">সরাসরি কোচিং — আপনার Learning Path</h3><p class="mt-1 text-sm text-emerald-900">একই শিক্ষার্থী অ্যাকাউন্টে অনলাইন কোর্স ও শাখাভিত্তিক কোচিংয়ের অগ্রগতি।</p></div>
-        <div class="text-right"><p class="text-xs text-emerald-800">Coaching fee due</p><p class="text-xl font-black text-emerald-950">৳{{ number_format($coachingDue,2) }}</p></div>
+        <div><h3 class="font-bold text-orange-950">সরাসরি কোচিং — আপনার Learning Path</h3><p class="mt-1 text-sm text-orange-900">একই শিক্ষার্থী অ্যাকাউন্টে অনলাইন কোর্স ও শাখাভিত্তিক কোচিংয়ের অগ্রগতি।</p></div>
+        <div class="text-right"><p class="text-xs text-orange-800">Coaching fee due</p><p class="text-xl font-black text-emerald-950">৳{{ number_format($coachingDue,2) }}</p></div>
     </div>
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
         @foreach($coachingEnrollments as $coachingEnrollment)
-        <article class="rounded-xl border border-emerald-100 bg-white p-4">
+        <article class="rounded-xl border border-orange-100 bg-white p-4">
             <p class="font-bold text-slate-900">{{ $coachingEnrollment->course?->title }}</p>
             <p class="mt-1 text-sm text-slate-600">{{ $coachingEnrollment->batch?->name }} · {{ $coachingEnrollment->batch?->branch?->name }}</p>
             <p class="mt-1 text-xs text-slate-500">{{ $coachingEnrollment->batch?->schedule_days }} {{ $coachingEnrollment->batch?->schedule_time }}</p>
@@ -44,12 +44,12 @@
 </section>
 @endif
 
-<div class="rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-900 p-6 text-white">
+<div class="rounded-2xl bg-gradient-to-r from-slate-950 to-blue-950 p-6 text-white">
     <h2 class="text-2xl font-extrabold">Hello, {{ auth()->user()->name }} 👋</h2>
     <p class="mt-1 text-slate-300">Keep going — you're {{ $stats['in_progress'] }} course(s) in progress.</p>
     @if ($continueCourse)
         <a href="{{ route('student.learn', $continueCourse->course->slug) }}"
-           class="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 font-bold text-slate-950 hover:bg-emerald-400">
+           class="mt-5 inline-flex items-center gap-2 rounded-xl bg-orange-400 px-5 py-2.5 font-bold text-slate-950 hover:bg-orange-300">
             Continue: {{ Str::limit($continueCourse->course->title, 32) }} →
         </a>
     @endif
@@ -98,7 +98,7 @@
 <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-900">Continue learning</h3>
-            <a href="{{ route('student.courses') }}" class="text-sm font-semibold text-emerald-700 hover:underline">All courses →</a>
+            <a href="{{ route('student.courses') }}" class="text-sm font-semibold text-orange-700 hover:underline">All courses →</a>
         </div>
         <div class="mt-4 space-y-3">
             @forelse ($enrollments as $enrollment)
@@ -122,7 +122,7 @@
             @empty
                 <p class="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-600">
                     You are not enrolled in any course yet.
-                    <a href="{{ route('courses.index') }}" class="font-semibold text-emerald-700 underline">Browse courses</a>
+                    <a href="{{ route('courses.index') }}" class="font-semibold text-orange-700 underline">Browse courses</a>
                 </p>
             @endforelse
         </div>
@@ -140,7 +140,7 @@
                             <p class="font-semibold text-slate-800">{{ Str::limit($exam->title, 30) }}</p>
                             <p class="text-xs text-slate-500">{{ $exam->starts_at ? $exam->starts_at->format('d M, h:i A') : 'Open now' }} · {{ $exam->duration_minutes }}m</p>
                         </div>
-                        <a href="{{ route('student.exams.show', $exam) }}" class="rounded bg-white px-2 py-1 text-xs font-bold text-emerald-700 ring-1 ring-slate-200">Open</a>
+                        <a href="{{ route('student.exams.show', $exam) }}" class="rounded bg-white px-2 py-1 text-xs font-bold text-orange-700 ring-1 ring-slate-200">Open</a>
                     </li>
                 @empty
                     <li class="text-slate-500">No exams scheduled.</li>
