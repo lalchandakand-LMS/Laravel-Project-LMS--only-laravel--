@@ -173,4 +173,4 @@ class StudentCourseCompletionEligibilityTest extends TestCase
             $this->assertDatabaseCount('certificates', 1);
         }
     }
-}\n
+}
