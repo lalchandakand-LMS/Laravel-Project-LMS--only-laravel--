@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ExamAttempt extends Model
 {
-    protected $fillable = ['exam_id','user_id','started_at','submitted_at','manual_reviewed_at','score','correct_count','wrong_count','status'];
+    protected $fillable = ['exam_id','user_id','started_at','submitted_at','manual_reviewed_at','manual_feedback','score','correct_count','wrong_count','status'];
     protected $casts = ['started_at' => 'datetime', 'submitted_at' => 'datetime', 'manual_reviewed_at' => 'datetime'];
 
     public function exam()    { return $this->belongsTo(Exam::class); }
