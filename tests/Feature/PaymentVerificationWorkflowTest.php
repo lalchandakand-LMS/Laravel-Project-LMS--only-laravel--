@@ -705,4 +705,81 @@ class PaymentVerificationWorkflowTest extends TestCase
         }
     }
 
+
+    public function test_refund_cannot_exceed_or_over_refund_the_selected_payment(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $first = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'REFUND-CAP-FIRST',
+            'amount' => 400,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'REFUND-CAP-SECOND',
+            'amount' => 600,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'paid']);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'payment_id' => $first->id,
+            'amount' => 401,
+            'reference' => 'REFUND-CAP-401',
+            'reason' => 'Attempt exceeds selected payment.',
+        ])->assertRedirect()->assertSessionHasErrors('amount');
+
+        $this->assertDatabaseCount('payment_adjustments', 0);
+
+        $this->post(route('admin.orders.refunds.store', $order->order_no), [
+            'payment_id' => $first->id,
+            'amount' => 300,
+            'reference' => 'REFUND-CAP-300',
+            'reason' => 'Valid partial refund against selected payment.',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->post(route('admin.orders.refunds.store', $order->order_no), [
+            'payment_id' => $first->id,
+            'amount' => 101,
+            'reference' => 'REFUND-CAP-101',
+            'reason' => 'Attempt exceeds remaining selected payment balance.',
+        ])->assertRedirect()->assertSessionHasErrors('amount');
+
+        $this->assertSame(300.0, (float) PaymentAdjustment::where('payment_id', $first->id)->sum('amount'));
+        $this->assertSame(700.0, $order->fresh()->amountPaid());
+    }
+
+    public function test_refund_reference_has_a_database_level_unique_constraint(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+
+        PaymentAdjustment::create([
+            'order_id' => $order->id,
+            'created_by' => $admin->id,
+            'type' => 'refund',
+            'amount' => 10,
+            'reference' => 'GLOBAL-UNIQUE-REFUND-REFERENCE',
+            'reason' => 'First refund reference.',
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        PaymentAdjustment::create([
+            'order_id' => $order->id,
+            'created_by' => $admin->id,
+            'type' => 'refund',
+            'amount' => 10,
+            'reference' => 'GLOBAL-UNIQUE-REFUND-REFERENCE',
+            'reason' => 'Duplicate refund reference must be rejected by the database.',
+        ]);
+    }
+
+
 }
