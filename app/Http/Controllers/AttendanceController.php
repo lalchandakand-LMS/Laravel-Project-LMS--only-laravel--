@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
+use App\Models\LiveClass;
 use App\Models\Batch;
 use App\Models\CoachingBatch;
 use App\Models\CoachingEnrollment;
@@ -196,6 +197,36 @@ class AttendanceController extends Controller
         $session->load(['batch', 'coachingBatch', 'course', 'instructor', 'reviewer', 'records.student']);
 
         return view('attendance.admin.show', compact('session'));
+    }
+
+    public function createFromLiveClass(Request $request, LiveClass $liveClass)
+    {
+        $user = $request->user();
+        abort_unless($user->isAdmin() || (int) $liveClass->course?->instructor_id === (int) $user->id, 403);
+        abort_if($liveClass->isCancelled(), 422, 'Cancelled live classes cannot create attendance sessions.');
+        abort_unless($liveClass->batch_id, 422, 'Assign this live class to a batch before creating attendance.');
+
+        $batch = $liveClass->batch;
+        abort_if(! $batch, 422, 'The assigned batch no longer exists.');
+
+        $session = AttendanceSession::firstOrCreate(
+            ['live_class_id' => $liveClass->id],
+            [
+                'batch_id' => $batch->id,
+                'coaching_batch_id' => null,
+                'course_id' => $liveClass->course_id,
+                'branch_id' => $batch->branch_id,
+                'instructor_id' => $liveClass->course?->instructor_id ?: $user->id,
+                'mode' => 'online',
+                'topic' => $liveClass->title,
+                'starts_at' => $liveClass->starts_at,
+                'ends_at' => $liveClass->endsAt(),
+                'status' => 'draft',
+            ]
+        );
+
+        return redirect()->route('teacher.attendance.show', $session)
+            ->with('success', 'Attendance session is linked to this live class.');
     }
 
     public function studentReport(Request $request)
