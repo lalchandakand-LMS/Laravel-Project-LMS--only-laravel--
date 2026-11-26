@@ -35,11 +35,16 @@ class LiveClassChanged extends Notification
             default => "A new live class \"{$this->liveClass->title}\" has been scheduled for ".$this->liveClass->starts_at?->format('d M Y, h:i A').'.',
         };
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject('Live class update: '.$this->liveClass->title)
             ->greeting('Hello '.$notifiable->name.',')
-            ->line($message)
-            ->when($this->event === 'cancelled' && $this->liveClass->cancellation_reason, fn ($mail) => $mail->line('Reason: '.$this->liveClass->cancellation_reason))
+            ->line($message);
+
+        if ($this->event === 'cancelled' && $this->liveClass->cancellation_reason) {
+            $mail->line('Reason: '.$this->liveClass->cancellation_reason);
+        }
+
+        return $mail
             ->action('View live class schedule', route('student.live-classes'))
             ->line('Please check your LMS schedule for the latest details.');
     }
