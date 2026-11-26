@@ -14,7 +14,7 @@
     <meta property="og:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta property="og:description" content="{{ $brandDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/aec-logo.svg') }}">
+    <meta property="og:image" content="{{ media_url(\\App\\Models\\Setting::get('logo'), asset('images/aec-logo.svg')) }}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta name="twitter:description" content="{{ $brandDescription }}">
