@@ -228,4 +228,41 @@ class AdvancedExamBuilderTest extends TestCase
         $response->assertDontSee($unselected->question);
     }
 
+
+    public function test_attempt_snapshots_and_question_pool_are_protected_from_historical_mutation(): void
+    {
+        $admin = $this->admin();
+        $student = $this->student();
+        $exam = $this->freeExam(['negative_marking' => 0.25, 'pass_marks' => 5, 'total_marks' => 10]);
+        $question = $this->addMcq($exam, 'Locked question');
+
+        $this->actingAs($student)->post(route('student.exams.start', $exam))->assertRedirect();
+        $attempt = ExamAttempt::where('exam_id', $exam->id)->where('user_id', $student->id)->firstOrFail();
+        $this->assertSame(30, $attempt->duration_minutes);
+        $this->assertSame(0.25, (float) $attempt->negative_marking);
+        $this->assertSame(0.5, (float) $attempt->pass_mark_target);
+
+        $exam->update(['duration_minutes' => 60, 'negative_marking' => 1, 'pass_marks' => 8, 'total_marks' => 20]);
+        $this->assertSame(0.5, $attempt->fresh()->passMarksRequired());
+        $this->assertSame(30, $attempt->fresh()->duration_minutes);
+        $this->assertSame(0.25, (float) $attempt->fresh()->negative_marking);
+
+        $this->actingAs($admin)->put(route('admin.questions.update', $question), [
+            'question' => 'Changed after attempt',
+            'type' => 'mcq',
+            'marks' => 1,
+            'options' => ['A', 'B'],
+            'correct' => 0,
+        ])->assertStatus(409);
+
+        $this->actingAs($admin)->delete(route('admin.questions.destroy', $question))->assertStatus(409);
+        $this->actingAs($admin)->post(route('admin.exams.questions.store', $exam), [
+            'question' => 'New question after attempt',
+            'type' => 'short',
+            'marks' => 1,
+        ])->assertStatus(409);
+        $this->actingAs($admin)->delete(route('admin.exams.destroy', $exam))->assertStatus(409);
+        $this->assertDatabaseHas('questions', ['id' => $question->id, 'question' => 'Locked question']);
+    }
+
 }
