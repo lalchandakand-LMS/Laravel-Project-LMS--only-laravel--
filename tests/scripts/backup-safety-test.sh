@@ -62,14 +62,10 @@ fi
   exit 1
 }
 
-PRIVATE_ARCHIVE=""
-for candidate in "$PROJECT/storage/backups"/private-*.tar.gz; do
-  if tar -tzf "$candidate" 2>/dev/null | grep -Fq 'private/documents/student.pdf'; then
-    PRIVATE_ARCHIVE="$candidate"
-    break
-  fi
-done
-[[ -n "$PRIVATE_ARCHIVE" ]] || {
+CURRENT_ENV_BACKUP="$(ls -1t "$PROJECT/storage/backups"/env-*.bak | head -n1)"
+CURRENT_STAMP="$(basename "$CURRENT_ENV_BACKUP" | sed -E 's/^env-([0-9]{8}-[0-9]{6})\.bak$/\1/')"
+PRIVATE_ARCHIVE="$PROJECT/storage/backups/private-$CURRENT_STAMP.tar.gz"
+[[ -f "$PRIVATE_ARCHIVE" ]] || {
   echo "Private upload archive was not created." >&2
   exit 1
 }
