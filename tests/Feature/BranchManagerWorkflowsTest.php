@@ -104,7 +104,7 @@ class BranchManagerWorkflowsTest extends TestCase
         $this->assertDatabaseHas('online_batch_enrollments', ['application_id' => $application->id, 'status' => 'active']);
 
         $this->actingAs($manager)->post(route('branch.admissions.online.approve', $otherApplication), [])
-            ->assertNotFound();
+            ->assertForbidden();
         $this->assertDatabaseHas('online_batch_applications', ['id' => $otherApplication->id, 'status' => 'pending']);
     }
 
@@ -142,6 +142,7 @@ class BranchManagerWorkflowsTest extends TestCase
             'branch_id' => $branch->id,
             'invoice_type' => 'admission',
             'status' => 'unpaid',
+            'created_by' => $manager->id,
         ]);
         $this->assertSame($branch->id, $admission->student->branch_id);
     }
