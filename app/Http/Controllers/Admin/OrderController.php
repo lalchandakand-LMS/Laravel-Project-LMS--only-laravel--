@@ -256,7 +256,20 @@ class OrderController extends Controller
                             'verified_at' => now(),
                         ]);
                     }
+
                     OrderService::fulfill($lockedOrder);
+                }
+
+                if ($data['status'] === 'paid') {
+                    $lockedOrder->payments()
+                        ->where('status', 'pending')
+                        ->update([
+                            'status' => 'rejected',
+                            'verified_by' => $request->user()->id,
+                            'verified_at' => now(),
+                            'rejection_reason' => 'Automatically closed because the order was marked paid.',
+                        ]);
+
                     return;
                 }
 
@@ -290,8 +303,13 @@ class OrderController extends Controller
 
         try {
             DB::transaction(function () use ($request, $payment, $data) {
+                // Keep lock order consistent with order cancellation and offline collection.
+                $order = Order::whereKey($payment->order_id)->lockForUpdate()->firstOrFail();
                 $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
-                $order = Order::whereKey($lockedPayment->order_id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedPayment->order_id !== $order->id) {
+                    throw ValidationException::withMessages(['payment' => 'The payment no longer belongs to this order.']);
+                }
 
                 if ($lockedPayment->status !== 'pending') {
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
