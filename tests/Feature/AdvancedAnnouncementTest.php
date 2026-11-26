@@ -52,11 +52,13 @@ class AdvancedAnnouncementTest extends TestCase
         $studentA = User::factory()->create(['role' => 'student', 'branch_id' => $branchA->id, 'is_active' => true]);
         $studentB = User::factory()->create(['role' => 'student', 'branch_id' => $branchB->id, 'is_active' => true]);
 
-        $announcement = Announcement::create([
+        $this->actingAs($admin)->post(route('admin.announcements.store'), [
             'title' => 'Branch update', 'body' => 'Read this update.',
             'branch_id' => $branchA->id, 'audience_role' => 'student',
-            'is_published' => true, 'priority' => 'general',
-        ]);
+            'is_published' => '1', 'priority' => 'general',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $announcement = Announcement::firstOrFail();
+
         $this->actingAs($admin)->put(route('admin.announcements.update', $announcement), [
             'title' => $announcement->title,
             'body' => $announcement->body,
@@ -95,7 +97,7 @@ class AdvancedAnnouncementTest extends TestCase
     public function test_admin_can_remove_an_existing_announcement_attachment(): void
     {
         Storage::fake('local');
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $announcement = Announcement::create(['title' => 'Attachment removal', 'body' => 'Notice', 'is_published' => false]);
         $path = UploadedFile::fake()->create('old.pdf', 10, 'application/pdf')->store('announcements/'.$announcement->id, 'local');
         $attachment = $announcement->attachments()->create([
