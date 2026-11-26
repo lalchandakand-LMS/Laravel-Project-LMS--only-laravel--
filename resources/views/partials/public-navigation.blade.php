@@ -16,7 +16,7 @@
 <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
     <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
         <a href="{{ route('home') }}" class="flex min-w-0 shrink-0 items-center gap-2" aria-label="{{ $brandName }} home">
-            <img src="{{ \App\Models\Setting::get('logo') ? asset('storage/'.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="" class="h-10 w-10 rounded-lg object-contain">
+            <img src="{{ \App\Models\Setting::get('logo') ? media_url(.\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="" class="h-10 w-10 rounded-lg object-contain">
             <span class="max-w-[12rem] truncate text-base font-extrabold tracking-tight text-slate-900 sm:text-lg">{{ $brandName }}</span>
         </a>
         <form action="{{ route('courses.index') }}" class="ml-auto hidden max-w-xs flex-1 lg:block">
