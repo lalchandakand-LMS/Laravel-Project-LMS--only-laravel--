@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
@@ -115,7 +114,7 @@ class SettingController extends Controller
                 if ($newPath) {
                     Setting::set($field, $newPath);
                     if ($oldPath && $oldPath !== $newPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
-                        Storage::disk('public')->delete($oldPath);
+                        delete_stored_media('public', $oldPath);
                     }
                 }
             }
@@ -126,7 +125,7 @@ class SettingController extends Controller
                 $oldPath = Setting::get($key);
                 Setting::set($key, $request->input($field));
                 if ($oldPath && ! (str_starts_with(strtolower($oldPath), 'http://') || str_starts_with(strtolower($oldPath), 'https://'))) {
-                    Storage::disk('public')->delete($oldPath);
+                    delete_stored_media('public', $oldPath);
                 }
             }
         }
@@ -136,7 +135,7 @@ class SettingController extends Controller
                 $oldPath = Setting::get($key);
                 Setting::set($key, '');
                 if ($oldPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
-                    Storage::disk('public')->delete($oldPath);
+                    delete_stored_media('public', $oldPath);
                 }
             }
         }
