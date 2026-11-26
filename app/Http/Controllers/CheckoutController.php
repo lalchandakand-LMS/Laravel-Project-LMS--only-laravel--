@@ -135,7 +135,7 @@ class CheckoutController extends Controller
         $proofPath = null;
 
         try {
-            \\Illuminate\\Support\\Facades\\DB::transaction(function () use ($request, $order, $data, &$proofPath) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($request, $order, $data, &$proofPath) {
                 // Serialize submissions for this order so simultaneous requests cannot
                 // both pass the "one pending payment" and outstanding-balance checks.
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
