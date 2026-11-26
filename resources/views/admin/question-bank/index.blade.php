@@ -34,11 +34,7 @@
     </section>
 </div>
 
-@if($exam)
-<form id="attach-bank-items" method="POST" action="{{ route('admin.question-bank.attach', $exam) }}" class="mt-5 rounded-2xl border border-orange-200 bg-orange-50 p-4">
-    @csrf
-    <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
-@endif
+
 
 <form method="GET" class="my-4 flex flex-wrap gap-2">
     @if($exam)<input type="hidden" name="exam_id" value="{{ $exam->id }}">@endif
@@ -47,6 +43,11 @@
     <select name="difficulty" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All levels</option>@foreach(['easy','medium','hard'] as $level)<option value="{{ $level }}" @selected(request('difficulty')===$level)>{{ ucfirst($level) }}</option>@endforeach</select>
     <button class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">Filter</button>
 </form>
+@if($exam)
+<form id="attach-bank-items" method="POST" action="{{ route('admin.question-bank.attach', $exam) }}" class="mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+    @csrf
+    <div class="flex flex-wrap items-center justify-between gap-3"><p class="font-bold text-slate-900">Add selected bank questions to: {{ $exam->title }}</p><button class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Add selected to exam</button></div>
+@endif
 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
     <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr>@if($exam)<th class="px-4 py-3">Select</th>@endif<th class="px-4 py-3">Question</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Topic</th><th class="px-4 py-3">Level</th><th class="px-4 py-3">Marks</th></tr></thead><tbody class="divide-y divide-slate-100">
     @forelse($items as $item)<tr>
