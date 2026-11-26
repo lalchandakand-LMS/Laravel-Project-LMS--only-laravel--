@@ -736,7 +736,15 @@ class LiveClassSchedulingTest extends TestCase
             'code' => 'NOTIFY-CANCELLED',
             'status' => 'cancelled',
         ]);
+        $application = \App\Models\OnlineBatchApplication::create([
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
         \App\Models\OnlineBatchEnrollment::create([
+            'application_id' => $application->id,
             'student_id' => $student->id,
             'course_id' => $course->id,
             'batch_id' => $batch->id,
