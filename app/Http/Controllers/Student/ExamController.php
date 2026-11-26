@@ -6,25 +6,82 @@ use App\Http\Controllers\Controller;
 use App\Models\AttemptAnswer;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
 {
+    /**
+     * Keep exam discovery, details and starting aligned with the course-player
+     * entitlement rules. An active enrollment alone is not enough: it must
+     * still be unexpired and its assigned batch/branch must remain eligible.
+     */
+    private function canAccessExam(User $user, Exam $exam): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $user->isStudent() || ! $exam->is_published) {
+            return false;
+        }
+
+        $course = $exam->course;
+        if ($exam->course_id && (! $course || ! $course->is_published)) {
+            return false;
+        }
+
+        if ($exam->is_free) {
+            return true;
+        }
+
+        if (! $course) {
+            return false;
+        }
+
+        $enrollment = $user->enrollments()
+            ->with('batch')
+            ->where('course_id', $course->id)
+            ->where('status', 'active')
+            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->first();
+
+        if (! $enrollment) {
+            return false;
+        }
+
+        $batch = $enrollment->batch;
+        if ($enrollment->batch_id && (! $batch || in_array($batch->status, ['upcoming', 'cancelled'], true))) {
+            return false;
+        }
+
+        if ($batch?->branch_id && (int) $user->branch_id !== (int) $batch->branch_id) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function index()
     {
         $user = auth()->user();
-        $courseIds = $user->enrollments()->where('status', 'active')->pluck('course_id');
+        abort_unless($user->isStudent() || $user->isAdmin(), 403);
 
-        return view('student.exams.index', [
-            'exams' => Exam::with('course')->where('is_published', true)
-                ->where(fn ($q) => $q->whereIn('course_id', $courseIds)->orWhere('is_free', true))
-                ->latest()->get(),
-        ]);
+        $exams = Exam::with('course')
+            ->where('is_published', true)
+            ->latest()
+            ->get()
+            ->filter(fn (Exam $exam) => $this->canAccessExam($user, $exam))
+            ->values();
+
+        return view('student.exams.index', ['exams' => $exams]);
     }
 
     public function show(Exam $exam)
     {
         $user = auth()->user();
+        abort_unless($this->canAccessExam($user, $exam), 403, 'You do not have access to this exam.');
+
         return view('student.exams.show', [
             'exam' => $exam->load('course'),
             'attempts' => $exam->attempts()->where('user_id', $user->id)->latest()->get(),
@@ -36,11 +93,7 @@ class ExamController extends Controller
     public function start(Request $request, Exam $exam)
     {
         $user = $request->user();
-        abort_unless($exam->is_published && $exam->isOpen(), 403, 'This exam is not open.');
-
-        if ($exam->course_id && ! $user->hasCourse($exam->course) && ! $exam->is_free && ! $user->isAdmin()) {
-            abort(403, 'Enroll in the course to take this exam.');
-        }
+        abort_unless($this->canAccessExam($user, $exam) && $exam->isOpen(), 403, 'This exam is not available to your account.');
 
         $left = $exam->attemptsLeftFor($user);
         if ($left !== null && $left <= 0) {
@@ -156,8 +209,6 @@ class ExamController extends Controller
             'answers' => $attempt->answers()->with(['question.options', 'option'])->get()->keyBy('question_id'),
         ]);
     }
-
-    /* ------------------------------------------------------------------ */
 
     private function authorizeAttempt(ExamAttempt $attempt): void
     {
