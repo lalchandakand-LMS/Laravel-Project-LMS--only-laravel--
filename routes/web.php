@@ -49,7 +49,7 @@ Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/instructors', [InstructorController::class, 'index'])->name('instructors.index');
 Route::get('/instructors/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('instructors.show');
 Route::get('/teacher/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('teachers.public.show');
-Route::post('/contact', [PageController::class, 'sendContact'])->name('contact.send');
+Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:5,10')->name('contact.send');
 
 Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Conditions', 'policy' => 'terms'])->name('legal.terms');
 Route::view('/privacy-policy', 'legal.policy', ['title' => 'Privacy Policy', 'policy' => 'privacy'])->name('legal.privacy');
@@ -206,6 +206,8 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
         Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
+        Route::get('marketing/leads', [Admin\MarketingLeadController::class, 'index'])->name('marketing.leads.index');
+        Route::patch('marketing/leads/{lead}', [Admin\MarketingLeadController::class, 'update'])->name('marketing.leads.update');
         Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
         Route::post('certificates', [Admin\CertificateController::class, 'store'])->name('certificates.store');
         Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');

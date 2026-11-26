@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\MarketingLead;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Ebook;
@@ -77,14 +78,40 @@ class PageController extends Controller
 
     public function sendContact(Request $request)
     {
-        $request->validate([
-            'name' => 'required|max:100',
-            'email' => 'required|email',
-            'message' => 'required|max:2000',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'subject' => ['nullable', 'string', 'max:180'],
+            'message' => ['required', 'string', 'max:2000'],
+            'website' => ['nullable', 'string', 'max:200'],
         ]);
 
-        // In production: Mail::to(Setting::get('contact_email'))->send(new ContactMail(...));
-        logger()->info('Contact message', $request->only('name', 'email', 'message'));
+        // A filled honeypot is treated as a successful submission but is not stored.
+        if (filled($validated['website'] ?? null)) {
+            return back()->with('success', 'Your message has been sent. We will reply soon!');
+        }
+
+        $attribution = $request->session()->get('marketing_attribution', []);
+        $attribution = is_array($attribution) ? $attribution : [];
+
+        MarketingLead::create([
+            'user_id' => $request->user()?->id,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'subject' => $validated['subject'] ?? null,
+            'message' => $validated['message'],
+            'source' => mb_substr((string) ($attribution['utm_source'] ?? ($attribution['referrer_host'] ?? 'website')), 0, 80),
+            'utm_source' => $attribution['utm_source'] ?? null,
+            'utm_medium' => $attribution['utm_medium'] ?? null,
+            'utm_campaign' => $attribution['utm_campaign'] ?? null,
+            'utm_term' => $attribution['utm_term'] ?? null,
+            'utm_content' => $attribution['utm_content'] ?? null,
+            'landing_page' => mb_substr((string) ($attribution['landing_page'] ?? '/contact'), 0, 500),
+            'referrer_host' => $attribution['referrer_host'] ?? null,
+            'status' => 'new',
+        ]);
 
         return back()->with('success', 'Your message has been sent. We will reply soon!');
     }
