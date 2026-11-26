@@ -28,7 +28,7 @@ class CoachingAdmissionController extends Controller
             'student_phone' => ['required', 'string', 'max:30'],
             'guardian_name' => ['nullable', 'string', 'max:160'],
             'guardian_phone' => ['nullable', 'string', 'max:30'],
-            'guardian_email' => ['nullable', 'email', 'max:255'],
+            'guardian_email' => ['nullable', 'email', 'max:255'],\n            'student_sms_consent' => ['sometimes', 'accepted'],\n            'guardian_sms_consent' => ['sometimes', 'accepted'],
             'batch_id' => ['required', 'integer', Rule::exists('batches', 'id')->where(fn ($q) => $q->whereIn('status', ['upcoming', 'ongoing']))],
             'applicant_note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -48,7 +48,7 @@ class CoachingAdmissionController extends Controller
         CoachingAdmission::create($data + [
             'branch_id' => $batch->branch_id,
             'course_id' => $batch->course_id,
-            'status' => 'pending',
+            'student_sms_consent' => $request->boolean('student_sms_consent'),\n            'guardian_sms_consent' => $request->boolean('guardian_sms_consent'),\n            'status' => 'pending',
         ]);
 
         return redirect()->route('coaching-admission.create')->with('success', 'আপনার ভর্তি আবেদন জমা হয়েছে। যাচাই শেষে SMS/ফোনে জানানো হবে।');
