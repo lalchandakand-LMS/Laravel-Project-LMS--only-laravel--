@@ -100,6 +100,9 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
     Route::get('/', [Student\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-courses', [Student\DashboardController::class, 'courses'])->name('courses');
     Route::get('/live-classes', [Student\LiveClassController::class, 'index'])->name('live-classes');
+    Route::get('/library', [Student\LibraryController::class, 'index'])->name('library.index');
+    Route::post('/library/{book}/request', [Student\LibraryController::class, 'requestBook'])->name('library.request');
+    Route::post('/library/loans/{loan}/cancel', [Student\LibraryController::class, 'cancelRequest'])->name('library.cancel');
     Route::get('/assignments', [Student\AssignmentController::class, 'index'])->name('assignments.index');
     Route::get('/assignments/{assignment}', [Student\AssignmentController::class, 'show'])->name('assignments.show');
     Route::post('/assignments/{assignment}/submit', [Student\AssignmentController::class, 'submit'])->name('assignments.submit');
@@ -175,6 +178,18 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::get('enrollments', [Admin\EnrollmentController::class, 'index'])->name('enrollments.index');
         Route::delete('enrollments/{enrollment}', [Admin\EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
         Route::post('enrollments/manual', [Admin\EnrollmentController::class, 'store'])->name('enrollments.store');
+
+        Route::prefix('library')->name('library.')->group(function () {
+            Route::get('/books', [Admin\LibraryBookController::class, 'index'])->name('books.index');
+            Route::get('/books/create', [Admin\LibraryBookController::class, 'create'])->name('books.create');
+            Route::post('/books', [Admin\LibraryBookController::class, 'store'])->name('books.store');
+            Route::get('/books/{book}/edit', [Admin\LibraryBookController::class, 'edit'])->name('books.edit');
+            Route::put('/books/{book}', [Admin\LibraryBookController::class, 'update'])->name('books.update');
+            Route::get('/loans', [Admin\LibraryLoanController::class, 'index'])->name('loans.index');
+            Route::post('/loans/{loan}/issue', [Admin\LibraryLoanController::class, 'issue'])->name('loans.issue');
+            Route::post('/loans/{loan}/reject', [Admin\LibraryLoanController::class, 'reject'])->name('loans.reject');
+            Route::post('/loans/{loan}/return', [Admin\LibraryLoanController::class, 'returnBook'])->name('loans.return');
+        });
 
         Route::get('staff-leave-requests', [Admin\LeaveRequestController::class, 'index'])->name('staff-leave-requests.index');
         Route::post('staff-leave-requests/{leaveRequest}/approve', [Admin\LeaveRequestController::class, 'approve'])->name('staff-leave-requests.approve');
