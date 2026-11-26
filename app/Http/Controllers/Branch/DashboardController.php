@@ -41,9 +41,15 @@ class DashboardController extends Controller
 
         $courseEnrollments = Enrollment::query()
             ->where(function ($query) use ($branch) {
-                $query->whereHas('batch', fn ($batch) => $batch->where('branch_id', $branch->id))
-                    ->orWhere(fn ($unbatched) => $unbatched->whereNull('batch_id')
-                        ->whereHas('user', fn ($user) => $user->where('branch_id', $branch->id)));
+                $query->where('branch_id', $branch->id)
+                    ->orWhere(function ($legacy) use ($branch) {
+                        $legacy->whereNull('branch_id')
+                            ->where(function ($fallback) use ($branch) {
+                                $fallback->whereHas('batch', fn ($batch) => $batch->where('branch_id', $branch->id))
+                                    ->orWhere(fn ($unbatched) => $unbatched->whereNull('batch_id')
+                                        ->whereHas('user', fn ($user) => $user->where('branch_id', $branch->id)));
+                            });
+                    });
             });
 
         $onlineEnrollmentCount = OnlineBatchEnrollment::whereHas('batch', fn ($batch) => $batch->where('branch_id', $branch->id))->count();
@@ -95,9 +101,15 @@ class DashboardController extends Controller
             ->leftJoin('batches', 'batches.id', '=', 'enrollments.batch_id')
             ->join('users', 'users.id', '=', 'enrollments.user_id')
             ->where(function ($query) use ($branch) {
-                $query->where('batches.branch_id', $branch->id)
-                    ->orWhere(fn ($unbatched) => $unbatched->whereNull('enrollments.batch_id')
-                        ->where('users.branch_id', $branch->id));
+                $query->where('enrollments.branch_id', $branch->id)
+                    ->orWhere(function ($legacy) use ($branch) {
+                        $legacy->whereNull('enrollments.branch_id')
+                            ->where(function ($fallback) use ($branch) {
+                                $fallback->where('batches.branch_id', $branch->id)
+                                    ->orWhere(fn ($unbatched) => $unbatched->whereNull('enrollments.batch_id')
+                                        ->where('users.branch_id', $branch->id));
+                            });
+                    });
             })
             ->select('courses.title', DB::raw('COUNT(*) as total'), DB::raw('SUM(enrollments.price_paid) as revenue'))
             ->groupBy('courses.id', 'courses.title')
