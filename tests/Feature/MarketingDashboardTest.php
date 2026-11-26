@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\MarketingCampaign;
 use App\Models\MarketingLead;
+use App\Models\Order;
+use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -59,6 +61,24 @@ class MarketingDashboardTest extends TestCase
             'status' => 'qualified',
         ]);
 
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 1000,
+            'discount' => 0,
+            'total' => 1000,
+            'status' => 'partially_paid',
+            'utm_campaign' => $campaign->slug,
+        ]);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bank',
+            'amount' => 400,
+            'transaction_id' => 'MARKETING-DASHBOARD-REVENUE',
+            'status' => 'verified',
+            'verified_at' => now(),
+        ]);
+
         $this->actingAs($admin)->get(route('admin.marketing.dashboard'))
             ->assertOk()
             ->assertSee('Marketing Performance Dashboard')
@@ -67,6 +87,8 @@ class MarketingDashboardTest extends TestCase
             ->assertSee(number_format((($initialConverted + 1) / ($initialTotal + 3)) * 100, 1).'%')
             ->assertSee('IELTS Facebook Campaign')
             ->assertSee('2 leads')
+            ->assertSee('Attributed orders')
+            ->assertSee('৳400.00')
             ->assertSee('facebook')
             ->assertSee('google');
     }
