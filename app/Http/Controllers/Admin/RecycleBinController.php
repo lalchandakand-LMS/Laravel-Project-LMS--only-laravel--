@@ -205,6 +205,7 @@ class RecycleBinController extends Controller
             'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
+            'live-classes' => [['attendance_sessions', 'live_class_id']],
             'branches' => [
                 ['users', 'branch_id'], ['orders', 'branch_id'], ['batches', 'branch_id'],
                 ['coaching_batches', 'branch_id'], ['coaching_admissions', 'branch_id'],

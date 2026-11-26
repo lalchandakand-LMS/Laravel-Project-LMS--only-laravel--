@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceSession;
 use App\Models\Batch;
 use App\Models\Course;
 use App\Models\LiveClass;
@@ -94,10 +95,63 @@ class LiveClassController extends Controller
     public function update(Request $request, LiveClass $liveClass)
     {
         $this->authorizeOwner($liveClass);
+        $data = $this->validated($request);
+
         $previousStart = $liveClass->starts_at?->timestamp;
-        $liveClass->update($this->validated($request));
-        if (! $liveClass->isCancelled() && $liveClass->is_published && $previousStart !== $liveClass->starts_at?->timestamp) {
-            $this->notifyStudents($liveClass, 'rescheduled');
+        $previousDuration = (int) $liveClass->duration_minutes;
+        $previousCourseId = (int) $liveClass->course_id;
+        $previousBatchId = $liveClass->batch_id ? (int) $liveClass->batch_id : null;
+
+        $updated = DB::transaction(function () use ($request, $liveClass, $data) {
+            $lockedClass = LiveClass::query()->lockForUpdate()->findOrFail($liveClass->id);
+            $this->authorizeOwner($lockedClass);
+            $attendanceSession = AttendanceSession::query()
+                ->where('live_class_id', $lockedClass->id)
+                ->lockForUpdate()
+                ->first();
+
+            $scheduleOrAudienceChanged =
+                Carbon::parse($data['starts_at'])->timestamp !== $lockedClass->starts_at?->timestamp
+                || (int) $data['duration_minutes'] !== (int) $lockedClass->duration_minutes
+                || (int) $data['course_id'] !== (int) $lockedClass->course_id
+                || (($data['batch_id'] ?? null) ? (int) $data['batch_id'] : null)
+                    !== ($lockedClass->batch_id ? (int) $lockedClass->batch_id : null);
+
+            if ($attendanceSession
+                && in_array($attendanceSession->status, ['submitted', 'approved'], true)
+                && $scheduleOrAudienceChanged) {
+                throw ValidationException::withMessages([
+                    'starts_at' => 'This live class has submitted or approved attendance. Its course, batch and schedule can no longer be changed.',
+                ]);
+            }
+
+            $lockedClass->update($data);
+
+            if ($attendanceSession && in_array($attendanceSession->status, ['draft', 'returned'], true)) {
+                $lockedClass->load(['course', 'batch']);
+                $attendanceSession->update([
+                    'course_id' => $lockedClass->course_id,
+                    'batch_id' => $lockedClass->batch_id,
+                    'branch_id' => $lockedClass->batch?->branch_id,
+                    'instructor_id' => $lockedClass->course?->instructor_id ?: $attendanceSession->instructor_id,
+                    'topic' => $lockedClass->title,
+                    'starts_at' => $lockedClass->starts_at,
+                    'ends_at' => $lockedClass->endsAt(),
+                ]);
+            }
+
+            return $lockedClass;
+        });
+
+        $updated->refresh();
+        $scheduleOrAudienceChanged =
+            $previousStart !== $updated->starts_at?->timestamp
+            || $previousDuration !== (int) $updated->duration_minutes
+            || $previousCourseId !== (int) $updated->course_id
+            || $previousBatchId !== ($updated->batch_id ? (int) $updated->batch_id : null);
+
+        if (! $updated->isCancelled() && $updated->is_published && $scheduleOrAudienceChanged) {
+            $this->notifyStudents($updated, 'rescheduled');
         }
 
         return redirect()->route('admin.live-classes.index')->with('success', 'Live class updated.');

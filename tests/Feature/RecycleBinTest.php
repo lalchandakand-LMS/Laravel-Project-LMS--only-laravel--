@@ -6,6 +6,8 @@ use App\Models\Slider;
 use App\Models\Course;
 use App\Models\Branch;
 use App\Models\CoachingBatch;
+use App\Models\AttendanceSession;
+use App\Models\LiveClass;
 use App\Models\Lesson;
 use App\Models\Enrollment;
 use App\Models\User;
@@ -242,6 +244,46 @@ class RecycleBinTest extends TestCase
 
         $this->assertSoftDeleted('branches', ['id' => $branch->id]);
         $this->assertDatabaseHas('coaching_batches', ['id' => $batch->id, 'branch_id' => $branch->id]);
+    }
+
+
+    public function test_live_class_with_attendance_history_cannot_be_permanently_deleted_or_pruned(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Attendance History Course', 'slug' => 'attendance-history-course']);
+        $liveClass = LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Attendance history live class',
+            'platform' => 'Zoom',
+            'starts_at' => now()->subDays(40),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        $session = AttendanceSession::create([
+            'live_class_id' => $liveClass->id,
+            'course_id' => $course->id,
+            'instructor_id' => $admin->id,
+            'topic' => $liveClass->title,
+            'starts_at' => $liveClass->starts_at,
+            'ends_at' => $liveClass->endsAt(),
+            'status' => 'approved',
+            'mode' => 'online',
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.live-classes.destroy', $liveClass))->assertRedirect();
+        $this->delete(route('admin.recycle-bin.destroy', ['type' => 'live-classes', 'id' => $liveClass->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        DB::table('live_classes')->where('id', $liveClass->id)->update(['deleted_at' => now()->subDays(31)]);
+        Artisan::call('recycle-bin:prune', ['--days' => 30]);
+
+        $this->assertSoftDeleted('live_classes', ['id' => $liveClass->id]);
+        $this->assertDatabaseHas('attendance_sessions', [
+            'id' => $session->id,
+            'live_class_id' => $liveClass->id,
+            'status' => 'approved',
+        ]);
     }
 
 }
