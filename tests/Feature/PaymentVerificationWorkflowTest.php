@@ -296,4 +296,73 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame('pending', $order->fresh()->status);
         $this->assertSame(1000.0, $order->fresh()->dueAmount());
     }
+
+    public function test_student_repayment_can_be_verified_after_full_refund(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'ORIGINAL-FULL-PAYMENT',
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $order->update(['status' => 'paid']);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'amount' => 1000,
+            'reference' => 'FULL-REFUND-REFERENCE',
+            'reason' => 'Full refund before replacement payment.',
+        ])->assertRedirect();
+
+        $this->assertSame('refunded', $order->fresh()->status);
+        $this->assertSame(0.0, $order->fresh()->amountPaid());
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'pending',
+        ])->assertRedirect();
+
+        $this->actingAs($student)->post(route('checkout.pay', $order->order_no), [
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'REPLACEMENT-PAYMENT',
+        ])->assertRedirect();
+
+        $replacement = Payment::where('transaction_id', 'REPLACEMENT-PAYMENT')->firstOrFail();
+        $this->actingAs($admin)->post(route('admin.payments.verify', $replacement), [
+            'action' => 'verify',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame('paid', $order->fresh()->status);
+        $this->assertSame(1000.0, $order->fresh()->amountPaid());
+    }
+
+    public function test_pending_payment_cannot_be_verified_after_order_is_cancelled(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'amount' => 1000,
+            'sender_number' => '01711111111',
+            'transaction_id' => 'CANCELLED-ORDER-PENDING-PAYMENT',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.status', $order->order_no), [
+            'status' => 'cancelled',
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->post(route('admin.payments.verify', $payment), [
+            'action' => 'verify',
+        ])->assertRedirect()->assertSessionHasErrors('payment');
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame(0.0, $order->fresh()->amountPaid());
+    }
 }

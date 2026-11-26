@@ -279,6 +279,10 @@ class OrderController extends Controller
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
                 }
 
+                if ($data['action'] === 'verify' && ! in_array($order->status, ['pending', 'partially_paid'], true)) {
+                    throw ValidationException::withMessages(['payment' => 'Payments cannot be approved for an order that is no longer awaiting payment.']);
+                }
+
                 if ($data['action'] === 'reject') {
                     $lockedPayment->update([
                         'status' => 'rejected',
@@ -295,7 +299,7 @@ class OrderController extends Controller
                     return;
                 }
 
-                $alreadyPaid = (float) $order->payments()->where('status', 'verified')->sum('amount');
+                $alreadyPaid = $order->amountPaid();
                 if (round($alreadyPaid + $lockedPayment->amount, 2) > round($order->total, 2)) {
                     throw ValidationException::withMessages(['payment' => 'Approving this payment would exceed the order balance. Review the amount before approval.']);
                 }
