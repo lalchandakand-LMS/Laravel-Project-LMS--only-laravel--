@@ -22,6 +22,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Student;
+use App\Http\Controllers\AiAgentController;
 use Illuminate\Support\Facades\Route;
 
 /* ------------------------------------------------------------------
@@ -298,8 +299,8 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
  |  AI AGENT WORKSPACE
  |------------------------------------------------------------------*/
 Route::middleware('auth')->prefix('ai-agent')->name('ai-agent.')->group(function () {
-    Route::get('/', [App\\Http\\Controllers\\AiAgentController::class, 'index'])->name('index');
-    Route::post('/', [App\\Http\\Controllers\\AiAgentController::class, 'ask'])->name('ask');
-    Route::post('/actions/{proposal}/approve', [App\\Http\\Controllers\\AiAgentController::class, 'approve'])->name('approve');
-    Route::post('/actions/{proposal}/reject', [App\\Http\\Controllers\\AiAgentController::class, 'reject'])->name('reject');
+    Route::get('/', [AiAgentController::class, 'index'])->name('index');
+    Route::post('/', [AiAgentController::class, 'ask'])->name('ask');
+    Route::post('/actions/{proposal}/approve', [AiAgentController::class, 'approve'])->name('approve');
+    Route::post('/actions/{proposal}/reject', [AiAgentController::class, 'reject'])->name('reject');
 });
