@@ -70,12 +70,15 @@ class CartController extends Controller
             }
         }
 
+        $shippingFee = ShippingFeeCalculator::calculate($items, $subtotal, $discount);
+
         return [
             'items' => $items,
             'subtotal' => $subtotal,
             'eligible_subtotal' => $eligibleSubtotal,
             'discount' => $discount,
-            'total' => max(0, round($subtotal - $discount, 2)),
+            'shipping_fee' => $shippingFee,
+            'total' => max(0, round($subtotal - $discount + $shippingFee, 2)),
             'coupon' => $coupon,
             'count' => count($items),
         ];
