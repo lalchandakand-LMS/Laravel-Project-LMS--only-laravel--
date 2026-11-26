@@ -43,6 +43,14 @@ class AttendanceWorkflowTest extends TestCase
     {
         [$teacher, $student, $course, $batch] = $this->setupClassroom();
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $guardian = User::factory()->create(['role' => 'guardian', 'is_active' => true]);
+        \\DB::table('guardian_students')->insert([
+            'guardian_id' => $guardian->id,
+            'student_id' => $student->id,
+            'relation' => 'father',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $this->actingAs($teacher)->get(route('teacher.attendance.index'))->assertOk();
         $this->actingAs($teacher)->post(route('teacher.attendance.store'), [
@@ -71,6 +79,10 @@ class AttendanceWorkflowTest extends TestCase
             'action' => 'approve',
         ])->assertRedirect();
         $this->assertSame('approved', $session->fresh()->status);
+        $this->assertDatabaseCount('notifications', 2);
+        $this->assertSame('attendance', $student->notifications()->firstOrFail()->data['type']);
+        $this->assertSame('present', $student->notifications()->firstOrFail()->data['attendance_status']);
+        $this->assertSame('attendance', $guardian->notifications()->firstOrFail()->data['type']);
 
         $this->actingAs($student)->get(route('student.attendance'))
             ->assertOk()->assertSee('Speaking practice')->assertSee('Present');
