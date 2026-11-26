@@ -55,6 +55,33 @@ class CoachingAdmissionController extends Controller
                 $student->update(['phone' => $admission->student_phone, 'branch_id' => $admission->branch_id, 'is_active' => true]);
             }
 
+            $studentProfile = $student->studentProfile()->firstOrCreate([], ['status' => 'inactive']);
+            $studentProfile->fill(array_filter([
+                'date_of_birth' => $admission->student_date_of_birth,
+                'gender' => $admission->student_gender,
+                'school_name' => $admission->school_name,
+                'academic_class' => $admission->academic_class,
+                'academic_roll' => $admission->academic_roll,
+                'academic_session' => $admission->academic_session,
+                'academic_group' => $admission->academic_group,
+                'present_address' => $admission->present_address,
+                'permanent_address' => $admission->permanent_address,
+                'guardian_name' => $admission->guardian_name,
+                'guardian_phone' => $admission->guardian_phone,
+                'guardian_email' => $admission->guardian_email,
+                'emergency_contact_name' => $admission->guardian_name,
+                'emergency_contact_phone' => $admission->guardian_phone,
+                'quota_type' => $admission->quota_type,
+                'quota_notes' => $admission->quota_notes,
+            ], fn ($value) => $value !== null && $value !== ''))->save();
+
+            $admission->documents()->get()->each(function ($document) use ($studentProfile) {
+                $document->update([
+                    'documentable_type' => $studentProfile->getMorphClass(),
+                    'documentable_id' => $studentProfile->getKey(),
+                ]);
+            });
+
             if ($admission->guardian_email && $admission->guardian_email !== $admission->student_email) {
                 $guardian = User::query()->where('email', $admission->guardian_email)->lockForUpdate()->first();
                 if ($guardian?->isGuardian()) {
