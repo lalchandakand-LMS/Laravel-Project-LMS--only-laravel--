@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Batch;
 use App\Models\Branch;
 use App\Models\CoachingAdmission;
+use App\Models\CoachingBatch;
+use App\Models\CoachingEnrollment;
 use App\Models\Course;
-use App\Models\Enrollment;
+use App\Models\StudentFeeInvoice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,73 +16,89 @@ class CoachingAdmissionWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_can_submit_online_coaching_admission_application(): void
+    private function setupCoaching(): array
     {
         $branch = Branch::create(['name' => 'Dhaka', 'code' => 'DHK', 'is_active' => true]);
         $course = Course::create(['title' => 'Spoken English', 'price' => 3000, 'is_published' => true]);
-        $batch = Batch::create(['name' => 'Morning', 'code' => 'MORN1', 'branch_id' => $branch->id, 'course_id' => $course->id, 'status' => 'upcoming']);
-
-        $response = $this->post(route('coaching-admission.store'), [
-            'student_name' => 'Test Student', 'student_email' => 'student@example.com',
-            'student_phone' => '01700000000', 'guardian_name' => 'Parent',
-            'guardian_phone' => '01800000000', 'batch_id' => $batch->id,
+        $batch = CoachingBatch::create([
+            'name' => 'Physical Morning', 'code' => 'PHY-MORN', 'branch_id' => $branch->id,
+            'course_id' => $course->id, 'admission_fee' => 500, 'monthly_fee' => 1500, 'status' => 'upcoming',
         ]);
 
-        $response->assertRedirect(route('coaching-admission.create'));
-        $this->assertDatabaseHas('coaching_admissions', ['student_email' => 'student@example.com', 'status' => 'pending', 'branch_id' => $branch->id]);
-        $this->assertDatabaseCount('users', 0);
+        return [$branch, $course, $batch];
     }
 
-    public function test_admin_approval_creates_student_account_and_batch_enrollment_without_online_order(): void
+    public function test_guest_can_submit_online_application_for_a_distinct_physical_coaching_batch(): void
+    {
+        [$branch, $course, $batch] = $this->setupCoaching();
+
+        $this->post(route('coaching-admission.store'), [
+            'student_name' => 'Test Student',
+            'student_email' => 'student@example.com',
+            'student_phone' => '01700000000',
+            'coaching_batch_id' => $batch->id,
+        ])->assertRedirect(route('coaching-admission.create'));
+
+        $this->assertDatabaseHas('coaching_admissions', [
+            'student_email' => 'student@example.com',
+            'coaching_batch_id' => $batch->id,
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('enrollments', 0);
+    }
+
+    public function test_approval_generates_required_admission_fee_and_enrollment_activates_only_after_full_payment(): void
     {
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
-        $branch = Branch::create(['name' => 'Dhaka', 'code' => 'DHK', 'is_active' => true]);
-        $course = Course::create(['title' => 'Spoken English', 'price' => 3000, 'is_published' => true]);
-        $batch = Batch::create(['name' => 'Morning', 'code' => 'MORN1', 'branch_id' => $branch->id, 'course_id' => $course->id, 'status' => 'upcoming']);
+        [$branch, $course, $batch] = $this->setupCoaching();
         $application = CoachingAdmission::create([
             'student_name' => 'Test Student', 'student_email' => 'student@example.com', 'student_phone' => '01700000000',
-            'branch_id' => $branch->id, 'course_id' => $course->id, 'batch_id' => $batch->id,
+            'branch_id' => $branch->id, 'course_id' => $course->id, 'coaching_batch_id' => $batch->id,
         ]);
+
         $this->actingAs($admin)->post(route('admin.coaching-admissions.approve', $application), ['admin_note' => 'Approved'])->assertRedirect();
+
         $student = User::where('email', 'student@example.com')->firstOrFail();
-        $this->assertDatabaseHas('coaching_admissions', ['id' => $application->id, 'student_id' => $student->id, 'status' => 'approved']);
-        $this->assertDatabaseHas('enrollments', ['user_id' => $student->id, 'course_id' => $course->id, 'batch_id' => $batch->id, 'status' => 'active']);
+        $application->refresh();
+        $invoice = StudentFeeInvoice::where('coaching_admission_id', $application->id)->firstOrFail();
+
+        $this->assertSame('awaiting_payment', $application->status);
+        $this->assertSame('admission', $invoice->invoice_type);
+        $this->assertEquals(500, (float) $invoice->amount);
+        $this->assertDatabaseCount('coaching_enrollments', 0);
+        $this->assertDatabaseCount('enrollments', 0);
+
+        $this->post(route('admin.coaching-fees.payments.store', $invoice), ['amount' => 500, 'method' => 'cash'])
+            ->assertRedirect();
+
+        $this->assertSame('admitted', $application->fresh()->status);
+        $this->assertDatabaseHas('coaching_enrollments', [
+            'coaching_admission_id' => $application->id,
+            'student_id' => $student->id,
+            'coaching_batch_id' => $batch->id,
+            'status' => 'active',
+        ]);
         $this->assertDatabaseCount('orders', 0);
     }
-    public function test_coaching_fee_payment_tracks_partial_and_advance_credit_separately_from_online_orders(): void
+
+    public function test_zero_admission_fee_allows_admin_approval_to_activate_physical_coaching_enrollment(): void
     {
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'password', 'role' => 'admin', 'is_active' => true]);
-        $student = User::create(['name' => 'Student', 'email' => 'student@example.com', 'password' => 'password', 'role' => 'student', 'is_active' => true]);
-        $branch = Branch::create(['name' => 'Dhaka', 'code' => 'DHK', 'is_active' => true]);
-        $course = Course::create(['title' => 'Spoken English', 'price' => 3000, 'is_published' => true]);
-        $batch = Batch::create(['name' => 'Morning', 'code' => 'MORN1', 'branch_id' => $branch->id, 'course_id' => $course->id, 'status' => 'ongoing']);
-        $admission = CoachingAdmission::create([
-            'student_name' => $student->name, 'student_email' => $student->email, 'student_phone' => '01700000000',
-            'branch_id' => $branch->id, 'course_id' => $course->id, 'batch_id' => $batch->id,
-            'student_id' => $student->id, 'status' => 'approved', 'admitted_at' => now(),
+        [$branch, $course, $batch] = $this->setupCoaching();
+        $batch->update(['admission_fee' => 0]);
+        $application = CoachingAdmission::create([
+            'student_name' => 'No Fee Student', 'student_email' => 'nofee@example.com', 'student_phone' => '01700000001',
+            'branch_id' => $branch->id, 'course_id' => $course->id, 'coaching_batch_id' => $batch->id,
         ]);
 
-        $this->actingAs($admin)->post(route('admin.coaching-fees.invoices.store'), [
-            'coaching_admission_id' => $admission->id, 'description' => 'First month', 'amount' => 100, 'discount' => 0,
-        ])->assertRedirect();
-        $first = \App\Models\StudentFeeInvoice::firstOrFail();
+        $this->actingAs($admin)->post(route('admin.coaching-admissions.approve', $application))->assertRedirect();
 
-        $this->post(route('admin.coaching-fees.payments.store', $first), [
-            'amount' => 150, 'method' => 'cash',
-        ])->assertRedirect();
-
-        $this->assertDatabaseHas('student_fee_payments', ['invoice_id' => $first->id, 'amount' => 150, 'applied_amount' => 100, 'advance_amount' => 50]);
-        $this->assertDatabaseHas('student_fee_credits', ['student_id' => $student->id, 'amount' => 50]);
-
-        $this->post(route('admin.coaching-fees.invoices.store'), [
-            'coaching_admission_id' => $admission->id, 'description' => 'Second month', 'amount' => 40, 'discount' => 0,
-        ])->assertRedirect();
-
-        $second = \App\Models\StudentFeeInvoice::where('description', 'Second month')->firstOrFail();
-        $this->assertSame(0.0, $second->dueAmount());
-        $this->assertSame('paid', $second->fresh()->status);
-        $this->assertEquals(10.00, (float) \App\Models\StudentFeeCredit::firstOrFail()->remainingAmount());
-        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame('admitted', $application->fresh()->status);
+        $this->assertDatabaseHas('coaching_enrollments', ['coaching_admission_id' => $application->id, 'status' => 'active']);
+        $this->assertDatabaseCount('student_fee_invoices', 0);
     }
 
     public function test_guardian_can_only_view_linked_child_coaching_fee_report(): void
@@ -94,5 +111,4 @@ class CoachingAdmissionWorkflowTest extends TestCase
         $this->actingAs($guardian)->get(route('guardian.child.coaching-fees', $child))->assertOk();
         $this->get(route('guardian.child.coaching-fees', $other))->assertForbidden();
     }
-
 }
