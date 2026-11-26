@@ -25,6 +25,10 @@ class EnrollmentController extends Controller
     {
         $query = Enrollment::query()->with(['user.branch', 'course', 'batch'])->latest('enrolled_at')->latest('id');
 
+        if ($request->filled('type') && $request->input('type') !== 'course') {
+            $query->whereRaw('1 = 0');
+        }
+
         if ($request->filled('q')) {
             $term = trim($request->string('q')->toString());
             $query->where(function (Builder $search) use ($term) {
@@ -79,7 +83,8 @@ class EnrollmentController extends Controller
             'batches' => Batch::with('course')->whereNotIn('status', ['cancelled'])->orderBy('name')->get(),
             'branches' => Branch::orderBy('name')->get(['id', 'name']),
             'statuses' => self::STATUSES,
-            'filters' => $request->only(['q', 'status', 'course_id', 'branch_id', 'from', 'to']),
+            'filters' => $request->only(['q', 'status', 'course_id', 'branch_id', 'from', 'to', 'type']),
+            'filterStatuses' => array_values(array_unique(array_merge(self::STATUSES, ['ended']))),
             'stats' => [
                 'total' => Enrollment::count() + OnlineBatchEnrollment::count() + CoachingEnrollment::count(),
                 'active' => Enrollment::where('status', 'active')->count()
@@ -242,6 +247,7 @@ class EnrollmentController extends Controller
     private function onlineBatchQuery(Request $request): Builder
     {
         return OnlineBatchEnrollment::query()->with(['student.branch', 'course', 'batch.branch', 'application'])
+            ->when($request->filled('type') && $request->input('type') !== 'online_batch', fn (Builder $query) => $query->whereRaw('1 = 0'))
             ->when($request->filled('q'), function (Builder $query) use ($request) {
                 $term = trim($request->string('q')->toString());
                 $query->where(fn (Builder $search) => $search
@@ -260,6 +266,7 @@ class EnrollmentController extends Controller
     private function coachingQuery(Request $request): Builder
     {
         return CoachingEnrollment::query()->with(['student.branch', 'course', 'batch.branch', 'admission'])
+            ->when($request->filled('type') && $request->input('type') !== 'coaching', fn (Builder $query) => $query->whereRaw('1 = 0'))
             ->when($request->filled('q'), function (Builder $query) use ($request) {
                 $term = trim($request->string('q')->toString());
                 $query->where(fn (Builder $search) => $search
