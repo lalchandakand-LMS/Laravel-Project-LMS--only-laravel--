@@ -43,7 +43,7 @@
                             <div><dt class="inline font-semibold">Referrer:</dt> <dd class="inline">{{ $lead->referrer_host ?: 'Direct / unknown' }}</dd></div>
                         </dl>
                     </div>
-                    <form method="POST" action="{{ route('admin.marketing.leads.update', $lead) }}" class="space-y-3">
+                    <form method="POST" action="{{ route('admin.marketing.leads.update', $lead) }}@if(request()->getQueryString())?{{ request()->getQueryString() }}@endif" class="space-y-3">
                         @csrf @method('PATCH')
                         <div><label class="mb-1 block text-xs font-bold text-slate-600">Lead status</label><select name="status" class="w-full rounded-lg border-slate-300 text-sm">@foreach(['new','contacted','qualified','converted','spam','closed'] as $status)<option value="{{ $status }}" @selected($lead->status === $status)>{{ ucfirst($status) }}</option>@endforeach</select></div>
                         <div><label class="mb-1 block text-xs font-bold text-slate-600">Internal notes</label><textarea name="admin_notes" rows="3" maxlength="5000" class="w-full rounded-lg border-slate-300 text-sm" placeholder="Follow-up details, outcome, next action...">{{ $lead->admin_notes }}</textarea></div>
