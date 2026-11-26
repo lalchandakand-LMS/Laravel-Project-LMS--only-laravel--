@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Batch;
+use App\Models\Branch;
 use App\Models\CoachingAdmission;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -60,12 +61,12 @@ class OnlineBatchApplicationWorkflowTest extends TestCase
 
     public function test_student_cannot_apply_for_an_online_batch_in_another_branch(): void
     {
-        $studentBranch = \\App\\Models\\Branch::create([
+        $studentBranch = Branch::create([
             'name' => 'Student Online Branch',
             'code' => 'ONL-ST-BR',
             'is_active' => true,
         ]);
-        $otherBranch = \\App\\Models\\Branch::create([
+        $otherBranch = Branch::create([
             'name' => 'Other Online Branch',
             'code' => 'ONL-OTHER-BR',
             'is_active' => true,
@@ -152,5 +153,35 @@ class OnlineBatchApplicationWorkflowTest extends TestCase
         $this->assertDatabaseCount('coaching_admissions', 0);
         $this->assertDatabaseCount('student_fee_invoices', 0);
         $this->assertDatabaseHas('batches', ['id' => $onlineBatch->id]);
+    }
+
+    public function test_student_without_a_branch_cannot_apply_for_a_branch_specific_batch(): void
+    {
+        $student = User::create([
+            'name' => 'Unassigned Student',
+            'email' => 'unassigned-student@example.com',
+            'password' => 'password',
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+        $branch = Branch::create([
+            'name' => 'Assigned Batch Branch',
+            'code' => 'ONL-ASSIGNED',
+            'is_active' => true,
+        ]);
+        $course = Course::create(['title' => 'Assigned Branch Course', 'price' => 1500, 'is_published' => true]);
+        $batch = Batch::create([
+            'name' => 'Assigned Branch Batch',
+            'code' => 'ONL-ASSIGNED-BATCH',
+            'course_id' => $course->id,
+            'branch_id' => $branch->id,
+            'status' => 'upcoming',
+        ]);
+
+        $this->actingAs($student)->post(route('student.online-batches.apply'), [
+            'batch_id' => $batch->id,
+        ])->assertSessionHasErrors('batch_id');
+
+        $this->assertDatabaseCount('online_batch_applications', 0);
     }
 }
