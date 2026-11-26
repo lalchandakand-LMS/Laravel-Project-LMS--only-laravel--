@@ -24,7 +24,13 @@ class PageController extends Controller
             ['loc' => route('coaching-admission.create')],
         ];
 
-        foreach (Category::query()->where('is_active', true)->whereHas('publishedCourses')->get(['slug', 'updated_at']) as $category) {
+        foreach (Category::query()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereHas('publishedCourses')
+                    ->orWhereHas('courses', fn ($courses) => $courses->where('is_published', true));
+            })
+            ->get(['slug', 'updated_at']) as $category) {
             $urls[] = ['loc' => route('categories.show', $category->slug), 'lastmod' => $category->updated_at];
         }
 
