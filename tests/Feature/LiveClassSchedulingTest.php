@@ -10,6 +10,7 @@ use App\Models\LiveClass;
 use App\Models\User;
 use App\Notifications\LiveClassChanged;
 use App\Jobs\SendLiveClassSms;
+use App\Jobs\SendLiveClassEmail;
 use App\Services\Sms\MiMSmsGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -442,7 +443,7 @@ class LiveClassSchedulingTest extends TestCase
         $this->assertSame(['database'], $notification->via($student));
 
         config(['mail.default' => 'smtp']);
-        $this->assertSame(['database', 'mail'], $notification->via($student));
+        $this->assertSame(['database', \App\Notifications\Channels\QueuedMailChannel::class], $notification->via($student));
     }
 
 
@@ -529,6 +530,57 @@ class LiveClassSchedulingTest extends TestCase
         Queue::assertPushed(SendLiveClassSms::class, fn ($job) => $job->userId === $student->id
             && $job->liveClassId === $liveClass->id
             && $job->event === 'scheduled');
+    }
+
+
+    public function test_live_class_email_channel_dispatches_a_queued_job(): void
+    {
+        Queue::fake();
+        config([
+            'live_classes.email_notifications' => true,
+            'mail.default' => 'smtp',
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+            'email' => 'learner@example.test',
+        ]);
+        $liveClass = LiveClass::create([
+            'course_id' => Course::firstOrFail()->id,
+            'title' => 'Queued email session',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDay(),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        $notification = new LiveClassChanged($liveClass, 'scheduled');
+        $notification->id = 'notification-email-001';
+
+        app(\App\Notifications\Channels\QueuedMailChannel::class)->send($student, $notification);
+
+        Queue::assertPushed(SendLiveClassEmail::class, fn ($job) => $job->userId === $student->id
+            && $job->liveClassId === $liveClass->id
+            && $job->event === 'scheduled');
+    }
+
+    public function test_mimsms_gateway_throws_when_provider_rejects_request(): void
+    {
+        Http::fake([
+            'api.mimsms.com/api/V2/SMS' => Http::response([
+                'statusCode' => '417',
+                'status' => 'Failed',
+            ], 200),
+        ]);
+        config([
+            'live_classes.sms.username' => 'panel@example.test',
+            'live_classes.sms.api_key' => 'test-api-key',
+            'live_classes.sms.sender_name' => 'ALOMS',
+            'live_classes.sms.endpoint' => 'https://api.mimsms.com/api/V2/SMS',
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        app(MiMSmsGateway::class)->sendTransactional('01712345678', 'Test message');
     }
 
 }
