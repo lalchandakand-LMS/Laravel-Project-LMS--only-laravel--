@@ -70,7 +70,7 @@ class OrderController extends Controller
             ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')))
-            ->when($request->filled('item_type'), fn ($q) => $q->whereHas('items', fn ($item) => $item->where('item_type', $request->input('item_type')))
+            ->when($request->filled('item_type'), fn ($q) => $q->whereHas('items', fn ($item) => $item->where('item_type', $request->input('item_type'))))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $term = trim($request->string('q')->toString());
                 $q->where(fn ($w) => $w->where('order_no', 'like', "%{$term}%")
