@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Ebook;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
