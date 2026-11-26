@@ -25,9 +25,9 @@ class StudentFeeController extends Controller
 
         $totals = [
             'invoiced' => (float) StudentFeeInvoice::sum(DB::raw('amount - discount')),
-            'collected' => (float) StudentFeePayment::sum('applied_amount'),
+            'collected' => (float) StudentFeePayment::sum('amount'),
             'due' => max(0, (float) StudentFeeInvoice::sum(DB::raw('amount - discount')) - (float) StudentFeePayment::sum('applied_amount')),
-            'advance' => (float) StudentFeeCredit::sum('amount'),
+            'advance' => max(0, (float) StudentFeeCredit::sum('amount') - (float) DB::table('student_fee_credit_applications')->sum('amount')),
         ];
 
         return view('admin.coaching-fees.index', compact('invoices', 'admissions', 'totals'));
@@ -49,7 +49,7 @@ class StudentFeeController extends Controller
             $discount = (float) ($data['discount'] ?? 0);
             abort_if($discount > (float) $data['amount'], 422, 'Discount invoice amount-এর বেশি হতে পারবে না।');
 
-            StudentFeeInvoice::create([
+            $invoice = StudentFeeInvoice::create([
                 'coaching_admission_id' => $admission->id,
                 'student_id' => $admission->student_id,
                 'course_id' => $admission->course_id,
@@ -63,6 +63,20 @@ class StudentFeeController extends Controller
                 'status' => 'unpaid',
                 'created_by' => auth()->id(),
             ]);
+
+            $credits = StudentFeeCredit::where('student_id', $admission->student_id)->orderBy('id')->lockForUpdate()->get();
+            foreach ($credits as $credit) {
+                $available = $credit->remainingAmount();
+                $toApply = min($available, $invoice->dueAmount());
+                if ($toApply <= 0) { continue; }
+                \\App\\Models\\StudentFeeCreditApplication::create([
+                    'credit_id' => $credit->id, 'invoice_id' => $invoice->id,
+                    'amount' => $toApply, 'applied_by' => auth()->id(),
+                ]);
+                $invoice->refresh();
+                if ($invoice->dueAmount() <= 0) { break; }
+            }
+            $invoice->syncStatus();
         });
 
         return back()->with('success', 'কোচিং ফি invoice তৈরি হয়েছে।');
