@@ -108,9 +108,6 @@ class ExamController extends Controller
         }
 
         $questions = $this->attemptQuestions($attempt);
-        if ($attempt->exam->shuffle_questions) {
-            $questions = $questions->shuffle();
-        }
 
         return view('student.exams.attempt', [
             'attempt' => $attempt,
@@ -129,6 +126,9 @@ class ExamController extends Controller
     private function prepareAttemptQuestions(ExamAttempt $attempt): void
     {
         if ($attempt->questions()->exists()) {
+            if ($attempt->max_score === null) {
+                $attempt->update(['max_score' => $attempt->questions()->sum('marks')]);
+            }
             return;
         }
 
@@ -137,8 +137,12 @@ class ExamController extends Controller
         if ($count > 0) {
             abort_if($pool->count() < $count, 422, 'This exam does not have enough questions for its configured random set.');
             $pool = $pool->shuffle()->take($count)->values();
+        } elseif ($attempt->exam->shuffle_questions) {
+            $pool = $pool->shuffle()->values();
         }
 
+        $maxScore = \App\Models\Question::whereIn('id', $pool)->sum('marks');
+        $attempt->update(['max_score' => $maxScore]);
         $sync = [];
         foreach ($pool as $position => $questionId) {
             $sync[$questionId] = ['position' => $position];
