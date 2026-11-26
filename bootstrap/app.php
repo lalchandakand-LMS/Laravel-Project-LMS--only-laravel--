@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([\App\Console\Commands\SystemBackupCommand::class, \App\Console\Commands\RecycleBinPruneCommand::class])
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [\App\Http\Middleware\CaptureMarketingAttribution::class, \App\Http\Middleware\RecordActivity::class]);
+        $middleware->web(append: [\App\Http\Middleware\CaptureMarketingAttribution::class, \App\Http\Middleware\RecordActivity::class, \App\Http\Middleware\HandleSeoRedirects::class]);
         $middleware->validateCsrfTokens(except: ['payments/bkash/webhook']);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
