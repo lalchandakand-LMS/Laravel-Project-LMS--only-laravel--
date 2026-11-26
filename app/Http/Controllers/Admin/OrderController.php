@@ -194,7 +194,7 @@ class OrderController extends Controller
             $product = $line['type'] === 'course'
                 ? Course::where('is_published', true)->findOrFail($line['id'])
                 : Ebook::where('is_published', true)->where('is_free', false)->findOrFail($line['id']);
-            $price = $line['type'] === 'course' ? $product->final_price : (float) $product->price;
+            $price = $product->final_price;
             if ($price <= 0) {
                 throw ValidationException::withMessages(['items' => 'Free items cannot be added to a paid order.']);
             }
