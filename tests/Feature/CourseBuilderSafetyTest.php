@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
 use App\Models\Course;
+use App\Models\Level;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
@@ -218,6 +220,55 @@ class CourseBuilderSafetyTest extends TestCase
             'user_id' => $student->id,
             'watched_seconds' => 120,
         ]);
+    }
+
+    public function test_course_builder_rejects_archived_categories_and_levels_and_non_teacher_instructors(): void
+    {
+        $admin = $this->admin();
+        $course = Course::firstOrFail();
+        $originalCategoryId = $course->category_id;
+        $originalLevelId = $course->level_id;
+
+        $inactiveCategory = Category::create([
+            'name' => 'Archived course category',
+            'is_active' => false,
+        ]);
+        $inactiveLevel = Level::create([
+            'name' => 'Archived course level',
+            'is_active' => false,
+        ]);
+        $student = User::where('role', 'student')->firstOrFail();
+
+        $basePayload = [
+            'title' => $course->title,
+            'price' => (float) $course->price,
+            'language' => 'Bangla',
+            'is_published' => 1,
+        ];
+
+        $this->actingAs($admin)
+            ->put(route('admin.courses.update', $course), $basePayload + [
+                'category_ids' => [$inactiveCategory->id],
+            ])
+            ->assertSessionHasErrors('category_ids.0');
+
+        $this->assertSame($originalCategoryId, $course->fresh()->category_id);
+
+        $this->actingAs($admin)
+            ->put(route('admin.courses.update', $course), $basePayload + [
+                'level_id' => $inactiveLevel->id,
+            ])
+            ->assertSessionHasErrors('level_id');
+
+        $this->assertSame($originalLevelId, $course->fresh()->level_id);
+
+        $this->actingAs($admin)
+            ->put(route('admin.courses.update', $course), $basePayload + [
+                'instructor_id' => $student->id,
+            ])
+            ->assertSessionHasErrors('instructor_id');
+
+        $this->assertNotSame($student->id, $course->fresh()->instructor_id);
     }
 
 }
