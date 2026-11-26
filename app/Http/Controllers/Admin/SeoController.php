@@ -30,7 +30,7 @@ class SeoController extends Controller
             ->where(function ($query) {
                 $query->whereNull('meta_title')->orWhere('meta_title', '')
                     ->orWhereNull('meta_description')->orWhere('meta_description', '');
-            })->orderBy('title')->limit(8)->get(['id', 'title'])->each(function ($course) use ($missingMeta) {
+            })->orderBy('title')->limit(8)->get(['id', 'title', 'slug'])->each(function ($course) use ($missingMeta) {
                 $missingMeta->push(['type' => 'Course', 'title' => $course->title, 'url' => route('admin.courses.edit', ['course' => $course->slug])]);
             });
 
