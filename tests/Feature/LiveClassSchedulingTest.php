@@ -340,4 +340,24 @@ class LiveClassSchedulingTest extends TestCase
             ->assertSee($student->name);
     }
 
+
+    public function test_admin_can_view_monthly_live_class_calendar(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Calendar display test',
+            'platform' => 'Zoom',
+            'starts_at' => now()->startOfMonth()->addDays(4),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.live-classes.calendar', ['month' => now()->format('Y-m')]))
+            ->assertOk()
+            ->assertSee('Calendar display test');
+    }
+
 }
