@@ -34,18 +34,33 @@
         $organizationSchema = [
             '@context' => 'https://schema.org',
             '@type' => 'EducationalOrganization',
+            '@id' => rtrim(config('app.url'), '/').'#organization',
             'name' => $brandName,
             'url' => config('app.url'),
             'logo' => $socialImage,
             'description' => $brandDescription,
-            'telephone' => \\App\\Models\\Setting::get('site_phone') ?: null,
-            'email' => \\App\\Models\\Setting::get('site_email') ?: null,
-            'address' => \\App\\Models\\Setting::get('site_address') ?: null,
+            'telephone' => \App\Models\Setting::get('site_phone') ?: null,
+            'email' => \App\Models\Setting::get('site_email') ?: null,
+            'address' => \App\Models\Setting::get('site_address') ?: null,
             'sameAs' => array_values(array_filter([
-                \\App\\Models\\Setting::get('facebook'),
-                \\App\\Models\\Setting::get('youtube'),
-                \\App\\Models\\Setting::get('instagram'),
+                \App\Models\Setting::get('facebook'),
+                \App\Models\Setting::get('youtube'),
+                \App\Models\Setting::get('instagram'),
             ])),
+            '@graph' => [
+                [
+                    '@type' => 'WebSite',
+                    '@id' => rtrim(config('app.url'), '/').'#website',
+                    'url' => config('app.url'),
+                    'name' => $brandName,
+                    'publisher' => ['@id' => rtrim(config('app.url'), '/').'#organization'],
+                    'potentialAction' => [
+                        '@type' => 'SearchAction',
+                        'target' => route('courses.index').'?q={search_term_string}',
+                        'query-input' => 'required name=search_term_string',
+                    ],
+                ],
+            ],
         ];
     @endphp
     <script type="application/ld+json">@json($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
