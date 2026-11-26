@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php($brandName = \App\Models\Setting::get('site_name', "Alom's English Center"))
+    @php($brandLogo = \\App\\Models\\Setting::get('logo'))
+    @php($brandLogoUrl = $brandLogo ? (str_starts_with($brandLogo, 'https://') ? $brandLogo : asset('storage/'.$brandLogo)) : asset('images/aec-logo.svg'))
     @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))))
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url()->current() }}">
@@ -14,7 +16,7 @@
     <meta property="og:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta property="og:description" content="{{ $brandDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('images/aec-logo.svg') }}">
+    <meta property="og:image" content="{{ $brandLogoUrl }}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="@yield('title', $brandName) — {{ $brandName }}">
     <meta name="twitter:description" content="{{ $brandDescription }}">
