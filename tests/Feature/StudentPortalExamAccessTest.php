@@ -179,4 +179,45 @@ class StudentPortalExamAccessTest extends TestCase
         $this->assertSame('submitted', $attempt->fresh()->status);
     }
 
+
+    public function test_student_can_resume_an_unfinished_attempt_even_when_it_uses_the_last_allowed_attempt(): void
+    {
+        [$student, , $exam] = $this->createPaidExam();
+        $exam->update(['is_free' => true, 'attempt_limit' => 1]);
+
+        $firstResponse = $this->actingAs($student)->post(route('student.exams.start', $exam));
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('user_id', $student->id)
+            ->where('status', 'in_progress')
+            ->firstOrFail();
+        $firstResponse->assertRedirect(route('student.attempts.show', $attempt));
+
+        $this->actingAs($student)
+            ->post(route('student.exams.start', $exam))
+            ->assertRedirect(route('student.attempts.show', $attempt));
+
+        $this->assertDatabaseCount('exam_attempts', 1);
+    }
+
+    public function test_student_cannot_start_another_attempt_after_the_limit_is_used(): void
+    {
+        [$student, , $exam] = $this->createPaidExam();
+        $exam->update(['is_free' => true, 'attempt_limit' => 1]);
+        ExamAttempt::create([
+            'exam_id' => $exam->id,
+            'user_id' => $student->id,
+            'started_at' => now()->subHour(),
+            'submitted_at' => now()->subMinute(),
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($student)
+            ->from(route('student.exams.show', $exam))
+            ->post(route('student.exams.start', $exam))
+            ->assertRedirect(route('student.exams.show', $exam))
+            ->assertSessionHas('info', 'You have used all attempts.');
+
+        $this->assertDatabaseCount('exam_attempts', 1);
+    }
+
 }
