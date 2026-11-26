@@ -53,7 +53,7 @@ class MediaAsset extends Model
 
         if ($this->source_type === 'upload' && $this->disk && $this->path) {
             $duplicate = self::query()
-                ->whereKeyNot($this->id)
+                ->where('id', '!=', $this->id)
                 ->where('source_type', 'upload')
                 ->where('disk', $this->disk)
                 ->where('path', $this->path)
