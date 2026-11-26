@@ -86,6 +86,21 @@ class AdminPaymentMethodManagementTest extends TestCase
         $this->assertSame([], $payload['credentials']);
     }
 
+
+    public function test_global_payment_method_switch_limits_methods_available_at_branches(): void
+    {
+        $branch = Branch::create([
+            'name' => 'Global Payment Test',
+            'code' => 'GLOBAL-PAY',
+            'is_active' => true,
+            'payment_methods' => ['bkash', 'nagad', 'bank'],
+        ]);
+
+        Setting::set('payment_methods.global_enabled', json_encode(['nagad', 'bank']));
+
+        $this->assertSame(['nagad', 'bank'], $branch->enabledStudentPaymentMethods());
+    }
+
     public function test_non_admin_cannot_manage_payment_methods(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
