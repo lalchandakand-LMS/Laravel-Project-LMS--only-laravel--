@@ -196,6 +196,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('staff-leave-requests/{leaveRequest}/approve', [Admin\LeaveRequestController::class, 'approve'])->name('staff-leave-requests.approve');
         Route::post('staff-leave-requests/{leaveRequest}/reject', [Admin\LeaveRequestController::class, 'reject'])->name('staff-leave-requests.reject');
 
+        Route::post('students/{user}/documents', [Admin\ProfileDocumentController::class, 'store'])->name('users.documents.store');
+        Route::get('students/{user}/documents/{document}', [Admin\ProfileDocumentController::class, 'download'])->name('users.documents.download');
+        Route::post('students/{user}/documents/{document}/review', [Admin\ProfileDocumentController::class, 'review'])->name('users.documents.review');
+
         Route::get('students/create', [Admin\UserController::class, 'create'])->name('users.create');
         Route::post('students', [Admin\UserController::class, 'store'])->name('users.store');
         Route::get('students', [Admin\UserController::class, 'index'])->name('users.index');
