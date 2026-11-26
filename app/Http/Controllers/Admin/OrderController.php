@@ -15,6 +15,7 @@ use App\Models\EbookPurchase;
 use App\Notifications\PaymentStatusNotification;
 use App\Notifications\PaymentRefundNotification;
 use App\Services\OrderService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -378,6 +379,12 @@ class OrderController extends Controller
             });
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors());
+        } catch (QueryException $exception) {
+            if (! $this->isTransactionReferenceConflict($exception)) {
+                throw $exception;
+            }
+
+            return back()->withErrors(['reference' => 'This receipt/reference number is already recorded.']);
         }
 
         $order->user?->notify(new PaymentStatusNotification(
@@ -452,5 +459,13 @@ class OrderController extends Controller
     {
         abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
         return response()->file(Storage::disk('local')->path($payment->proof_path));
+    }
+
+    private function isTransactionReferenceConflict(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'payments_transaction_id_unique')
+            || str_contains($message, 'payments.transaction_id');
     }
 }
