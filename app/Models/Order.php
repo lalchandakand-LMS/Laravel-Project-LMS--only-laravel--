@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 class Order extends Model
 {
-    protected $fillable = ['order_no','user_id','branch_id','coupon_id','subtotal','discount','total','status','name','phone','email','address','note','shipping_status','shipping_carrier','tracking_number','shipped_at','delivered_at'];
+    protected $fillable = ['order_no','user_id','branch_id','coupon_id','subtotal','discount','total','status','name','phone','email','address','note','shipping_status','shipping_carrier','tracking_number','shipped_at','delivered_at','utm_source','utm_medium','utm_campaign','utm_term','utm_content','landing_page','referrer_host'];
 
     protected $casts = ['subtotal' => 'float', 'discount' => 'float', 'total' => 'float', 'shipped_at' => 'datetime', 'delivered_at' => 'datetime'];
 

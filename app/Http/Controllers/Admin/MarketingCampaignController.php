@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MarketingCampaign;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +13,12 @@ class MarketingCampaignController extends Controller
     public function index(Request $request)
     {
         $campaigns = MarketingCampaign::query()
-            ->withCount('leads')
+            ->withCount(['leads', 'orders'])
+            ->addSelect(['verified_revenue' => Payment::query()
+                ->join('orders', 'orders.id', '=', 'payments.order_id')
+                ->selectRaw('COALESCE(SUM(payments.amount), 0)')
+                ->whereColumn('orders.utm_campaign', 'marketing_campaigns.slug')
+                ->where('payments.status', 'verified')])
             ->when($request->filled('q'), fn ($query) => $query->where('name', 'like', '%'.trim($request->string('q')->toString()).'%'))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
             ->when($request->filled('channel'), fn ($query) => $query->where('channel', $request->input('channel')))
