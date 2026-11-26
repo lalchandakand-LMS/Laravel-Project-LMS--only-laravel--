@@ -2,7 +2,7 @@
 @section('title', $post->meta_title ?: $post->title)
 @section('meta_description', $post->meta_description ?: $post->excerpt)
 @push('structured_data')
-<script type="application/ld+json">@json([
+<script type="application/ld+json"><?php echo json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'Article',
     'headline' => $post->meta_title ?: $post->title,
@@ -13,7 +13,7 @@
     'publisher' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
     'mainEntityOfPage' => route('blog.show', $post),
     'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
 @endpush
 
 @section('content')
