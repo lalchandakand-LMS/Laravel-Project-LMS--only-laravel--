@@ -331,4 +331,44 @@
     </div>
 </section>
 @endif
+
+@push('scripts')
+<style>
+.home-carousel-track{scrollbar-width:thin;scroll-behavior:smooth;scroll-snap-type:x mandatory}
+.home-carousel-track>*{scroll-snap-align:start;flex:0 0 84%;min-width:0}
+@media(min-width:640px){.home-carousel-track>*{flex-basis:48%}}
+@media(min-width:1024px){.home-carousel-track>*{flex-basis:31%}}
+.home-carousel-controls button:disabled{opacity:.35;cursor:not-allowed}
+@media(prefers-reduced-motion:reduce){.home-carousel-track{scroll-behavior:auto}}
+</style>
+<script>
+(() => {
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ document.querySelectorAll('[data-home-carousel]').forEach(section=>{
+  if(section.dataset.homeCarouselLayout!=='carousel')return;
+  const track=section.querySelector('.mt-8.grid');if(!track||track.children.length<2)return;
+  track.classList.remove('grid','sm:grid-cols-2','md:grid-cols-3','lg:grid-cols-3','lg:grid-cols-4','gap-4','gap-5','gap-6');
+  track.classList.add('home-carousel-track','flex','gap-5','overflow-x-auto','pb-3');
+  const controls=document.createElement('div');controls.className='home-carousel-controls ml-auto flex shrink-0 gap-2';
+  controls.innerHTML='<button type="button" aria-label="Previous items" class="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-white text-xl text-slate-700 shadow-sm">‹</button><button type="button" aria-label="Next items" class="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-white text-xl text-slate-700 shadow-sm">›</button>';
+  const heading=section.querySelector('.mx-auto.max-w-7xl>div.flex.items-end.justify-between, .mx-auto.max-w-7xl>div.flex.flex-wrap.items-end.justify-between');
+  if(heading){heading.classList.add('gap-4');heading.appendChild(controls);}else{section.querySelector('.mx-auto.max-w-7xl')?.prepend(controls);}
+  const [prev,next]=controls.querySelectorAll('button');
+  const step=()=>Math.max(track.clientWidth*.82,220);
+  const move=direction=>track.scrollBy({left:direction*step(),behavior:reduced.matches?'auto':'smooth'});
+  prev.addEventListener('click',()=>move(-1));next.addEventListener('click',()=>move(1));
+  const update=()=>{prev.disabled=track.scrollLeft<=2;next.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;};
+  track.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update);update();
+  track.setAttribute('aria-label',section.dataset.homeCarousel.replace('_',' ')+' carousel');
+  let timer=null;
+  const stop=()=>{if(timer)window.clearInterval(timer);timer=null;};
+  const start=()=>{stop();if(section.dataset.homeCarouselAutoplay!=='1'||reduced.matches||track.scrollWidth<=track.clientWidth+2)return;const delay=Math.min(20,Math.max(3,Number(section.dataset.homeCarouselSpeed)||6))*1000;timer=window.setInterval(()=>{if(section.matches(':hover')||section.contains(document.activeElement))return;move(track.scrollLeft+track.clientWidth>=track.scrollWidth-3?-1:1);},delay);};
+  section.addEventListener('mouseenter',stop);section.addEventListener('mouseleave',start);
+  section.addEventListener('focusin',stop);section.addEventListener('focusout',event=>{if(!section.contains(event.relatedTarget))start();});
+  reduced.addEventListener('change',start);start();
+ });
+})();
+</script>
+@endpush
+
 @endsection
