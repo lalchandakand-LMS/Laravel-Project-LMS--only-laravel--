@@ -77,14 +77,11 @@ class CourseController extends Controller
     public function destroy(Course $course)
     {
         $this->authorizeOwner($course);
-        $thumbnail = $course->thumbnail;
-        $lessonAttachments = $course->lessons()->pluck('attachment')->filter()->all();
+        // Course uses SoftDeletes. Keep all related records and uploaded media intact
+        // so a restore returns the course exactly as it was before archiving.
         $course->delete();
-        delete_stored_media('public', $thumbnail);
-        foreach ($lessonAttachments as $attachment) {
-            delete_stored_media('local', $attachment);
-        }
-        return redirect()->route('admin.courses.index')->with('success', 'Course deleted.');
+
+        return redirect()->route('admin.courses.index')->with('success', 'Course archived. You can restore it from the Recycle Bin.');
     }
 
     private function authorizeOwner(Course $course): void
