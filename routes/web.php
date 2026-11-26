@@ -99,6 +99,11 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('my')->name
     Route::get('/', [Student\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-courses', [Student\DashboardController::class, 'courses'])->name('courses');
     Route::get('/live-classes', [Student\LiveClassController::class, 'index'])->name('live-classes');
+    Route::get('/assignments', [Student\AssignmentController::class, 'index'])->name('assignments.index');
+    Route::get('/assignments/{assignment}', [Student\AssignmentController::class, 'show'])->name('assignments.show');
+    Route::post('/assignments/{assignment}/submit', [Student\AssignmentController::class, 'submit'])->name('assignments.submit');
+    Route::get('/assignments/{assignment}/resource', [Student\AssignmentController::class, 'downloadResource'])->name('assignments.resource');
+    Route::get('/assignments/{assignment}/submission-file', [Student\AssignmentController::class, 'downloadSubmission'])->name('assignments.submission-file');
     Route::get('/orders', [Student\DashboardController::class, 'orders'])->name('orders');
     Route::get('/ebooks', [Student\DashboardController::class, 'ebooks'])->name('ebooks');
     Route::get('/certificates', [Student\DashboardController::class, 'certificates'])->name('certificates');
@@ -251,6 +256,15 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
     Route::get('/students/{user}', [Teacher\DashboardController::class, 'student'])->name('students.show');
     Route::get('/earnings', [Teacher\DashboardController::class, 'earnings'])->name('earnings');
     Route::get('/live-classes', [Teacher\DashboardController::class, 'liveClasses'])->name('live-classes');
+    Route::get('/assignments', [Teacher\AssignmentController::class, 'index'])->name('assignments.index');
+    Route::get('/assignments/create', [Teacher\AssignmentController::class, 'create'])->name('assignments.create');
+    Route::post('/assignments', [Teacher\AssignmentController::class, 'store'])->name('assignments.store');
+    Route::get('/assignments/{assignment}/edit', [Teacher\AssignmentController::class, 'edit'])->name('assignments.edit');
+    Route::put('/assignments/{assignment}', [Teacher\AssignmentController::class, 'update'])->name('assignments.update');
+    Route::delete('/assignments/{assignment}', [Teacher\AssignmentController::class, 'destroy'])->name('assignments.destroy');
+    Route::get('/assignments/{assignment}/submissions', [Teacher\AssignmentController::class, 'submissions'])->name('assignments.submissions');
+    Route::post('/assignments/{assignment}/submissions/{submission}/grade', [Teacher\AssignmentController::class, 'grade'])->name('assignments.grade');
+    Route::get('/assignments/{assignment}/submissions/{submission}/file', [Teacher\AssignmentController::class, 'downloadSubmission'])->name('assignments.submission-file');
     Route::get('/attendance', [AttendanceController::class, 'teacherIndex'])->name('attendance.index');
     Route::get('/attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
