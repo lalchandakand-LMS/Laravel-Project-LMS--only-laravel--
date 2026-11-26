@@ -76,7 +76,9 @@ class ExamController extends Controller
         $user = $request->user();
         abort_unless($this->canAccessExam($user, $exam) && $exam->isOpen(), 403, 'This exam is not available to your account.');
 
-        if ($exam->random_question_count > $exam->questions()->count()) {
+        $questionPoolCount = $exam->questions()->count();
+        abort_if($questionPoolCount === 0, 422, 'This exam does not have any questions yet.');
+        if ($exam->random_question_count > $questionPoolCount) {
             abort(422, 'This exam does not have enough questions for its configured random set.');
         }
 
