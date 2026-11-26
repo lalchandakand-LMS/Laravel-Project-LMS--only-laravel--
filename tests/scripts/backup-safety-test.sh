@@ -28,7 +28,7 @@ ENV
 cat > "$BIN/mysqldump" <<'STUB'
 #!/usr/bin/env bash
 printf '%s' "$*" > "$CAPTURE_ARGS"
-printf '%s' "\${MYSQL_PWD:-}" > "$CAPTURE_PASSWORD"
+printf '%s' "${MYSQL_PWD:-}" > "$CAPTURE_PASSWORD"
 printf 'test database dump\n'
 STUB
 chmod +x "$BIN/mysqldump"
