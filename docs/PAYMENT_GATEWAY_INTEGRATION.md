@@ -47,6 +47,7 @@ Official starting points:
 - bKash Developer Portal: https://developer.bka.sh/
 - bKash Tokenized Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
 - bKash official sandbox merchant demo: https://merchantdemo.sandbox.bka.sh/
+- bKash official Instant Payment Notification / SNS webhook specification: https://developer.bka.sh/docs/webhooks
 
 ### Live-mode acceptance gate for each provider
 
