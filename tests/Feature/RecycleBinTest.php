@@ -349,4 +349,40 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+
+    public function test_dependent_lesson_must_be_restored_after_its_prerequisite(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Restore Prerequisite Course', 'slug' => 'restore-prerequisite-course']);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Restore prerequisite first',
+            'type' => 'text',
+            'position' => 1,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Restore dependent second',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.lessons.destroy', $dependent))->assertRedirect();
+        $this->delete(route('admin.lessons.destroy', $prerequisite))->assertRedirect();
+
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $dependent->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('lessons', ['id' => $dependent->id]);
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $prerequisite->id]))
+            ->assertRedirect();
+        $this->post(route('admin.recycle-bin.restore', ['type' => 'lessons', 'id' => $dependent->id]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('lessons', ['id' => $prerequisite->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('lessons', ['id' => $dependent->id, 'deleted_at' => null]);
+    }
+
 }
