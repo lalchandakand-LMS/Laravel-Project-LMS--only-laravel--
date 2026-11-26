@@ -148,7 +148,7 @@
                 @foreach (['bkash' => 'bKash', 'nagad' => 'Nagad', 'rocket' => 'Rocket', 'bank' => 'Bank transfer'] as $method => $label)
                     @if (isset($branch) && $branch
                         ? in_array($method, $branch->enabledStudentPaymentMethods(), true)
-                        : \\App\\Models\\Branch::active()->get()->contains(fn ($paymentBranch) => in_array($method, $paymentBranch->enabledStudentPaymentMethods(), true)))
+                        : \App\Models\Branch::active()->get()->contains(fn ($paymentBranch) => in_array($method, $paymentBranch->enabledStudentPaymentMethods(), true)))
                         <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-extrabold {{ $method === 'bkash' ? 'text-pink-600' : ($method === 'nagad' ? 'text-orange-600' : 'text-slate-800') }}">{{ $label }}</span>
                     @endif
                 @endforeach
