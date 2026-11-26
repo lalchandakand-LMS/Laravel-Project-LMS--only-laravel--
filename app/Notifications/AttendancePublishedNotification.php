@@ -28,7 +28,7 @@ class AttendancePublishedNotification extends Notification
         return [
             'title' => 'Attendance published: '.$status,
             'message' => 'Attendance for '.($this->session->topic ?: $this->session->batchName() ?: 'your class').' on '.$this->session->starts_at?->format('d M Y').' has been approved. Your status: '.$status.'.',
-            'url' => route('student.attendance'),
+            'url' => $notifiable->role === 'guardian' ? route('guardian.dashboard') : route('student.attendance'),
             'type' => 'attendance',
             'attendance_session_id' => $this->session->id,
             'attendance_status' => $this->attendance->status,
