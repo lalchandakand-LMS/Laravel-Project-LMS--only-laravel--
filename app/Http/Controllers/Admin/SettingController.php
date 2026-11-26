@@ -125,7 +125,7 @@ class SettingController extends Controller
             if ($request->filled($field) && ! $request->hasFile($key)) {
                 $oldPath = Setting::get($key);
                 Setting::set($key, $request->input($field));
-                if ($oldPath && ! preg_match('/^https?:\\/\\//i', $oldPath)) {
+                if ($oldPath && ! (str_starts_with(strtolower($oldPath), 'http://') || str_starts_with(strtolower($oldPath), 'https://'))) {
                     Storage::disk('public')->delete($oldPath);
                 }
             }
