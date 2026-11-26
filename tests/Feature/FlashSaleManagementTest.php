@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\Ebook;
 use App\Models\FlashSale;
 use App\Models\Order;
 use App\Models\User;
@@ -163,4 +164,56 @@ class FlashSaleManagementTest extends TestCase
         $this->actingAs($instructor)->post(route('admin.flash-sales.store'), $this->campaignPayload())
             ->assertForbidden();
     }
+
+    public function test_flash_sale_can_discount_paid_ebooks_and_price_flows_to_cart(): void
+    {
+        $student = User::where('email', 'student@lms.test')->firstOrFail();
+        $ebook = Ebook::create([
+            'title' => 'Flash Sale Test E-book',
+            'price' => 1000,
+            'pages' => 20,
+            'is_free' => false,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($this->admin())->post(route('admin.flash-sales.store'), $this->campaignPayload([
+            'type' => 'percent',
+            'value' => 25,
+            'ebook_ids' => [$ebook->id],
+        ]))->assertRedirect(route('admin.flash-sales.index'));
+
+        $sale = FlashSale::where('name', 'Early bird flash sale')->firstOrFail();
+        $this->assertDatabaseHas('flash_sale_ebooks', [
+            'flash_sale_id' => $sale->id,
+            'ebook_id' => $ebook->id,
+        ]);
+        $this->assertSame(750.0, $ebook->fresh()->final_price);
+        $this->assertSame('Early bird flash sale', $ebook->fresh()->activeFlashSale()?->name);
+
+        $this->actingAs($student)->withSession(['cart' => ['ebook:'.$ebook->id]])
+            ->get(route('cart.index'))
+            ->assertOk()
+            ->assertSee('Flash Sale Test E-book')
+            ->assertSee('750.00')
+            ->assertSee('Early bird flash sale');
+
+        $sale->update(['is_active' => false]);
+        $this->assertSame(1000.0, $ebook->fresh()->final_price);
+    }
+
+    public function test_flash_sales_reject_free_or_unpublished_ebooks(): void
+    {
+        $free = Ebook::create([
+            'title' => 'Free title',
+            'price' => 0,
+            'pages' => 5,
+            'is_free' => true,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($this->admin())->post(route('admin.flash-sales.store'), $this->campaignPayload([
+            'ebook_ids' => [$free->id],
+        ]))->assertSessionHasErrors('ebook_ids');
+    }
+
 }
