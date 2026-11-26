@@ -52,9 +52,8 @@ class SliderController extends Controller
 
     public function destroy(Slider $slider)
     {
-        $image = $slider->image;
+        // Keep the image while the slider is recoverable from the Recycle Bin.
         $slider->delete();
-        delete_stored_media('public', $image);
 
         return redirect()->route('admin.sliders.index')->with('success', 'Slider deleted.');
     }
