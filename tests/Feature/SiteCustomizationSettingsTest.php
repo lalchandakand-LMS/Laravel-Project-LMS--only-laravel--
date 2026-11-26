@@ -73,6 +73,7 @@ class SiteCustomizationSettingsTest extends TestCase
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
 
         $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_show_categories' => '1',
             'homepage_learning_layout' => 'carousel',
             'homepage_featured_layout' => 'grid',
             'homepage_carousel_autoplay' => '1',
