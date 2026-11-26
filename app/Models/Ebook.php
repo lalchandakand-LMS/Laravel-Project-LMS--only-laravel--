@@ -30,7 +30,13 @@ class Ebook extends Model
     public function ownedBy(?User $user): bool
     {
         if (! $user) return false;
-        if ($this->is_free) return true;
+
+        // Free access is a catalogue entitlement, not a permanent purchase.
+        // Archived or unpublished free titles must not remain readable by everyone.
+        if ($this->is_free) {
+            return $this->is_published && ! $this->trashed();
+        }
+
         return $this->purchases()->where('user_id', $user->id)->exists();
     }
 }
