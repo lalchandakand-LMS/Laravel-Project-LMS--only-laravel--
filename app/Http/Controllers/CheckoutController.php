@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
@@ -20,7 +22,7 @@ class CheckoutController extends Controller
 
         $assignedBranch = $totals['count'] ? auth()->user()->branch : null;
         $branches = Branch::active()->orderBy('name')->get()
-            ->filter(fn (Branch $branch) => $branch->enabledStudentPaymentMethods() !== [])
+            ->filter(fn (Branch $branch) => count($branch->payment_methods ?? []) > 0)
             ->values();
 
         return view('cart.checkout', $totals + compact('branches', 'assignedBranch'));
@@ -28,8 +30,7 @@ class CheckoutController extends Controller
 
     public function store(Request $request)
     {
-        $totals = CartController::totals();
-        abort_if($totals['count'] === 0, 403);
+        abort_if(CartController::totals()['count'] === 0, 403);
 
         $data = $request->validate([
             'name' => 'required|string|max:100',
@@ -41,35 +42,52 @@ class CheckoutController extends Controller
         ]);
 
         $branch = Branch::active()->findOrFail($data['branch_id']);
-        if ($branch->enabledStudentPaymentMethods() === []) {
+        if (count($branch->payment_methods ?? []) === 0) {
             throw ValidationException::withMessages(['branch_id' => 'This branch has not enabled any payment method yet.']);
         }
         if (auth()->user()->branch_id && auth()->user()->branch_id !== $branch->id) {
             throw ValidationException::withMessages(['branch_id' => 'Please select your assigned branch.']);
         }
 
-        $order = Order::create($data + [
-            'user_id' => $request->user()->id,
-            'coupon_id' => $totals['coupon']?->id,
-            'subtotal' => $totals['subtotal'],
-            'discount' => $totals['discount'],
-            'total' => $totals['total'],
-            'status' => 'pending',
-        ]);
+        // Lock the coupon row while reserving its usage in the order. This serializes
+        // concurrent checkouts so global and per-student limits cannot be exceeded.
+        $order = DB::transaction(function () use ($request, $data, $branch) {
+            $lockedCoupon = session('coupon')
+                ? Coupon::where('code', session('coupon'))->lockForUpdate()->first()
+                : null;
+            $totals = CartController::totals($branch->id, $lockedCoupon);
 
-        foreach ($totals['items'] as $item) {
-            $order->items()->create([
-                'item_type' => $item['type'],
-                'item_id' => $item['id'],
-                'title' => $item['title'],
-                'price' => $item['price'],
-                'qty' => 1,
+            if (session('coupon') && ! $totals['coupon']) {
+                throw ValidationException::withMessages([
+                    'coupon' => 'The coupon is no longer valid for this branch, cart, or usage limit. Remove it and try again.',
+                ]);
+            }
+
+            if ($totals['count'] === 0) {
+                throw ValidationException::withMessages(['cart' => 'Your cart is empty.']);
+            }
+
+            $order = Order::create($data + [
+                'user_id' => $request->user()->id,
+                'coupon_id' => $totals['coupon']?->id,
+                'subtotal' => $totals['subtotal'],
+                'discount' => $totals['discount'],
+                'total' => $totals['total'],
+                'status' => 'pending',
             ]);
-        }
 
-        if ($totals['coupon']) {
-            $totals['coupon']->increment('used_count');
-        }
+            foreach ($totals['items'] as $item) {
+                $order->items()->create([
+                    'item_type' => $item['type'],
+                    'item_id' => $item['id'],
+                    'title' => $item['title'],
+                    'price' => $item['price'],
+                    'qty' => 1,
+                ]);
+            }
+
+            return $order;
+        });
 
         if ($order->total <= 0) {
             try {
