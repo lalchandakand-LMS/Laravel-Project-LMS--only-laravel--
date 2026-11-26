@@ -2,7 +2,7 @@
 
 The LMS supports branch-configured manual payment submission and staff verification. The Admin → Payment Methods screen controls global method availability and stores future provider credentials encrypted with Laravel Crypt. Secret values are not rendered back into the form.
 
-When merchant credentials become available, add a provider adapter implementing App\\Contracts\\PaymentGatewayAdapter. The Admin screen stores credentials encrypted and exposes a sandbox readiness state. Live mode remains locked:
+For each provider, use an adapter implementing App\\Contracts\\PaymentGatewayAdapter. The bKash Checkout v1.2.0-beta sandbox adapter is implemented; Nagad, Rocket and SSLCommerz still require provider-specific adapters. The Admin screen stores credentials encrypted and exposes a sandbox readiness state. Live mode remains locked:
 
 - initiate() creates a provider checkout session and returns provider reference / redirect data. It must not fulfill an order.
 - verifyCallback() validates the provider signature and normalizes the callback.
@@ -44,7 +44,6 @@ The application now contains a sandbox-only `BkashCheckoutAdapter` for the docum
 
 Official starting points:
 - bKash Developer Portal: https://developer.bka.sh/
-- bKash Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
 - bKash official Checkout v1.2.0-beta sandbox demo: https://merchantdemo.sandbox.bka.sh/checkout/version/v1.2.0-beta
 - bKash official API reference (grant token, create, execute, query, search): https://developer.bka.sh/v1.2.0-beta/reference
 - bKash official merchant webhook listener sample: https://github.com/bKash-developer/merchant-webhook-endpoint
