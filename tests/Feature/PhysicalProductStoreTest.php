@@ -1,0 +1,137 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\User;
+use App\Services\OrderService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class PhysicalProductStoreTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_published_in_stock_products_are_visible_and_out_of_stock_products_are_hidden(): void
+    {
+        Product::create([
+            'title' => 'English Grammar Book',
+            'price' => 450,
+            'stock_quantity' => 8,
+            'is_published' => true,
+        ]);
+        Product::create([
+            'title' => 'Sold Out Workbook',
+            'price' => 250,
+            'stock_quantity' => 0,
+            'is_published' => true,
+        ]);
+        Product::create([
+            'title' => 'Draft Workbook',
+            'price' => 300,
+            'stock_quantity' => 5,
+            'is_published' => false,
+        ]);
+
+        $this->get(route('products.index'))
+            ->assertOk()
+            ->assertSee('English Grammar Book')
+            ->assertDontSee('Sold Out Workbook')
+            ->assertDontSee('Draft Workbook');
+    }
+
+    public function test_physical_product_can_be_added_to_cart_and_requires_shipping_address_at_checkout(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'English Grammar Book',
+            'price' => 450,
+            'stock_quantity' => 8,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($student)
+            ->post(route('cart.add', ['type' => 'product', 'id' => $product->id]))
+            ->assertRedirect(route('cart.index'));
+
+        $this->get(route('cart.index'))->assertOk()->assertSee('English Grammar Book');
+
+        $totals = \App\Http\Controllers\CartController::totals();
+        $this->assertSame(1, $totals['count']);
+        $this->assertSame('product', $totals['items'][0]['type']);
+        $this->assertSame(450.0, $totals['items'][0]['price']);
+    }
+
+    public function test_paid_fulfillment_decrements_inventory_once_and_is_idempotent(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'English Grammar Book',
+            'price' => 450,
+            'stock_quantity' => 8,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 900,
+            'discount' => 0,
+            'total' => 900,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 450,
+            'qty' => 2,
+        ]);
+
+        OrderService::fulfill($order);
+        OrderService::fulfill($order);
+
+        $this->assertSame(6, $product->fresh()->stock_quantity);
+        $this->assertSame('paid', $order->fresh()->status);
+    }
+
+    public function test_fulfillment_refuses_to_oversell_and_rolls_back_order_status(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Limited Workbook',
+            'price' => 300,
+            'stock_quantity' => 1,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 600,
+            'discount' => 0,
+            'total' => 600,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 300,
+            'qty' => 2,
+        ]);
+
+        try {
+            OrderService::fulfill($order);
+            $this->fail('Overselling should be rejected.');
+        } catch (\Illuminate\Validation\ValidationException) {
+            $this->assertSame(1, $product->fresh()->stock_quantity);
+            $this->assertSame('pending', $order->fresh()->status);
+        }
+    }
+}
