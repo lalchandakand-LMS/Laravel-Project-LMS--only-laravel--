@@ -16,6 +16,7 @@ class ExamResultController extends Controller
         $attempts = $exam->attempts()
             ->with('user')
             ->withCount('answers')
+            ->withExists(['answers as has_manual_answers' => fn ($query) => $query->whereHas('question', fn ($question) => $question->whereIn('type', ['cq', 'short']))])
             ->whereIn('status', ['submitted', 'expired'])
             ->latest('submitted_at')
             ->paginate(25);
@@ -38,7 +39,7 @@ class ExamResultController extends Controller
         abort_unless($attempt->exam_id === $exam->id && in_array($attempt->status, ['submitted', 'expired'], true), 404);
 
         $data = $request->validate([
-            'marks' => 'required|array',
+            'marks' => 'nullable|array',
             'marks.*' => 'required|numeric|min:0',
             'feedback' => 'nullable|string|max:5000',
         ]);
@@ -74,8 +75,16 @@ class ExamResultController extends Controller
         $this->authorizeExam($exam);
         $attempts = $exam->attempts()->whereIn('status', ['submitted', 'expired']);
         $total = (clone $attempts)->count();
-        $passed = (clone $attempts)->get()->filter(fn ($attempt) => $attempt->isPassed())->count();
-        $average = (float) (clone $attempts)->avg('score');
+        $pendingReview = (clone $attempts)->whereNull('manual_reviewed_at')
+            ->whereHas('answers.question', fn ($query) => $query->whereIn('type', ['cq', 'short']))->count();
+        $finalized = (clone $attempts)->where(function ($query) {
+            $query->whereNotNull('manual_reviewed_at')->orWhereDoesntHave('answers', fn ($answers) =>
+                $answers->whereHas('question', fn ($question) => $question->whereIn('type', ['cq', 'short']))
+            );
+        });
+        $finalizedAttempts = (clone $finalized)->get();
+        $passed = $finalizedAttempts->filter(fn ($attempt) => $attempt->isPassed())->count();
+        $average = (float) $finalizedAttempts->avg('score');
         $uniqueStudents = (clone $attempts)->distinct('user_id')->count('user_id');
 
         $questionStats = $exam->questions()->get()->map(function ($question) use ($exam) {
@@ -96,7 +105,7 @@ class ExamResultController extends Controller
             '60–79%' => 0,
             '80–100%' => 0,
         ];
-        foreach ((clone $attempts)->get() as $attempt) {
+        foreach ($finalizedAttempts as $attempt) {
             $maxScore = $attempt->max_score ?? $exam->total_marks;
             $percent = $maxScore > 0 ? ($attempt->score / $maxScore) * 100 : 0;
             $bucket = $percent < 40 ? '0–39%' : ($percent < 60 ? '40–59%' : ($percent < 80 ? '60–79%' : '80–100%'));
@@ -104,7 +113,7 @@ class ExamResultController extends Controller
         }
 
         return view('admin.exam-results.analytics', compact(
-            'exam', 'total', 'passed', 'average', 'uniqueStudents', 'questionStats', 'distribution'
+            'exam', 'total', 'passed', 'pendingReview', 'average', 'uniqueStudents', 'questionStats', 'distribution'
         ));
     }
 
