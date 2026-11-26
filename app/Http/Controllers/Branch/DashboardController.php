@@ -1,18 +1,18 @@
 <?php
 
-namespace App\\Http\\Controllers\\Branch;
+namespace App\Http\Controllers\Branch;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Branch;
-use App\\Models\\CoachingEnrollment;
-use App\\Models\\Enrollment;
-use App\\Models\\OnlineBatchEnrollment;
-use App\\Models\\Order;
-use App\\Models\\Payment;
-use App\\Models\\PaymentAdjustment;
-use App\\Models\\User;
-use Illuminate\\Http\\Request;
-use Illuminate\\Support\\Facades\\DB;
+use App\Http\Controllers\Controller;
+use App\Models\Branch;
+use App\Models\CoachingEnrollment;
+use App\Models\Enrollment;
+use App\Models\OnlineBatchEnrollment;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\PaymentAdjustment;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
