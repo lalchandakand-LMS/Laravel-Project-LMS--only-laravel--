@@ -218,7 +218,9 @@ class LiveClassSchedulingTest extends TestCase
         $this->assertNotNull($liveClass->fresh()->cancelled_at);
         $this->assertFalse($liveClass->fresh()->canJoin());
         Notification::assertSentTo($student, LiveClassChanged::class);
-        Notification::assertSentTo($guardian, LiveClassChanged::class);
+        Notification::assertSentTo($guardian, LiveClassChanged::class, fn ($notification) =>
+            $notification->toDatabase($guardian)['url'] === route('guardian.dashboard')
+        );
     }
 
     public function test_cancelled_live_class_can_be_rescheduled_and_reactivated(): void

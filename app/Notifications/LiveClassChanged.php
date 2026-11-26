@@ -45,8 +45,15 @@ class LiveClassChanged extends Notification
         }
 
         return $mail
-            ->action('View live class schedule', route('student.live-classes'))
+            ->action('View live class schedule', $this->scheduleUrl($notifiable))
             ->line('Please check your LMS schedule for the latest details.');
+    }
+
+    private function scheduleUrl(object $notifiable): string
+    {
+        return $notifiable->role === 'guardian'
+            ? route('guardian.dashboard')
+            : route('student.live-classes');
     }
 
     public function toDatabase(object $notifiable): array
@@ -64,7 +71,7 @@ class LiveClassChanged extends Notification
             'message' => $message,
             'course_id' => $this->liveClass->course_id,
             'live_class_id' => $this->liveClass->id,
-            'url' => route('student.live-classes'),
+            'url' => $this->scheduleUrl($notifiable),
         ];
     }
 }
