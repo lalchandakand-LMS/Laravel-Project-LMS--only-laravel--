@@ -69,6 +69,17 @@ class ConsentBasedTrackingTest extends TestCase
             ->assertDontSee('<script async src="https://www.googletagmanager.com/gtag/js', false);
     }
 
+    public function test_gtm_container_alone_enables_the_existing_consent_manager(): void
+    {
+        Setting::set('gtm_container_id', 'GTM-A1B2C3D');
+
+        $this->get('/')->assertOk()
+            ->assertSee('Your privacy choices')
+            ->assertSee('data-gtm-id="GTM-A1B2C3D"', false)
+            ->assertSee("window.dataLayer.push({ 'gtm.start'", false)
+            ->assertSee('180 * 24 * 60 * 60 * 1000', false);
+    }
+
     public function test_privacy_policy_explains_optional_tracking_and_withdrawal(): void
     {
         Setting::set('ga_measurement_id', 'G-ABC1234567');
