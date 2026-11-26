@@ -12,7 +12,7 @@ Database notifications remain enabled for scheduled, cancelled and rescheduled l
 
 ## Email delivery (SMTP)
 
-Email is opt-in and disabled by default. To enable it on the production server:
+Email is opt-in and disabled by default. Email messages are queued separately from the in-app notification so SMTP delays do not block class scheduling. The mail channel is not queued unless SMTP host, username, password and sender address are configured. To enable it on the production server:
 
 1. Configure the server .env with the SMTP details supplied by your email/hosting provider:
    - MAIL_MAILER=smtp
@@ -47,13 +47,13 @@ Before enabling SMS:
 
 ### cPanel queue worker
 
-The SMS dispatch is queued on the notifications queue, with up to 3 attempts and backoff delays. Add a cPanel Cron Job to process pending work each minute (replace the path with the actual Laravel application path):
+Both email and SMS dispatch are queued on the notifications queue, with up to 3 attempts and backoff delays. The same queue worker processes both delivery channels. Add a cPanel Cron Job to process pending work each minute (replace the path with the actual Laravel application path):
 
     * * * * * cd /home/CPANEL_USER/public_html && php artisan queue:work database --queue=notifications,default --stop-when-empty --tries=3 --timeout=30 >> /dev/null 2>&1
 
 The existing jobs and failed_jobs tables are part of the Laravel migrations. Check php artisan queue:failed for exhausted jobs and use php artisan queue:retry all after correcting the cause.
 
-MiMSMS transactional requests accept one recipient at a time. The job logs the provider tracking ID and retries temporary failures. A provider API success means the request was accepted by the gateway; it is not proof that the handset received the message. Confirm handset delivery in the provider delivery report/panel. Because the transactional API does not document an idempotency key, a network timeout after provider acceptance can theoretically lead to a duplicate when a job retries.
+MiMSMS transactional requests accept one recipient at a time. The SMS job logs the provider tracking ID and retries temporary failures. The email job logs successful hand-off to Laravel's configured SMTP transport. A provider API success means the request was accepted by the gateway; it is not proof that the handset received the message. Confirm handset delivery in the provider delivery report/panel. Because the transactional API does not document an idempotency key, a network timeout after provider acceptance can theoretically lead to a duplicate when a job retries.
 
 ## Security and deployment notes
 
