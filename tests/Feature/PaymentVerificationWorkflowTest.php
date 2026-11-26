@@ -653,4 +653,56 @@ class PaymentVerificationWorkflowTest extends TestCase
         $this->assertSame(1000.0, $order->fresh()->amountPaid());
     }
 
+
+    public function test_rejecting_a_pending_payment_does_not_reopen_terminal_orders(): void
+    {
+        [$student, $admin, $branch, $cancelledOrder] = $this->orderForStudent();
+        $cancelledOrder->update(['status' => 'cancelled']);
+        $failedOrder = Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 1000,
+            'discount' => 0,
+            'total' => 1000,
+            'status' => 'failed',
+            'name' => $student->name,
+            'phone' => '01700000000',
+            'email' => $student->email,
+        ]);
+        $refundedOrder = Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 1000,
+            'discount' => 0,
+            'total' => 1000,
+            'status' => 'refunded',
+            'name' => $student->name,
+            'phone' => '01700000000',
+            'email' => $student->email,
+        ]);
+
+        foreach ([
+            [$cancelledOrder, 'cancelled'],
+            [$failedOrder, 'failed'],
+            [$refundedOrder, 'refunded'],
+        ] as [$order, $terminalStatus]) {
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'gateway' => 'nagad',
+                'amount' => 1000,
+                'sender_number' => '01711111111',
+                'transaction_id' => 'REJECT-TERMINAL-'.$terminalStatus.'-'.Str::upper(Str::random(5)),
+                'status' => 'pending',
+            ]);
+
+            $this->actingAs($admin)->post(route('admin.payments.verify', $payment), [
+                'action' => 'reject',
+                'rejection_reason' => 'Payment proof could not be verified.',
+            ])->assertRedirect();
+
+            $this->assertSame('rejected', $payment->fresh()->status);
+            $this->assertSame($terminalStatus, $order->fresh()->status);
+        }
+    }
+
 }
