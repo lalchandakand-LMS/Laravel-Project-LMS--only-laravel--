@@ -53,7 +53,7 @@
         <div><h3 class="font-bold text-slate-900">Staff / Teacher employment profile</h3><p class="text-xs text-slate-500">These fields are saved for Teacher and Branch Manager roles.</p></div>
         @php($ep = $user->staffProfile)
         <div class="grid gap-4 sm:grid-cols-2">
-            @foreach (['employee_code'=>'Employee ID','department'=>'Department','staff_designation'=>'Job title / Designation','highest_qualification'=>'Highest qualification','institution'=>'Institution','base_salary'=>'Base salary (BDT)'] as $field => $label)
+            @foreach (['employee_code'=>'Employee ID','department'=>'Department','staff_designation'=>'Job title / Designation','highest_qualification'=>'Highest qualification','institution'=>'Institution'] as $field => $label)
                 <div><label class="mb-1 block text-sm font-semibold">{{ $label }}</label><input name="{{ $field }}" value="{{ old($field, $field === 'staff_designation' ? $ep?->designation : $ep?->{$field === 'staff_designation' ? 'designation' : $field}) }}" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
             @endforeach
             <div><label class="mb-1 block text-sm font-semibold">Base salary (BDT)</label><input type="number" min="0" step="0.01" name="base_salary" value="{{ old('base_salary', $ep?->base_salary ?? 0) }}" class="w-full rounded-lg border px-3 py-2 text-sm"></div>
