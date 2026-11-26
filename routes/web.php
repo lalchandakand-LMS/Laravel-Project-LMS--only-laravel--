@@ -37,6 +37,10 @@ Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.sho
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'sendContact'])->name('contact.send');
 
+Route::view('/terms-and-conditions', 'legal.policy', ['title' => 'Terms & Conditions', 'policy' => 'terms'])->name('legal.terms');
+Route::view('/privacy-policy', 'legal.policy', ['title' => 'Privacy Policy', 'policy' => 'privacy'])->name('legal.privacy');
+Route::view('/refund-policy', 'legal.policy', ['title' => 'Refund Policy', 'policy' => 'refund'])->name('legal.refunds');
+
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/coaching-admission', [CoachingAdmissionController::class, 'create'])->name('coaching-admission.create');
 Route::post('/coaching-admission', [CoachingAdmissionController::class, 'store'])->middleware('throttle:5,10')->name('coaching-admission.store');
