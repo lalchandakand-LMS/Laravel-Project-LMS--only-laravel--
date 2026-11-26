@@ -12,6 +12,8 @@ use App\Models\Exam;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use App\Services\GamificationService;
 
 class DashboardController extends Controller
@@ -109,9 +111,17 @@ class DashboardController extends Controller
 
         $oldPhone = $user->phone;
         $oldAvatar = $user->avatar;
+        $storedAvatar = null;
         $replaceAvatar = false;
+
         if ($request->hasFile('avatar')) {
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $storedAvatar = $request->file('avatar')->store('avatars', 'public');
+            if (! $storedAvatar) {
+                throw ValidationException::withMessages([
+                    'avatar' => 'The uploaded profile photo could not be stored. Your existing photo has been kept.',
+                ]);
+            }
+            $data['avatar'] = $storedAvatar;
             $replaceAvatar = true;
         } elseif ($request->filled('avatar_url')) {
             $data['avatar'] = $data['avatar_url'];
@@ -119,16 +129,21 @@ class DashboardController extends Controller
         }
         unset($data['avatar_url']);
 
-        if (array_key_exists('phone', $data) && $data['phone'] !== $oldPhone) {
+        $phoneChanged = array_key_exists('phone', $data) && $data['phone'] !== $oldPhone;
+        if ($phoneChanged) {
             $data['phone_verified_at'] = null;
         }
 
-        $phoneChanged = array_key_exists('phone', $data) && $data['phone'] !== $oldPhone;
-        $user->update($data);
-        if ($phoneChanged) {
-            $user->forceFill(['phone_verified_at' => null])->save();
+        try {
+            DB::transaction(fn () => $user->update($data));
+        } catch (\Throwable $exception) {
+            if ($storedAvatar) {
+                delete_stored_media('public', $storedAvatar);
+            }
+            throw $exception;
         }
-        if ($replaceAvatar) {
+
+        if ($replaceAvatar && $oldAvatar !== ($data['avatar'] ?? null)) {
             delete_stored_media('public', $oldAvatar);
         }
 
