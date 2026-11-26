@@ -101,6 +101,9 @@
                 <div class="flex justify-between"><dt class="text-slate-500">Email</dt><dd class="font-semibold">{{ $order->email }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-500">Branch</dt><dd class="font-semibold">{{ $order->branch?->name ?? '—' }}</dd></div>
                 <div class="flex justify-between"><dt class="text-slate-500">Account</dt><dd class="font-semibold"><a href="{{ route('admin.users.show', $order->user_id) }}" class="text-emerald-700">{{ optional($order->user)->name }}</a></dd></div>
+                @if($order->items->contains('item_type', 'product'))
+                    <div class="border-t border-slate-100 pt-2"><dt class="text-slate-500">Shipping address</dt><dd class="mt-1 whitespace-pre-line font-semibold">{{ $order->address ?: 'Not provided' }}</dd></div>
+                @endif
             </dl>
         </section>
 
