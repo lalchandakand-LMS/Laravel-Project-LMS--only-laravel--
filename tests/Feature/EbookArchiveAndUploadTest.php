@@ -228,6 +228,83 @@ class EbookArchiveAndUploadTest extends TestCase
         $this->assertSame($file, $ebook->fresh()->file);
     }
 
+    public function test_admin_can_save_and_clear_free_and_published_flags(): void
+    {
+        $this->actingAs($this->admin())
+            ->post(route('admin.ebooks.store'), [
+                'title' => 'Visibility controlled title',
+                'price' => 0,
+                'is_free' => 1,
+                'is_published' => 1,
+            ])
+            ->assertRedirect(route('admin.ebooks.index'))
+            ->assertSessionHasNoErrors();
+
+        $ebook = Ebook::where('title', 'Visibility controlled title')->firstOrFail();
+        $this->assertTrue($ebook->is_free);
+        $this->assertTrue($ebook->is_published);
+
+        $this->actingAs($this->admin())
+            ->put(route('admin.ebooks.update', $ebook), [
+                'title' => $ebook->title,
+                'price' => 0,
+            ])
+            ->assertRedirect(route('admin.ebooks.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertFalse($ebook->fresh()->is_free);
+        $this->assertFalse($ebook->fresh()->is_published);
+    }
+
+    public function test_paid_ebook_cannot_be_created_with_a_public_hosted_file_url(): void
+    {
+        $this->actingAs($this->admin())
+            ->from(route('admin.ebooks.create'))
+            ->post(route('admin.ebooks.store'), [
+                'title' => 'Publicly hosted paid book',
+                'price' => 200,
+                'file_url' => 'https://cdn.example.com/paid-book.pdf',
+                'is_published' => 1,
+            ])
+            ->assertRedirect(route('admin.ebooks.create'))
+            ->assertSessionHasErrors('file_url');
+
+        $this->assertDatabaseMissing('ebooks', ['title' => 'Publicly hosted paid book']);
+    }
+
+    public function test_paid_ebook_with_legacy_public_url_does_not_redirect_and_archived_free_title_loses_public_access(): void
+    {
+        $paid = Ebook::create([
+            'title' => 'Legacy hosted paid book',
+            'price' => 200,
+            'file' => 'https://cdn.example.com/legacy-paid.pdf',
+            'is_published' => true,
+        ]);
+        EbookPurchase::create(['user_id' => $this->student()->id, 'ebook_id' => $paid->id]);
+
+        $this->actingAs($this->student())
+            ->get(route('student.ebooks.file', $paid->slug))
+            ->assertForbidden();
+
+        $free = Ebook::create([
+            'title' => 'Archived free title',
+            'price' => 0,
+            'is_free' => true,
+            'is_published' => true,
+            'file' => 'https://cdn.example.com/free-book.pdf',
+        ]);
+
+        $this->actingAs($this->student())
+            ->get(route('student.ebooks.file', $free->slug))
+            ->assertRedirect('https://cdn.example.com/free-book.pdf');
+
+        $free->delete();
+
+        $this->actingAs($this->student())
+            ->get(route('student.ebooks.read', $free->slug))
+            ->assertForbidden();
+    }
+
     public function test_permanent_delete_is_blocked_for_purchased_ebook_and_allowed_for_unpurchased_ebook(): void
     {
         $cover = UploadedFile::fake()->image('protected-cover.jpg')->store('ebooks', 'public');
