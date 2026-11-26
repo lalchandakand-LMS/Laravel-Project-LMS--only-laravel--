@@ -30,6 +30,20 @@ return new class extends Migration {
         // Upgrade only the untouched default menu item; preserve admin-customized links.
         DB::table('menu_items')->where('label', 'Instructors')->where('url', '/#teachers')
             ->update(['url' => '/instructors', 'updated_at' => $now]);
+
+        if (! DB::table('menu_items')->where('location', 'header')->where('label', 'Instructors')->exists()) {
+            DB::table('menu_items')->insert([
+                'label' => 'Instructors',
+                'url' => '/instructors',
+                'location' => 'header',
+                'sort_order' => 4,
+                'is_enabled' => true,
+                'show_desktop' => true,
+                'show_mobile' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 
     public function down(): void
