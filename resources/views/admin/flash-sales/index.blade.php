@@ -16,7 +16,7 @@
                 <tr>
                     <td class="px-5 py-3"><div class="font-bold text-slate-900">{{ $sale->name }}</div><div class="text-xs text-slate-500">{{ $sale->description }}</div></td>
                     <td class="px-5 py-3 font-semibold">{{ $sale->type === 'percent' ? number_format($sale->value, 2).'%' : '৳'.number_format($sale->value, 2) }}</td>
-                    <td class="px-5 py-3"><div>{{ $sale->courses->count() }} course(s)</div><div>{{ $sale->categories->count() }} categor{{ $sale->categories->count() === 1 ? 'y' : 'ies' }}</div></td>
+                    <td class="px-5 py-3"><div>{{ $sale->courses->count() }} course(s)</div><div>{{ $sale->categories->count() }} categor{{ $sale->categories->count() === 1 ? 'y' : 'ies' }}</div><div>{{ $sale->ebooks->count() }} e-book(s)</div></td>
                     <td class="px-5 py-3 text-xs text-slate-600">{{ $sale->starts_at->format('d M Y, h:i A') }}<br>to {{ $sale->ends_at->format('d M Y, h:i A') }}</td>
                     <td class="px-5 py-3"><span class="rounded-full px-2 py-1 text-xs font-bold {{ $sale->statusLabel() === 'Running' ? 'bg-emerald-100 text-emerald-700' : ($sale->statusLabel() === 'Scheduled' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600') }}">{{ $sale->statusLabel() }}</span></td>
                     <td class="px-5 py-3 text-right whitespace-nowrap">
