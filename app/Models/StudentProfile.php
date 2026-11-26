@@ -29,4 +29,9 @@ class StudentProfile extends Model
     {
         return $this->morphMany(ProfileDocument::class, 'documentable')->latest();
     }
+
+    public function attendanceRecords()
+    {
+        return $this->hasManyThrough(Attendance::class, User::class, 'id', 'student_id', 'user_id', 'id')->latest();
+    }
 }
