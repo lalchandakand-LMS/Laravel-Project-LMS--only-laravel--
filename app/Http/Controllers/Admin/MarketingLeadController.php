@@ -25,6 +25,14 @@ class MarketingLeadController extends Controller
             ->when($request->filled('campaign'), fn ($builder) => $builder->where('utm_campaign', $request->input('campaign')));
 
         $leads = $query->latest()->paginate(25)->withQueryString();
+
+        $leads->getCollection()->each(function (MarketingLead $lead) {
+            $number = app(MiMSmsGateway::class)->normalizeBangladeshNumber($lead->phone);
+            $message = "Assalamu Alaikum {$lead->name}, thank you for contacting Alom's English Center. How can our team help you?";
+            $lead->whatsapp_url = $number
+                ? 'https://wa.me/'.$number.'?text='.rawurlencode($message)
+                : null;
+        });
         $counts = collect(MarketingLead::STATUSES)->mapWithKeys(
             fn ($status) => [$status => MarketingLead::where('status', $status)->count()]
         );
