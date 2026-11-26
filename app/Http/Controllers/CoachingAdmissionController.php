@@ -46,52 +46,77 @@ class CoachingAdmissionController extends Controller
             'applicant_note' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $batch = CoachingBatch::with(['branch', 'course'])->findOrFail($data['coaching_batch_id']);
-        abort_unless(in_array($batch->status, ['upcoming', 'ongoing'], true), 422, 'এই কোচিং ব্যাচে আবেদন বন্ধ।');
-        abort_unless($batch->branch?->is_active && $batch->course?->is_published, 422, 'এই শাখা বা কোর্সে বর্তমানে ভর্তি নেওয়া হচ্ছে না।');
-        abort_unless($batch->hasAvailableSeat(), 422, 'এই কোচিং ব্যাচে আসন পূর্ণ হয়ে গেছে।');
-
-        $duplicate = CoachingAdmission::where('student_email', $data['student_email'])
-            ->where('coaching_batch_id', $batch->id)
-            ->whereIn('status', ['pending', 'awaiting_payment', 'admitted'])->exists();
-        abort_if($duplicate, 422, 'এই শিক্ষার্থীর এই কোচিং ব্যাচে আবেদন বা ভর্তি ইতিমধ্যে রয়েছে।');
-
         $uploadFields = ['student_photo', 'identity_document', 'quota_document'];
         foreach ($uploadFields as $field) {
             unset($data[$field]);
         }
-
-        $admission = CoachingAdmission::create($data + [
-            'branch_id' => $batch->branch_id,
-            'course_id' => $batch->course_id,
-            'student_sms_consent' => $request->boolean('student_sms_consent'),
-            'guardian_sms_consent' => $request->boolean('guardian_sms_consent'),
-            'status' => 'pending',
-        ]);
 
         $documentTypes = [
             'student_photo' => 'photo',
             'identity_document' => 'birth_certificate',
             'quota_document' => 'other',
         ];
+        $storedPaths = [];
 
-        foreach ($documentTypes as $field => $documentType) {
-            if (! $request->hasFile($field)) {
-                continue;
+        try {
+            DB::transaction(function () use ($data, $request, $documentTypes, &$storedPaths) {
+                // Serialize admissions for the same batch so concurrent requests
+                // cannot both pass the seat and duplicate-application checks.
+                $batch = CoachingBatch::query()
+                    ->with(['branch', 'course'])
+                    ->lockForUpdate()
+                    ->findOrFail($data['coaching_batch_id']);
+
+                abort_unless(in_array($batch->status, ['upcoming', 'ongoing'], true), 422, 'এই কোচিং ব্যাচে আবেদন বন্ধ।');
+                abort_unless($batch->branch?->is_active && $batch->course?->is_published, 422, 'এই শাখা বা কোর্সে বর্তমানে ভর্তি নেওয়া হচ্ছে না।');
+                abort_unless($batch->hasAvailableSeat(), 422, 'এই কোচিং ব্যাচে আসন পূর্ণ হয়ে গেছে।');
+
+                $duplicate = CoachingAdmission::where('student_email', $data['student_email'])
+                    ->where('coaching_batch_id', $batch->id)
+                    ->whereIn('status', ['pending', 'awaiting_payment', 'admitted'])
+                    ->exists();
+                abort_if($duplicate, 422, 'এই শিক্ষার্থীর এই কোচিং ব্যাচে আবেদন বা ভর্তি ইতিমধ্যে রয়েছে।');
+
+                $admission = CoachingAdmission::create($data + [
+                    'branch_id' => $batch->branch_id,
+                    'course_id' => $batch->course_id,
+                    'student_sms_consent' => $request->boolean('student_sms_consent'),
+                    'guardian_sms_consent' => $request->boolean('guardian_sms_consent'),
+                    'status' => 'pending',
+                ]);
+
+                foreach ($documentTypes as $field => $documentType) {
+                    if (! $request->hasFile($field)) {
+                        continue;
+                    }
+
+                    $file = $request->file($field);
+                    $path = $file->store('profile-documents/admissions/'.$admission->id, 'local');
+
+                    if (! is_string($path) || $path === '') {
+                        throw ValidationException::withMessages([
+                            $field => 'The uploaded file could not be stored. Please try again.',
+                        ]);
+                    }
+
+                    $storedPaths[] = $path;
+                    $admission->documents()->create([
+                        'document_type' => $documentType,
+                        'disk' => 'local',
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+                        'size_bytes' => $file->getSize(),
+                        'status' => 'pending',
+                    ]);
+                }
+            });
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $path) {
+                Storage::disk('local')->delete($path);
             }
 
-            $file = $request->file($field);
-            $path = $file->store('profile-documents/admissions/'.$admission->id, 'local');
-
-            $admission->documents()->create([
-                'document_type' => $documentType,
-                'disk' => 'local',
-                'path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
-                'size_bytes' => $file->getSize(),
-                'status' => 'pending',
-            ]);
+            throw $exception;
         }
 
         return redirect()->route('coaching-admission.create')->with('success', 'আপনার সরাসরি কোচিংয়ের ভর্তি আবেদন জমা হয়েছে। যাচাই শেষে জানানো হবে।');
