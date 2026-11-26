@@ -53,7 +53,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100">
             @forelse ($orders as $order)
-                @php($received = (float) $order->verified_paid - (float) $order->adjustments()->where('type', 'refund')->sum('amount'))
+                @php($received = (float) $order->verified_paid - (float) $order->refund_total + (float) $order->credit_total)
                 <tr>
                     <td class="px-5 py-3 font-mono font-semibold text-slate-800">{{ $order->order_no }}</td>
                     <td class="px-5 py-3"><p class="font-semibold text-slate-700">{{ $order->name ?: optional($order->user)->name }}</p><p class="text-xs text-slate-500">{{ $order->phone }} · {{ $order->branch?->name ?? 'No branch' }}</p></td>
