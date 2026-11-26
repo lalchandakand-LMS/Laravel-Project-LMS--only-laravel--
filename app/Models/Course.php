@@ -104,12 +104,14 @@ class Course extends Model
         if (! $user) {
             return 0;
         }
-        $total = $this->lessons()->count();
+        // Draft lessons are not part of the learner's course curriculum.
+        $publishedLessonIds = $this->lessons()->where('is_published', true)->pluck('id');
+        $total = $publishedLessonIds->count();
         if ($total === 0) {
             return 0;
         }
         $done = LessonProgress::where('user_id', $user->id)
-            ->whereIn('lesson_id', $this->lessons()->pluck('id'))
+            ->whereIn('lesson_id', $publishedLessonIds)
             ->whereNotNull('completed_at')
             ->count();
 
