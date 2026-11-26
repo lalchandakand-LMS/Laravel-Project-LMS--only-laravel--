@@ -89,6 +89,46 @@ class AttendanceWorkflowTest extends TestCase
             ->assertOk()->assertSee('Speaking practice')->assertSee('Present');
     }
 
+    public function test_teacher_cannot_submit_attendance_after_the_active_student_list_changes(): void
+    {
+        [$teacher, $originalStudent, $course, $batch] = $this->setupClassroom();
+        $session = AttendanceSession::create([
+            'batch_id' => $batch->id,
+            'course_id' => $course->id,
+            'instructor_id' => $teacher->id,
+            'mode' => 'online',
+            'starts_at' => now(),
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($teacher)->post(route('teacher.attendance.save', $session), [
+            'attendance' => [$originalStudent->id => ['status' => 'present']],
+        ])->assertRedirect();
+
+        Enrollment::where('user_id', $originalStudent->id)
+            ->where('course_id', $course->id)
+            ->update(['status' => 'cancelled']);
+
+        $replacementStudent = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        Enrollment::create([
+            'user_id' => $replacementStudent->id,
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'status' => 'active',
+            'price_paid' => 0,
+            'enrolled_at' => now(),
+        ]);
+
+        $this->actingAs($teacher)->post(route('teacher.attendance.submit', $session))
+            ->assertStatus(422);
+
+        $this->assertSame('draft', $session->fresh()->status);
+        $this->assertDatabaseMissing('attendances', [
+            'attendance_session_id' => $session->id,
+            'student_id' => $replacementStudent->id,
+        ]);
+    }
+
     public function test_teacher_cannot_create_attendance_for_another_teachers_batch(): void
     {
         [$teacher, $student, $course, $batch] = $this->setupClassroom();
