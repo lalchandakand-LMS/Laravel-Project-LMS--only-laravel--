@@ -59,6 +59,23 @@
                             <a href="{{ $class->meeting_url }}" target="_blank" rel="noopener" class="text-sm font-semibold text-slate-600">Open</a>
                         @endif
                         <a href="{{ route('admin.live-classes.edit', $class) }}" class="ml-3 text-sm font-semibold text-emerald-700">Edit</a>
+                        @if ($class->isCancelled())
+                            <form method="POST" action="{{ route('admin.live-classes.reschedule', $class) }}" class="mt-2 flex items-center justify-end gap-1">
+                                @csrf
+                                <input type="datetime-local" name="starts_at" required min="{{ now()->format('Y-m-d\\TH:i') }}" class="w-40 rounded border border-slate-300 px-2 py-1 text-xs">
+                                <input type="number" name="duration_minutes" min="5" max="600" value="{{ $class->duration_minutes }}" required class="w-16 rounded border border-slate-300 px-2 py-1 text-xs">
+                                <button class="text-xs font-bold text-emerald-700">Reschedule</button>
+                            </form>
+                            @if ($class->cancellation_reason)
+                                <p class="mt-1 text-xs text-rose-600">Reason: {{ $class->cancellation_reason }}</p>
+                            @endif
+                        @else
+                            <form method="POST" action="{{ route('admin.live-classes.cancel', $class) }}" class="mt-2 flex items-center justify-end gap-1" onsubmit="return confirm('Cancel this live class and notify enrolled students?')">
+                                @csrf
+                                <input name="cancellation_reason" required maxlength="500" placeholder="Cancellation reason" class="w-36 rounded border border-slate-300 px-2 py-1 text-xs">
+                                <button class="text-xs font-bold text-rose-600">Cancel class</button>
+                            </form>
+                        @endif
                         <form method="POST" action="{{ route('admin.live-classes.destroy', $class) }}" class="inline" onsubmit="return confirm('Delete this class?')">
                             @csrf @method('DELETE')
                             <button class="ml-3 text-sm font-semibold text-rose-600">Delete</button>
