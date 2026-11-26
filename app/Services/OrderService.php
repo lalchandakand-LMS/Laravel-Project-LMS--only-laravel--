@@ -130,8 +130,7 @@ class OrderService
                     continue;
                 }
 
-                $product = Product::whereKey($item->item_id)
-                    ->where('is_published', true)
+                $product = Product::withTrashed()->whereKey($item->item_id)
                     ->lockForUpdate()
                     ->first();
 
