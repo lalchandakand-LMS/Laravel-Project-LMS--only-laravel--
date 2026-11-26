@@ -201,8 +201,31 @@ class BranchLedgerAndAccessTest extends TestCase
         $branch = $this->branch('FEE-METHOD', $manager);
         $manager->update(['branch_id' => $branch->id]);
         $student = User::factory()->create(['role' => 'student', 'is_active' => true, 'branch_id' => $branch->id]);
+        $course = Course::create(['title' => 'Fee Method Course', 'price' => 1000, 'is_published' => true]);
+        $coachingBatch = CoachingBatch::create([
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'name' => 'Fee Method Batch',
+            'code' => 'FEE-METHOD-BATCH',
+            'admission_fee' => 500,
+            'monthly_fee' => 1500,
+            'status' => 'ongoing',
+        ]);
+        $admission = CoachingAdmission::create([
+            'student_name' => $student->name,
+            'student_email' => $student->email,
+            'student_phone' => '01700000000',
+            'coaching_batch_id' => $coachingBatch->id,
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'student_id' => $student->id,
+            'status' => 'admitted',
+            'admitted_at' => now(),
+        ]);
         $invoice = StudentFeeInvoice::create([
             'student_id' => $student->id,
+            'coaching_admission_id' => $admission->id,
+            'coaching_batch_id' => $coachingBatch->id,
             'branch_id' => $branch->id,
             'invoice_type' => 'recurring',
             'description' => 'Monthly tuition',
