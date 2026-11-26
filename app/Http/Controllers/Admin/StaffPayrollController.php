@@ -121,11 +121,19 @@ class StaffPayrollController extends Controller
                 // Serialize payroll creation for the same staff member so two
                 // concurrent requests cannot both pass the monthly duplicate check.
                 $staffUser = User::query()->lockForUpdate()->findOrFail($data['staff_user_id']);
-                abort_unless($staffUser->is_active, 422, 'Inactive staff cannot be added to a new payroll.');
+                if (! $staffUser->is_active) {
+                    throw ValidationException::withMessages([
+                        'staff_user_id' => 'Inactive staff cannot be added to a new payroll.',
+                    ]);
+                }
 
                 $profile = $staffUser->staffProfile()->firstOrCreate([], ['employment_status' => 'active']);
                 $profile = StaffProfile::query()->lockForUpdate()->findOrFail($profile->id);
-                abort_unless($profile->employment_status === 'active', 422, 'Only active staff can receive a new payroll entry.');
+                if ($profile->employment_status !== 'active') {
+                    throw ValidationException::withMessages([
+                        'staff_user_id' => 'Only active staff can receive a new payroll entry.',
+                    ]);
+                }
 
                 if (StaffPayroll::where('staff_profile_id', $profile->id)
                     ->where('payroll_month', $data['payroll_month'])->exists()) {
