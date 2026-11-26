@@ -142,13 +142,13 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
     private function token(array $configuration): string
     {
         $credentials = $configuration['credentials'];
-        $cacheKey = 'payments:bkash:token:'.hash('sha256', $credentials['app_key']);
+        $cacheKey = 'payments:bkash:token:'.hash('sha256', $credentials['app_key'].'|'.$credentials['app_secret'].'|'.$credentials['username']);
         $cached = Cache::get($cacheKey);
         if (is_string($cached) && $cached !== '') {
             return $cached;
         }
 
-        return Cache::lock($cacheKey.':lock', 15)->block(15, function () use ($cacheKey, $credentials, $configuration) {
+        return Cache::lock($cacheKey.':lock', 45)->block(45, function () use ($cacheKey, $credentials, $configuration) {
             $cached = Cache::get($cacheKey);
             if (is_string($cached) && $cached !== '') {
                 return $cached;
