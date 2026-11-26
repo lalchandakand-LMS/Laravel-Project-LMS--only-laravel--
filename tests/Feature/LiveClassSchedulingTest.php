@@ -288,6 +288,17 @@ class LiveClassSchedulingTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(1, AttendanceSession::where('live_class_id', $liveClass->id)->count());
+
+        $liveClass->update(['cancelled_at' => now()]);
+        $newStart = now()->addDays(20)->startOfHour();
+        $this->actingAs($admin)->post(route('admin.live-classes.reschedule', $liveClass), [
+            'starts_at' => $newStart->format('Y-m-d H:i:s'),
+            'duration_minutes' => 90,
+        ])->assertRedirect(route('admin.live-classes.index'));
+
+        $attendanceSession = AttendanceSession::where('live_class_id', $liveClass->id)->firstOrFail();
+        $this->assertSame($newStart->timestamp, $attendanceSession->starts_at->timestamp);
+        $this->assertSame(90, $attendanceSession->ends_at->diffInMinutes($attendanceSession->starts_at));
     }
 
 }
