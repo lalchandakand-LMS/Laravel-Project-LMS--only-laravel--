@@ -19,15 +19,10 @@ class MarketingLeadCaptureTest extends TestCase
 
     public function test_contact_form_saves_lead_with_session_utm_attribution(): void
     {
-        $this->withSession(['marketing_attribution' => [
-            'utm_source' => 'facebook',
-            'utm_medium' => 'paid_social',
-            'utm_campaign' => 'spoken-english-november',
-            'utm_term' => 'spoken english',
-            'utm_content' => 'video-ad-a',
-            'landing_page' => '/courses/spoken-english',
-            'referrer_host' => 'facebook.com',
-        ]])->post(route('contact.send'), [
+        $this->get('/?utm_source=facebook&utm_medium=paid_social&utm_campaign=spoken-english-november&utm_term=spoken%20english&utm_content=video-ad-a')
+            ->assertOk();
+
+        $this->post(route('contact.send'), [
             'name' => 'Amina Rahman',
             'email' => 'amina@example.test',
             'phone' => '01700000000',
@@ -44,8 +39,8 @@ class MarketingLeadCaptureTest extends TestCase
             'utm_campaign' => 'spoken-english-november',
             'utm_term' => 'spoken english',
             'utm_content' => 'video-ad-a',
-            'landing_page' => '/courses/spoken-english',
-            'referrer_host' => 'facebook.com',
+            'landing_page' => '/',
+            'referrer_host' => null,
             'status' => 'new',
         ]);
     }
