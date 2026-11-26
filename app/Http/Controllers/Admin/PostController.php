@@ -34,6 +34,8 @@ class PostController extends Controller
         $data['tags'] = $this->tags($request->input('tags'));
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('posts', 'public');
+        } elseif ($request->filled('thumbnail_url')) {
+            $data['thumbnail'] = $request->input('thumbnail_url');
         }
         unset($data['thumbnail_url']);
         $post = Post::create($data);
