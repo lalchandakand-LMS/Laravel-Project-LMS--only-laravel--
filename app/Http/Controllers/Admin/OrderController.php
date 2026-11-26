@@ -501,6 +501,17 @@ class OrderController extends Controller
                     $lockedOrder->update([
                         'status' => $netAfterRefund > 0 ? 'partially_paid' : 'refunded',
                     ]);
+
+                    if ($netAfterRefund <= 0) {
+                        $lockedOrder->payments()
+                            ->where('status', 'pending')
+                            ->update([
+                                'status' => 'rejected',
+                                'verified_by' => $request->user()->id,
+                                'verified_at' => now(),
+                                'rejection_reason' => 'Automatically closed because the order was fully refunded.',
+                            ]);
+                    }
                 }
 
                 return $adjustment;
