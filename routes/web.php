@@ -11,6 +11,7 @@ use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CoachingAdmissionController;
+use App\Http\Controllers\CoachingFeeReportController;
 use App\Http\Controllers\EbookController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
@@ -67,7 +68,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
 
-    Route::get('/coaching-fees', [CoachingFeeReportController::class, 'student'])->middleware('role:student,instructor,admin')->name('coaching-fees.student');\n    Route::get('/notices', [NoticeController::class, 'index'])->name('notices.index');
+    Route::get('/coaching-fees', [CoachingFeeReportController::class, 'student'])->middleware('role:student,instructor,admin')->name('coaching-fees.student');
+    Route::get('/notices', [NoticeController::class, 'index'])->name('notices.index');
     Route::get('/notices/{announcement}', [NoticeController::class, 'show'])->name('notices.show');
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
@@ -134,7 +136,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');
-        Route::get('coaching-admissions', [Admin\\CoachingAdmissionController::class, 'index'])->name('coaching-admissions.index');\n        Route::get('coaching-fees', [Admin\\StudentFeeController::class, 'index'])->name('coaching-fees.index');\n        Route::post('coaching-fees/invoices', [Admin\\StudentFeeController::class, 'storeInvoice'])->name('coaching-fees.invoices.store');\n        Route::post('coaching-fees/invoices/{invoice}/payments', [Admin\\StudentFeeController::class, 'collectPayment'])->name('coaching-fees.payments.store');
+        Route::get('coaching-admissions', [Admin\\CoachingAdmissionController::class, 'index'])->name('coaching-admissions.index');
+        Route::get('coaching-fees', [Admin\\StudentFeeController::class, 'index'])->name('coaching-fees.index');
+        Route::post('coaching-fees/invoices', [Admin\\StudentFeeController::class, 'storeInvoice'])->name('coaching-fees.invoices.store');
+        Route::post('coaching-fees/invoices/{invoice}/payments', [Admin\\StudentFeeController::class, 'collectPayment'])->name('coaching-fees.payments.store');
         Route::post('coaching-admissions/{admission}/approve', [Admin\\CoachingAdmissionController::class, 'approve'])->name('coaching-admissions.approve');
         Route::post('coaching-admissions/{admission}/reject', [Admin\\CoachingAdmissionController::class, 'reject'])->name('coaching-admissions.reject');
         Route::get('attendance/{session}', [AttendanceController::class, 'adminShow'])->name('attendance.show');
@@ -252,7 +257,8 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('t
 Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('guardian.')->group(function () {
     Route::get('/', [Guardian\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/children/{child}', [Guardian\DashboardController::class, 'child'])->name('child');
-    Route::get('/children/{child}/attendance', [AttendanceController::class, 'guardianReport'])->name('child.attendance');\n    Route::get('/children/{child}/coaching-fees', [CoachingFeeReportController::class, 'guardian'])->name('child.coaching-fees');
+    Route::get('/children/{child}/attendance', [AttendanceController::class, 'guardianReport'])->name('child.attendance');
+    Route::get('/children/{child}/coaching-fees', [CoachingFeeReportController::class, 'guardian'])->name('child.coaching-fees');
 });
 
 /* ------------------------------------------------------------------
