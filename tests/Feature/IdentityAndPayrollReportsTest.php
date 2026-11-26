@@ -32,7 +32,7 @@ class IdentityAndPayrollReportsTest extends TestCase
 
     public function test_user_can_verify_saved_bangladesh_mobile_with_one_time_sms_code(): void
     {
-        $student = User::factory()->create(['role' => 'student', 'phone' => '01712345678']);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true, 'phone' => '01712345678']);
         $this->configureSms();
 
         $this->actingAs($student)->post(route('account.phone.send'))->assertRedirect();
@@ -97,6 +97,7 @@ class IdentityAndPayrollReportsTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $student = User::factory()->create([
             'role' => 'student',
+            'is_active' => true,
             'phone' => '01712345678',
             'email' => 'private.student@example.com',
         ]);
