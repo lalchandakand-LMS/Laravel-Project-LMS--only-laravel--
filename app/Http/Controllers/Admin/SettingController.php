@@ -11,7 +11,7 @@ class SettingController extends Controller
 {
     private const HOMEPAGE_SECTION_KEYS = ['hero', 'categories', 'featured', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
     public const KEYS = [
-        'site_name', 'site_tagline', 'admin_theme_preset', 'admin_card_radius', 'admin_brand_title', 'admin_brand_subtitle', 'admin_sidebar_promo_title', 'admin_sidebar_promo_body', 'admin_sidebar_promo_button', 'admin_sidebar_promo_url', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
+        'site_name', 'site_tagline', 'admin_logo', 'admin_theme_preset', 'admin_card_radius', 'admin_brand_title', 'admin_brand_subtitle', 'admin_sidebar_promo_title', 'admin_sidebar_promo_body', 'admin_sidebar_promo_button', 'admin_sidebar_promo_url', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
         'currency', 'certificate_signature', 'about_text',
         'dashboard_banner_title', 'dashboard_banner_subtitle',
@@ -93,6 +93,7 @@ class SettingController extends Controller
             'youtube' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'instagram' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'admin_logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'logo_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'dashboard_banner' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'dashboard_banner_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
@@ -205,7 +206,7 @@ class SettingController extends Controller
             Setting::set($key, $request->boolean($key) ? '1' : '0');
         }
 
-        foreach (['logo' => 'brand', 'dashboard_banner' => 'brand/dashboard'] as $field => $directory) {
+        foreach (['logo' => 'brand', 'admin_logo' => 'brand/admin', 'dashboard_banner' => 'brand/dashboard'] as $field => $directory) {
             if ($request->hasFile($field)) {
                 $oldPath = Setting::get($field);
                 $newPath = $request->file($field)->store($directory, 'public');
@@ -233,7 +234,7 @@ class SettingController extends Controller
             }
         }
 
-        foreach (['remove_logo' => 'logo', 'remove_dashboard_banner' => 'dashboard_banner'] as $flag => $key) {
+        foreach (['remove_logo' => 'logo', 'remove_admin_logo' => 'admin_logo', 'remove_dashboard_banner' => 'dashboard_banner'] as $flag => $key) {
             if ($request->boolean($flag)) {
                 $oldPath = Setting::get($key);
                 Setting::set($key, '');
