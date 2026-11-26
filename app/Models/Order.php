@@ -21,6 +21,7 @@ class Order extends Model
     public function branch()  { return $this->belongsTo(Branch::class); }
     public function items()   { return $this->hasMany(OrderItem::class); }
     public function payments(){ return $this->hasMany(Payment::class); }
+    public function returnRequests() { return $this->hasMany(ProductReturnRequest::class); }
     public function adjustments(){ return $this->hasMany(PaymentAdjustment::class); }
     public function coupon()  { return $this->belongsTo(Coupon::class); }
 
