@@ -48,6 +48,7 @@ class OrderService
                     if ($existing) {
                         $existing->update([
                             'order_id' => $order->id,
+                            'branch_id' => $order->branch_id,
                             'price_paid' => $item->price,
                             'status' => 'active',
                             'enrolled_at' => now(),
