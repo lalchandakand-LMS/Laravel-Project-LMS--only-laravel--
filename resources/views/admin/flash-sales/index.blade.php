@@ -21,6 +21,7 @@
                     <td class="px-5 py-3"><span class="rounded-full px-2 py-1 text-xs font-bold {{ $sale->statusLabel() === 'Running' ? 'bg-emerald-100 text-emerald-700' : ($sale->statusLabel() === 'Scheduled' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600') }}">{{ $sale->statusLabel() }}</span></td>
                     <td class="px-5 py-3 text-right whitespace-nowrap">
                         <a href="{{ route('admin.flash-sales.edit', $sale) }}" class="font-semibold text-orange-700">Edit</a>
+                        <form method="POST" action="{{ route('admin.flash-sales.toggle', $sale) }}" class="inline">@csrf @method('PATCH')<button class="ml-3 font-semibold {{ $sale->is_active ? 'text-amber-700' : 'text-emerald-700' }}">{{ $sale->is_active ? 'Disable' : 'Enable' }}</button></form>
                         <form method="POST" action="{{ route('admin.flash-sales.destroy', $sale) }}" class="inline" onsubmit="return confirm('Archive this flash sale?')">@csrf @method('DELETE')<button class="ml-3 font-semibold text-rose-600">Delete</button></form>
                     </td>
                 </tr>
