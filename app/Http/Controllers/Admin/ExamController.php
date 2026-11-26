@@ -80,6 +80,7 @@ class ExamController extends Controller
             'pass_marks' => 'nullable|numeric|min:0',
             'negative_marking' => 'nullable|numeric|min:0',
             'attempt_limit' => 'nullable|integer|min:0',
+            'random_question_count' => 'nullable|integer|min:0',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
@@ -95,6 +96,7 @@ class ExamController extends Controller
         $data['pass_marks'] = $data['pass_marks'] ?? 0;
         $data['negative_marking'] = $data['negative_marking'] ?? 0;
         $data['attempt_limit'] = $data['attempt_limit'] ?? 0;
+        $data['random_question_count'] = $data['random_question_count'] ?? 0;
 
         return $data;
     }
