@@ -90,7 +90,7 @@
     </section>
 
     <section class="overflow-hidden rounded-2xl bg-slate-950 p-5 text-white shadow-lg">
-        <div class="flex items-center justify-between"><h3 class="font-extrabold">Live Class Now</h3><span class="rounded-full bg-rose-500/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-rose-300"><i class="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500"></i>Live</span></div>
+        <div class="flex items-center justify-between"><h3 class="font-extrabold">Live Class Now</h3>@if($liveClass)<span class="rounded-full bg-rose-500/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-rose-300"><i class="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500"></i>Live</span>@else<span class="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">No active class</span>@endif</div>
         @if($liveClass)
             <div class="mt-4 h-32 overflow-hidden rounded-xl bg-slate-800"><img src="{{ $liveClass->course?->thumbnail_url ?? asset('images/aec-logo.svg') }}" alt="Live class thumbnail" class="h-full w-full object-cover"></div>
             <h4 class="mt-4 line-clamp-2 text-lg font-extrabold">{{ $liveClass->title }}</h4>
@@ -145,7 +145,7 @@
             <a href="{{ route('admin.users.create', ['role' => 'instructor']) }}" class="rounded-xl bg-emerald-50 p-3 text-center text-[11px] font-extrabold text-emerald-700 hover:bg-emerald-100"><span class="mb-1 block text-xl">♟</span>Add Teacher</a>
             <a href="{{ route('admin.batches.create') }}" class="rounded-xl bg-violet-50 p-3 text-center text-[11px] font-extrabold text-violet-700 hover:bg-violet-100"><span class="mb-1 block text-xl">▦</span>Create Batch</a>
             <a href="{{ route('admin.courses.create') }}" class="rounded-xl bg-orange-50 p-3 text-center text-[11px] font-extrabold text-orange-700 hover:bg-orange-100"><span class="mb-1 block text-xl">▣</span>Add Course</a>
-            <a href="{{ route('admin.exams.create') }}" class="rounded-xl bg-cyan-50 p-3 text-center text-[11px] font-extrabold text-cyan-700 hover:bg-cyan-100"><span class="mb-1 block text-xl">✎</span>Take / Create Exam</a>
+            <a href="{{ route('admin.exams.create') }}" class="rounded-xl bg-cyan-50 p-3 text-center text-[11px] font-extrabold text-cyan-700 hover:bg-cyan-100"><span class="mb-1 block text-xl">✎</span>Create Exam</a>
             <a href="{{ route('admin.certificates.index') }}" class="rounded-xl bg-amber-50 p-3 text-center text-[11px] font-extrabold text-amber-700 hover:bg-amber-100"><span class="mb-1 block text-xl">✧</span>Certificates</a>
         </div>
     </section>
