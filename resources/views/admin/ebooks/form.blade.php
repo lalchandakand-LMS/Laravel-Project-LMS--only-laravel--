@@ -24,12 +24,19 @@
             <input type="number" name="pages" value="{{ old('pages', $ebook->pages ?? 0) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
         <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-700">Cover image</label>
-            <input type="file" name="cover" accept="image/*" class="w-full text-xs">
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Cover image upload</label>
+            <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
+            <label class="mb-1 mt-3 block text-sm font-semibold text-slate-700">Or cover image URL (HTTPS)</label>
+            <input type="url" name="cover_url" value="{{ old('cover_url', str_starts_with((string) $ebook->cover, 'https://') ? $ebook->cover : '') }}" placeholder="https://example.com/cover.webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            @if ($ebook->cover)<img src="{{ $ebook->coverUrl() }}" alt="Current e-book cover" class="mt-2 h-24 rounded-lg object-contain">@endif
         </div>
         <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-700">PDF file</label>
-            <input type="file" name="file" accept=".pdf,.epub" class="w-full text-xs">
+            <label class="mb-1 block text-sm font-semibold text-slate-700">PDF / EPUB upload (private storage)</label>
+            <input type="file" name="file" accept=".pdf,.epub,application/pdf,application/epub+zip" class="w-full text-xs">
+            <label class="mb-1 mt-3 block text-sm font-semibold text-slate-700">Or PDF / EPUB URL (HTTPS)</label>
+            <input type="url" name="file_url" value="{{ old('file_url', str_starts_with((string) $ebook->file, 'https://') ? $ebook->file : '') }}" placeholder="https://example.com/book.pdf" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            @if ($ebook->file && !str_starts_with((string) $ebook->file, 'https://'))<p class="mt-2 text-xs text-slate-500">Current uploaded file: {{ basename($ebook->file) }}. Leave both inputs empty to keep it.</p>@endif
+            <p class="mt-1 text-xs text-slate-500">Uploaded files remain private and are served only after purchase verification. External URLs must use HTTPS and are redirected only after the same access check.</p>
         </div>
     </div>
     <div class="flex gap-5 text-sm font-semibold text-slate-700">
