@@ -114,6 +114,133 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
         ];
     }
 
+    /** Verify an AWS SNS envelope using the signing certificate URL supplied by bKash. */
+    public function verifyWebhook(Request $request): array
+    {
+        $event = json_decode($request->getContent(), true);
+        if (! is_array($event)) {
+            throw ValidationException::withMessages(['webhook' => 'Invalid bKash webhook payload.']);
+        }
+
+        $config = $this->configuration();
+        $expectedTopic = (string) ($config['credentials']['webhook_topic_arn'] ?? '');
+        if ($expectedTopic === '' || ! hash_equals($expectedTopic, (string) ($event['TopicArn'] ?? ''))) {
+            throw ValidationException::withMessages(['webhook' => 'The bKash webhook topic is not configured or does not match.']);
+        }
+
+        $type = (string) ($event['Type'] ?? '');
+        if (! in_array($type, ['Notification', 'SubscriptionConfirmation', 'UnsubscribeConfirmation'], true)) {
+            throw ValidationException::withMessages(['webhook' => 'Unsupported SNS message type.']);
+        }
+
+        $region = $this->snsRegion($expectedTopic);
+        $certificateUrl = (string) ($event['SigningCertURL'] ?? '');
+        $certificate = $this->fetchSnsCertificate($certificateUrl, $region);
+        $fields = $type === 'Notification'
+            ? ['Message', 'MessageId', 'Subject', 'Timestamp', 'TopicArn', 'Type']
+            : ['Message', 'MessageId', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type'];
+
+        $canonical = '';
+        foreach ($fields as $field) {
+            if ($field === 'Subject' && ! array_key_exists($field, $event)) {
+                continue;
+            }
+            if (! array_key_exists($field, $event) || ! is_scalar($event[$field])) {
+                throw ValidationException::withMessages(['webhook' => 'The signed SNS message is missing a required field.']);
+            }
+            $canonical .= $field."\n".(string) $event[$field]."\n";
+        }
+
+        $signature = base64_decode((string) ($event['Signature'] ?? ''), true);
+        $algorithm = match ((string) ($event['SignatureVersion'] ?? '')) {
+            '1' => OPENSSL_ALGO_SHA1,
+            '2' => OPENSSL_ALGO_SHA256,
+            default => null,
+        };
+        $publicKey = openssl_pkey_get_public($certificate);
+        if ($signature === false || $algorithm === null || $publicKey === false
+            || openssl_verify($canonical, $signature, $publicKey, $algorithm) !== 1) {
+            throw ValidationException::withMessages(['webhook' => 'The bKash SNS signature could not be verified.']);
+        }
+
+        return $event;
+    }
+
+    public function confirmWebhookSubscription(array $event): void
+    {
+        $topic = (string) ($event['TopicArn'] ?? '');
+        $region = $this->snsRegion($topic);
+        $url = (string) ($event['SubscribeURL'] ?? '');
+        $parts = parse_url($url);
+        parse_str((string) ($parts['query'] ?? ''), $query);
+
+        if (($parts['scheme'] ?? null) !== 'https'
+            || ($parts['host'] ?? null) !== 'sns.'.$region.'.amazonaws.com'
+            || ($parts['path'] ?? '/') !== '/'
+            || ($query['Action'] ?? null) !== 'ConfirmSubscription'
+            || ($query['TopicArn'] ?? null) !== $topic) {
+            throw ValidationException::withMessages(['webhook' => 'The SNS subscription confirmation URL is not trusted.']);
+        }
+
+        Http::timeout(10)->get($url)->throw();
+    }
+
+    /** Search by bKash transaction ID after a signed webhook notification. */
+    public function searchTransaction(string $transactionId): array
+    {
+        $transactionId = trim($transactionId);
+        if ($transactionId === '' || strlen($transactionId) > 100) {
+            throw new RuntimeException('A valid bKash transaction ID is required.');
+        }
+
+        $result = $this->providerPost('/tokenized/checkout/general/searchTransaction', [
+            'trxID' => $transactionId,
+        ]);
+        $providerStatus = strtolower((string) ($result['transactionStatus'] ?? ''));
+        $completed = $providerStatus === 'completed';
+
+        return [
+            'status' => $completed ? 'success' : (in_array($providerStatus, ['failed', 'cancelled', 'canceled', 'rejected'], true) ? 'failed' : 'pending'),
+            'payment_id' => (string) ($result['paymentID'] ?? ''),
+            'transaction_id' => (string) ($result['trxID'] ?? $transactionId),
+            'invoice' => (string) ($result['merchantInvoiceNumber'] ?? ''),
+            'amount' => (string) ($result['amount'] ?? ''),
+            'currency' => strtoupper((string) ($result['currency'] ?? '')),
+            'customer_msisdn' => (string) ($result['customerMsisdn'] ?? ''),
+            'provider_status' => (string) ($result['transactionStatus'] ?? ''),
+        ];
+    }
+
+    private function snsRegion(string $topicArn): string
+    {
+        if (! preg_match('/^arn:aws:sns:([a-z0-9-]+):[0-9]{12}:[A-Za-z0-9_-]+$/', $topicArn, $matches)) {
+            throw ValidationException::withMessages(['webhook' => 'The configured bKash SNS topic ARN is invalid.']);
+        }
+
+        return $matches[1];
+    }
+
+    private function fetchSnsCertificate(string $url, string $region): string
+    {
+        $parts = parse_url($url);
+        $expectedHost = 'sns.'.$region.'.amazonaws.com';
+        if (($parts['scheme'] ?? null) !== 'https'
+            || ($parts['host'] ?? null) !== $expectedHost
+            || ! preg_match('#^/SimpleNotificationService-[A-Za-z0-9-]+\\.pem$#', (string) ($parts['path'] ?? ''))
+            || isset($parts['query']) || isset($parts['user']) || isset($parts['pass'])) {
+            throw ValidationException::withMessages(['webhook' => 'The SNS signing certificate URL is not trusted.']);
+        }
+
+        return Cache::remember('payments:bkash:sns-cert:'.hash('sha256', $url), now()->addDay(), function () use ($url) {
+            $certificate = Http::timeout(10)->get($url)->throw()->body();
+            if (! str_contains($certificate, 'BEGIN CERTIFICATE')) {
+                throw new RuntimeException('The SNS signing certificate response was invalid.');
+            }
+
+            return $certificate;
+        });
+    }
+
     private function providerPost(string $path, array $payload): array
     {
         $response = $this->api($this->configuration())->post($path, $payload)->throw();
