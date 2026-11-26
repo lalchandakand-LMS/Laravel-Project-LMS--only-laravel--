@@ -13,7 +13,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class StudentFeeController extends Controller
 {
