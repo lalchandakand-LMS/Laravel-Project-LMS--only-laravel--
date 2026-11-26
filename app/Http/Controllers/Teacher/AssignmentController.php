@@ -8,6 +8,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class AssignmentController extends Controller
 {
@@ -60,14 +61,26 @@ class AssignmentController extends Controller
         $this->authorizeCourse($course);
         $this->assertLessonBelongsToCourse($data);
 
+        $storedAttachment = null;
         if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
+            $storedAttachment = $request->file('attachment')->store('assignments/resources', 'local');
+            if (! $storedAttachment) {
+                throw ValidationException::withMessages(['attachment' => 'The uploaded resource could not be stored.']);
+            }
+            $data['attachment'] = $storedAttachment;
         } elseif ($request->filled('resource_url')) {
             $data['attachment'] = $data['resource_url'];
         }
         unset($data['resource_url']);
 
-        Assignment::create($data);
+        try {
+            Assignment::create($data);
+        } catch (\Throwable $exception) {
+            if ($storedAttachment) {
+                Storage::disk('local')->delete($storedAttachment);
+            }
+            throw $exception;
+        }
 
         return redirect()->route('teacher.assignments.index')->with('success', 'Assignment created.');
     }
@@ -92,8 +105,13 @@ class AssignmentController extends Controller
 
         $oldAttachment = $assignment->attachment;
         $replaceAttachment = false;
+        $newAttachment = null;
         if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('assignments/resources', 'local');
+            $newAttachment = $request->file('attachment')->store('assignments/resources', 'local');
+            if (! $newAttachment) {
+                throw ValidationException::withMessages(['attachment' => 'The uploaded resource could not be stored. The previous file has been kept.']);
+            }
+            $data['attachment'] = $newAttachment;
             $replaceAttachment = true;
         } elseif ($request->filled('resource_url')) {
             $data['attachment'] = $data['resource_url'];
@@ -103,7 +121,15 @@ class AssignmentController extends Controller
         }
         unset($data['resource_url']);
 
-        $assignment->update($data);
+        try {
+            $assignment->update($data);
+        } catch (\Throwable $exception) {
+            if ($newAttachment) {
+                Storage::disk('local')->delete($newAttachment);
+            }
+            throw $exception;
+        }
+
         if ($replaceAttachment) {
             delete_stored_media('local', $oldAttachment);
         }
