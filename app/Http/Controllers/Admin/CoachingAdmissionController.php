@@ -76,10 +76,8 @@ class CoachingAdmissionController extends Controller
             ], fn ($value) => $value !== null && $value !== ''))->save();
 
             $admission->documents()->get()->each(function ($document) use ($studentProfile) {
-                $document->update([
-                    'documentable_type' => $studentProfile->getMorphClass(),
-                    'documentable_id' => $studentProfile->getKey(),
-                ]);
+                $document->documentable()->associate($studentProfile);
+                $document->save();
             });
 
             if ($admission->guardian_email && $admission->guardian_email !== $admission->student_email) {
