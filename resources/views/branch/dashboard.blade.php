@@ -4,7 +4,7 @@
 @section('content')
 @include('partials.dashboard-banner')
 @include('partials.phone-verification')@include('partials.dashboard-banner')
-<div class="mb-5"><a href="{{ route('branch.id-card') }}" class="inline-flex rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-700">Branch manager ID card</a></div>
+@if(auth()->user()->isBranchManager())<div class="mb-5"><a href="{{ route('branch.id-card') }}" class="inline-flex rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-700">Branch manager ID card</a></div>@endif
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 <p class="-mt-2 mb-4 text-sm text-slate-600">
