@@ -77,6 +77,7 @@ class IdentityAndPayrollReportsTest extends TestCase
     {
         $student = User::factory()->create([
             'role' => 'student',
+            'is_active' => true,
             'phone' => '01712345678',
             'phone_verified_at' => now(),
         ]);
