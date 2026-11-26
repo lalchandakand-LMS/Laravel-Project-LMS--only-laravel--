@@ -71,6 +71,8 @@ class CourseController extends Controller
 
         $course->load(['sections.lessons', 'instructor', 'category', 'categories', 'liveClasses']);
 
+        $user = $request->user();
+
         // Count one course detail view per browser session per course per day.
         // The session identifier is HMACed so raw session IDs are never stored.
         $visitorKey = hash_hmac('sha256', (string) $request->session()->getId(), (string) config('app.key'));
@@ -82,7 +84,6 @@ class CourseController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $user = $request->user();
         $enrolled = $user && $user->hasCourse($course);
 
         return view('courses.show', [
