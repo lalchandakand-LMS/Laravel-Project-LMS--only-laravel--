@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class LessonController extends Controller
 {
@@ -30,7 +31,14 @@ class LessonController extends Controller
         $this->authorizeCourse($course);
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data);
-        Lesson::create($data);
+        try {
+            Lesson::create($data);
+        } catch (\Throwable $exception) {
+            if ($request->hasFile('attachment') && ! empty($data['attachment'])) {
+                delete_stored_media('local', $data['attachment']);
+            }
+            throw $exception;
+        }
 
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Lesson added.');
     }
@@ -54,7 +62,14 @@ class LessonController extends Controller
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data, $lesson);
         $oldAttachment = $lesson->attachment;
-        $lesson->update($data);
+        try {
+            $lesson->update($data);
+        } catch (\Throwable $exception) {
+            if ($request->hasFile('attachment') && ! empty($data['attachment'])) {
+                delete_stored_media('local', $data['attachment']);
+            }
+            throw $exception;
+        }
         if (isset($data['attachment']) && $data['attachment'] !== $oldAttachment) {
             delete_stored_media('local', $oldAttachment);
         }
@@ -149,6 +164,9 @@ class LessonController extends Controller
 
         if ($request->hasFile('attachment')) {
             $data['attachment'] = $request->file('attachment')->store('lessons', 'local');
+            if (! $data['attachment']) {
+                throw ValidationException::withMessages(['attachment' => 'The lesson attachment could not be stored.']);
+            }
         } elseif ($request->filled('attachment_url')) {
             $data['attachment'] = $data['attachment_url'];
         }
