@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\MarketingPopup;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\MarketingPopup;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MarketingPopupController extends Controller
 {
@@ -56,12 +56,12 @@ class MarketingPopupController extends Controller
 
     private function validated(Request $request): array
     {
-        $safeUrl = function (string $attribute, mixed $value, \\Closure $fail): void {
+        $safeUrl = function (string $attribute, mixed $value, \Closure $fail): void {
             if (blank($value)) return;
             $url = trim((string) $value);
             if (str_starts_with($url, '/') && ! str_starts_with($url, '//')
-                && ! str_contains($url, '\\\\') && ! str_contains($url, '#')
-                && preg_match('/[\\x00-\\x20]/', $url) !== 1) return;
+                && ! str_contains($url, '\\') && ! str_contains($url, '#')
+                && preg_match('/[\x00-\x20]/', $url) !== 1) return;
             $parts = parse_url($url);
             if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
                 || blank($parts['host'] ?? null) || isset($parts['user']) || isset($parts['pass']) || isset($parts['fragment'])) {
