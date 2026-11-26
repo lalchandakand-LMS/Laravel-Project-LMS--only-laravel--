@@ -44,7 +44,7 @@ class MediaUploadAndUrlFallbackTest extends TestCase
                 'language' => 'Bangla',
                 'thumbnail_url' => 'https://cdn.example.com/course-cover.webp',
             ])
-            ->assertRedirect(route('admin.courses.edit', $course->id));
+            ->assertRedirect(route('admin.courses.edit', $course));
 
         $this->assertSame('https://cdn.example.com/course-cover.webp', $course->fresh()->thumbnail);
         $this->assertSame('https://cdn.example.com/course-cover.webp', $course->fresh()->thumbnail_url);
