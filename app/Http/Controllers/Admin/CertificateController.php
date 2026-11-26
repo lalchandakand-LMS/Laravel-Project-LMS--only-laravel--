@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
+use App\Models\Course;
+use App\Models\User;
+use App\Services\EnrollmentEligibility;
 use Illuminate\Http\Request;
 
 class CertificateController extends Controller
