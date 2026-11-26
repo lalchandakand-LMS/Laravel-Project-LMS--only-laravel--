@@ -123,7 +123,11 @@ class DashboardController extends Controller
             $data['phone_verified_at'] = null;
         }
 
+        $phoneChanged = array_key_exists('phone', $data) && $data['phone'] !== $oldPhone;
         $user->update($data);
+        if ($phoneChanged) {
+            $user->forceFill(['phone_verified_at' => null])->save();
+        }
         if ($replaceAvatar) {
             delete_stored_media('public', $oldAvatar);
         }
