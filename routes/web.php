@@ -238,6 +238,11 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::delete('students/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/export', [Admin\OrderController::class, 'export'])->name('orders.export');
+        Route::get('orders/create', [Admin\OrderController::class, 'create'])->name('orders.create');
+        Route::post('orders', [Admin\OrderController::class, 'store'])->name('orders.store');
+        Route::get('orders/{order:order_no}/edit', [Admin\OrderController::class, 'edit'])->name('orders.edit');
+        Route::put('orders/{order:order_no}', [Admin\OrderController::class, 'update'])->name('orders.update');
         Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{order:order_no}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::post('payments/{payment}/verify', [Admin\OrderController::class, 'verifyPayment'])->name('payments.verify');

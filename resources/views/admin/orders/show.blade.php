@@ -87,7 +87,10 @@
     </div>
 
     <div class="space-y-6">
-        <div class="flex justify-end">
+        <div class="flex flex-wrap justify-end gap-2">
+            @if (!$order->payments()->exists())
+                <a href="{{ route('admin.orders.edit', $order->order_no) }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">Edit customer details</a>
+            @endif
             <a href="{{ route('orders.receipt', $order->order_no) }}" target="_blank" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-emerald-700">View receipt</a>
         </div>
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
