@@ -47,7 +47,9 @@ class SettingController extends Controller
             'youtube' => ['sometimes', 'nullable', 'url', 'max:2048'],
             'instagram' => ['sometimes', 'nullable', 'url', 'max:2048'],
             'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logo_url' => ['sometimes', 'nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'dashboard_banner' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'dashboard_banner_url' => ['sometimes', 'nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'dashboard_banner_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'dashboard_banner_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
             'dashboard_banner_button_text' => ['sometimes', 'nullable', 'string', 'max:60'],
@@ -115,6 +117,16 @@ class SettingController extends Controller
                     if ($oldPath && $oldPath !== $newPath) {
                         Storage::disk('public')->delete($oldPath);
                     }
+                }
+            }
+        }
+
+        foreach (['logo_url' => 'logo', 'dashboard_banner_url' => 'dashboard_banner'] as $field => $key) {
+            if (! $request->hasFile($key) && $request->filled($field)) {
+                $oldPath = Setting::get($key);
+                Setting::set($key, $request->input($field));
+                if ($oldPath && ! str_starts_with($oldPath, 'https://') && $oldPath !== $request->input($field)) {
+                    Storage::disk('public')->delete($oldPath);
                 }
             }
         }
