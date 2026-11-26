@@ -10,6 +10,8 @@ use App\Models\Enrollment;
 use App\Models\EnrollmentHistory;
 use App\Models\OnlineBatchEnrollment;
 use App\Models\CoachingEnrollment;
+use App\Models\OnlineBatchApplication;
+use App\Models\CoachingAdmission;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -76,8 +78,8 @@ class EnrollmentController extends Controller
             'enrollments' => $enrollments,
             'onlineEnrollments' => $onlineEnrollments,
             'coachingEnrollments' => $coachingEnrollments,
-            'onlinePending' => \\App\\Models\\OnlineBatchApplication::where('status', 'pending')->count(),
-            'coachingPending' => \\App\\Models\\CoachingAdmission::where('status', 'pending')->count(),
+            'onlinePending' => OnlineBatchApplication::where('status', 'pending')->count(),
+            'coachingPending' => CoachingAdmission::where('status', 'pending')->count(),
             'courses' => Course::orderBy('title')->get(['id', 'title']),
             'students' => User::where('role', 'student')->orderBy('name')->get(['id', 'name', 'email', 'branch_id']),
             'batches' => Batch::with('course')->whereNotIn('status', ['cancelled'])->orderBy('name')->get(),
@@ -257,7 +259,9 @@ class EnrollmentController extends Controller
             })
             ->when($request->filled('status'), fn (Builder $query) => $query->where('status', $request->input('status')))
             ->when($request->filled('course_id'), fn (Builder $query) => $query->where('course_id', $request->integer('course_id')))
-            ->when($request->filled('branch_id'), fn (Builder $query) => $query->whereHas('batch', fn ($batch) => $batch->where('branch_id', $request->integer('branch_id'))))
+            ->when($request->filled('branch_id'), fn (Builder $query) => $query->where(fn (Builder $branchQuery) => $branchQuery
+                ->whereHas('batch', fn ($batch) => $batch->where('branch_id', $request->integer('branch_id')))
+                ->orWhereHas('student', fn ($student) => $student->where('branch_id', $request->integer('branch_id')))))
             ->when($request->filled('from'), fn (Builder $query) => $query->whereDate('admitted_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn (Builder $query) => $query->whereDate('admitted_at', '<=', $request->date('to')))
             ->latest('admitted_at')->latest('id');
