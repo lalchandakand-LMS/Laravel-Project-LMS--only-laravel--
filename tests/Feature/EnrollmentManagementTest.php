@@ -3,6 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Batch;
+use App\Models\Branch;
+use App\Models\CoachingAdmission;
+use App\Models\CoachingBatch;
+use App\Models\CoachingEnrollment;
+use App\Models\OnlineBatchApplication;
+use App\Models\OnlineBatchEnrollment;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
@@ -162,5 +168,88 @@ class EnrollmentManagementTest extends TestCase
         ])->assertStatus(422);
 
         $this->assertDatabaseMissing('enrollments', ['user_id' => $student->id, 'course_id' => $course->id]);
+    }
+
+    public function test_admin_enrollment_dashboard_unifies_course_online_and_physical_coaching_access_without_merging_records(): void
+    {
+        $admin = $this->admin();
+        $course = $this->course();
+        $onlineStudent = $this->student();
+        $coachingStudent = $this->student();
+        $branch = Branch::create(['name' => 'Dhaka Branch', 'code' => 'DHK', 'is_active' => true]);
+
+        $onlineBatch = Batch::create([
+            'course_id' => $course->id,
+            'branch_id' => $branch->id,
+            'name' => 'Online Evening',
+            'code' => 'ONL-EVE',
+            'status' => 'ongoing',
+        ]);
+        $onlineApplication = OnlineBatchApplication::create([
+            'student_id' => $onlineStudent->id,
+            'batch_id' => $onlineBatch->id,
+            'course_id' => $course->id,
+            'status' => 'approved',
+        ]);
+        OnlineBatchEnrollment::create([
+            'application_id' => $onlineApplication->id,
+            'student_id' => $onlineStudent->id,
+            'batch_id' => $onlineBatch->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'admitted_at' => now(),
+        ]);
+
+        $coachingBatch = CoachingBatch::create([
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'name' => 'Physical Morning',
+            'code' => 'PHY-MORN',
+            'admission_fee' => 500,
+            'monthly_fee' => 1500,
+            'status' => 'ongoing',
+        ]);
+        $admission = CoachingAdmission::create([
+            'student_name' => $coachingStudent->name,
+            'student_email' => $coachingStudent->email,
+            'student_phone' => '01700000000',
+            'branch_id' => $branch->id,
+            'course_id' => $course->id,
+            'coaching_batch_id' => $coachingBatch->id,
+            'student_id' => $coachingStudent->id,
+            'status' => 'admitted',
+            'admitted_at' => now(),
+        ]);
+        CoachingEnrollment::create([
+            'coaching_admission_id' => $admission->id,
+            'student_id' => $coachingStudent->id,
+            'coaching_batch_id' => $coachingBatch->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'admitted_at' => now(),
+        ]);
+
+        Enrollment::create([
+            'user_id' => $onlineStudent->id,
+            'course_id' => $course->id,
+            'price_paid' => 1500,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.enrollments.index'));
+        $response->assertOk()
+            ->assertSee('All learning enrollments')
+            ->assertSee('Online batch enrollments')
+            ->assertSee('Physical coaching enrollments')
+            ->assertSee('Online Evening')
+            ->assertSee('Physical Morning')
+            ->assertSee('3');
+
+        $this->actingAs($admin)->get(route('admin.enrollments.index', ['type' => 'online_batch']))
+            ->assertOk()
+            ->assertSee('Online Evening')
+            ->assertDontSee('Physical Morning')
+            ->assertDontSee('Manual enrollment');
     }
 }

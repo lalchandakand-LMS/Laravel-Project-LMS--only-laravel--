@@ -3,10 +3,16 @@
 @section('heading', 'Enrollment Management')
 @section('content')
 <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-    @foreach ([['Total enrollments', $stats['total']], ['Active', $stats['active']], ['Completed', $stats['completed']], ['Suspended', $stats['suspended']]] as [$label, $value])
+    @foreach ([['All learning enrollments', $stats['total']], ['Active access', $stats['active']], ['Online batch', $stats['online']], ['Physical coaching', $stats['coaching']]] as [$label, $value])
         <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</p><p class="mt-1 text-2xl font-extrabold text-slate-900">{{ number_format($value) }}</p></div>
     @endforeach
 </div>
+<div class="mb-5 flex flex-wrap gap-2">
+    <a href="{{ route('admin.online-batch-applications.index') }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">Online applications <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">{{ $onlinePending }} pending</span></a>
+    <a href="{{ route('admin.coaching-admissions.index') }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">Coaching admissions <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">{{ $coachingPending }} pending</span></a>
+    <a href="{{ route('admin.coaching-fees.index') }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">Coaching fee ledger</a>
+</div>
+@if (! in_array(request('type'), ['online_batch', 'coaching'], true))
 <div class="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <h2 class="font-bold text-slate-900">Manual enrollment</h2><p class="mb-3 text-xs text-slate-500">Grant or restore course access without creating a payment order.</p>
     <form method="POST" action="{{ route('admin.enrollments.store') }}" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -22,16 +28,19 @@
         <div class="sm:col-span-2 xl:col-span-4"><button class="rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-700">Create manual enrollment</button></div>
     </form>
 </div>
+@endif
 <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <form method="GET" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
         <input name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Student, email or course" class="rounded-lg border border-slate-300 px-3 py-2 text-sm lg:col-span-2">
+        <select name="type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All learning paths</option><option value="course" @selected(($filters['type'] ?? '') === 'course')>Course access</option><option value="online_batch" @selected(($filters['type'] ?? '') === 'online_batch')>Online batch</option><option value="coaching" @selected(($filters['type'] ?? '') === 'coaching')>Physical coaching</option></select>
         <select name="course_id" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All courses</option>@foreach ($courses as $course)<option value="{{ $course->id }}" @selected(($filters['course_id'] ?? '') == $course->id)>{{ $course->title }}</option>@endforeach</select>
         <select name="branch_id" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All branches</option>@foreach ($branches as $branch)<option value="{{ $branch->id }}" @selected(($filters['branch_id'] ?? '') == $branch->id)>{{ $branch->name }}</option>@endforeach</select>
-        <select name="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All statuses</option>@foreach ($statuses as $status)<option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>@endforeach</select>
+        <select name="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">All statuses</option>@foreach ($filterStatuses as $status)<option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>@endforeach</select>
         <div class="flex gap-2"><input type="date" name="from" value="{{ $filters['from'] ?? '' }}" aria-label="From date" class="min-w-0 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm"><input type="date" name="to" value="{{ $filters['to'] ?? '' }}" aria-label="To date" class="min-w-0 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm"></div>
         <div class="flex gap-2 sm:col-span-2 lg:col-span-6"><button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Apply filters</button><a href="{{ route('admin.enrollments.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Reset</a><a href="{{ route('admin.enrollments.export', request()->query()) }}" class="ml-auto rounded-lg border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700">Export CSV</a></div>
     </form>
 </div>
+@if (! in_array(request('type'), ['online_batch', 'coaching'], true))
 <form method="POST" action="{{ route('admin.enrollments.bulk-update') }}" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
     @csrf
     <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3"><span class="mr-auto text-sm font-bold text-slate-800">Enrollment records</span><select name="status" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">Bulk change status…</option>@foreach ($statuses as $status)<option value="{{ $status }}">{{ ucfirst($status) }}</option>@endforeach</select><button class="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-white" onclick="return confirm('Apply status to selected enrollments?')">Apply to selected</button></div>
@@ -51,5 +60,27 @@
         @empty<tr><td colspan="8" class="px-4 py-12 text-center text-slate-500">No enrollments match your filters.</td></tr>@endforelse
         </tbody></table></div>
     <div class="border-t border-slate-200 p-4">{{ $enrollments->links() }}</div>
+
 </form>
+@endif
+
+@if (! in_array(request('type'), ['course', 'coaching'], true))
+<section class="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 p-4"><div><h2 class="font-bold text-slate-900">Online batch enrollments</h2><p class="text-xs text-slate-500">Approved online live-class batch access. Separate from course purchase access.</p></div><a href="{{ route('admin.online-batch-applications.index') }}" class="text-sm font-semibold text-orange-700">Manage applications</a></div>
+    <div class="overflow-x-auto"><table class="w-full min-w-[760px] text-sm"><thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th class="px-4 py-3">Student</th><th class="px-4 py-3">Course / Online batch</th><th class="px-4 py-3">Branch</th><th class="px-4 py-3">Admitted</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Action</th></tr></thead><tbody class="divide-y divide-slate-100">
+    @forelse ($onlineEnrollments as $record)<tr><td class="px-4 py-3"><a href="{{ route('admin.users.show', $record->student) }}" class="font-semibold text-slate-900">{{ $record->student?->name }}</a><p class="text-xs text-slate-500">{{ $record->student?->email }}</p></td><td class="px-4 py-3"><p class="font-semibold">{{ $record->course?->title }}</p><p class="text-xs text-slate-500">{{ $record->batch?->name }}</p></td><td class="px-4 py-3">{{ $record->batch?->branch?->name ?? $record->student?->branch?->name ?? '—' }}</td><td class="px-4 py-3">{{ $record->admitted_at?->format('d M Y') ?? '—' }}</td><td class="px-4 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">{{ ucfirst($record->status) }}</span></td><td class="px-4 py-3"><a href="{{ route('admin.online-batch-applications.index') }}" class="font-semibold text-orange-700">Application queue</a></td></tr>
+    @empty<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No online batch enrollments match these filters.</td></tr>@endforelse
+    </tbody></table></div><div class="border-t border-slate-200 p-4">{{ $onlineEnrollments->links() }}</div>
+</section>
+@endif
+
+@if (! in_array(request('type'), ['course', 'online_batch'], true))
+<section class="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 p-4"><div><h2 class="font-bold text-slate-900">Physical coaching enrollments</h2><p class="text-xs text-slate-500">Branch-based coaching access activated after admission requirements and fees.</p></div><a href="{{ route('admin.coaching-admissions.index') }}" class="text-sm font-semibold text-orange-700">Manage admissions</a></div>
+    <div class="overflow-x-auto"><table class="w-full min-w-[760px] text-sm"><thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th class="px-4 py-3">Student</th><th class="px-4 py-3">Course / Coaching batch</th><th class="px-4 py-3">Branch</th><th class="px-4 py-3">Admitted</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Action</th></tr></thead><tbody class="divide-y divide-slate-100">
+    @forelse ($coachingEnrollments as $record)<tr><td class="px-4 py-3"><a href="{{ route('admin.users.show', $record->student) }}" class="font-semibold text-slate-900">{{ $record->student?->name }}</a><p class="text-xs text-slate-500">{{ $record->student?->email }}</p></td><td class="px-4 py-3"><p class="font-semibold">{{ $record->course?->title }}</p><p class="text-xs text-slate-500">{{ $record->batch?->name }}</p></td><td class="px-4 py-3">{{ $record->batch?->branch?->name ?? '—' }}</td><td class="px-4 py-3">{{ $record->admitted_at?->format('d M Y') ?? '—' }}</td><td class="px-4 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">{{ ucfirst($record->status) }}</span></td><td class="px-4 py-3"><div class="flex flex-col gap-1"><a href="{{ route('admin.coaching-admissions.index') }}" class="font-semibold text-orange-700">Admission records</a><a href="{{ route('admin.coaching-fees.index') }}" class="text-xs font-semibold text-slate-600">Fee ledger</a></div></td></tr>
+    @empty<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No physical coaching enrollments match these filters.</td></tr>@endforelse
+    </tbody></table></div><div class="border-t border-slate-200 p-4">{{ $coachingEnrollments->links() }}</div>
+</section>
+@endif
 @endsection
