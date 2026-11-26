@@ -37,8 +37,10 @@
                         <p class="mt-1 text-xs text-slate-500">Add the values supplied by your payment provider when you receive API access.</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        @if ($provider['saved'])
-                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">Credentials saved</span>
+                        @if ($provider['ready'] ?? false)
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">Sandbox credentials complete</span>
+                        @elseif ($provider['saved'])
+                            <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Credentials incomplete</span>
                         @else
                             <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">Awaiting API details</span>
                         @endif
