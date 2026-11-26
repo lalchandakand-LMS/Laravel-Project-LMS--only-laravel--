@@ -20,6 +20,7 @@
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <form method="GET" class="flex flex-wrap items-end gap-3 border-b p-4">
+            <a href="{{ route('admin.staff-attendance.index') }}" class="rounded-lg border px-3 py-2 text-sm font-semibold">Staff Attendance</a>
             <div><label class="mb-1 block text-xs font-semibold">Month</label><input type="month" name="month" value="{{ request('month') }}" class="rounded-lg border px-3 py-2 text-sm"></div>
             <div><label class="mb-1 block text-xs font-semibold">Status</label><select name="status" class="rounded-lg border px-3 py-2 text-sm"><option value="">All</option>@foreach (['draft','approved','paid'] as $status)<option value="{{ $status }}" @selected(request('status')===$status)>{{ ucfirst($status) }}</option>@endforeach</select></div>
             <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Filter</button>
