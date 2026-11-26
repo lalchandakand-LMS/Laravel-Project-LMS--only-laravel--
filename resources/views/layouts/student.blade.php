@@ -70,7 +70,7 @@
         <nav class="mt-6 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm font-medium">
             @foreach ($nav as [$route, $label, $icon])
                 <a href="{{ route($route) }}"
-                   class="flex items-center gap-3 role-nav-link {{ request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route) ? 'bg-blue-500/20 text-white ring-1 ring-orange-300/30' : 'text-slate-300 hover:bg-white/10' }}">
+                   class="role-nav-link" @if(request()->routeIs(str_replace('.index','.*',$route)) || request()->routeIs($route)) aria-current="page" @endif>
                     <span>{{ $icon }}</span> {{ $label }}
                 </a>
             @endforeach
