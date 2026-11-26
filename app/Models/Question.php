@@ -13,4 +13,5 @@ class Question extends Model
     public function exam()    { return $this->belongsTo(Exam::class); }
     public function options() { return $this->hasMany(Option::class)->orderBy('position'); }
     public function correctOption() { return $this->hasOne(Option::class)->where('is_correct', true); }
+    public function answers() { return $this->hasMany(AttemptAnswer::class); }
 }

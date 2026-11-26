@@ -30,6 +30,11 @@
             <input type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes ?? 30) }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
         <div>
+            <label class="mb-1 block text-sm font-semibold text-slate-700">Random questions per attempt (0 = all)</label>
+            <input type="number" min="0" name="random_question_count" value="{{ old('random_question_count', $exam->random_question_count ?? 0) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+            <p class="mt-1 text-xs text-slate-500">Each student receives a saved random set from this exam's question pool.</p>
+        </div>
+        <div>
             <label class="mb-1 block text-sm font-semibold text-slate-700">Pass marks</label>
             <input type="number" step="0.01" name="pass_marks" value="{{ old('pass_marks', $exam->pass_marks ?? 0) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>

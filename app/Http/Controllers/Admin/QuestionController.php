@@ -27,6 +27,7 @@ class QuestionController extends Controller
     public function store(Request $request, Exam $exam)
     {
         $this->authorizeExam($exam);
+        abort_if($exam->attempts()->exists(), 409, 'This exam already has student attempts. Duplicate the exam to create a new question version.');
         $this->save($request, $exam);
         $this->syncTotalMarks($exam);
 
@@ -45,6 +46,7 @@ class QuestionController extends Controller
     public function update(Request $request, Question $question)
     {
         $this->authorizeExam($question->exam);
+        abort_if($question->exam->attempts()->exists(), 409, 'Questions are locked after the first student attempt to preserve historical results.');
         $this->save($request, $question->exam, $question);
         $this->syncTotalMarks($question->exam);
 
@@ -54,6 +56,7 @@ class QuestionController extends Controller
     public function destroy(Question $question)
     {
         $this->authorizeExam($question->exam);
+        abort_if($question->exam->attempts()->exists(), 409, 'Questions cannot be deleted after student attempts exist. Duplicate the exam to make changes.');
         $exam = $question->exam;
         $question->delete();
         $this->syncTotalMarks($exam);
@@ -89,10 +92,24 @@ class QuestionController extends Controller
             'position' => $data['position'] ?? 0,
         ])->save();
 
+        $rawOptions = $data['options'] ?? [];
+        $optionKeys = array_keys(array_filter($rawOptions, fn ($value) => filled($value)));
+        $options = array_values(array_intersect_key($rawOptions, array_flip($optionKeys)));
+
         if ($data['type'] === 'mcq') {
+            validator([
+                'options' => $options,
+                'correct' => $data['correct'] ?? null,
+            ], [
+                'options' => 'required|array|min:2|max:10',
+                'correct' => 'required|integer|min:0',
+            ])->validate();
+
+            $correct = array_search((int) $data['correct'], $optionKeys, true);
+            abort_if($correct === false, 422, 'Select a valid correct option.');
+
             $question->options()->delete();
-            $correct = (int) ($data['correct'] ?? 0);
-            foreach (array_values(array_filter($data['options'] ?? [], fn ($o) => filled($o))) as $i => $text) {
+            foreach ($options as $i => $text) {
                 Option::create([
                     'question_id' => $question->id,
                     'option_text' => $text,
@@ -100,6 +117,8 @@ class QuestionController extends Controller
                     'position' => $i,
                 ]);
             }
+        } else {
+            $question->options()->delete();
         }
     }
 

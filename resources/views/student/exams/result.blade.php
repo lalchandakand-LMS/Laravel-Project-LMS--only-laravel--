@@ -12,14 +12,18 @@
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900">{{ $exam->title }}</h1>
                 <p class="text-sm text-slate-600">{{ optional($exam->course)->title }} · submitted {{ optional($attempt->submitted_at)->format('d M Y, h:i A') }}</p>
-                <p class="mt-2 inline-block rounded-full px-3 py-1 text-xs font-bold {{ $passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                    {{ $passed ? 'PASSED' : 'FAILED' }} · pass marks {{ $exam->pass_marks }}
-                </p>
+                @if($manualPending)
+                    <p class="mt-2 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">AWAITING MANUAL REVIEW · provisional MCQ score</p>
+                @else
+                    <p class="mt-2 inline-block rounded-full px-3 py-1 text-xs font-bold {{ $passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                        {{ $passed ? 'PASSED' : 'FAILED' }} · pass marks {{ $attempt->passMarksRequired() }}
+                    </p>
+                @endif
             </div>
             <a href="{{ route('student.exams.show', $exam) }}" class="ml-auto rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Back to exam</a>
         </div>
         <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            @foreach ([['Score', $attempt->score], ['Correct', $attempt->correct_count], ['Wrong', $attempt->wrong_count], ['Total marks', $exam->total_marks]] as [$l, $v])
+            @foreach ([['Score', $attempt->score], ['Correct', $attempt->correct_count], ['Wrong', $attempt->wrong_count], ['Total marks', $attempt->max_score ?? $exam->total_marks]] as [$l, $v])
                 <div class="rounded-xl bg-slate-50 p-3 text-center">
                     <p class="text-lg font-extrabold text-slate-900">{{ $v }}</p>
                     <p class="text-xs text-slate-500">{{ $l }}</p>
@@ -28,8 +32,12 @@
         </div>
     </div>
 
+    @if($attempt->manual_feedback)
+        <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900"><strong>Teacher feedback:</strong> {{ $attempt->manual_feedback }}</div>
+    @endif
+
     <div class="space-y-3">
-        @foreach ($exam->questions()->with('options')->get() as $i => $question)
+        @foreach ($attempt->questions as $i => $question)
             @php($answer = $answers[$question->id] ?? null)
             @php($correct = $question->options->firstWhere('is_correct', true))
             <div class="rounded-2xl border {{ $answer && $answer->is_correct ? 'border-emerald-200' : 'border-slate-200' }} bg-white p-5 shadow-sm">
@@ -50,7 +58,7 @@
                 @if ($question->explanation)
                     <p class="mt-3 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800"><b>Explanation:</b> {{ $question->explanation }}</p>
                 @endif
-                <p class="mt-2 text-xs font-semibold text-slate-500">Marks awarded: {{ $answer->marks_awarded ?? 0 }} / {{ $question->marks }}</p>
+                <p class="mt-2 text-xs font-semibold text-slate-500">Marks awarded: {{ $answer->marks_awarded ?? 0 }} / {{ $question->marks }} @if(in_array($question->type, ['cq','short'], true) && $manualPending)<span class="text-amber-700">· awaiting teacher review</span>@endif</p>
             </div>
         @endforeach
     </div>

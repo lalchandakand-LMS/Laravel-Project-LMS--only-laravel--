@@ -268,6 +268,22 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::put('questions/{question}', [Admin\QuestionController::class, 'update'])->name('questions.update');
     Route::delete('questions/{question}', [Admin\QuestionController::class, 'destroy'])->name('questions.destroy');
 
+    Route::get('exams/{exam}/results', [Admin\ExamResultController::class, 'index'])->name('exams.results.index');
+    Route::get('exams/{exam}/results/{attempt}', [Admin\ExamResultController::class, 'show'])->name('exams.results.show');
+    Route::post('exams/{exam}/results/{attempt}/grade', [Admin\ExamResultController::class, 'grade'])->name('exams.results.grade');
+    Route::get('exams/{exam}/analytics', [Admin\ExamResultController::class, 'analytics'])->name('exams.analytics');
+
+    Route::middleware('role:admin')->prefix('question-bank')->name('question-bank.')->group(function () {
+        Route::get('/', [Admin\QuestionBankController::class, 'index'])->name('index');
+        Route::post('/', [Admin\QuestionBankController::class, 'store'])->name('store');
+        Route::get('/{item}/edit', [Admin\QuestionBankController::class, 'edit'])->name('edit');
+        Route::put('/{item}', [Admin\QuestionBankController::class, 'update'])->name('update');
+        Route::delete('/{item}', [Admin\QuestionBankController::class, 'destroy'])->name('destroy');
+        Route::post('/import', [Admin\QuestionBankController::class, 'import'])->name('import');
+        Route::get('/template', [Admin\QuestionBankController::class, 'template'])->name('template');
+        Route::post('/attach/{exam}', [Admin\QuestionBankController::class, 'attach'])->name('attach');
+    });
+
     Route::resource('live-classes', Admin\LiveClassController::class)->except('show')
         ->parameters(['live-classes' => 'liveClass']);
 });

@@ -46,13 +46,14 @@ class ExamController extends Controller
     public function update(Request $request, Exam $exam)
     {
         $this->authorizeExam($exam);
-        $exam->update($this->validated($request));
+        $exam->update($this->validated($request, $exam));
         return redirect()->route('admin.exams.index')->with('success', 'Exam updated.');
     }
 
     public function destroy(Exam $exam)
     {
         $this->authorizeExam($exam);
+        abort_if($exam->attempts()->exists(), 409, 'This exam has student attempt history and cannot be deleted.');
         $exam->delete();
         return redirect()->route('admin.exams.index')->with('success', 'Exam deleted.');
     }
@@ -70,7 +71,7 @@ class ExamController extends Controller
             ->orderBy('title')->get();
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Exam $exam = null): array
     {
         $data = $request->validate([
             'title' => 'required|string|max:180',
@@ -80,6 +81,7 @@ class ExamController extends Controller
             'pass_marks' => 'nullable|numeric|min:0',
             'negative_marking' => 'nullable|numeric|min:0',
             'attempt_limit' => 'nullable|integer|min:0',
+            'random_question_count' => 'nullable|integer|min:0',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
@@ -91,10 +93,11 @@ class ExamController extends Controller
         $data['is_published'] = $request->boolean('is_published');
         $data['is_free'] = $request->boolean('is_free');
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
-        $data['total_marks'] = (float) $request->input('total_marks', 0);
+        $data['total_marks'] = (float) $request->input('total_marks', $exam?->total_marks ?? 0);
         $data['pass_marks'] = $data['pass_marks'] ?? 0;
         $data['negative_marking'] = $data['negative_marking'] ?? 0;
         $data['attempt_limit'] = $data['attempt_limit'] ?? 0;
+        $data['random_question_count'] = $data['random_question_count'] ?? 0;
 
         return $data;
     }
