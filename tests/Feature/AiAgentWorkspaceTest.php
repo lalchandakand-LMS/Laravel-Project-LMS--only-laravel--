@@ -125,6 +125,11 @@ class AiAgentWorkspaceTest extends TestCase
         $this->assertFalse($assignment->is_published);
         $this->assertSame('executed', $proposal->fresh()->status);
         $this->assertSame($teacher->id, $proposal->fresh()->reviewed_by);
+
+        $this->actingAs($teacher)
+            ->post(route('ai-agent.approve', $proposal))
+            ->assertStatus(409);
+        $this->assertSame(1, Assignment::count());
     }
 
     public function test_teacher_agent_cannot_propose_assignment_for_another_teachers_course(): void
