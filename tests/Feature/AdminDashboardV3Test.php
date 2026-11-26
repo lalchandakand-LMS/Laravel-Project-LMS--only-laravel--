@@ -38,7 +38,7 @@ class AdminDashboardV3Test extends TestCase
     public function test_admin_global_search_returns_students_and_courses_but_is_forbidden_to_students(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
-        $student = User::factory()->create(['role' => 'student', 'name' => 'Searchable Learner', 'email' => 'searchable@example.com']);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true, 'name' => 'Searchable Learner', 'email' => 'searchable@example.com']);
         $course = Course::create([
             'title' => 'Searchable English Course',
             'slug' => 'searchable-english-course',
