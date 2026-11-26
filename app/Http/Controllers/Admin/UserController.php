@@ -138,6 +138,11 @@ class UserController extends Controller
             'permanent_address' => [$student ? 'nullable' : 'prohibited', 'string', 'max:500'],
             'emergency_contact_name' => [$student ? 'nullable' : 'prohibited', 'string', 'max:160'],
             'emergency_contact_phone' => [$student ? 'nullable' : 'prohibited', 'string', 'max:30'],
+            'guardian_name' => [$student ? 'nullable' : 'prohibited', 'string', 'max:160'],
+            'guardian_phone' => [$student ? 'nullable' : 'prohibited', 'string', 'max:30'],
+            'guardian_email' => [$student ? 'nullable' : 'prohibited', 'nullable', 'email', 'max:255'],
+            'quota_type' => [$student ? 'nullable' : 'prohibited', 'string', 'max:80'],
+            'quota_notes' => [$student ? 'nullable' : 'prohibited', 'string', 'max:1000'],
             'student_status' => [$student ? 'nullable' : 'prohibited', Rule::in(['active', 'inactive', 'suspended', 'graduated'])],
 
             'employee_code' => [$staff ? 'nullable' : 'prohibited', 'string', 'max:40', Rule::unique('staff_profiles', 'employee_code')->ignore($user?->staffProfile?->id)],
@@ -202,6 +207,11 @@ class UserController extends Controller
                 'permanent_address' => $data['permanent_address'] ?? null,
                 'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
                 'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                'guardian_name' => $data['guardian_name'] ?? null,
+                'guardian_phone' => $data['guardian_phone'] ?? null,
+                'guardian_email' => $data['guardian_email'] ?? null,
+                'quota_type' => $data['quota_type'] ?? null,
+                'quota_notes' => $data['quota_notes'] ?? null,
                 'status' => $data['student_status'] ?? $user->studentProfile?->status ?? 'active',
             ]);
         }
