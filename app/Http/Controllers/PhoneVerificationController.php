@@ -19,16 +19,17 @@ class PhoneVerificationController extends Controller
         abort_unless($number, 422, 'Enter a valid Bangladesh mobile number before requesting an OTP.');
 
         $key = 'phone-verification:'.$user->getKey();
-        if (Cache::has($key)) {
-            throw ValidationException::withMessages(['otp' => 'An OTP was already sent. Please wait five minutes before requesting another.']);
-        }
-
         $code = (string) random_int(100000, 999999);
-        Cache::put($key, [
+        $expiresAt = now()->addMinutes(5);
+
+        if (! Cache::add($key, [
             'hash' => Hash::make($code),
             'phone' => $number,
             'attempts' => 0,
-        ], now()->addMinutes(5));
+            'expires_at' => $expiresAt->timestamp,
+        ], $expiresAt)) {
+            throw ValidationException::withMessages(['otp' => 'An OTP was already sent. Please wait five minutes before requesting another.']);
+        }
 
         try {
             $gateway->sendTransactional($number, 'Your Alom’s English Center verification code is '.$code.'. It expires in 5 minutes. Do not share this code.');
@@ -53,6 +54,11 @@ class PhoneVerificationController extends Controller
             throw ValidationException::withMessages(['otp' => 'The verification code expired. Request a new code.']);
         }
 
+        if (now()->timestamp > (int) ($challenge['expires_at'] ?? 0)) {
+            Cache::forget($key);
+            throw ValidationException::withMessages(['otp' => 'The verification code expired. Request a new code.']);
+        }
+
         $number = $gateway->normalizeBangladeshNumber($user->phone);
         if (! $number || ! hash_equals((string) $challenge['phone'], $number)) {
             Cache::forget($key);
@@ -66,7 +72,7 @@ class PhoneVerificationController extends Controller
 
         if (! Hash::check($data['otp'], $challenge['hash'])) {
             $challenge['attempts'] = (int) ($challenge['attempts'] ?? 0) + 1;
-            Cache::put($key, $challenge, now()->addMinutes(5));
+            Cache::put($key, $challenge, \Illuminate\Support\Carbon::createFromTimestamp((int) $challenge['expires_at']));
             throw ValidationException::withMessages(['otp' => 'The verification code is incorrect.']);
         }
 
