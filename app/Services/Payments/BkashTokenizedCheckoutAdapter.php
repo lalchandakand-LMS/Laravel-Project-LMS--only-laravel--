@@ -176,13 +176,14 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
 
         if (($parts['scheme'] ?? null) !== 'https'
             || ($parts['host'] ?? null) !== 'sns.'.$region.'.amazonaws.com'
-            || ($parts['path'] ?? '/') !== '/'
+            || ($parts['path'] ?? '/') !== '/' || isset($parts['port']) && (int) $parts['port'] !== 443
             || ($query['Action'] ?? null) !== 'ConfirmSubscription'
-            || ($query['TopicArn'] ?? null) !== $topic) {
+            || ($query['TopicArn'] ?? null) !== $topic
+            || blank($query['Token'] ?? null)) {
             throw ValidationException::withMessages(['webhook' => 'The SNS subscription confirmation URL is not trusted.']);
         }
 
-        Http::timeout(10)->get($url)->throw();
+        Http::timeout(10)->withOptions(['allow_redirects' => false])->get($url)->throw();
     }
 
     /** Search by bKash transaction ID after a signed webhook notification. */
@@ -227,14 +228,23 @@ class BkashTokenizedCheckoutAdapter implements PaymentGatewayAdapter
         if (($parts['scheme'] ?? null) !== 'https'
             || ($parts['host'] ?? null) !== $expectedHost
             || ! preg_match('#^/SimpleNotificationService-[A-Za-z0-9-]+\\.pem$#', (string) ($parts['path'] ?? ''))
-            || isset($parts['query']) || isset($parts['user']) || isset($parts['pass'])) {
+            || isset($parts['query']) || isset($parts['user']) || isset($parts['pass'])
+            || isset($parts['port']) && (int) $parts['port'] !== 443
+            || isset($parts['fragment'])) {
             throw ValidationException::withMessages(['webhook' => 'The SNS signing certificate URL is not trusted.']);
         }
 
         return Cache::remember('payments:bkash:sns-cert:'.hash('sha256', $url), now()->addDay(), function () use ($url) {
-            $certificate = Http::timeout(10)->get($url)->throw()->body();
+            $certificate = Http::timeout(10)->withOptions(['allow_redirects' => false])->get($url)->throw()->body();
             if (! str_contains($certificate, 'BEGIN CERTIFICATE')) {
                 throw new RuntimeException('The SNS signing certificate response was invalid.');
+            }
+
+            $details = openssl_x509_parse($certificate);
+            if (! is_array($details)
+                || ($details['validFrom_time_t'] ?? 0) > now()->timestamp
+                || ($details['validTo_time_t'] ?? 0) < now()->timestamp) {
+                throw new RuntimeException('The SNS signing certificate is not currently valid.');
             }
 
             return $certificate;
