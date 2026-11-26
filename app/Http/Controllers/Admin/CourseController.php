@@ -65,6 +65,9 @@ class CourseController extends Controller
         $data = $this->validated($request, $course);
         $categoryIds = $data['category_ids'] ?? [];
         unset($data['category_ids']);
+        if (isset($data['thumbnail']) && $data['thumbnail'] !== $course->thumbnail) {
+            delete_stored_media('public', $course->thumbnail);
+        }
         $course->update($data);
         $course->categories()->sync($categoryIds);
         return redirect()->route('admin.courses.edit', $course)->with('success', 'Course updated.');
@@ -73,6 +76,7 @@ class CourseController extends Controller
     public function destroy(Course $course)
     {
         $this->authorizeOwner($course);
+        delete_stored_media('public', $course->thumbnail);
         $course->delete();
         return redirect()->route('admin.courses.index')->with('success', 'Course deleted.');
     }
