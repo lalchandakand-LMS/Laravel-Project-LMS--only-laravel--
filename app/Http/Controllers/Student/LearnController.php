@@ -117,9 +117,19 @@ class LearnController extends Controller
         $this->guard($course, $lesson);
 
         $user = auth()->user();
-        $course->load(['sections.lessons' => fn ($query) => $query->where('is_published', true), 'announcements', 'instructor']);
         $flat = $this->accessibleLessons($course, $user)->orderBy('position')->get();
         $index = $flat->search(fn ($item) => (int) $item->id === (int) $lesson->id);
+
+        // The sidebar is part of the learning interface: only expose lessons the
+        // current learner can actually open, not merely every published lesson.
+        $accessibleLessonIds = $flat->pluck('id')->all();
+        $course->load([
+            'sections.lessons' => fn ($query) => $query
+                ->where('is_published', true)
+                ->whereIn('id', $accessibleLessonIds),
+            'announcements',
+            'instructor',
+        ]);
 
         $lessonProgress = LessonProgress::firstOrCreate([
             'user_id' => $user->id,
