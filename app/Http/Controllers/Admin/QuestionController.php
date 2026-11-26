@@ -27,6 +27,7 @@ class QuestionController extends Controller
     public function store(Request $request, Exam $exam)
     {
         $this->authorizeExam($exam);
+        abort_if($exam->attempts()->exists(), 409, 'This exam already has student attempts. Duplicate the exam to create a new question version.');
         $this->save($request, $exam);
         $this->syncTotalMarks($exam);
 
@@ -45,6 +46,7 @@ class QuestionController extends Controller
     public function update(Request $request, Question $question)
     {
         $this->authorizeExam($question->exam);
+        abort_if($question->exam->attempts()->exists(), 409, 'Questions are locked after the first student attempt to preserve historical results.');
         $this->save($request, $question->exam, $question);
         $this->syncTotalMarks($question->exam);
 
@@ -54,6 +56,7 @@ class QuestionController extends Controller
     public function destroy(Question $question)
     {
         $this->authorizeExam($question->exam);
+        abort_if($question->exam->attempts()->exists(), 409, 'Questions cannot be deleted after student attempts exist. Duplicate the exam to make changes.');
         $exam = $question->exam;
         $question->delete();
         $this->syncTotalMarks($exam);
