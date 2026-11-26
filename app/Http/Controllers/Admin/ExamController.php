@@ -46,7 +46,7 @@ class ExamController extends Controller
     public function update(Request $request, Exam $exam)
     {
         $this->authorizeExam($exam);
-        $exam->update($this->validated($request));
+        $exam->update($this->validated($request, $exam));
         return redirect()->route('admin.exams.index')->with('success', 'Exam updated.');
     }
 
@@ -71,7 +71,7 @@ class ExamController extends Controller
             ->orderBy('title')->get();
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Exam $exam = null): array
     {
         $data = $request->validate([
             'title' => 'required|string|max:180',
@@ -93,7 +93,7 @@ class ExamController extends Controller
         $data['is_published'] = $request->boolean('is_published');
         $data['is_free'] = $request->boolean('is_free');
         $data['shuffle_questions'] = $request->boolean('shuffle_questions');
-        $data['total_marks'] = (float) $request->input('total_marks', 0);
+        $data['total_marks'] = (float) $request->input('total_marks', $exam?->total_marks ?? 0);
         $data['pass_marks'] = $data['pass_marks'] ?? 0;
         $data['negative_marking'] = $data['negative_marking'] ?? 0;
         $data['attempt_limit'] = $data['attempt_limit'] ?? 0;
