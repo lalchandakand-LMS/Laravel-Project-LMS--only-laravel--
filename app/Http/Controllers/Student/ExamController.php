@@ -89,6 +89,8 @@ class ExamController extends Controller
                 'status' => 'in_progress',
             ]);
 
+        $this->prepareAttemptQuestions($attempt);
+
         return redirect()->route('student.attempts.show', $attempt);
     }
 
@@ -105,7 +107,7 @@ class ExamController extends Controller
             return redirect()->route('student.attempts.result', $attempt)->with('info', 'Time is up — your answers were submitted.');
         }
 
-        $questions = $attempt->exam->questions()->with('options')->get();
+        $questions = $this->attemptQuestions($attempt);
         if ($attempt->exam->shuffle_questions) {
             $questions = $questions->shuffle();
         }
@@ -117,6 +119,38 @@ class ExamController extends Controller
             'saved' => $attempt->answers()->get()->keyBy('question_id'),
             'remaining' => $attempt->remainingSeconds(),
         ]);
+    }
+
+
+    /**
+     * Snapshot a randomized question set on first attempt access. The same
+     * question order is reused for refreshes, autosaves and grading.
+     */
+    private function prepareAttemptQuestions(ExamAttempt $attempt): void
+    {
+        if ($attempt->questions()->exists()) {
+            return;
+        }
+
+        $pool = $attempt->exam->questions()->pluck('questions.id');
+        $count = (int) $attempt->exam->random_question_count;
+        if ($count > 0) {
+            abort_if($pool->count() < $count, 422, 'This exam does not have enough questions for its configured random set.');
+            $pool = $pool->shuffle()->take($count)->values();
+        }
+
+        $sync = [];
+        foreach ($pool as $position => $questionId) {
+            $sync[$questionId] = ['position' => $position];
+        }
+        $attempt->questions()->sync($sync);
+    }
+
+    private function attemptQuestions(ExamAttempt $attempt)
+    {
+        $this->prepareAttemptQuestions($attempt);
+
+        return $attempt->questions()->with('options')->get();
     }
 
     /** Store the answer sheet (called via fetch on autosave / final submit). */
@@ -136,7 +170,7 @@ class ExamController extends Controller
         }
 
         $answers = (array) $request->input('answers', []);
-        foreach ($attempt->exam->questions as $question) {
+        foreach ($this->attemptQuestions($attempt) as $question) {
             $value = $answers[$question->id] ?? null;
             if ($value === null || $value === '') {
                 continue;
@@ -225,7 +259,7 @@ class ExamController extends Controller
         $correct = 0;
         $wrong = 0;
 
-        foreach ($attempt->exam->questions()->with('options')->get() as $question) {
+        foreach ($this->attemptQuestions($attempt) as $question) {
             $answer = $attempt->answers()->where('question_id', $question->id)->first();
 
             if ($question->type === 'mcq') {
