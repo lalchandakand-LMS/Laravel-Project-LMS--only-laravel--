@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 class OnlineBatchApplicationController extends Controller {
  public function index() {
-  abort_unless(auth()->user()->isStudent(),403);
+  $user=auth()->user();
+  abort_unless($user->isStudent(),403);
   $applications=OnlineBatchApplication::with(['batch.course','reviewer'])->where('student_id',auth()->id())->latest()->get();
   $batches=Batch::with('course')
    ->whereIn('status',['upcoming','ongoing'])
@@ -26,8 +27,7 @@ class OnlineBatchApplicationController extends Controller {
   if(!$batch->course?->is_published) {
    throw ValidationException::withMessages(['batch_id'=>'এই ব্যাচের কোর্স বর্তমানে প্রকাশিত নয়।']);
   }
-  if($request->user()->branch_id!==null && $batch->branch_id!==null
-      && (int)$request->user()->branch_id!==(int)$batch->branch_id) {
+  if($batch->branch_id!==null && (int)$request->user()->branch_id!==(int)$batch->branch_id) {
    throw ValidationException::withMessages(['batch_id'=>'আপনার নির্ধারিত শাখার বাইরে থাকা ব্যাচে আবেদন করা যাবে না।']);
   }
   abort_if($batch->capacity&&$batch->activeStudentCount()>=$batch->capacity,422,'এই অনলাইন ব্যাচের আসন পূর্ণ।');
