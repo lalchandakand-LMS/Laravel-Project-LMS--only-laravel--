@@ -133,7 +133,7 @@ class LessonController extends Controller
             'content' => 'nullable|string',
             'duration_minutes' => 'nullable|integer|min:0',
             'position' => 'nullable|integer|min:0',
-            'attachment' => 'nullable|file|mimes:pdf,zip,doc,docx,ppt,pptx|max:20480',
+            'attachment' => 'nullable|file|max:20480',
             'attachment_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'available_at' => 'nullable|date',
             'prerequisite_lesson_id' => 'nullable|integer|exists:lessons,id',
