@@ -2,7 +2,7 @@
 @section('title', $category->exists ? 'Edit category' : 'New category')
 @section('heading', $category->exists ? 'Edit category' : 'New category')
 @section('content')
-<form method="POST" action="{{ $category->exists ? route('admin.categories.update', $category) : route('admin.categories.store') }}"
+<form method="POST" enctype="multipart/form-data" action="{{ $category->exists ? route('admin.categories.update', $category) : route('admin.categories.store') }}"
       class="max-w-2xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     @csrf
     @if ($category->exists) @method('PUT') @endif
@@ -25,6 +25,14 @@
             <label class="mb-1 block text-sm font-semibold text-slate-700">Icon (emoji)</label>
             <input name="icon" value="{{ old('icon', $category->icon) }}" placeholder="📘" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
         </div>
+    </div>
+    <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Category image upload</label>
+        <input type="file" name="image" accept="image/png,image/jpeg,image/webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <label class="mb-1 mt-3 block text-sm font-semibold text-slate-700">Or image URL (HTTPS)</label>
+        <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $category->image, 'https://') ? $category->image : '') }}" placeholder="https://example.com/category.webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        @if ($category->image)<img src="{{ $category->imageUrl() }}" alt="Current category image" class="mt-2 h-20 w-32 rounded-lg object-cover">@endif
+        <p class="mt-1 text-xs text-slate-500">Upload takes priority. JPG, PNG or WebP; max 4 MB.</p>
     </div>
     <div>
         <label class="mb-1 block text-sm font-semibold text-slate-700">Description</label>
