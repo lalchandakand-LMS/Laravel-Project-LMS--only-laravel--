@@ -2,7 +2,7 @@
 
 The LMS supports branch-configured manual payment submission and staff verification. The Admin → Payment Methods screen controls global method availability and stores future provider credentials encrypted with Laravel Crypt. Secret values are not rendered back into the form.
 
-When merchant credentials become available, add a provider adapter implementing App\\Contracts\\PaymentGatewayAdapter. The Admin screen currently stores credentials only; selecting Live mode does not activate payment processing:
+When merchant credentials become available, add a provider adapter implementing App\\Contracts\\PaymentGatewayAdapter. The Admin screen stores credentials encrypted and exposes a sandbox readiness state. Live mode remains locked:
 
 - initiate() creates a provider checkout session and returns provider reference / redirect data. It must not fulfill an order.
 - verifyCallback() validates the provider signature and normalizes the callback.
@@ -23,7 +23,7 @@ All provider callbacks must be idempotent. Lock the payment and order rows in a 
 
 ### bKash Checkout v1.2.0-beta — sandbox adapter implemented
 
-The application now contains a sandbox-only `BkashCheckoutAdapter` for the documented Checkout v1.2.0-beta API and a provider callback flow. This is the Checkout product, not the separate Tokenized Checkout v2 Agreement API.
+The application now contains a sandbox-only `BkashCheckoutAdapter` for the documented Checkout v1.2.0-beta API and a provider callback flow. This is the one-time Checkout URL/API v1.2.0-beta product, not the separate Tokenized Checkout v2 Agreement/binding API. Tokenized Checkout v2 is not enabled by this adapter.
 
 - Uses the bKash Checkout v1.2.0-beta grant-token, create, execute and payment-status endpoints.
 - Only the official HTTPS Checkout sandbox host `checkout.sandbox.bka.sh` is allowed. The configured base URL cannot point to arbitrary hosts, preventing an Admin setting from becoming an SSRF vector.
@@ -45,9 +45,9 @@ The application now contains a sandbox-only `BkashCheckoutAdapter` for the docum
 Official starting points:
 - bKash Developer Portal: https://developer.bka.sh/
 - bKash Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
-- bKash official sandbox merchant demo: https://merchantdemo.sandbox.bka.sh/
-- bKash official merchant webhook endpoint onboarding sample: https://github.com/bKash-developer/merchant-webhook-endpoint
-- bKash official merchant sandbox portal and Tokenized Checkout v1.2.0-beta documentation: https://merchantdemo.sandbox.bka.sh/
+- bKash official Checkout v1.2.0-beta sandbox demo: https://merchantdemo.sandbox.bka.sh/checkout/version/v1.2.0-beta
+- bKash official API reference (grant token, create, execute, query, search): https://developer.bka.sh/v1.2.0-beta/reference
+- bKash official merchant webhook listener sample: https://github.com/bKash-developer/merchant-webhook-endpoint
 
 ### Live-mode acceptance gate for each provider
 
