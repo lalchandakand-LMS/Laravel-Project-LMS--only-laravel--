@@ -157,12 +157,21 @@ class AssignmentController extends Controller
 
     public function destroy(Assignment $assignment)
     {
-        $this->authorizeAssignment($assignment);
-        abort_if($assignment->submissions()->exists(), 409,
-            'Assignments with student submissions cannot be deleted. Unpublish the assignment instead.');
+        $attachment = null;
 
-        $attachment = $assignment->attachment;
-        $assignment->delete();
+        DB::transaction(function () use ($assignment, &$attachment) {
+            // Student submission locks this same assignment row first. Recheck
+            // submissions after acquiring the lock so a just-created submission
+            // cannot be lost to a concurrent teacher deletion.
+            $lockedAssignment = Assignment::query()->lockForUpdate()->findOrFail($assignment->id);
+            $this->authorizeAssignment($lockedAssignment);
+            abort_if($lockedAssignment->submissions()->exists(), 409,
+                'Assignments with student submissions cannot be deleted. Unpublish the assignment instead.');
+
+            $attachment = $lockedAssignment->attachment;
+            $lockedAssignment->delete();
+        });
+
         delete_stored_media('local', $attachment);
 
         return redirect()->route('teacher.assignments.index')->with('success', 'Assignment deleted.');
@@ -186,7 +195,7 @@ class AssignmentController extends Controller
 
         $data = $request->validate([
             'status' => 'required|in:graded,returned',
-            'score' => 'nullable|numeric|min:0|max:'.$assignment->total_marks,
+            'score' => 'nullable|numeric|min:0|max:99999999.99',
             'feedback' => 'nullable|string|max:10000',
         ]);
 
@@ -194,13 +203,30 @@ class AssignmentController extends Controller
             return back()->withErrors(['score' => 'Enter a score before marking the submission as graded.']);
         }
 
-        $submission->update([
-            'status' => $data['status'],
-            'score' => $data['status'] === 'graded' ? $data['score'] : null,
-            'feedback' => $data['feedback'] ?? null,
-            'graded_by' => auth()->id(),
-            'graded_at' => now(),
-        ]);
+        DB::transaction(function () use ($assignment, $submission, $data) {
+            // Use the same assignment -> submission lock order as student
+            // resubmission to prevent the grade from racing with a revision.
+            $lockedAssignment = Assignment::query()->lockForUpdate()->findOrFail($assignment->id);
+            $this->authorizeAssignment($lockedAssignment);
+            $lockedSubmission = $lockedAssignment->submissions()
+                ->whereKey($submission->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($data['status'] === 'graded' && (float) $data['score'] > (float) $lockedAssignment->total_marks) {
+                throw ValidationException::withMessages([
+                    'score' => 'The score cannot exceed the assignment total marks.',
+                ]);
+            }
+
+            $lockedSubmission->update([
+                'status' => $data['status'],
+                'score' => $data['status'] === 'graded' ? $data['score'] : null,
+                'feedback' => $data['feedback'] ?? null,
+                'graded_by' => auth()->id(),
+                'graded_at' => now(),
+            ]);
+        });
 
         return back()->with('success', $data['status'] === 'returned'
             ? 'Submission returned to the student for revision.'

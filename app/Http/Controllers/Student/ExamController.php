@@ -218,14 +218,21 @@ class ExamController extends Controller
      * IDs must belong to the question being answered; descriptive input is
      * bounded to keep oversized payloads out of the answer store.
      */
-    private function persistAnswers(Request $request, ExamAttempt $attempt, $questions): void
+    private function persistAnswers(Request $request, ExamAttempt $attempt, $questions): bool
     {
         $data = $request->validate([
             'answers' => ['sometimes', 'array', 'max:'.$questions->count()],
         ]);
         $answers = $data['answers'] ?? [];
 
-        DB::transaction(function () use ($answers, $questions, $attempt) {
+        return DB::transaction(function () use ($answers, $questions, $attempt) {
+            // Autosave and final submit share this lock with grading. A request
+            // that waited behind a completed submit must never overwrite answers.
+            $lockedAttempt = ExamAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+            if ($lockedAttempt->status !== 'in_progress' || $lockedAttempt->remainingSeconds() <= 0) {
+                return false;
+            }
+
             foreach ($questions as $question) {
                 if (! array_key_exists($question->id, $answers)) {
                     continue;
@@ -263,6 +270,8 @@ class ExamController extends Controller
                     'answer_text' => $validated['answer_text'],
                 ]);
             }
+
+            return true;
         });
     }
 
@@ -283,7 +292,15 @@ class ExamController extends Controller
         }
 
         $questions = $this->attemptQuestions($attempt);
-        $this->persistAnswers($request, $attempt, $questions);
+        $answersSaved = $this->persistAnswers($request, $attempt, $questions);
+        if (! $answersSaved) {
+            $this->grade($attempt);
+
+            return response()->json([
+                'ok' => true,
+                'redirect' => route('student.attempts.result', $attempt),
+            ]);
+        }
 
         if ($request->boolean('submit')) {
             $this->grade($attempt);
@@ -309,6 +326,9 @@ class ExamController extends Controller
         $questions = $this->attemptQuestions($attempt);
         $this->persistAnswers($request, $attempt, $questions);
 
+        // The attempt may have been finalized by a concurrent request while
+        // this request was preparing its answer payload. grade() rechecks the
+        // locked status and is therefore safe to call more than once.
         $this->grade($attempt);
 
         return redirect()->route('student.attempts.result', $attempt);
@@ -334,71 +354,78 @@ class ExamController extends Controller
 
     private function grade(ExamAttempt $attempt): void
     {
-        if ($attempt->status !== 'in_progress') {
-            return;
-        }
-
-        $score = 0.0;
-        $correct = 0;
-        $wrong = 0;
-
-        foreach ($this->attemptQuestions($attempt) as $question) {
-            $answer = $attempt->answers()->where('question_id', $question->id)->first();
-
-            if ($question->type === 'mcq') {
-                $correctOption = $question->options->firstWhere('is_correct', true);
-                $isCorrect = $answer && $correctOption && (int) $answer->option_id === (int) $correctOption->id;
-
-                $awarded = 0.0;
-                if ($isCorrect) {
-                    $awarded = (float) $question->marks;
-                    $correct++;
-                } elseif ($answer && $answer->option_id) {
-                    $awarded = -1 * (float) ($attempt->negative_marking ?? $attempt->exam->negative_marking);
-                    $wrong++;
-                }
-
-                $score += $awarded;
-
-                if ($answer) {
-                    $answer->update(['is_correct' => $isCorrect, 'marks_awarded' => $awarded]);
-                }
-            } else {
-                // Keep an explicit empty answer row so the marker can review unanswered CQ / short questions.
-                $answer ??= $attempt->answers()->create(['question_id' => $question->id, 'answer_text' => null]);
-                $answer->update(['is_correct' => false, 'marks_awarded' => 0]);
+        DB::transaction(function () use ($attempt) {
+            // Final scoring, answer-row updates, status transition and awards
+            // are one atomic operation. Competing submit/timeout requests wait
+            // here and then observe the already-finalized attempt.
+            $lockedAttempt = ExamAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+            if ($lockedAttempt->status !== 'in_progress') {
+                return;
             }
-        }
 
-        $attempt->update([
-            'score' => max(0, round($score, 2)),
-            'correct_count' => $correct,
-            'wrong_count' => $wrong,
-            'submitted_at' => now(),
-            'status' => 'submitted',
-        ]);
+            $attempt = $lockedAttempt;
+            $score = 0.0;
+            $correct = 0;
+            $wrong = 0;
 
-        $attempt->refresh();
-        $student = $attempt->user;
-        if ($student && $student->isStudent()) {
-            GamificationService::award(
-                $student,
-                'exam_submitted',
-                'exam_attempt:'.$attempt->id,
-                15,
-                ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
-            );
+            foreach ($this->attemptQuestions($attempt) as $question) {
+                $answer = $attempt->answers()->where('question_id', $question->id)->first();
 
-            $requiresManualReview = $attempt->questions()->whereIn('type', ['cq', 'short'])->exists();
-            if (! $requiresManualReview && $attempt->isPassed()) {
+                if ($question->type === 'mcq') {
+                    $correctOption = $question->options->firstWhere('is_correct', true);
+                    $isCorrect = $answer && $correctOption && (int) $answer->option_id === (int) $correctOption->id;
+
+                    $awarded = 0.0;
+                    if ($isCorrect) {
+                        $awarded = (float) $question->marks;
+                        $correct++;
+                    } elseif ($answer && $answer->option_id) {
+                        $awarded = -1 * (float) ($attempt->negative_marking ?? $attempt->exam->negative_marking);
+                        $wrong++;
+                    }
+
+                    $score += $awarded;
+
+                    if ($answer) {
+                        $answer->update(['is_correct' => $isCorrect, 'marks_awarded' => $awarded]);
+                    }
+                } else {
+                    // Keep an explicit empty answer row so the marker can review unanswered CQ / short questions.
+                    $answer ??= $attempt->answers()->create(['question_id' => $question->id, 'answer_text' => null]);
+                    $answer->update(['is_correct' => false, 'marks_awarded' => 0]);
+                }
+            }
+
+            $attempt->update([
+                'score' => max(0, round($score, 2)),
+                'correct_count' => $correct,
+                'wrong_count' => $wrong,
+                'submitted_at' => now(),
+                'status' => 'submitted',
+            ]);
+
+            $attempt->refresh();
+            $student = $attempt->user;
+            if ($student && $student->isStudent()) {
                 GamificationService::award(
                     $student,
-                    'exam_passed',
-                    'exam_passed:'.$attempt->id,
-                    5,
+                    'exam_submitted',
+                    'exam_attempt:'.$attempt->id,
+                    15,
                     ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
                 );
+
+                $requiresManualReview = $attempt->questions()->whereIn('type', ['cq', 'short'])->exists();
+                if (! $requiresManualReview && $attempt->isPassed()) {
+                    GamificationService::award(
+                        $student,
+                        'exam_passed',
+                        'exam_passed:'.$attempt->id,
+                        5,
+                        ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
+                    );
+                }
             }
-        }
+        });
     }
 }
