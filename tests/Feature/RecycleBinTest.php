@@ -286,4 +286,38 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+
+    public function test_prerequisite_lesson_cannot_be_permanently_purged_while_a_dependent_lesson_references_it(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::create(['title' => 'Retained Prerequisite Course', 'slug' => 'retained-prerequisite-course']);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Archived prerequisite lesson',
+            'type' => 'text',
+            'position' => 1,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Dependent lesson',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+
+        // Simulate a legacy archived prerequisite that predates the controller guard.
+        $prerequisite->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'lessons', 'id' => $prerequisite->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('lessons', ['id' => $prerequisite->id]);
+        $this->assertDatabaseHas('lessons', [
+            'id' => $dependent->id,
+            'prerequisite_lesson_id' => $prerequisite->id,
+        ]);
+    }
+
 }
