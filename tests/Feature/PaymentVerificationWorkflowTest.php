@@ -784,4 +784,41 @@ class PaymentVerificationWorkflowTest extends TestCase
     }
 
 
+
+    public function test_full_refund_rejects_any_remaining_pending_payment_submissions_with_audit_details(): void
+    {
+        [$student, $admin, $branch, $order] = $this->orderForStudent();
+
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'FULL-REFUND-VERIFIED',
+            'amount' => 1000,
+            'status' => 'verified',
+            'verified_by' => $admin->id,
+            'verified_at' => now(),
+        ]);
+        $pending = Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'nagad',
+            'transaction_id' => 'FULL-REFUND-PENDING',
+            'amount' => 1000,
+            'status' => 'pending',
+        ]);
+        $order->update(['status' => 'paid']);
+
+        $this->actingAs($admin)->post(route('admin.orders.refunds.store', $order->order_no), [
+            'amount' => 1000,
+            'reference' => 'FULL-REFUND-CLOSE-PENDING',
+            'reason' => 'Full refund; close any outstanding payment attempts.',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame('refunded', $order->fresh()->status);
+        $this->assertSame('rejected', $pending->fresh()->status);
+        $this->assertSame($admin->id, $pending->fresh()->verified_by);
+        $this->assertNotNull($pending->fresh()->verified_at);
+        $this->assertStringContainsString('fully refunded', $pending->fresh()->rejection_reason);
+    }
+
+
 }
