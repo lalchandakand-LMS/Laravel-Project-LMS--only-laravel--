@@ -29,14 +29,16 @@ class OrderController extends Controller
     {
         $this->validateOrderFilters($request);
         $query = $this->ordersQuery($request);
+        $grossReceived = (float) Payment::where('status', 'verified')->sum('amount');
+        $refunds = (float) PaymentAdjustment::where('type', 'refund')->sum('amount');
         $totals = [
             'all' => Order::count(),
             'paid' => Order::where('status', 'paid')->count(),
             'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
             'cancelled' => Order::where('status', 'cancelled')->count(),
-            'revenue' => max(0, (float) Payment::where('status', 'verified')->sum('amount')
-                - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')
-                + (float) PaymentAdjustment::where('type', 'credit')->sum('amount')),
+            // Credit adjustments transfer existing value between balances; they
+            // are not new cash receipts and must not inflate collected revenue.
+            'revenue' => max(0, round($grossReceived - $refunds, 2)),
         ];
 
         return view('admin.orders.index', [
@@ -68,7 +70,7 @@ class OrderController extends Controller
             ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->date('to')))
-            ->when($request->filled('item_type'), fn ($q) => $q->whereHas('items', fn ($item) => $item->where('item_type', $request->input('item_type'))))
+            ->when($request->filled('item_type'), fn ($q) => $q->whereHas('items', fn ($item) => $item->where('item_type', $request->input('item_type')))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $term = trim($request->string('q')->toString());
                 $q->where(fn ($w) => $w->where('order_no', 'like', "%{$term}%")
