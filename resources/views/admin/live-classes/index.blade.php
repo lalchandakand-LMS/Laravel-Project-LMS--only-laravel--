@@ -59,7 +59,7 @@
                             <a href="{{ $class->meeting_url }}" target="_blank" rel="noopener" class="text-sm font-semibold text-slate-600">Open</a>
                         @endif
                         <a href="{{ route('admin.live-classes.edit', $class) }}" class="ml-3 text-sm font-semibold text-emerald-700">Edit</a>
-                        @if ($class->batch_id && ! $class->isCancelled())
+                        @if (! $class->isCancelled())
                             <form method="POST" action="{{ route('teacher.live-classes.attendance', $class) }}" class="inline">
                                 @csrf
                                 <button class="ml-2 text-xs font-semibold text-indigo-700">Attendance</button>
