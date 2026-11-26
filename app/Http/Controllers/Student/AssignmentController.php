@@ -8,6 +8,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class AssignmentController extends Controller
 {
@@ -102,7 +103,7 @@ class AssignmentController extends Controller
             } else {
                 $assignment->submissions()->create($values + ['student_id' => $user->id]);
             }
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             if ($newAttachment) {
                 Storage::disk('local')->delete($newAttachment);
             }
