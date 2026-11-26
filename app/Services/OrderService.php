@@ -8,6 +8,7 @@ use App\Models\Ebook;
 use App\Models\EbookPurchase;
 use App\Models\Enrollment;
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -75,6 +76,17 @@ class OrderService
                         ['user_id' => $order->user_id, 'ebook_id' => $item->item_id],
                         ['order_id' => $order->id]
                     );
+                }
+
+                if ($item->item_type === 'product') {
+                    $product = Product::whereKey($item->item_id)->lockForUpdate()->first();
+                    if (! $product || $product->stock_quantity < $item->qty) {
+                        throw ValidationException::withMessages([
+                            'product' => "Insufficient stock for {$item->title}. The payment cannot be approved until stock is reconciled.",
+                        ]);
+                    }
+
+                    $product->decrement('stock_quantity', $item->qty);
                 }
             }
 
