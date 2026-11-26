@@ -223,7 +223,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::delete('batches/{batch}/students/{enrollment}', [Admin\BatchController::class, 'removeStudent'])->name('batches.students.destroy');
         Route::resource('ebooks', Admin\EbookController::class)->except('show');
         Route::resource('products', Admin\ProductController::class)->except('show');
-        Route::post('products/{product}/restore', [Admin\ProductController::class, 'restore'])->withTrashed()->name('products.restore');
+        Route::post('products/{product}/restore', [Admin\ProductController::class, 'restore'])->name('products.restore');
         Route::get('coupons/usage', [Admin\CouponController::class, 'usage'])->name('coupons.usage');
         Route::get('coupons/usage/export', [Admin\CouponController::class, 'exportUsage'])->name('coupons.usage.export');
         Route::resource('coupons', Admin\CouponController::class)->except('show');
