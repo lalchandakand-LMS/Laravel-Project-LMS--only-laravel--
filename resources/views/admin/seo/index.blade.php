@@ -52,17 +52,28 @@
                     <input id="google_site_verification" name="google_site_verification" value="{{ old('google_site_verification', $settings['google_site_verification'] ?? '') }}" autocomplete="off" spellcheck="false" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                     <p class="mt-1 text-xs text-slate-500">Paste only the content token from Google's HTML meta-tag verification method.</p>
                 </div>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="font-bold text-slate-900">Analytics & conversion tracking</h2>
+            <p class="mt-1 text-sm text-slate-500">Connect Google Analytics 4, Google Tag Manager and Meta Pixel. Tracking scripts load only after a visitor accepts optional analytics and marketing cookies.</p>
+            <div class="mt-4 grid gap-4 md:grid-cols-3">
                 <div>
-                    <label for="ga_measurement_id" class="mb-1 block text-sm font-semibold text-slate-700">Google Analytics 4 Measurement ID</label>
-                    <input id="ga_measurement_id" name="ga_measurement_id" value="{{ old('ga_measurement_id', $settings['ga_measurement_id'] ?? '') }}" placeholder="G-XXXXXXXXXX" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-                    <p class="mt-1 text-xs text-slate-500">GA4 loads only after a visitor accepts Analytics cookies.</p>
+                    <label for="ga4_measurement_id" class="mb-1 block text-sm font-semibold text-slate-700">GA4 Measurement ID</label>
+                    <input id="ga4_measurement_id" name="ga4_measurement_id" value="{{ old('ga4_measurement_id', $settings['ga4_measurement_id'] ?? '') }}" placeholder="G-XXXXXXXXXX" pattern="G-[A-Za-z0-9]{4,20}" maxlength="22" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                 </div>
                 <div>
-                    <label for="meta_pixel_id" class="mb-1 block text-sm font-semibold text-slate-700">Meta / Facebook Pixel ID</label>
-                    <input id="meta_pixel_id" name="meta_pixel_id" value="{{ old('meta_pixel_id', $settings['meta_pixel_id'] ?? '') }}" placeholder="123456789012345" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
-                    <p class="mt-1 text-xs text-slate-500">Meta Pixel loads only after a visitor accepts Marketing cookies.</p>
+                    <label for="gtm_container_id" class="mb-1 block text-sm font-semibold text-slate-700">Google Tag Manager ID</label>
+                    <input id="gtm_container_id" name="gtm_container_id" value="{{ old('gtm_container_id', $settings['gtm_container_id'] ?? '') }}" placeholder="GTM-XXXXXXX" pattern="GTM-[A-Za-z0-9]{4,12}" maxlength="16" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label for="meta_pixel_id" class="mb-1 block text-sm font-semibold text-slate-700">Meta Pixel ID</label>
+                    <input id="meta_pixel_id" name="meta_pixel_id" inputmode="numeric" value="{{ old('meta_pixel_id', $settings['meta_pixel_id'] ?? '') }}" placeholder="123456789012345" pattern="[0-9]{6,20}" maxlength="20" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                 </div>
             </div>
+            <p class="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Tip: if GA4 is already configured as a tag inside Google Tag Manager, leave the standalone GA4 ID empty to avoid duplicate page views. Configure these IDs only after adding the website to the corresponding provider accounts.</p>
+            <p class="mt-2 text-xs text-slate-500">Visitors can accept or reject optional tracking. Essential site functions continue either way; no analytics or advertising script is requested before consent.</p>
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
