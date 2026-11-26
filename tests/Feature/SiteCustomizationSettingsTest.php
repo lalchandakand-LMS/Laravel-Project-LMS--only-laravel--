@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\Slider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -188,6 +189,7 @@ class SiteCustomizationSettingsTest extends TestCase
 
     public function test_new_installation_uses_cyan_teal_public_brand_defaults(): void
     {
+        Cache::forget('settings.all');
         $this->get('/')
             ->assertOk()
             ->assertSee('--aec-primary: #06b6d4', false)
