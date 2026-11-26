@@ -183,9 +183,11 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->assertSame($order, json_decode(Setting::get('homepage_section_order'), true));
 
-        $response = $this->get('/')->assertOk();
-        $html = $response->getContent();
-        $this->assertLessThan(strpos($html, 'data-home-section="categories"'), strpos($html, 'data-home-section="featured"'));
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('const savedOrder = ["hero","featured","categories"', false)
+            ->assertSee('data-home-section="categories"', false)
+            ->assertSee('data-home-section="featured"', false);
     }
 
     public function test_invalid_homepage_section_order_is_rejected(): void
