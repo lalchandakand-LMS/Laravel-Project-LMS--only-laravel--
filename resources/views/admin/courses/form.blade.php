@@ -214,6 +214,9 @@
                 <div>
                     <label class="mb-1 block font-semibold text-slate-700">Thumbnail</label>
                     <input type="file" name="thumbnail" accept="image/*" class="w-full text-xs">
+                    <label class="mb-1 mt-3 block font-semibold text-slate-700">Or use an image URL (HTTPS)</label>
+                    <input type="url" name="thumbnail_url" value="{{ old('thumbnail_url', str_starts_with((string) $course->thumbnail, 'https://') ? $course->thumbnail : '') }}" placeholder="https://example.com/course-thumbnail.webp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">Upload takes priority if both are supplied. JPG, PNG or WebP, max 4 MB.</p>
                 </div>
                 <div>
                     <label class="mb-1 block font-semibold text-slate-700">Promo video URL</label>
