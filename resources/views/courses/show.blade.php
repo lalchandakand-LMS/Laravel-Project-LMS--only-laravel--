@@ -37,6 +37,12 @@
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
                 <img src="{{ $course->thumbnail_url }}" alt="" class="aspect-video w-full object-cover">
                 <div class="p-5">
+                    @if ($course->activeFlashSale())
+                        <div class="mb-2 flex flex-wrap items-center gap-2">
+                            <span class="rounded bg-orange-100 px-2 py-1 text-xs font-extrabold text-orange-800">⚡ {{ $course->activeFlashSale()->name }}</span>
+                            <span class="text-xs text-orange-700">Limited-time offer ends {{ $course->activeFlashSale()->ends_at->format('d M, h:i A') }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-baseline gap-2">
                         <span class="text-3xl font-extrabold text-slate-900">{{ $course->final_price <= 0 ? 'Free' : '৳'.number_format($course->final_price) }}</span>
                         @if ($course->has_discount)

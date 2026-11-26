@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Ebook;
+use App\Models\FlashSale;
 use App\Models\Exam;
 use App\Models\Lesson;
 use App\Models\LiveClass;
@@ -44,6 +45,7 @@ class RecycleBinController extends Controller
         'menu-items' => MenuItem::class,
         'coupons' => Coupon::class,
         'posts' => Post::class,
+        'flash-sales' => FlashSale::class,
         'branches' => Branch::class,
         'batches' => Batch::class,
         'levels' => Level::class,

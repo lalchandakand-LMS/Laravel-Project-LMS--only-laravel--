@@ -19,8 +19,10 @@
                         <div class="flex-1">
                             <p class="font-semibold text-slate-900">{{ $item['title'] }}</p>
                             <p class="text-xs uppercase tracking-wide text-slate-500">{{ $item['type'] }}</p>
+                            @if(!empty($item['flash_sale_name']))<p class="mt-1 text-xs font-bold text-orange-700">⚡ {{ $item['flash_sale_name'] }}</p>@endif
                         </div>
-                        <p class="font-bold text-slate-900">{{ $item['price'] <= 0 ? 'Free' : '৳'.number_format($item['price']) }}</p>
+                        <div class="text-right"><p class="font-bold text-slate-900">{{ $item['price'] <= 0 ? 'Free' : '৳'.number_format($item['price']) }}</p>
+                            @if(!empty($item['has_discount']))<p class="text-xs text-slate-400 line-through">৳{{ number_format($item['original_price']) }}</p>@endif</div>
                         <form method="POST" action="{{ route('cart.remove', $item['key']) }}">
                             @csrf
                             <button class="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Remove">✕</button>
