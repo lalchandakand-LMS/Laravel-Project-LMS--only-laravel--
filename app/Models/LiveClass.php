@@ -9,7 +9,7 @@ class LiveClass extends Model
 {
     use TracksDeletionActor;
     protected $fillable = [
-        'course_id', 'title', 'description', 'meeting_url', 'meeting_password',
+        'course_id', 'batch_id', 'title', 'description', 'meeting_url', 'meeting_password',
         'recording_url', 'platform', 'starts_at', 'duration_minutes', 'is_published',
     ];
 
@@ -18,6 +18,7 @@ class LiveClass extends Model
     public const PLATFORMS = ['Zoom', 'Google Meet', 'Jitsi', 'YouTube Live', 'Facebook Live', 'Offline / Classroom'];
 
     public function course() { return $this->belongsTo(Course::class); }
+    public function batch() { return $this->belongsTo(Batch::class); }
 
     public function scopePublished($q) { return $q->where('is_published', true); }
 

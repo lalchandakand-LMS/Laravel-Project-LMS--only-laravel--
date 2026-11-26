@@ -162,14 +162,14 @@ class RolesAndOrganisationTest extends TestCase
         $this->actingAs($admin)->post(route('admin.live-classes.store'), [
             'course_id' => $course->id, 'title' => 'Final revision class',
             'platform' => 'jitsi', 'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
-            'starts_at' => now()->addDay()->format('Y-m-d\TH:i'),
+            'starts_at' => now()->addDays(120)->format('Y-m-d\TH:i'),
             'duration_minutes' => 90, 'is_published' => 1,
         ])->assertRedirect(route('admin.live-classes.index'));
         $live = LiveClass::where('title', 'Final revision class')->firstOrFail();
         $this->actingAs($admin)->put(route('admin.live-classes.update', $live), [
             'course_id' => $course->id, 'title' => 'Final revision class (moved)',
             'platform' => 'jitsi', 'meeting_url' => 'https://meet.jit.si/aloms-english-center-demo',
-            'starts_at' => now()->addDays(2)->format('Y-m-d\TH:i'),
+            'starts_at' => now()->addDays(121)->format('Y-m-d\TH:i'),
             'duration_minutes' => 90, 'is_published' => 1,
         ])->assertRedirect(route('admin.live-classes.index'));
         $this->assertDatabaseHas('live_classes', ['title' => 'Final revision class (moved)']);
