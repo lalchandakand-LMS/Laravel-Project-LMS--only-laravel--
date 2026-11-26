@@ -6,6 +6,7 @@ use App\Models\Slider;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -179,6 +180,27 @@ class RecycleBinTest extends TestCase
 
         Storage::disk('public')->assertMissing($sliderImage);
         Storage::disk('local')->assertMissing($lessonFile);
+    }
+
+
+    public function test_scheduled_prune_includes_posts_and_removes_their_uploaded_media(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $thumbnail = UploadedFile::fake()->image('expired-post.jpg')->store('posts', 'public');
+        $post = Post::create([
+            'title' => 'Expired archived post',
+            'author_id' => $admin->id,
+            'thumbnail' => $thumbnail,
+            'is_published' => false,
+        ]);
+        $post->delete();
+        DB::table('posts')->where('id', $post->id)->update(['deleted_at' => now()->subDays(31)]);
+
+        Artisan::call('recycle-bin:prune', ['--days' => 30]);
+
+        $this->assertDatabaseMissing('posts', ['id' => $post->id]);
+        Storage::disk('public')->assertMissing($thumbnail);
     }
 
 }
