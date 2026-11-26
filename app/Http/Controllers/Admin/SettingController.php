@@ -11,7 +11,7 @@ class SettingController extends Controller
 {
     private const HOMEPAGE_SECTION_KEYS = ['hero', 'categories', 'featured', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
     public const KEYS = [
-        'site_name', 'site_tagline', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
+        'site_name', 'site_tagline', 'admin_theme_preset', 'admin_card_radius', 'admin_brand_title', 'admin_brand_subtitle', 'admin_sidebar_promo_title', 'admin_sidebar_promo_body', 'admin_sidebar_promo_button', 'admin_sidebar_promo_url', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
         'currency', 'certificate_signature', 'about_text',
         'dashboard_banner_title', 'dashboard_banner_subtitle',
@@ -23,7 +23,7 @@ class SettingController extends Controller
         'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
         'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
         'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-        'homepage_section_order', 'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_learning_layout', 'homepage_featured_layout', 'homepage_latest_layout', 'homepage_live_classes_layout', 'homepage_exams_layout', 'homepage_teachers_layout', 'homepage_reviews_layout', 'homepage_ebooks_layout', 'homepage_carousel_autoplay', 'homepage_carousel_speed',
+        'homepage_section_order', 'admin_sidebar_promo_enabled', 'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_learning_layout', 'homepage_featured_layout', 'homepage_latest_layout', 'homepage_live_classes_layout', 'homepage_exams_layout', 'homepage_teachers_layout', 'homepage_reviews_layout', 'homepage_ebooks_layout', 'homepage_carousel_autoplay', 'homepage_carousel_speed',
         'homepage_board_results_title', 'homepage_board_results_subtitle', 'homepage_board_results_body', 'homepage_board_results_year',
         'homepage_admission_title', 'homepage_admission_subtitle', 'homepage_admission_button_text', 'homepage_admission_button_url',
         'homepage_learning_title', 'homepage_learning_subtitle', 'homepage_testimonial_title', 'homepage_featured_title', 'homepage_featured_subtitle', 'homepage_online_batches_title', 'homepage_online_batches_subtitle', 'homepage_online_batches_badge', 'homepage_stats_title', 'homepage_stats_students_label', 'homepage_stats_students_icon', 'homepage_stats_courses_label', 'homepage_stats_courses_icon', 'homepage_stats_teachers_label', 'homepage_stats_teachers_icon', 'homepage_stats_lessons_label', 'homepage_stats_lessons_icon', 'homepage_latest_title', 'homepage_latest_subtitle', 'homepage_live_classes_title', 'homepage_live_classes_subtitle', 'homepage_exams_title', 'homepage_exams_subtitle', 'homepage_teachers_title', 'homepage_teachers_subtitle', 'instructors_title', 'instructors_subtitle', 'homepage_reviews_subtitle', 'homepage_ebooks_title', 'homepage_ebooks_subtitle',
@@ -76,6 +76,14 @@ class SettingController extends Controller
     {
         $request->validate([
             'site_name' => ['sometimes', 'required', 'string', 'max:120'],
+            'admin_theme_preset' => ['sometimes', 'required', 'in:navy,orange,teal,purple'],
+            'admin_card_radius' => ['sometimes', 'required', 'integer', 'in:10,14,18,22'],
+            'admin_brand_title' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'admin_brand_subtitle' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'admin_sidebar_promo_title' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'admin_sidebar_promo_body' => ['sometimes', 'nullable', 'string', 'max:240'],
+            'admin_sidebar_promo_button' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'admin_sidebar_promo_url' => ['sometimes', 'nullable', 'string', 'max:2048', $this->safeNavigationTarget()],
             'site_tagline' => ['sometimes', 'nullable', 'string', 'max:255'],
             'site_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'company_license' => ['sometimes', 'nullable', 'string', 'max:120'],
