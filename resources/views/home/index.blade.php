@@ -262,21 +262,16 @@
             <p class="mt-3 text-sm text-slate-300">{{ $homepageSettings['homepage_reviews_subtitle'] ?? 'Real feedback from our learning community.' }}</p>
             <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-bold text-amber-200"><span>★★★★★</span><strong>{{ number_format((float) $reviews->avg('rating'), 1) }}</strong><span class="text-slate-300">Average rating</span></div>
         </div>
-        @php($reviewRows = $reviews->values()->chunk((int) ceil($reviews->count() / 2)))
-        <div class="mt-9 space-y-4">
-            @foreach ($reviewRows as $row)
-                <div class="testimonial-track flex gap-4 overflow-x-auto pb-3">
-                    @foreach ($row as $review)
-                        <figure class="testimonial-card min-w-[min(88vw,340px)] max-w-[340px] flex-1 rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
-                            <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
-                            <blockquote class="mt-2 min-h-20 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
-                            <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
-                                <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
-                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
-                            </figcaption>
-                        </figure>
-                    @endforeach
-                </div>
+        <div class="mx-auto mt-9 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3 {{ $reviews->count() === 1 ? 'max-w-xl' : '' }}">
+            @foreach ($reviews as $review)
+                <figure class="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
+                    <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
+                    <blockquote class="mt-2 flex-1 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
+                    <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
+                        <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
+                        <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \\App\\Services\\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
+                    </figcaption>
+                </figure>
             @endforeach
         </div>
     </div>
@@ -284,9 +279,6 @@
 @push('scripts')
 <style>
 .student-testimonials{background:linear-gradient(135deg,#111827 0%,#172554 55%,#0f172a 100%)}
-.testimonial-track{scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#475569 transparent}
-.testimonial-card{scroll-snap-align:start}
-@media(prefers-reduced-motion:reduce){.testimonial-track{scroll-behavior:auto}}
 </style>
 @endpush
 @endif
