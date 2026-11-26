@@ -224,7 +224,7 @@
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Minimum display time (ms)</label><input type="number" min="0" max="2000" step="100" name="brand_loader_min_time" value="{{ old('brand_loader_min_time', $settings['brand_loader_min_time'] ?? '250') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
         </div>
         <div class="mt-4 grid gap-4 sm:grid-cols-3">
-            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#047857'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
+            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#ea580c'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
                 <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             @endforeach
         </div>
