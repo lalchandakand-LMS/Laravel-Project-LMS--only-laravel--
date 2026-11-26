@@ -218,6 +218,20 @@
 @if (!$privateSeoRoute || request()->routeIs('checkout.success'))
     @include('partials.cookie-consent')
 @endif
+@if (!$privateSeoRoute)
+    @php
+        $activeMarketingPopup = null;
+        $popupQuery = \\App\\Models\\MarketingPopup::currentlyActive()
+            ->whereIn('target_audience', ['all', 'guest']);
+        if (request()->routeIs('home')) {
+            $popupQuery->whereIn('display_on', ['all_public_pages', 'homepage_only']);
+        } else {
+            $popupQuery->where('display_on', 'all_public_pages');
+        }
+        $activeMarketingPopup = $popupQuery->orderByDesc('priority')->orderByDesc('id')->first();
+    @endphp
+    @include('partials.marketing-popup', ['popup' => $activeMarketingPopup])
+@endif
 @stack('scripts')
 </body>
 </html>
