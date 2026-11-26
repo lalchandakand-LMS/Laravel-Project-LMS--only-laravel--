@@ -28,6 +28,7 @@ use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Student;
 use App\Http\Controllers\AiAgentController;
