@@ -104,6 +104,14 @@ class FinanceController extends Controller
         return view('branch.finance.index', compact('branch', 'orders', 'pendingPayments', 'invoices', 'admissions', 'totals'));
     }
 
+    public function paymentProof(Payment $payment)
+    {
+        $branch = $this->branch();
+        abort_unless((int) $payment->order?->branch_id === (int) $branch->id, 404);
+
+        return app(AdminOrderController::class)->paymentProof($payment);
+    }
+
     public function verifyPayment(Request $request, Payment $payment)
     {
         $branch = $this->branch();
