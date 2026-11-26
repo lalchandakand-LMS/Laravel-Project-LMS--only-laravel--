@@ -13,6 +13,7 @@ return new class extends Migration {
 
         Schema::table('exam_attempts', function (Blueprint $table) {
             $table->timestamp('manual_reviewed_at')->nullable()->after('submitted_at');
+            $table->text('manual_feedback')->nullable()->after('manual_reviewed_at');
         });
 
         Schema::create('question_bank_items', function (Blueprint $table) {
@@ -45,7 +46,7 @@ return new class extends Migration {
         Schema::dropIfExists('exam_attempt_questions');
         Schema::dropIfExists('question_bank_items');
         Schema::table('exam_attempts', function (Blueprint $table) {
-            $table->dropColumn('manual_reviewed_at');
+            $table->dropColumn(['manual_reviewed_at', 'manual_feedback']);
         });
         Schema::table('exams', function (Blueprint $table) {
             $table->dropColumn('random_question_count');
