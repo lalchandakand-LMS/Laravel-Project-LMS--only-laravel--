@@ -91,6 +91,15 @@ class LiveClassController extends Controller
 
     private function validated(Request $request): array
     {
+        // Accept legacy lowercase/mixed-case platform values and persist the canonical label.
+        $submittedPlatform = (string) $request->input('platform', '');
+        $canonicalPlatform = collect(LiveClass::PLATFORMS)->first(
+            fn (string $platform) => strcasecmp($platform, $submittedPlatform) === 0
+        );
+        if ($canonicalPlatform !== null) {
+            $request->merge(['platform' => $canonicalPlatform]);
+        }
+
         $data = $request->validate([
             'course_id' => 'required|exists:courses,id',
             'title' => 'required|string|max:160',
