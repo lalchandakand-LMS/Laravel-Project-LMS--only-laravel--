@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
