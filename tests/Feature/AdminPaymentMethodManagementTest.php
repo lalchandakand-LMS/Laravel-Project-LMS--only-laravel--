@@ -1,12 +1,13 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\Setting;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\Crypt;
-use Tests\\TestCase;
+use App\Models\Branch;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
+use Tests\TestCase;
 
 class AdminPaymentMethodManagementTest extends TestCase
 {
