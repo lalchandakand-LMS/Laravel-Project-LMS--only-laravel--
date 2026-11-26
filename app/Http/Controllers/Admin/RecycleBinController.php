@@ -1,28 +1,28 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Announcement;
-use App\\Models\\Branch;
-use App\\Models\\Batch;
-use App\\Models\\Category;
-use App\\Models\\Coupon;
-use App\\Models\\Course;
-use App\\Models\\Ebook;
-use App\\Models\\Exam;
-use App\\Models\\Lesson;
-use App\\Models\\LiveClass;
-use App\\Models\\Level;
-use App\\Models\\MenuItem;
-use App\\Models\\Question;
-use App\\Models\\Review;
-use App\\Models\\Section;
-use App\\Models\\Slider;
-use App\\Models\\User;
-use Illuminate\\Http\\Request;
-use Illuminate\\Database\\QueryException;
-use Illuminate\\Support\\Facades\\DB;
+use App\Http\Controllers\Controller;
+use App\Models\Announcement;
+use App\Models\Branch;
+use App\Models\Batch;
+use App\Models\Category;
+use App\Models\Coupon;
+use App\Models\Course;
+use App\Models\Ebook;
+use App\Models\Exam;
+use App\Models\Lesson;
+use App\Models\LiveClass;
+use App\Models\Level;
+use App\Models\MenuItem;
+use App\Models\Question;
+use App\Models\Review;
+use App\Models\Section;
+use App\Models\Slider;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 class RecycleBinController extends Controller
 {
@@ -199,7 +199,7 @@ class RecycleBinController extends Controller
         };
 
         foreach ($checks as [$table, $column]) {
-            if (\\Illuminate\\Support\\Facades\\Schema::hasTable($table)) {
+            if (\Illuminate\Support\Facades\Schema::hasTable($table)) {
                 $query = DB::table($table)->where($column, $id);
                 if ($table === 'order_items') {
                     $query->where('item_type', $type === 'ebooks' ? 'ebook' : 'course');
