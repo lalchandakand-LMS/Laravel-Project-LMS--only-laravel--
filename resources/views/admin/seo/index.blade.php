@@ -52,6 +52,16 @@
                     <input id="google_site_verification" name="google_site_verification" value="{{ old('google_site_verification', $settings['google_site_verification'] ?? '') }}" autocomplete="off" spellcheck="false" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                     <p class="mt-1 text-xs text-slate-500">Paste only the content token from Google's HTML meta-tag verification method.</p>
                 </div>
+                <div>
+                    <label for="ga_measurement_id" class="mb-1 block text-sm font-semibold text-slate-700">Google Analytics 4 Measurement ID</label>
+                    <input id="ga_measurement_id" name="ga_measurement_id" value="{{ old('ga_measurement_id', $settings['ga_measurement_id'] ?? '') }}" placeholder="G-XXXXXXXXXX" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">GA4 loads only after a visitor accepts Analytics cookies.</p>
+                </div>
+                <div>
+                    <label for="meta_pixel_id" class="mb-1 block text-sm font-semibold text-slate-700">Meta / Facebook Pixel ID</label>
+                    <input id="meta_pixel_id" name="meta_pixel_id" value="{{ old('meta_pixel_id', $settings['meta_pixel_id'] ?? '') }}" placeholder="123456789012345" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">Meta Pixel loads only after a visitor accepts Marketing cookies.</p>
+                </div>
             </div>
         </section>
 
