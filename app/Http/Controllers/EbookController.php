@@ -27,7 +27,7 @@ class EbookController extends Controller
 
     public function read(Request $request, Ebook $ebook)
     {
-        abort_unless($ebook->is_published && $ebook->ownedBy($request->user()), 403, 'Please purchase this e-book first.');
+        abort_unless(($ebook->is_published || $ebook->trashed()) && $ebook->ownedBy($request->user()), 403, 'Please purchase this e-book first.');
         return view('ebooks.read', compact('ebook'));
     }
 
