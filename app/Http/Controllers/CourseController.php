@@ -70,7 +70,21 @@ class CourseController extends Controller
         abort_unless($course->is_published || optional($request->user())->isAdmin(), 404);
 
         $course->load(['sections.lessons', 'instructor', 'category', 'categories', 'liveClasses']);
+
         $user = $request->user();
+
+        // Count one course detail view per browser session per course per day.
+        // The session identifier is HMACed so raw session IDs are never stored.
+        $visitorIdentity = $user ? 'user:'.$user->id : 'session:'.$request->session()->getId();
+        $visitorKey = hash_hmac('sha256', $visitorIdentity, (string) config('app.key'));
+        DB::table('course_views')->insertOrIgnore([
+            'course_id' => $course->id,
+            'user_id' => $user?->id,
+            'visitor_key' => $visitorKey,
+            'viewed_on' => now()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         $enrolled = $user && $user->hasCourse($course);
 
         return view('courses.show', [

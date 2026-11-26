@@ -163,6 +163,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     // all organisation, account, finance, and site-wide management stay admin-only.
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
+        Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
+        Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
+        Route::post('certificates', [Admin\CertificateController::class, 'store'])->name('certificates.store');
         Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');
         Route::get('online-batch-applications', [Admin\OnlineBatchApplicationController::class, 'index'])->name('online-batch-applications.index');
         Route::post('online-batch-applications/{application}/approve', [Admin\OnlineBatchApplicationController::class, 'approve'])->name('online-batch-applications.approve');
