@@ -341,12 +341,12 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
 
         Route::get('seo', [Admin\SeoController::class, 'index'])->name('seo.index');
         Route::post('seo', [Admin\SeoController::class, 'update'])->name('seo.update');
-        Route::get('seo/redirects', [Admin\\SeoRedirectController::class, 'index'])->name('seo.redirects.index');
-        Route::get('seo/redirects/create', [Admin\\SeoRedirectController::class, 'create'])->name('seo.redirects.create');
-        Route::post('seo/redirects', [Admin\\SeoRedirectController::class, 'store'])->name('seo.redirects.store');
-        Route::get('seo/redirects/{redirect}/edit', [Admin\\SeoRedirectController::class, 'edit'])->name('seo.redirects.edit');
-        Route::put('seo/redirects/{redirect}', [Admin\\SeoRedirectController::class, 'update'])->name('seo.redirects.update');
-        Route::delete('seo/redirects/{redirect}', [Admin\\SeoRedirectController::class, 'destroy'])->name('seo.redirects.destroy');
+        Route::get('seo/redirects', [Admin\SeoRedirectController::class, 'index'])->name('seo.redirects.index');
+        Route::get('seo/redirects/create', [Admin\SeoRedirectController::class, 'create'])->name('seo.redirects.create');
+        Route::post('seo/redirects', [Admin\SeoRedirectController::class, 'store'])->name('seo.redirects.store');
+        Route::get('seo/redirects/{redirect}/edit', [Admin\SeoRedirectController::class, 'edit'])->name('seo.redirects.edit');
+        Route::put('seo/redirects/{redirect}', [Admin\SeoRedirectController::class, 'update'])->name('seo.redirects.update');
+        Route::delete('seo/redirects/{redirect}', [Admin\SeoRedirectController::class, 'destroy'])->name('seo.redirects.destroy');
         Route::get('settings', [Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::resource('menu-settings', Admin\MenuSettingController::class)->except(['create', 'show', 'edit']);
