@@ -83,21 +83,22 @@ class OrderController extends Controller
     public function export(Request $request)
     {
         $this->validateOrderFilters($request);
-        $orders = $this->ordersQuery($request)->with(['items', 'payments', 'adjustments'])->get();
+        $orders = $this->ordersQuery($request)->with(['items', 'payments', 'adjustments'])->reorder('id');
 
         return response()->streamDownload(function () use ($orders) {
             $out = fopen('php://output', 'w');
             fputcsv($out, ['Order', 'Date', 'Student', 'Phone', 'Email', 'Branch', 'Items', 'Subtotal', 'Discount', 'Total', 'Verified received', 'Refunds', 'Due', 'Status']);
-            foreach ($orders as $order) {
+            foreach ($orders->lazyById(500) as $order) {
                 $received = (float) $order->payments->where('status', 'verified')->sum('amount');
                 $refunds = (float) $order->adjustments->where('type', 'refund')->sum('amount');
                 $credits = (float) $order->adjustments->where('type', 'credit')->sum('amount');
                 fputcsv($out, [
-                    $order->order_no, optional($order->created_at)->toDateTimeString(),
-                    $order->name, $order->phone, $order->email, $order->branch?->name,
+                    $this->safeCsvCell($order->order_no), optional($order->created_at)->toDateTimeString(),
+                    $this->safeCsvCell($order->name), $this->safeCsvCell($order->phone),
+                    $this->safeCsvCell($order->email), $this->safeCsvCell($order->branch?->name),
                     $order->items->count(), $order->subtotal, $order->discount, $order->total,
                     number_format($received, 2, '.', ''), number_format($refunds, 2, '.', ''),
-                    number_format(max(0, $order->total - $received + $refunds - $credits), 2, '.', ''), $order->status,
+                    number_format(max(0, $order->total - $received + $refunds - $credits), 2, '.', ''), $this->safeCsvCell($order->status),
                 ]);
             }
             fclose($out);
@@ -514,6 +515,15 @@ class OrderController extends Controller
         $response->headers->addCacheControlDirective('no-store');
 
         return $response;
+    }
+
+    private function safeCsvCell(mixed $value): string
+    {
+        $value = (string) ($value ?? '');
+
+        return preg_match('/^[\\x00-\\x20]*[=+\\-@]/u', $value) === 1
+            ? "'".$value
+            : $value;
     }
 
     private function isTransactionReferenceConflict(QueryException $exception): bool
