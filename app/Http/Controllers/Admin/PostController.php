@@ -79,7 +79,7 @@ class PostController extends Controller
     {
         return $request->validate([
             'title' => 'required|string|max:180',
-            'slug' => ['nullable', 'string', 'max:200', 'alpha_dash', Rule::unique('posts', 'slug')->ignore($post?->id)->whereNull('deleted_at')],
+            'slug' => ['nullable', 'string', 'max:200', 'alpha_dash', Rule::unique('posts', 'slug')->ignore($post?->id)],
             'category_id' => 'nullable|exists:categories,id',
             'excerpt' => 'nullable|string|max:500',
             'content' => 'nullable|string',
