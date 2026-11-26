@@ -73,7 +73,12 @@ class SettingController extends Controller
                 $order = json_decode($value, true);
                 if (! is_array($order) || ! array_is_list($order) ||
                     count($order) !== count(self::HOMEPAGE_SECTION_KEYS) ||
-                    count(array_unique($order)) !== count($order) ||
+                    count(array_filter($order, 'is_string')) !== count($order)) {
+                    $fail('Choose each homepage section exactly once in the display order.');
+                    return;
+                }
+
+                if (count(array_unique($order)) !== count($order) ||
                     array_diff($order, self::HOMEPAGE_SECTION_KEYS)) {
                     $fail('Choose each homepage section exactly once in the display order.');
                 }
