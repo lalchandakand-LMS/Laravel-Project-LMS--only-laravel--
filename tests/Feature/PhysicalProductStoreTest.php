@@ -109,6 +109,58 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertSame('paid', $order->fresh()->status);
     }
 
+    public function test_admin_shipping_workflow_requires_tracking_and_prevents_backward_transitions(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Shipping Test Book',
+            'price' => 200,
+            'stock_quantity' => 4,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 200,
+            'discount' => 0,
+            'total' => 200,
+            'status' => 'paid',
+            'shipping_status' => 'processing',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 200,
+            'qty' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'shipped'])
+            ->assertSessionHasErrors('tracking_number');
+
+        $this->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'packed'])
+            ->assertSessionHasNoErrors();
+        $this->post(route('admin.orders.shipping', $order->order_no), [
+            'shipping_status' => 'shipped',
+            'shipping_carrier' => 'Courier',
+            'tracking_number' => 'TRACK-1001',
+        ])->assertSessionHasNoErrors();
+        $this->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'delivered'])
+            ->assertSessionHasNoErrors();
+
+        $this->post(route('admin.orders.shipping', $order->order_no), ['shipping_status' => 'packed'])
+            ->assertSessionHasErrors('shipping_status');
+
+        $this->assertSame('delivered', $order->fresh()->shipping_status);
+        $this->assertSame('TRACK-1001', $order->fresh()->tracking_number);
+        $this->assertNotNull($order->fresh()->delivered_at);
+    }
+
     public function test_fulfillment_refuses_to_oversell_and_rolls_back_order_status(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
