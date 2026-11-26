@@ -252,7 +252,7 @@ class StudentPortalExamAccessTest extends TestCase
         $this->assertSame($correctOption->id, $savedAnswer->option_id);
         $this->assertSame(10.0, (float) $attempt->fresh()->score);
         $this->assertEquals($originalSubmittedAt, $attempt->fresh()->submitted_at);
-        $this->assertSame(2, \\Illuminate\\Support\\Facades\\DB::table('gamification_events')
+        $this->assertSame(2, \Illuminate\Support\Facades\DB::table('gamification_events')
             ->where('user_id', $student->id)
             ->whereIn('event_type', ['exam_submitted', 'exam_passed'])
             ->count());
