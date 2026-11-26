@@ -6,6 +6,8 @@ use App\Models\LiveClass;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use App\Notifications\Channels\MiMSmsChannel;
+use App\Notifications\Channels\QueuedMailChannel;
 
 class LiveClassChanged extends Notification
 {
@@ -20,8 +22,21 @@ class LiveClassChanged extends Notification
     {
         $channels = ['database'];
 
-        if (config('live_classes.email_notifications') && filled($notifiable->routeNotificationFor('mail'))) {
-            $channels[] = 'mail';
+        $smtp = (array) config('mail.mailers.smtp', []);
+        $smtpReady = config('mail.default') === 'smtp'
+            && filled($smtp['host'] ?? null)
+            && filled($smtp['username'] ?? null)
+            && filled($smtp['password'] ?? null)
+            && filled(config('mail.from.address'));
+
+        if (config('live_classes.email_notifications')
+            && $smtpReady
+            && filled($notifiable->routeNotificationFor('mail'))) {
+            $channels[] = QueuedMailChannel::class;
+        }
+
+        if (config('live_classes.sms_notifications') && filled($notifiable->phone)) {
+            $channels[] = MiMSmsChannel::class;
         }
 
         return $channels;
@@ -54,6 +69,16 @@ class LiveClassChanged extends Notification
         return $notifiable->role === 'guardian'
             ? route('guardian.dashboard')
             : route('student.live-classes');
+    }
+
+    public function liveClass(): LiveClass
+    {
+        return $this->liveClass;
+    }
+
+    public function event(): string
+    {
+        return $this->event;
     }
 
     public function toDatabase(object $notifiable): array
