@@ -276,6 +276,9 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::middleware('role:admin')->prefix('question-bank')->name('question-bank.')->group(function () {
         Route::get('/', [Admin\QuestionBankController::class, 'index'])->name('index');
         Route::post('/', [Admin\QuestionBankController::class, 'store'])->name('store');
+        Route::get('/{item}/edit', [Admin\QuestionBankController::class, 'edit'])->name('edit');
+        Route::put('/{item}', [Admin\QuestionBankController::class, 'update'])->name('update');
+        Route::delete('/{item}', [Admin\QuestionBankController::class, 'destroy'])->name('destroy');
         Route::post('/import', [Admin\QuestionBankController::class, 'import'])->name('import');
         Route::get('/template', [Admin\QuestionBankController::class, 'template'])->name('template');
         Route::post('/attach/{exam}', [Admin\QuestionBankController::class, 'attach'])->name('attach');
