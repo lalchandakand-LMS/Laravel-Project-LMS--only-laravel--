@@ -87,7 +87,7 @@ class BkashCheckoutAdapterTest extends TestCase
             ]),
         ]);
 
-        $request = Request::create('/payments/bkash/callback/AEC-ORDER-1002', 'GET', [
+        $request = Request::create('/payments/bkash/callback', 'GET', [
             'paymentID' => 'BKASH-PAY-1002',
             'status' => 'cancel',
         ]);
