@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MarketingCampaign;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
