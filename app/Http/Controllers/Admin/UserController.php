@@ -13,7 +13,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with(['branch'])->withCount(['enrollments', 'courses', 'orders']);
+        $query = User::with(['branch', 'studentProfile', 'staffProfile'])->withCount(['enrollments', 'courses', 'orders']);
 
         if ($role = $request->get('role')) {
             $query->where('role', $role);
@@ -21,6 +21,18 @@ class UserController extends Controller
         if ($branch = $request->get('branch')) {
             $query->where('branch_id', $branch);
         }
+        if ($status = $request->get('status')) {
+            if ($request->get('role') === 'student') {
+                $query->whereHas('studentProfile', fn ($profile) => $profile->where('status', $status));
+            } elseif (in_array($request->get('role'), ['instructor', 'branch_manager'], true)) {
+                $query->whereHas('staffProfile', fn ($profile) => $profile->where('employment_status', $status));
+            } elseif ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
         if ($q = $request->get('q')) {
             $query->where(fn ($w) => $w->where('name', 'like', "%{$q}%")
                 ->orWhere('email', 'like', "%{$q}%")->orWhere('phone', 'like', "%{$q}%"));
