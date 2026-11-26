@@ -17,46 +17,56 @@ class BkashPaymentController extends Controller
     public function initiate(Request $request, Order $order, BkashCheckoutAdapter $adapter)
     {
         abort_unless($order->user_id === $request->user()->id, 403);
-        abort_unless($order->branch && $order->branch->is_active, 403);
 
-        if (! in_array('bkash', $order->branch->enabledStudentPaymentMethods(), true)) {
-            throw ValidationException::withMessages(['gateway' => 'bKash is not enabled for this order branch.']);
-        }
+        $session = DB::transaction(function () use ($request, $order, $adapter) {
+                // Serialize checkout creation per order. The pending row must be
+                // checked and inserted while holding the same order lock, otherwise
+                // two parallel requests can create two live provider sessions.
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                abort_unless($lockedOrder->user_id === $request->user()->id, 403);
+                $lockedOrder->load('branch');
 
-        if (! in_array($order->status, ['pending', 'partially_paid'], true) || $order->dueAmount() <= 0) {
-            throw ValidationException::withMessages(['payment' => 'This order is not awaiting payment.']);
-        }
+                abort_unless($lockedOrder->branch && $lockedOrder->branch->is_active, 403);
 
-        if ($order->payments()->where('status', 'pending')->exists()) {
-            throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order.']);
-        }
+                if (! in_array('bkash', $lockedOrder->branch->enabledStudentPaymentMethods(), true)) {
+                    throw ValidationException::withMessages(['gateway' => 'bKash is not enabled for this order branch.']);
+                }
 
-        try {
-            $session = $adapter->initiate($order);
-        } catch (Throwable $exception) {
-            report($exception);
-            throw ValidationException::withMessages([
-                'gateway' => 'The bKash sandbox checkout could not be started. Check the Admin API configuration and try again.',
-            ]);
-        }
+                if (! in_array($lockedOrder->status, ['pending', 'partially_paid'], true) || $lockedOrder->dueAmount() <= 0) {
+                    throw ValidationException::withMessages(['payment' => 'This order is not awaiting payment.']);
+                }
 
-        try {
-            Payment::create([
-                'order_id' => $order->id,
-                'gateway' => 'bkash',
-                'provider_payment_id' => $session['payment_id'],
-                'amount' => $session['amount'],
-                'status' => 'pending',
-                'payload' => [
-                    'provider' => 'bkash',
-                    'invoice' => $session['invoice'],
-                    'currency' => $session['currency'],
-                    'initiated_at' => now()->toIso8601String(),
-                ],
-            ]);
-        } catch (QueryException) {
-            throw ValidationException::withMessages(['payment' => 'This bKash payment session already exists. Refresh the order before trying again.']);
-        }
+                if ($lockedOrder->payments()->where('status', 'pending')->exists()) {
+                    throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order.']);
+                }
+
+                // Keep the order lock until the provider session is persisted so a
+                // concurrent request cannot pass the pending-payment check.
+                try {
+                    $session = $adapter->initiate($lockedOrder);
+                } catch (Throwable $exception) {
+                    report($exception);
+                    throw ValidationException::withMessages([
+                        'gateway' => 'The bKash sandbox checkout could not be started. Check the Admin API configuration and try again.',
+                    ]);
+                }
+
+                Payment::create([
+                    'order_id' => $lockedOrder->id,
+                    'gateway' => 'bkash',
+                    'provider_payment_id' => $session['payment_id'],
+                    'amount' => $session['amount'],
+                    'status' => 'pending',
+                    'payload' => [
+                        'provider' => 'bkash',
+                        'invoice' => $session['invoice'],
+                        'currency' => $session['currency'],
+                        'initiated_at' => now()->toIso8601String(),
+                    ],
+                ]);
+
+                return $session;
+            });
 
         return redirect()->away($session['redirect_url']);
     }
@@ -86,10 +96,13 @@ class BkashPaymentController extends Controller
 
         if (($result['status'] ?? null) !== 'success') {
             if (($result['status'] ?? null) === 'failed') {
-                $rejected = DB::transaction(function () use ($payment, $result) {
+                $rejected = DB::transaction(function () use ($payment, $order, $result) {
+                    // Use the same order-then-payment lock order as webhook settlement.
+                    // This prevents a stale browser failure from winning the payment lock
+                    // while a successful webhook is holding the order lock.
+                    Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
                     $lockedPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
-                    // A webhook may have settled the payment while the browser return was in flight.
                     if ($lockedPayment->status !== 'pending') {
                         return $lockedPayment->status === 'rejected';
                     }
