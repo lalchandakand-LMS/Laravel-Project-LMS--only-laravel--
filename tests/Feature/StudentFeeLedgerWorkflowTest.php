@@ -1,20 +1,20 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\Branch;
-use App\\Models\\CoachingAdmission;
-use App\\Models\\CoachingBatch;
-use App\\Models\\Course;
-use App\\Models\\StudentFeeCredit;
-use App\\Models\\StudentFeeCreditApplication;
-use App\\Models\\StudentFeeInvoice;
-use App\\Models\\StudentFeePayment;
-use App\\Models\\User;
-use Illuminate\\Database\\QueryException;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Str;
-use Tests\\TestCase;
+use App\Models\Branch;
+use App\Models\CoachingAdmission;
+use App\Models\CoachingBatch;
+use App\Models\Course;
+use App\Models\StudentFeeCredit;
+use App\Models\StudentFeeCreditApplication;
+use App\Models\StudentFeeInvoice;
+use App\Models\StudentFeePayment;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class StudentFeeLedgerWorkflowTest extends TestCase
 {
