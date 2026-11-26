@@ -32,6 +32,10 @@
         </div>
     </div>
 
+    @if($attempt->manual_feedback)
+        <div class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900"><strong>Teacher feedback:</strong> {{ $attempt->manual_feedback }}</div>
+    @endif
+
     <div class="space-y-3">
         @foreach ($attempt->questions as $i => $question)
             @php($answer = $answers[$question->id] ?? null)
