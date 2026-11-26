@@ -33,6 +33,40 @@ class SettingController extends Controller
         'brand_loader_enabled', 'brand_loader_message', 'brand_loader_style', 'brand_loader_min_time', 'brand_loader_bg', 'brand_loader_color', 'brand_loader_text_color',
     ];
 
+    /**
+     * Public CTA links are restricted to same-site root paths, anchors, and
+     * absolute HTTP(S) URLs to prevent javascript:/data: navigation injection.
+     */
+    private function safeNavigationTarget(): \\Closure
+    {
+        return function (string $attribute, mixed $value, \\Closure $fail): void {
+            if ($value === null || trim((string) $value) === '') {
+                return;
+            }
+
+            $url = trim((string) $value);
+
+            if (str_starts_with($url, '#')
+                || (str_starts_with($url, '/') && ! str_starts_with($url, '//')
+                    && ! str_contains($url, '\\\\')
+                    && preg_match('/[\\x00-\\x20]/', $url) !== 1)) {
+                return;
+            }
+
+            $parts = parse_url($url);
+            $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+            $safeExternal = is_array($parts)
+                && in_array($scheme, ['http', 'https'], true)
+                && filled($parts['host'] ?? null)
+                && ! isset($parts['user'])
+                && ! isset($parts['pass']);
+
+            if (! $safeExternal) {
+                $fail('Use a same-site path, anchor, or http/https URL.');
+            }
+        };
+    }
+
     public function index()
     {
         return view('admin.settings', ['settings' => Setting::all_()]);
@@ -46,9 +80,9 @@ class SettingController extends Controller
             'site_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'site_primary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'site_secondary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'facebook' => ['sometimes', 'nullable', 'url', 'max:2048'],
-            'youtube' => ['sometimes', 'nullable', 'url', 'max:2048'],
-            'instagram' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'facebook' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
+            'youtube' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
+            'instagram' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'logo_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'dashboard_banner' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
@@ -56,7 +90,7 @@ class SettingController extends Controller
             'dashboard_banner_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'dashboard_banner_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
             'dashboard_banner_button_text' => ['sometimes', 'nullable', 'string', 'max:60'],
-            'dashboard_banner_button_url' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'dashboard_banner_button_url' => ['sometimes', 'nullable', 'string', 'max:2048', $this->safeNavigationTarget()],
             'dashboard_primary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'dashboard_secondary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'dashboard_banner_enabled' => ['sometimes', 'boolean'],
@@ -91,7 +125,7 @@ class SettingController extends Controller
             'homepage_admission_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'homepage_admission_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
             'homepage_admission_button_text' => ['sometimes', 'nullable', 'string', 'max:60'],
-            'homepage_admission_button_url' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'homepage_admission_button_url' => ['sometimes', 'nullable', 'string', 'max:2048', $this->safeNavigationTarget()],
             'homepage_learning_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'homepage_learning_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
             'homepage_testimonial_title' => ['sometimes', 'nullable', 'string', 'max:180'],
@@ -121,7 +155,7 @@ class SettingController extends Controller
             'footer_heading' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'footer_copyright' => ['sometimes', 'nullable', 'string', 'max:255'],
             'developer_name' => ['sometimes', 'nullable', 'string', 'max:120'],
-            'developer_url' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'developer_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'developer_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'developer_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'developer_text_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
