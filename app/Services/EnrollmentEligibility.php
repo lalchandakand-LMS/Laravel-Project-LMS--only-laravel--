@@ -18,6 +18,9 @@ class EnrollmentEligibility
         return $user->enrollments()
             ->where('status', 'active')
             ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            // Enrollment branch ownership is snapshotted independently of the
+            // student's current profile; do not grant old-branch access after transfer.
+            ->where(fn ($branch) => $branch->whereNull('branch_id')->orWhere('branch_id', $user->branch_id))
             ->where(function ($batch) use ($user) {
                 $batch->whereNull('batch_id')
                     ->orWhereHas('batch', function ($eligibleBatch) use ($user) {
