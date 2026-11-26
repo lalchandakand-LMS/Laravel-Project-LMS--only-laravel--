@@ -15,6 +15,7 @@ class VerifyEmailController extends Controller
         }
 
         $request->fulfill();
+        $request->user()->forceFill(['email_verification_required' => false])->save();
 
         return redirect()->intended($request->user()->dashboardRoute())
             ->with('success', 'Your email address has been verified.');
