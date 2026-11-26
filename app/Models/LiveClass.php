@@ -19,6 +19,7 @@ class LiveClass extends Model
 
     public function course() { return $this->belongsTo(Course::class); }
     public function batch() { return $this->belongsTo(Batch::class); }
+    public function attendanceSession() { return $this->hasOne(AttendanceSession::class); }
 
     public function scopePublished($q) { return $q->where('is_published', true); }
 
