@@ -3,6 +3,7 @@
 @section('heading', 'Profile settings')
 @section('content')
 <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4"><div><p class="font-bold text-slate-900">Your student identity card</p><p class="text-xs text-slate-500">Print or save your QR-enabled identity card.</p></div><a href="{{ route('student.id-card') }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">View ID card</a></div>
+<div class="mb-5">@include('partials.phone-verification')</div>
 <div class="grid gap-6 lg:grid-cols-2">
     <form method="POST" action="{{ route('student.profile.update') }}" enctype="multipart/form-data" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         @csrf @method('PUT')
@@ -33,7 +34,6 @@
                 <textarea name="bio" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">{{ old('bio', $user->bio) }}</textarea>
             </div>
         </div>
-        @include('partials.phone-verification')
         <button class="mt-5 rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white">Save changes</button>
     </form>
 
