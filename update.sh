@@ -215,7 +215,7 @@ if [ "$DRY_RUN" -eq 0 ]; then
   [ -L public/storage ] || { "$PHP_BIN" artisan storage:link >/dev/null 2>&1 && ok "public/storage linked" || warn "storage:link failed (uploads may 404)"; }
   chmod -R ug+rwX storage bootstrap/cache 2>/dev/null && ok "storage/ + bootstrap/cache/ writable" || warn "chmod failed (fix permissions manually)"
   chmod 700 "$BACKUP_DIR" 2>/dev/null || warn "could not restrict backup directory permissions"
-  find "$BACKUP_DIR" -maxdepth 1 -type f -exec chmod 600 {} \\; 2>/dev/null || warn "could not restrict backup file permissions"
+  find "$BACKUP_DIR" -maxdepth 1 -type f -exec chmod 600 {} \; 2>/dev/null || warn "could not restrict backup file permissions"
 else
   echo "    [dry-run] optimize:clear / config:cache / route:cache / view:cache / storage:link / chmod"
 fi
