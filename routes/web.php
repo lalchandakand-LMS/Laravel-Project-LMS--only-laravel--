@@ -160,6 +160,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('coaching-fees/invoices/{invoice}/payments', [Admin\StudentFeeController::class, 'collectPayment'])->name('coaching-fees.payments.store');
         Route::post('coaching-admissions/{admission}/approve', [Admin\CoachingAdmissionController::class, 'approve'])->name('coaching-admissions.approve');
         Route::post('coaching-admissions/{admission}/reject', [Admin\CoachingAdmissionController::class, 'reject'])->name('coaching-admissions.reject');
+        Route::get('coaching-admissions/{admission}/documents/{document}', [Admin\ProfileDocumentController::class, 'downloadAdmission'])->name('coaching-admissions.documents.download');
+        Route::post('coaching-admissions/{admission}/documents/{document}/review', [Admin\ProfileDocumentController::class, 'reviewAdmission'])->name('coaching-admissions.documents.review');
         Route::get('attendance/{session}', [AttendanceController::class, 'adminShow'])->name('attendance.show');
         Route::post('attendance/{session}/review', [AttendanceController::class, 'review'])->name('attendance.review');
         Route::resource('categories', Admin\CategoryController::class)->except('show');
