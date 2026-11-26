@@ -44,6 +44,32 @@ class AdvancedAnnouncementTest extends TestCase
             ->assertOk();
     }
 
+    public function test_failed_announcement_attachment_upload_rolls_back_and_cleans_prior_files(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->twice()->andReturn('announcements/1/first.pdf', false);
+        $disk->shouldReceive('delete')->once()->with('announcements/1/first.pdf')->andReturn(true);
+        Storage::shouldReceive('disk')->times(3)->with('local')->andReturn($disk);
+
+        $this->actingAs($admin)->from(route('admin.announcements.create'))
+            ->post(route('admin.announcements.store'), [
+                'title' => 'Storage failure announcement',
+                'body' => 'The announcement must not be saved when an attachment fails.',
+                'priority' => 'general',
+                'attachments' => [
+                    UploadedFile::fake()->create('first.pdf', 100, 'application/pdf'),
+                    UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'),
+                ],
+            ])
+            ->assertRedirect(route('admin.announcements.create'))
+            ->assertSessionHasErrors('attachments');
+
+        $this->assertDatabaseCount('announcements', 0);
+        $this->assertDatabaseCount('announcement_attachments', 0);
+        $this->assertDatabaseCount('announcement_deliveries', 0);
+    }
+
     public function test_editing_a_published_audience_notifies_only_new_recipients(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
