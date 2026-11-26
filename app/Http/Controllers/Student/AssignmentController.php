@@ -8,6 +8,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class AssignmentController extends Controller
 {
@@ -72,12 +73,17 @@ class AssignmentController extends Controller
             return back()->withErrors(['answer_text' => 'Write an answer or attach a file before submitting.'])->withInput();
         }
 
-        $attachment = $submission?->attachment;
+        $previousAttachment = $submission?->attachment;
+        $newAttachment = null;
+        $attachment = $previousAttachment;
         if ($request->hasFile('attachment')) {
-            if ($attachment) {
-                Storage::disk('local')->delete($attachment);
+            $newAttachment = $request->file('attachment')->store('assignments/submissions', 'local');
+            if (! $newAttachment) {
+                throw ValidationException::withMessages([
+                    'attachment' => 'The uploaded file could not be stored. Your previous submission file has been kept.',
+                ]);
             }
-            $attachment = $request->file('attachment')->store('assignments/submissions', 'local');
+            $attachment = $newAttachment;
         }
 
         $values = [
@@ -91,10 +97,21 @@ class AssignmentController extends Controller
             'graded_at' => null,
         ];
 
-        if ($submission) {
-            $submission->update($values);
-        } else {
-            $assignment->submissions()->create($values + ['student_id' => $user->id]);
+        try {
+            if ($submission) {
+                $submission->update($values);
+            } else {
+                $assignment->submissions()->create($values + ['student_id' => $user->id]);
+            }
+        } catch (\Throwable $exception) {
+            if ($newAttachment) {
+                Storage::disk('local')->delete($newAttachment);
+            }
+            throw $exception;
+        }
+
+        if ($newAttachment && $previousAttachment) {
+            Storage::disk('local')->delete($previousAttachment);
         }
 
         return redirect()->route('student.assignments.show', $assignment)

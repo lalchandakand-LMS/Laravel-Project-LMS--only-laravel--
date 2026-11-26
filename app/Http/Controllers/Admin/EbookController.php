@@ -29,6 +29,11 @@ class EbookController extends Controller
             foreach (['cover' => 'public', 'file' => 'local'] as $field => $disk) {
                 if ($request->hasFile($field)) {
                     $path = $request->file($field)->store($field === 'cover' ? 'ebooks' : 'ebook-files', $disk);
+                    if (! $path) {
+                        throw ValidationException::withMessages([
+                            $field => 'The uploaded '.$field.' could not be stored. Existing e-book files have been kept.',
+                        ]);
+                    }
                     $data[$field] = $path;
                     $stored[] = [$disk, $path];
                 } elseif ($request->filled($field.'_url')) {
@@ -79,6 +84,11 @@ class EbookController extends Controller
             foreach (['cover' => 'public', 'file' => 'local'] as $field => $disk) {
                 if ($request->hasFile($field)) {
                     $path = $request->file($field)->store($field === 'cover' ? 'ebooks' : 'ebook-files', $disk);
+                    if (! $path) {
+                        throw ValidationException::withMessages([
+                            $field => 'The uploaded '.$field.' could not be stored. Existing e-book files have been kept.',
+                        ]);
+                    }
                     $data[$field] = $path;
                     $stored[] = [$disk, $path];
                 } elseif ($request->filled($field.'_url')) {

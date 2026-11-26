@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PostController extends Controller
 {
@@ -32,13 +33,25 @@ class PostController extends Controller
         $data = $this->validated($request);
         $data['author_id'] = $request->user()->id;
         $data['tags'] = $this->tags($request->input('tags'));
+        $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('posts', 'public');
+            $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            if (! $storedThumbnail) {
+                throw ValidationException::withMessages(['thumbnail' => 'The post thumbnail could not be stored.']);
+            }
+            $data['thumbnail'] = $storedThumbnail;
         } elseif ($request->filled('thumbnail_url')) {
             $data['thumbnail'] = $request->input('thumbnail_url');
         }
         unset($data['thumbnail_url']);
-        $post = Post::create($data);
+        try {
+            $post = Post::create($data);
+        } catch (\Throwable $exception) {
+            if ($storedThumbnail) {
+                delete_stored_media('public', $storedThumbnail);
+            }
+            throw $exception;
+        }
 
         return redirect()->route('admin.posts.edit', $post)->with('success', 'Post saved.');
     }
@@ -53,15 +66,27 @@ class PostController extends Controller
         $data = $this->validated($request, $post);
         $data['tags'] = $this->tags($request->input('tags'));
         $oldThumbnail = $post->thumbnail;
+        $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('posts', 'public');
+            $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            if (! $storedThumbnail) {
+                throw ValidationException::withMessages(['thumbnail' => 'The new post thumbnail could not be stored. The previous thumbnail has been kept.']);
+            }
+            $data['thumbnail'] = $storedThumbnail;
         } elseif ($request->filled('thumbnail_url')) {
             $data['thumbnail'] = $request->input('thumbnail_url');
         } elseif ($request->boolean('remove_thumbnail')) {
             $data['thumbnail'] = null;
         }
         unset($data['thumbnail_url'], $data['remove_thumbnail']);
-        $post->update($data);
+        try {
+            $post->update($data);
+        } catch (\Throwable $exception) {
+            if ($storedThumbnail) {
+                delete_stored_media('public', $storedThumbnail);
+            }
+            throw $exception;
+        }
         if ($oldThumbnail && isset($data['thumbnail']) && $oldThumbnail !== $data['thumbnail']) {
             delete_stored_media('public', $oldThumbnail);
         }
