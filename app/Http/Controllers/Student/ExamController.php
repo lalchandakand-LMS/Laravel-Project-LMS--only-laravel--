@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Http\\Controllers\\Student;
+namespace App\Http\Controllers\Student;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\AttemptAnswer;
-use App\\Models\\Exam;
-use App\\Models\\ExamAttempt;
-use App\\Models\\User;
-use Illuminate\\Http\\Request;
+use App\Http\Controllers\Controller;
+use App\Models\AttemptAnswer;
+use App\Models\Exam;
+use App\Models\ExamAttempt;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class ExamController extends Controller
 {
