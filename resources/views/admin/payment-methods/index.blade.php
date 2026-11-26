@@ -49,9 +49,12 @@
                         <label class="mb-1 block text-sm font-semibold text-slate-700">Environment</label>
                         <select name="providers[{{ $key }}][mode]" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm md:max-w-xs">
                             <option value="sandbox" @selected($provider['mode'] === 'sandbox')>Sandbox / Test</option>
-                            <option value="live" @selected($provider['mode'] === 'live')>Live (configuration only)</option>
+                            <option value="live" disabled>Live — locked until integration is certified</option>
                         </select>
-                        <p class="mt-1 text-xs text-slate-500">Live selection does not bypass provider integration or verification checks.</p>
+                        <p class="mt-1 text-xs text-slate-500">Live mode is intentionally locked. Credentials can be stored for preparation, but automatic collection cannot be enabled until the provider adapter and callback tests pass.</p>
+                        @if (($provider['configured_mode'] ?? 'sandbox') === 'live')
+                            <p class="mt-2 text-xs font-semibold text-rose-700">A previous Live selection was found. Saving this form will return the stored configuration to Sandbox.</p>
+                        @endif
                     </div>
                     @foreach ($provider['fields'] as $field => $label)
                         @php $secret = in_array($field, ['app_secret', 'password', 'private_key', 'api_key', 'api_secret', 'webhook_secret'], true); @endphp
