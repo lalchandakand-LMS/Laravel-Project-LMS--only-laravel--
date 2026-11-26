@@ -10,7 +10,7 @@
 <section data-home-section="hero" class="home-hero-shell overflow-hidden text-white">
     <div class="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:pt-12">
         @if ($slides->count())
-            <div id="heroSlides" class="coverflow-carousel relative mx-auto" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning banners">
+            <div id="heroSlides" class="coverflow-carousel relative mx-auto" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
                 <div class="coverflow-stage relative mx-auto">
                     @foreach ($slides as $i => $slide)
                         <article class="coverflow-slide {{ $i === 0 ? 'is-active' : '' }}" data-hero-slide data-slide="{{ $i }}" aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
@@ -116,15 +116,15 @@
 
 {{-- LEARNING PATH CATEGORIES --}}
 @if (($homepageSettings['homepage_show_categories'] ?? '1') === '1')
-<section data-home-section="categories" class="learning-path-section py-16" style="background:{{ (($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') === '#ffffff') ? '#f1f3ff' : ($homepageSettings['homepage_learning_bg'] ?? '#f1f3ff') }}">
+<section data-home-section="categories" data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'grid' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="learning-path-section py-16" style="background:{{ $homepageSettings['homepage_learning_bg'] ?? '#f1f3ff' }}">
     <div class="mx-auto max-w-7xl px-4">
         <div class="mx-auto max-w-2xl text-center">
             <p class="text-xs font-extrabold uppercase tracking-[.22em] text-orange-600">Explore your interests</p>
-            <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-orange-800 sm:text-4xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose Your Learning Path' }}</h2>
+            <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-orange-800 sm:text-4xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose your learning path' }}</h2>
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ $homepageSettings['homepage_learning_subtitle'] ?? 'Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.' }}</p>
         </div>
         @php($categoryPalettes = [['from-sky-100 to-blue-50','bg-sky-500'],['from-emerald-100 to-green-50','bg-emerald-500'],['from-violet-100 to-purple-50','bg-violet-500'],['from-orange-100 to-amber-50','bg-[#22d3ee]'],['from-pink-100 to-rose-50','bg-pink-500']])
-        <div class="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($categories as $index => $category)
                 @php([$gradient, $iconColor] = $categoryPalettes[$index % count($categoryPalettes)])
                 <a href="{{ route('categories.show', $category->slug) }}" class="group rounded-2xl border border-white/80 bg-gradient-to-br {{ $gradient }} p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
