@@ -88,7 +88,9 @@ class SeoManagementTest extends TestCase
 
         $this->actingAs($admin)->get('/')->assertOk()
             ->assertDontSee('tracking-consent')
-            ->assertDontSee('googletagmanager.com/gtag/js');
+            ->assertDontSee('<script async src="https://www.googletagmanager.com/gtag/js', false)
+            ->assertDontSee('<script async src="https://www.googletagmanager.com/gtm.js', false)
+            ->assertDontSee('<script async src="https://connect.facebook.net/', false);
     }
 
     public function test_invalid_seo_urls_and_verification_tokens_are_rejected(): void
