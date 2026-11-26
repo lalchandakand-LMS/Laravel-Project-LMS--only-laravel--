@@ -198,7 +198,7 @@
                 'homepage_learning_text' => ['Learning path text', '#0f172a'],
                 'homepage_testimonial_bg' => ['Testimonial background', '#f1f5f9'],
                 'homepage_testimonial_text' => ['Testimonial text', '#0f172a'],
-                'homepage_stats_bg' => ['Statistics background', '#047857'],
+                'homepage_stats_bg' => ['Statistics background', '#ea580c'],
                 'homepage_stats_text' => ['Statistics text', '#ffffff'],
                 'footer_bg' => ['Footer background', '#ffffff'],
                 'footer_text' => ['Footer text', '#475569'],
