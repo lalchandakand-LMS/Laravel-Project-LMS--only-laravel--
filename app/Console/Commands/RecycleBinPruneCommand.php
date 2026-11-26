@@ -4,15 +4,19 @@ namespace App\Console\Commands;
 
 use App\Models\Announcement;
 use App\Models\Branch;
+use App\Models\Batch;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Ebook;
+use App\Models\FlashSale;
 use App\Models\Exam;
 use App\Models\Lesson;
 use App\Models\LiveClass;
+use App\Models\Level;
 use App\Models\MenuItem;
 use App\Models\Question;
+use App\Models\Post;
 use App\Models\Review;
 use App\Models\Section;
 use App\Models\Slider;
@@ -42,7 +46,11 @@ class RecycleBinPruneCommand extends Command
         'sliders' => Slider::class,
         'menu-items' => MenuItem::class,
         'coupons' => Coupon::class,
+        'posts' => Post::class,
+        'flash-sales' => FlashSale::class,
         'branches' => Branch::class,
+        'batches' => Batch::class,
+        'levels' => Level::class,
     ];
 
     public function handle(): int
@@ -64,6 +72,7 @@ class RecycleBinPruneCommand extends Command
 
                     try {
                         $record->forceDelete();
+                        $this->deleteRecordMedia($record);
                         $deleted++;
                     } catch (Throwable $exception) {
                         report($exception);
@@ -76,6 +85,24 @@ class RecycleBinPruneCommand extends Command
         $this->info("Recycle Bin retention: {$days} days. Permanently removed: {$deleted}. Protected and retained: {$protected}. Failed safely: {$failed}.");
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    private function deleteRecordMedia($record): void
+    {
+        $media = match (true) {
+            $record instanceof User => [['public', $record->avatar]],
+            $record instanceof Course => [['public', $record->thumbnail]],
+            $record instanceof Category => [['public', $record->image]],
+            $record instanceof Lesson => [['local', $record->attachment]],
+            $record instanceof Slider => [['public', $record->image]],
+            $record instanceof Ebook => [['public', $record->cover], ['local', $record->file]],
+            $record instanceof Post => [['public', $record->thumbnail]],
+            default => [],
+        };
+
+        foreach ($media as [$disk, $path]) {
+            delete_stored_media($disk, $path);
+        }
     }
 
     /** Never cascade-delete accounts, financial records, learning history or exam attempts. */
@@ -94,14 +121,16 @@ class RecycleBinPruneCommand extends Command
                 ['certificates', 'course_id'], ['live_classes', 'course_id'], ['order_items', 'item_id'],
                 ['assignments', 'course_id'], ['batches', 'course_id'], ['online_batch_enrollments', 'course_id'],
             ],
-            'categories' => [['categories', 'parent_id'], ['courses', 'category_id']],
+            'categories' => [['categories', 'parent_id'], ['courses', 'category_id'], ['posts', 'category_id']],
             'sections' => [['lessons', 'section_id']],
-            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id']],
+            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id'], ['assignments', 'lesson_id']],
             'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],
             'coupons' => [['orders', 'coupon_id']],
-            'branches' => [['users', 'branch_id']],
+            'branches' => [\n                ['users', 'branch_id'], ['orders', 'branch_id'], ['batches', 'branch_id'],\n                ['coaching_batches', 'branch_id'], ['coaching_admissions', 'branch_id'],\n                ['student_fee_invoices', 'branch_id'], ['fee_plans', 'branch_id'],\n            ],
+            'batches' => [['enrollments', 'batch_id'], ['online_batch_enrollments', 'batch_id'], ['live_classes', 'batch_id'], ['attendance_sessions', 'batch_id']],
+            'levels' => [['courses', 'level_id'], ['batches', 'level_id'], ['coaching_batches', 'level_id']],
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };
