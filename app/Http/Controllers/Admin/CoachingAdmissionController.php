@@ -124,13 +124,21 @@ class CoachingAdmissionController extends Controller
     public function reject(Request $request, CoachingAdmission $admission)
     {
         $data = $request->validate(['admin_note' => ['required', 'string', 'max:2000']]);
-        abort_unless($admission->status === 'pending', 422, 'এই আবেদনটি আর pending অবস্থায় নেই।');
-        $admission->update([
-            'status' => 'rejected',
-            'admin_note' => $data['admin_note'],
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-        ]);
+
+        DB::transaction(function () use ($admission, $data, $request) {
+            $lockedAdmission = CoachingAdmission::query()
+                ->lockForUpdate()
+                ->findOrFail($admission->id);
+
+            abort_unless($lockedAdmission->status === 'pending', 422, 'এই আবেদনটি আর pending অবস্থায় নেই।');
+
+            $lockedAdmission->update([
+                'status' => 'rejected',
+                'admin_note' => $data['admin_note'],
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+            ]);
+        });
 
         return back()->with('success', 'ভর্তি আবেদনটি প্রত্যাখ্যান করা হয়েছে।');
     }
