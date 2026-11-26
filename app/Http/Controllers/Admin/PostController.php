@@ -87,7 +87,7 @@ class PostController extends Controller
             }
             throw $exception;
         }
-        if ($oldThumbnail && isset($data['thumbnail']) && $oldThumbnail !== $data['thumbnail']) {
+        if ($oldThumbnail && array_key_exists('thumbnail', $data) && $oldThumbnail !== $data['thumbnail']) {
             delete_stored_media('public', $oldThumbnail);
         }
 
