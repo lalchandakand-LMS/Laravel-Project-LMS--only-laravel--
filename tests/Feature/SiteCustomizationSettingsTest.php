@@ -23,6 +23,8 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->actingAs($admin)->post(route('admin.settings.update'), [
             'site_name' => "Alom's English Center",
+            'site_primary_color' => '#ea580c',
+            'site_secondary_color' => '#9a3412',
             'homepage_learning_title' => 'Learning paths',
             'homepage_testimonial_title' => 'Student stories',
             'homepage_learning_layout' => 'grid',
@@ -54,6 +56,8 @@ class SiteCustomizationSettingsTest extends TestCase
             'brand_loader_text_color' => '#0f172a',
         ])->assertRedirect();
 
+        $this->assertSame('#ea580c', Setting::get('site_primary_color'));
+        $this->assertSame('#9a3412', Setting::get('site_secondary_color'));
         $this->assertSame('Learning paths', Setting::get('homepage_learning_title'));
         $this->assertSame('Student stories', Setting::get('homepage_testimonial_title'));
         $this->assertSame('grid', Setting::get('homepage_learning_layout'));
@@ -146,4 +150,15 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('Homepage, footer & developer design', false)
             ->assertSee('Brand Loading');
     }
+
+    public function test_invalid_public_brand_colors_are_rejected(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->from('/admin/settings')->post(route('admin.settings.update'), [
+            'site_primary_color' => 'orange; background:url(javascript:alert(1))',
+            'site_secondary_color' => '#12345',
+        ])->assertSessionHasErrors(['site_primary_color', 'site_secondary_color']);
+    }
 }
+
