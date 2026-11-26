@@ -209,7 +209,7 @@ students outside the manager's branch) instead of relying on seed order.
 - Deletion is soft-delete based; the original record ID and linked learning history remain intact. The audit field records who deleted an item and when.
 - Restore is available per item and in batches for one selected record type. A restore that conflicts with a unique email/slug/code is safely skipped and reported.
 - Permanent deletion is guarded. Accounts, courses, lessons, exams, questions, e-books and branches cannot be purged while protected relationships exist; course/ebook order history, enrolments, certificates, exam attempts and progress are preserved. Orders and payments are not part of the Recycle Bin.
-- The updater verifies backups of the database, .env, and uploaded public media before changing the application. It only runs additive Laravel migrations; it never runs destructive fresh/wipe/seed commands.
+- The updater verifies backups of the database, .env, uploaded public media and private uploads before changing the application. It only runs additive Laravel migrations; it never runs destructive fresh/wipe/seed commands.
 - If a critical update step fails, the updater intentionally leaves the site in maintenance mode instead of exposing a partially upgraded application. Restore the verified backups and investigate before bringing the site online.
 
 
