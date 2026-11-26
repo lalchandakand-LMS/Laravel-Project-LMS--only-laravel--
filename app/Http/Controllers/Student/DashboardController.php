@@ -12,6 +12,7 @@ use App\Models\Exam;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Services\GamificationService;
 
 class DashboardController extends Controller
