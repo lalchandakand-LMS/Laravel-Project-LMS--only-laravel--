@@ -43,6 +43,8 @@ class Post extends Model
         });
     }
 
+    public function getRouteKeyName(): string { return 'slug'; }
+
     public function category() { return $this->belongsTo(Category::class); }
     public function author() { return $this->belongsTo(User::class, 'author_id'); }
     public function scopePublished($query) { return $query->where('is_published', true)->whereNotNull('published_at')->where('published_at', '<=', now()); }
