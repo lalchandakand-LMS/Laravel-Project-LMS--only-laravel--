@@ -44,7 +44,7 @@ class MediaUploadAndUrlFallbackTest extends TestCase
                 'language' => 'Bangla',
                 'thumbnail_url' => 'https://cdn.example.com/course-cover.webp',
             ])
-            ->assertRedirect(route('admin.courses.edit', $course));
+            ->assertRedirect(route('admin.courses.edit', $course->id));
 
         $this->assertSame('https://cdn.example.com/course-cover.webp', $course->fresh()->thumbnail);
         $this->assertSame('https://cdn.example.com/course-cover.webp', $course->fresh()->thumbnail_url);
@@ -83,7 +83,7 @@ class MediaUploadAndUrlFallbackTest extends TestCase
         $this->assertSame('https://cdn.example.com/handbook-cover.webp', $ebook->coverUrl());
 
         $this->actingAs($this->student())
-            ->get(route('ebooks.file', $ebook->slug))
+            ->get(route('student.ebooks.file', $ebook->slug))
             ->assertForbidden();
 
         EbookPurchase::create([
@@ -92,7 +92,7 @@ class MediaUploadAndUrlFallbackTest extends TestCase
         ]);
 
         $this->actingAs($this->student())
-            ->get(route('ebooks.file', $ebook->slug))
+            ->get(route('student.ebooks.file', $ebook->slug))
             ->assertRedirect('https://cdn.example.com/handbook.pdf');
     }
 
