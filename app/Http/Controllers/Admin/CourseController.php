@@ -14,7 +14,7 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Course::with(['category', 'instructor'])->withCount(['lessons', 'enrollments']);
+        $query = Course::with(['category', 'categories', 'instructor'])->withCount(['lessons', 'enrollments']);
 
         if (! auth()->user()->isAdmin()) {
             $query->where('instructor_id', auth()->id());
