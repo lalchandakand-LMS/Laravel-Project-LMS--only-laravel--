@@ -142,11 +142,19 @@ if [ -d storage/app/private ] && find storage/app/private -mindepth 1 -maxdepth 
   fi
 fi
 
-# keep the 10 newest backup artifacts, drop the rest
+# Keep the 10 newest complete timestamped backup sets.
 if [ "$DRY_RUN" -eq 0 ]; then
-  ls -1t "$BACKUP_DIR" 2>/dev/null | tail -n +11 | while read -r old; do
-    rm -rf "${BACKUP_DIR:?}/$old"
-  done
+  mapfile -t SNAPSHOTS < <(
+    for artifact in "$BACKUP_DIR"/*; do
+      [ -f "$artifact" ] || continue
+      basename "$artifact" | sed -nE 's/^(env|sqlite|mysql|pgsql|uploads|private)-([0-9]{8}-[0-9]{6})(\\..*)?$/\\2/p'
+    done | sort -ru
+  )
+  if [ "${#SNAPSHOTS[@]}" -gt 10 ]; then
+    for old_stamp in "${SNAPSHOTS[@]:10}"; do
+      rm -f "$BACKUP_DIR/"*-"$old_stamp".*
+    done
+  fi
 fi
 
 # ---------------------------------------------------- 2. maintenance mode
