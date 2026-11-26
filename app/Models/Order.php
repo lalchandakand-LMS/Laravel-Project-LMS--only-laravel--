@@ -35,6 +35,15 @@ class Order extends Model
         return max(0, round($received - $refunds + $credits, 2));
     }
 
+    /** Cash received and still refundable; internal credit transfers are not cash receipts. */
+    public function refundableAmount(): float
+    {
+        $received = (float) $this->payments()->where('status', 'verified')->sum('amount');
+        $refunds = (float) $this->adjustments()->where('type', 'refund')->sum('amount');
+
+        return max(0, round($received - $refunds, 2));
+    }
+
     public function dueAmount(): float
     {
         return max(0, round($this->total - $this->amountPaid(), 2));
