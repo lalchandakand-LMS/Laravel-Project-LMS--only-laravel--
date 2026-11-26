@@ -162,7 +162,12 @@ class MediaUploadAndUrlFallbackTest extends TestCase
             ])
             ->assertRedirect(route('admin.courses.edit', $course));
 
-        $this->actingAs($this->student())
+        $unentitledStudent = User::factory()->create([
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($unentitledStudent)
             ->get(route('student.learn.attachment', [$course->slug, $lesson->id]))
             ->assertForbidden();
 
