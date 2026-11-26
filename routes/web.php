@@ -284,6 +284,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('/attach/{exam}', [Admin\QuestionBankController::class, 'attach'])->name('attach');
     });
 
+    Route::post('live-classes/{liveClass}/cancel', [Admin\LiveClassController::class, 'cancel'])->name('live-classes.cancel');
+    Route::post('live-classes/{liveClass}/reschedule', [Admin\LiveClassController::class, 'reschedule'])->name('live-classes.reschedule');
     Route::resource('live-classes', Admin\LiveClassController::class)->except('show')
         ->parameters(['live-classes' => 'liveClass']);
 });
