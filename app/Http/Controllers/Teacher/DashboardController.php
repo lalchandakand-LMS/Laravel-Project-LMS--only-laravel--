@@ -14,6 +14,7 @@ use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -245,12 +246,29 @@ class DashboardController extends Controller
         return $rows;
     }
 
-    public function liveClasses()
+    public function liveClasses(Request $request)
     {
         $ids = $this->scopeIds(auth()->user());
+        $viewMode = $request->get('view') === 'calendar' ? 'calendar' : 'list';
+
+        if ($viewMode === 'calendar') {
+            try {
+                $calendarMonth = Carbon::createFromFormat('!Y-m', (string) $request->get('month', now()->format('Y-m')));
+            } catch (\Throwable $exception) {
+                $calendarMonth = now()->startOfMonth();
+            }
+            $calendarMonth->startOfMonth();
+            $calendarClasses = LiveClass::whereIn('course_id', $ids)->with(['course', 'batch'])
+                ->whereBetween('starts_at', [$calendarMonth->copy()->startOfMonth(), $calendarMonth->copy()->endOfMonth()])
+                ->orderBy('starts_at')->get()
+                ->groupBy(fn (LiveClass $class) => $class->starts_at?->toDateString());
+
+            return view('teacher.live-classes', compact('viewMode', 'calendarMonth', 'calendarClasses'));
+        }
 
         return view('teacher.live-classes', [
-            'classes' => LiveClass::whereIn('course_id', $ids)->with('course')
+            'viewMode' => $viewMode,
+            'classes' => LiveClass::whereIn('course_id', $ids)->with(['course', 'batch'])
                 ->orderByDesc('starts_at')->paginate(15),
         ]);
     }

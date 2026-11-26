@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\LiveClass;
 use App\Models\OnlineBatchEnrollment;
 use App\Services\EnrollmentEligibility;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class LiveClassController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         abort_unless($user->isStudent() || $user->isAdmin(), 403);
@@ -56,12 +58,32 @@ class LiveClassController extends Controller
                 });
         }
 
-        $classes = $query
-            ->orderByRaw('CASE WHEN starts_at >= ? THEN 0 ELSE 1 END', [now()])
-            ->orderByRaw('CASE WHEN starts_at >= ? THEN starts_at END ASC', [now()])
-            ->orderByRaw('CASE WHEN starts_at < ? THEN starts_at END DESC', [now()])
-            ->paginate(12);
+        $viewMode = $request->get('view') === 'calendar' ? 'calendar' : 'list';
+        $calendarMonth = null;
+        $calendarClasses = collect();
 
-        return view('student.live-classes', compact('classes'));
+        if ($viewMode === 'calendar') {
+            try {
+                $calendarMonth = Carbon::createFromFormat('!Y-m', (string) $request->get('month', now()->format('Y-m')));
+            } catch (\Throwable $exception) {
+                $calendarMonth = now()->startOfMonth();
+            }
+
+            $calendarMonth->startOfMonth();
+            $calendarClasses = (clone $query)
+                ->whereBetween('starts_at', [$calendarMonth->copy()->startOfMonth(), $calendarMonth->copy()->endOfMonth()])
+                ->orderBy('starts_at')
+                ->get()
+                ->groupBy(fn (LiveClass $class) => $class->starts_at?->toDateString());
+            $classes = null;
+        } else {
+            $classes = $query
+                ->orderByRaw('CASE WHEN starts_at >= ? THEN 0 ELSE 1 END', [now()])
+                ->orderByRaw('CASE WHEN starts_at >= ? THEN starts_at END ASC', [now()])
+                ->orderByRaw('CASE WHEN starts_at < ? THEN starts_at END DESC', [now()])
+                ->paginate(12);
+        }
+
+        return view('student.live-classes', compact('classes', 'viewMode', 'calendarMonth', 'calendarClasses'));
     }
 }

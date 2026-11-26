@@ -371,4 +371,71 @@ class LiveClassSchedulingTest extends TestCase
             ->assertSee('Calendar display test');
     }
 
+
+    public function test_student_can_view_monthly_calendar_for_eligible_live_classes(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $course = Course::firstOrFail();
+        Enrollment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'enrolled_at' => now(),
+        ]);
+        LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Student calendar session',
+            'platform' => 'Zoom',
+            'starts_at' => now()->startOfMonth()->addDays(3)->setHour(11),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('student.live-classes', ['view' => 'calendar', 'month' => now()->format('Y-m')]))
+            ->assertOk()
+            ->assertSee('Student calendar session')
+            ->assertSee('Calendar');
+    }
+
+    public function test_teacher_calendar_only_shows_owned_course_live_classes(): void
+    {
+        $teacher = User::where('email', 'teacher1@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+        $course->update(['instructor_id' => $teacher->id]);
+        LiveClass::create([
+            'course_id' => $course->id,
+            'title' => 'Teacher calendar session',
+            'platform' => 'Google Meet',
+            'starts_at' => now()->startOfMonth()->addDays(5)->setHour(12),
+            'duration_minutes' => 45,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($teacher)
+            ->get(route('teacher.live-classes', ['view' => 'calendar', 'month' => now()->format('Y-m')]))
+            ->assertOk()
+            ->assertSee('Teacher calendar session');
+    }
+
+    public function test_live_class_email_notifications_are_opt_in(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $liveClass = LiveClass::create([
+            'course_id' => Course::firstOrFail()->id,
+            'title' => 'Email opt-in session',
+            'platform' => 'Zoom',
+            'starts_at' => now()->addDay(),
+            'duration_minutes' => 60,
+            'is_published' => true,
+        ]);
+        $notification = new LiveClassChanged($liveClass, 'scheduled');
+
+        config(['live_classes.email_notifications' => false]);
+        $this->assertSame(['database'], $notification->via($student));
+
+        config(['live_classes.email_notifications' => true]);
+        $this->assertSame(['database', 'mail'], $notification->via($student));
+    }
+
 }
