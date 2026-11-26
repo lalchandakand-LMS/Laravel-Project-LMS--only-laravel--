@@ -55,8 +55,8 @@
     #brand-page-loader .brand-loader-name{font-weight:800;font-size:1.15rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
     #brand-page-loader .brand-loader-message{font-size:.9rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
     #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
-    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
-    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-pulse 1s ease-in-out infinite}
+    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
+    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};animation:brand-loader-pulse 1s ease-in-out infinite}
     @keyframes brand-loader-spin{to{transform:rotate(360deg)}}
     @keyframes brand-loader-dots{to{transform:scale(1.25);opacity:.55}}
     @keyframes brand-loader-pulse{50%{transform:scale(.72);opacity:.55}}
