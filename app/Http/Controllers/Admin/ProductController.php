@@ -114,6 +114,12 @@ class ProductController extends Controller
             'is_published' => 'required|boolean',
         ]);
 
+        if ($product && (int) $data['stock_quantity'] < (int) $product->reserved_quantity) {
+            throw ValidationException::withMessages([
+                'stock_quantity' => 'Total stock cannot be reduced below units reserved by unpaid orders. Cancel those orders first.',
+            ]);
+        }
+
         $data['slug'] = filled($data['slug'] ?? null) ? Str::slug($data['slug']) : Str::slug($data['title']);
 
         return $data;
