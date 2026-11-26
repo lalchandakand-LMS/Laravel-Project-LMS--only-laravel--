@@ -15,9 +15,9 @@ class QuestionBankController extends Controller
     public function index(Request $request)
     {
         $items = QuestionBankItem::query()
-            ->when($request->filled('q'), fn ($q) => $q->where('question', 'like', '%'.$request->string('q').'%'))
-            ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
-            ->when($request->filled('difficulty'), fn ($q) => $q->where('difficulty', $request->string('difficulty')))
+            ->when($request->filled('q'), fn ($q) => $q->where('question', 'like', '%'.$request->input('q').'%'))
+            ->when($request->filled('category'), fn ($q) => $q->where('category', $request->input('category')))
+            ->when($request->filled('difficulty'), fn ($q) => $q->where('difficulty', $request->input('difficulty')))
             ->latest()->paginate(20)->withQueryString();
 
         return view('admin.question-bank.index', [
@@ -80,6 +80,7 @@ class QuestionBankController extends Controller
         $header = fgetcsv($handle);
         $required = ['question', 'type', 'marks', 'options', 'correct_index', 'category', 'difficulty', 'explanation'];
         $header = array_map(fn ($value) => strtolower(trim((string) $value)), $header ?: []);
+        if (isset($header[0])) { $header[0] = preg_replace('/^\\xEF\\xBB\\xBF/', '', $header[0]); }
         abort_unless(array_diff($required, $header) === [], 422, 'CSV header must contain: '.implode(', ', $required));
 
         $created = 0;
@@ -95,17 +96,19 @@ class QuestionBankController extends Controller
                 abort_unless(filled($values['question'] ?? null), 422, "Question text is required on CSV line {$line}.");
                 $type = trim((string) ($values['type'] ?? ''));
                 abort_unless(in_array($type, ['mcq', 'cq', 'short'], true), 422, "Invalid question type on CSV line {$line}.");
+                $marks = filter_var($values['marks'] ?? null, FILTER_VALIDATE_FLOAT);
+                abort_unless($marks !== false && $marks >= 0.25 && $marks <= 1000, 422, "Invalid marks on CSV line {$line}.");
                 $options = $type === 'mcq' ? array_values(array_filter(array_map('trim', explode('|', (string) ($values['options'] ?? ''))), fn ($v) => $v !== '')) : [];
                 $correct = $values['correct_index'] === '' ? null : (int) $values['correct_index'];
                 if ($type === 'mcq') {
-                    abort_unless(count($options) >= 2 && $correct !== null && isset($options[$correct]), 422, "MCQ options or correct_index invalid on CSV line {$line}.");
+                    abort_unless(count($options) >= 2 && count($options) <= 10 && $correct !== null && isset($options[$correct]), 422, "MCQ options or correct_index invalid on CSV line {$line}.");
                 }
 
                 QuestionBankItem::create([
                     'created_by' => $request->user()->id,
                     'question' => trim((string) $values['question']),
                     'type' => $type,
-                    'marks' => max(0.25, (float) $values['marks']),
+                    'marks' => $marks,
                     'options' => $type === 'mcq' ? $options : null,
                     'correct_option_index' => $type === 'mcq' ? $correct : null,
                     'category' => filled($values['category'] ?? null) ? trim($values['category']) : null,
