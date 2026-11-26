@@ -162,6 +162,69 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertNotNull($order->fresh()->delivered_at);
     }
 
+    public function test_student_checkout_reserves_physical_inventory_before_payment(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $branch = Branch::create([
+            'name' => 'Reservation Branch',
+            'code' => 'RSV-01',
+            'is_active' => true,
+            'payment_methods' => ['bkash'],
+        ]);
+        $product = Product::create([
+            'title' => 'Checkout Reservation Book',
+            'price' => 400,
+            'stock_quantity' => 5,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($student)->withSession(['cart' => ['product:'.$product->id]])
+            ->post(route('checkout.store'), [
+                'name' => $student->name,
+                'phone' => '01712345678',
+                'email' => $student->email,
+                'address' => 'Dhaka, Bangladesh',
+                'branch_id' => $branch->id,
+            ])->assertRedirect();
+
+        $order = Order::where('user_id', $student->id)->latest('id')->firstOrFail();
+        $this->assertSame(1, $product->fresh()->reserved_quantity);
+        $this->assertTrue((bool) $order->items()->first()->stock_reserved);
+        $this->assertSame('pending', $order->status);
+    }
+
+    public function test_admin_created_physical_order_reserves_inventory(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $branch = Branch::create([
+            'name' => 'Admin Reservation Branch',
+            'code' => 'RSV-02',
+            'is_active' => true,
+            'payment_methods' => ['bank'],
+        ]);
+        $product = Product::create([
+            'title' => 'Admin Reservation Book',
+            'price' => 350,
+            'stock_quantity' => 4,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.orders.store'), [
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+            'items' => [['type' => 'product', 'id' => $product->id]],
+        ])->assertRedirect();
+
+        $order = Order::where('user_id', $student->id)->latest('id')->firstOrFail();
+        $this->assertSame(1, $product->fresh()->reserved_quantity);
+        $this->assertTrue((bool) $order->items()->first()->stock_reserved);
+    }
+
     public function test_reserved_stock_is_hidden_from_other_buyers_and_released_on_cancellation(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
