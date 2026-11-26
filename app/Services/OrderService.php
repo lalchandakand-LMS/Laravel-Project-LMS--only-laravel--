@@ -82,7 +82,7 @@ class OrderService
                 }
 
                 if ($item->item_type === 'product') {
-                    $product = Product::whereKey($item->item_id)->lockForUpdate()->first();
+                    $product = Product::withTrashed()->whereKey($item->item_id)->lockForUpdate()->first();
                     if (! $product || $product->stock_quantity < $item->qty) {
                         throw ValidationException::withMessages([
                             'product' => "Insufficient stock for {$item->title}. The payment cannot be approved until stock is reconciled.",
