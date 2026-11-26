@@ -59,12 +59,13 @@
                 ['admin.marketing.dashboard','Marketing Dashboard','▦','admin.marketing.dashboard'],
                 ['admin.marketing.leads.index','Marketing Leads','♧','admin.marketing.leads.*'],
                 ['admin.marketing.campaigns.index','Campaigns','◉','admin.marketing.campaigns.*'],
+                ['admin.marketing.popups.index','Popup Builder','▣','admin.marketing.popups.*'],
                 ['admin.seo.index','SEO & Marketing','⌕','admin.seo.*'],
                 ['admin.settings.index','Settings','⚙','admin.settings.*'],
             ])
             @foreach($menu as $item)
                 @php($routeName = $item[0])
-                @if(in_array($routeName, ['admin.seo.index', 'admin.marketing.dashboard', 'admin.marketing.leads.index', 'admin.marketing.campaigns.index'], true) && auth()->user()->role !== 'admin') @continue @endif
+                @if(in_array($routeName, ['admin.seo.index', 'admin.marketing.dashboard', 'admin.marketing.leads.index', 'admin.marketing.campaigns.index', 'admin.marketing.popups.index'], true) && auth()->user()->role !== 'admin') @continue @endif
                 @php($routePattern = $item[3])
                 @php($isActive = request()->routeIs($routePattern) || ($routeName === 'admin.users.index' && request()->routeIs('admin.users.*') && request('role') === str_replace('role=', '', ($item[4] ?? ''))))
                 <a href="{{ route($routeName, isset($item[4]) ? ['role' => str_replace('role=', '', $item[4])] : []) }}" class="nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 font-semibold {{ $isActive ? 'text-white' : 'text-blue-100' }}" @if($isActive) aria-current="page" @endif>
