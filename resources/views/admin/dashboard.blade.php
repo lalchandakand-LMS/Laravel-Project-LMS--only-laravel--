@@ -146,7 +146,7 @@
             <a href="{{ route('admin.batches.create') }}" class="rounded-xl bg-violet-50 p-3 text-center text-[11px] font-extrabold text-violet-700 hover:bg-violet-100"><span class="mb-1 block text-xl">▦</span>Create Batch</a>
             <a href="{{ route('admin.courses.create') }}" class="rounded-xl bg-orange-50 p-3 text-center text-[11px] font-extrabold text-orange-700 hover:bg-orange-100"><span class="mb-1 block text-xl">▣</span>Add Course</a>
             <a href="{{ route('admin.exams.create') }}" class="rounded-xl bg-cyan-50 p-3 text-center text-[11px] font-extrabold text-cyan-700 hover:bg-cyan-100"><span class="mb-1 block text-xl">✎</span>Create Exam</a>
-            <a href="{{ route('admin.certificates.index') }}" class="rounded-xl bg-amber-50 p-3 text-center text-[11px] font-extrabold text-amber-700 hover:bg-amber-100"><span class="mb-1 block text-xl">✧</span>Certificates</a>
+            <a href="{{ route('admin.certificates.index') }}" class="rounded-xl bg-amber-50 p-3 text-center text-[11px] font-extrabold text-amber-700 hover:bg-amber-100"><span class="mb-1 block text-xl">✧</span>Generate Certificate</a>
         </div>
     </section>
 </div>
