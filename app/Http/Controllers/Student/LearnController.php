@@ -98,7 +98,8 @@ class LearnController extends Controller
         $recentLessonId = LessonProgress::where('user_id', $user->id)
             ->whereIn('lesson_id', $lessonIds)
             ->whereNull('completed_at')
-            ->latest('updated_at')
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->value('lesson_id');
 
         $lesson = $lessons->first(fn ($item) => (int) $item->id === (int) $recentLessonId)
