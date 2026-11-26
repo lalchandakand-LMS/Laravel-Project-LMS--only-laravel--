@@ -7,6 +7,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class PaymentMethodController extends Controller
@@ -45,7 +46,8 @@ class PaymentMethodController extends Controller
             $credentials = $this->credentials($key);
             $providers[$key] = [
                 ...$provider,
-                'mode' => $credentials['mode'] ?? 'sandbox',
+                'mode' => 'sandbox',
+                'configured_mode' => $credentials['mode'] ?? 'sandbox',
                 'saved' => collect($credentials['credentials'] ?? [])->filter(fn ($value) => filled($value))->isNotEmpty(),
             ];
         }
@@ -71,6 +73,14 @@ class PaymentMethodController extends Controller
         ]);
 
         $submittedProviders = $request->input('providers', []);
+        foreach ($submittedProviders as $provider => $input) {
+            if (($input['mode'] ?? 'sandbox') === 'live') {
+                throw ValidationException::withMessages([
+                    'providers.'.$provider.'.mode' => 'Live mode is locked until this provider has a reviewed adapter, authenticated callback verification, and successful sandbox certification.',
+                ]);
+            }
+        }
+
         foreach (array_keys($submittedProviders) as $provider) {
             if (! array_key_exists($provider, self::PROVIDERS)) {
                 abort(422, 'Unknown payment provider.');
