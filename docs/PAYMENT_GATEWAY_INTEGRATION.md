@@ -23,13 +23,13 @@ All provider callbacks must be idempotent. Lock the payment and order rows in a 
 
 ### bKash Checkout v1.2.0-beta — sandbox adapter implemented
 
-The application now contains a sandbox-only `BkashCheckoutAdapter` and a provider callback flow.
+The application now contains a sandbox-only `BkashCheckoutAdapter` for the documented Checkout v1.2.0-beta API and a provider callback flow. This is the Checkout product, not the separate Tokenized Checkout v2 Agreement API.
 
 - Uses the bKash Checkout v1.2.0-beta grant-token, create, execute and payment-status endpoints.
-- Only the official HTTPS sandbox host `tokenized.sandbox.bka.sh` is allowed. The configured base URL cannot point to arbitrary hosts, preventing an Admin setting from becoming an SSRF vector.
+- Only the official HTTPS Checkout sandbox host `checkout.sandbox.bka.sh` is allowed. The configured base URL cannot point to arbitrary hosts, preventing an Admin setting from becoming an SSRF vector.
 - Merchant credentials are read from the existing encrypted Admin payment settings. Required fields are app key, app secret, API username and API password. Access tokens are cached and API calls use a 30-second timeout.
 - The create-payment response only creates a pending local payment session and redirects the customer to the provider-hosted checkout.
-- The browser return is not trusted as proof of payment. The callback runs provider execute and an independent server-to-server payment-status query, then compares provider payment ID, invoice/order number, exact amount, BDT currency and transaction ID under order/payment row locks.
+- The merchant callback URL must be configured to the application's fixed `payments/bkash/callback` route during bKash merchant onboarding. The browser return is not trusted as proof of payment. The callback runs provider execute and an independent server-to-server payment-status query, then compares provider payment ID, invoice/order number, exact amount, BDT currency and transaction ID under order/payment row locks.
 - A separate `POST /payments/bkash/webhook` listener verifies the AWS SNS signature (version 1/SHA-1 or version 2/SHA-256), allowlists the regional SNS signing-certificate host/path, pins the exact merchant Topic ARN, handles subscription confirmation safely, and reconciles each signed notification through bKash Search Transaction API before settlement.
 - Provider payment IDs and transaction IDs are unique in the local ledger. Repeated callbacks/webhooks are idempotent. Manual Admin approval is blocked for provider-initiated pending payments.
 - The checkout button is exposed only outside the production environment and only when required sandbox credentials are complete and bKash is enabled for the order's branch.
