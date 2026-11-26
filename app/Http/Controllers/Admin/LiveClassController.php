@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Batch;
 use App\Models\Course;
 use App\Models\LiveClass;
+use App\Models\Enrollment;
+use App\Models\OnlineBatchEnrollment;
+use App\Models\User;
+use App\Notifications\LiveClassChanged;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -45,7 +50,10 @@ class LiveClassController extends Controller
 
     public function store(Request $request)
     {
-        LiveClass::create($this->validated($request));
+        $liveClass = LiveClass::create($this->validated($request));
+        if ($liveClass->is_published) {
+            $this->notifyStudents($liveClass, 'scheduled');
+        }
 
         return redirect()->route('admin.live-classes.index')->with('success', 'Live class scheduled.');
     }
@@ -64,7 +72,11 @@ class LiveClassController extends Controller
     public function update(Request $request, LiveClass $liveClass)
     {
         $this->authorizeOwner($liveClass);
+        $previousStart = $liveClass->starts_at?->timestamp;
         $liveClass->update($this->validated($request));
+        if ($liveClass->is_published && $previousStart !== $liveClass->starts_at?->timestamp) {
+            $this->notifyStudents($liveClass, 'rescheduled');
+        }
 
         return redirect()->route('admin.live-classes.index')->with('success', 'Live class updated.');
     }
@@ -75,6 +87,101 @@ class LiveClassController extends Controller
         $liveClass->delete();
 
         return redirect()->route('admin.live-classes.index')->with('success', 'Live class deleted.');
+    }
+
+    public function cancel(Request $request, LiveClass $liveClass)
+    {
+        $this->authorizeOwner($liveClass);
+        abort_if($liveClass->isCancelled(), 422, 'This live class is already cancelled.');
+
+        $data = $request->validate([
+            'cancellation_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $liveClass->update([
+            'cancelled_at' => now(),
+            'cancellation_reason' => $data['cancellation_reason'],
+        ]);
+
+        $this->notifyStudents($liveClass, 'cancelled');
+
+        return redirect()->route('admin.live-classes.index')->with('success', 'Live class cancelled and enrolled students notified.');
+    }
+
+    public function reschedule(Request $request, LiveClass $liveClass)
+    {
+        $this->authorizeOwner($liveClass);
+        abort_unless($liveClass->isCancelled(), 422, 'Only a cancelled class can be rescheduled.');
+
+        $data = $request->validate([
+            'starts_at' => ['required', 'date', 'after:now'],
+            'duration_minutes' => ['required', 'integer', 'min:5', 'max:600'],
+        ]);
+
+        $startsAt = Carbon::parse($data['starts_at']);
+        $endsAt = $startsAt->copy()->addMinutes((int) $data['duration_minutes']);
+        $instructorId = $liveClass->course?->instructor_id;
+
+        if ($instructorId) {
+            $conflict = LiveClass::query()
+                ->whereKeyNot($liveClass->id)
+                ->whereNull('cancelled_at')
+                ->whereHas('course', fn ($query) => $query->where('instructor_id', $instructorId))
+                ->get(['starts_at', 'duration_minutes'])
+                ->contains(function (LiveClass $scheduled) use ($startsAt, $endsAt) {
+                    $scheduledEnd = $scheduled->starts_at?->copy()->addMinutes((int) $scheduled->duration_minutes);
+
+                    return $scheduled->starts_at && $scheduledEnd
+                        && $scheduled->starts_at->lt($endsAt)
+                        && $scheduledEnd->gt($startsAt);
+                });
+
+            if ($conflict) {
+                throw ValidationException::withMessages([
+                    'starts_at' => 'This teacher already has another live class during the selected time.',
+                ]);
+            }
+        }
+
+        $liveClass->update([
+            'starts_at' => $startsAt,
+            'duration_minutes' => $data['duration_minutes'],
+            'cancelled_at' => null,
+            'cancellation_reason' => null,
+        ]);
+
+        if ($liveClass->is_published) {
+            $this->notifyStudents($liveClass, 'rescheduled');
+        }
+
+        return redirect()->route('admin.live-classes.index')->with('success', 'Live class rescheduled and students notified.');
+    }
+
+    private function notifyStudents(LiveClass $liveClass, string $event): void
+    {
+        $legacy = Enrollment::query()
+            ->where('course_id', $liveClass->course_id)
+            ->where('status', 'active')
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->when($liveClass->batch_id, fn ($q) => $q->where('batch_id', $liveClass->batch_id))
+            ->whereHas('user', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->pluck('user_id');
+
+        $online = OnlineBatchEnrollment::query()
+            ->where('course_id', $liveClass->course_id)
+            ->where('status', 'active')
+            ->whereNull('ended_at')
+            ->when($liveClass->batch_id, fn ($q) => $q->where('batch_id', $liveClass->batch_id))
+            ->whereHas('student', fn ($q) => $q->where('role', 'student')->where('is_active', true))
+            ->pluck('student_id');
+
+        $studentIds = $legacy->merge($online)->unique()->values();
+        if ($studentIds->isNotEmpty()) {
+            Notification::send(
+                User::query()->whereIn('id', $studentIds)->get(),
+                new LiveClassChanged($liveClass, $event)
+            );
+        }
     }
 
     private function authorizeOwner(LiveClass $liveClass): void
