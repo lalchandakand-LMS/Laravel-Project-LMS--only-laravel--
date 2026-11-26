@@ -68,6 +68,7 @@ class CoachingAdmission extends Model
             ]);
 
             $admission->update(['status' => 'admitted', 'admitted_at' => now()]);
+            $admission->student?->studentProfile?->update(['status' => 'active']);
 
             return $enrollment;
         });
