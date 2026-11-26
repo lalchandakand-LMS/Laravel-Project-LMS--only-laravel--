@@ -50,7 +50,9 @@ class MarketingLeadController extends Controller
 
         $lead->update($validated);
 
-        return redirect()->route('admin.marketing.leads.index', $request->only('q', 'status', 'campaign'))
+        $filters = array_intersect_key($request->query(), array_flip(['q', 'status', 'campaign']));
+
+        return redirect()->route('admin.marketing.leads.index', $filters)
             ->with('success', 'Lead updated.');
     }
 }
