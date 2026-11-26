@@ -48,16 +48,23 @@ class EbookController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'pages' => 'nullable|integer|min:0',
-            'cover' => 'nullable|image|max:4096',
+            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'cover_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
             'file' => 'nullable|file|mimes:pdf,epub|max:51200',
+            'file_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
         ]);
 
         if ($request->hasFile('cover')) {
             $data['cover'] = $request->file('cover')->store('ebooks', 'public');
+        } elseif (! empty($data['cover_url'])) {
+            $data['cover'] = $data['cover_url'];
         }
         if ($request->hasFile('file')) {
             $data['file'] = $request->file('file')->store('ebook-files', 'local');
+        } elseif (! empty($data['file_url'])) {
+            $data['file'] = $data['file_url'];
         }
+        unset($data['cover_url'], $data['file_url']);
 
         $data['is_free'] = $request->boolean('is_free');
         $data['is_published'] = $request->boolean('is_published');
