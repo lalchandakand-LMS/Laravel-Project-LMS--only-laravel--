@@ -59,12 +59,13 @@ class SeoController extends Controller
             'seo_description' => ['nullable', 'string', 'max:320'],
             'seo_default_image' => ['nullable', 'url:http,https', 'max:2048'],
             'google_site_verification' => ['nullable', 'regex:/^[A-Za-z0-9_-]{0,255}$/'],
-            'ga_measurement_id' => ['nullable', 'regex:/^G-[A-Z0-9]{6,20}$/i'],
-            'meta_pixel_id' => ['nullable', 'regex:/^[0-9]{5,20}$/'],
+            'ga4_measurement_id' => ['nullable', 'regex:/^G-[A-Z0-9]{4,20}$/'],
+            'gtm_container_id' => ['nullable', 'regex:/^GTM-[A-Z0-9]{4,12}$/'],
+            'meta_pixel_id' => ['nullable', 'regex:/^[0-9]{6,20}$/'],
             'seo_robots_index' => ['nullable', 'boolean'],
         ]);
 
-        foreach (['seo_title', 'seo_description', 'seo_default_image', 'google_site_verification', 'ga_measurement_id', 'meta_pixel_id'] as $key) {
+        foreach (['seo_title', 'seo_description', 'seo_default_image', 'google_site_verification', 'ga4_measurement_id', 'gtm_container_id', 'meta_pixel_id'] as $key) {
             Setting::set($key, trim((string) ($validated[$key] ?? '')));
         }
 
