@@ -1,6 +1,7 @@
 @php
 $bannerEnabled = \App\Models\Setting::get('dashboard_banner_enabled', '1') === '1';
 $bannerImage = \App\Models\Setting::get('dashboard_banner');
+$bannerImageUrl = $bannerImage ? (str_starts_with($bannerImage, 'https://') ? $bannerImage : asset('storage/'.$bannerImage)) : null;
 $primary = \App\Models\Setting::get('dashboard_primary_color', '#059669');
 $secondary = \App\Models\Setting::get('dashboard_secondary_color', '#0f172a');
 $role = auth()->user()->role;
