@@ -325,6 +325,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:instructor,admin'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/', [Teacher\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/courses', [Teacher\DashboardController::class, 'courses'])->name('courses');
     Route::get('/students', [Teacher\DashboardController::class, 'students'])->name('students');
     Route::get('/students/{user}', [Teacher\DashboardController::class, 'student'])->name('students.show');
@@ -366,6 +367,7 @@ Route::middleware(['auth', 'role:guardian,admin'])->prefix('guardian')->name('gu
  |------------------------------------------------------------------*/
 Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name('branch.')->group(function () {
     Route::get('/', [Branch\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/id-card', [Admin\IdentityCardController::class, 'own'])->name('id-card');
     Route::get('/people/{type}/create', [Branch\PeopleController::class, 'create'])->whereIn('type', ['student', 'staff'])->name('people.create');
     Route::post('/people/{type}', [Branch\PeopleController::class, 'store'])->whereIn('type', ['student', 'staff'])->name('people.store');
     Route::get('/people/{user}/edit', [Branch\PeopleController::class, 'edit'])->name('people.edit');
