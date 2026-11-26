@@ -85,8 +85,9 @@ class IdentityAndPayrollReportsTest extends TestCase
             'name' => $student->name,
             'phone' => '01812345678',
             'bio' => '',
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
+        $this->assertSame('01812345678', $student->fresh()->phone);
         $this->assertNull($student->fresh()->phone_verified_at);
     }
 
