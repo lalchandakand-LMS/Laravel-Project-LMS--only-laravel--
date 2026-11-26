@@ -21,11 +21,11 @@ All provider callbacks must be idempotent. Lock the payment and order rows in a 
 
 ## Provider readiness and Live-mode lock (2026-11)
 
-### bKash Tokenized Checkout v1.2.0-beta — sandbox adapter implemented
+### bKash Checkout v1.2.0-beta — sandbox adapter implemented
 
-The application now contains a sandbox-only `BkashTokenizedCheckoutAdapter` and a provider callback flow.
+The application now contains a sandbox-only `BkashCheckoutAdapter` and a provider callback flow.
 
-- Uses the bKash Tokenized Checkout v1.2.0-beta grant-token, create, execute and payment-status endpoints.
+- Uses the bKash Checkout v1.2.0-beta grant-token, create, execute and payment-status endpoints.
 - Only the official HTTPS sandbox host `tokenized.sandbox.bka.sh` is allowed. The configured base URL cannot point to arbitrary hosts, preventing an Admin setting from becoming an SSRF vector.
 - Merchant credentials are read from the existing encrypted Admin payment settings. Required fields are app key, app secret, API username and API password. Access tokens are cached and API calls use a 30-second timeout.
 - The create-payment response only creates a pending local payment session and redirects the customer to the provider-hosted checkout.
@@ -45,7 +45,7 @@ The application now contains a sandbox-only `BkashTokenizedCheckoutAdapter` and 
 
 Official starting points:
 - bKash Developer Portal: https://developer.bka.sh/
-- bKash Tokenized Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
+- bKash Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
 - bKash official sandbox merchant demo: https://merchantdemo.sandbox.bka.sh/
 - bKash official Instant Payment Notification / SNS webhook specification: https://developer.bka.sh/docs/webhooks
 
