@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AttendanceWorkflowTest extends TestCase
@@ -44,7 +45,7 @@ class AttendanceWorkflowTest extends TestCase
         [$teacher, $student, $course, $batch] = $this->setupClassroom();
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $guardian = User::factory()->create(['role' => 'guardian', 'is_active' => true]);
-        \DB::table('guardian_students')->insert([
+        DB::table('guardian_students')->insert([
             'guardian_id' => $guardian->id,
             'student_id' => $student->id,
             'relation' => 'father',
@@ -107,7 +108,7 @@ class AttendanceWorkflowTest extends TestCase
         [$teacher, $student, $course, $batch] = $this->setupClassroom();
         $guardian = User::factory()->create(['role' => 'guardian', 'is_active' => true]);
         $otherStudent = User::factory()->create(['role' => 'student', 'is_active' => true]);
-        \DB::table('guardian_students')->insert([
+        DB::table('guardian_students')->insert([
             'guardian_id' => $guardian->id,
             'student_id' => $student->id,
             'relation' => 'father',
