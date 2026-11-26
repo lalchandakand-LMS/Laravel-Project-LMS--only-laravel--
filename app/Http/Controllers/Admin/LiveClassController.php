@@ -152,6 +152,11 @@ class LiveClassController extends Controller
             'cancellation_reason' => null,
         ]);
 
+        $liveClass->attendanceSession()->update([
+            'starts_at' => $startsAt,
+            'ends_at' => $liveClass->endsAt(),
+        ]);
+
         if ($liveClass->is_published) {
             $this->notifyStudents($liveClass, 'rescheduled');
         }
