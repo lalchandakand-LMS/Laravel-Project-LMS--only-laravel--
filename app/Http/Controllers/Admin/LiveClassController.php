@@ -250,6 +250,7 @@ class LiveClassController extends Controller
 
             $hasConflict = LiveClass::query()
                 ->where('id', '!=', $request->route('liveClass')?->id ?? 0)
+                ->whereNull('cancelled_at')
                 ->whereHas('course', fn ($query) => $query->where('instructor_id', $course->instructor_id))
                 ->get(['id', 'starts_at', 'duration_minutes'])
                 ->contains(function (LiveClass $scheduled) use ($startsAt, $endsAt) {
