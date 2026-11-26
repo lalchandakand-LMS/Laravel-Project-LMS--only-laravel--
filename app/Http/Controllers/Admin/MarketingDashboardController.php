@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingLead;
+use App\Models\Order;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class MarketingDashboardController extends Controller
@@ -17,7 +19,12 @@ class MarketingDashboardController extends Controller
         $conversionRate = $totalLeads > 0 ? round(($convertedLeads / $totalLeads) * 100, 1) : 0;
 
         $campaigns = MarketingCampaign::query()
-            ->withCount('leads')
+            ->withCount(['leads', 'orders'])
+            ->addSelect(['verified_revenue' => Payment::query()
+                ->join('orders', 'orders.id', '=', 'payments.order_id')
+                ->selectRaw('COALESCE(SUM(payments.amount), 0)')
+                ->whereColumn('orders.utm_campaign', 'marketing_campaigns.slug')
+                ->where('payments.status', 'verified')])
             ->withCount(['leads as converted_leads_count' => fn ($query) => $query->where('status', 'converted')])
             ->orderByDesc('leads_count')
             ->orderBy('name')
@@ -57,6 +64,15 @@ class MarketingDashboardController extends Controller
             'campaigns',
             'sources',
             'dailyLeads'
-        ));
+        ) + [
+            'campaignCount' => MarketingCampaign::count(),
+            'activeCampaignCount' => MarketingCampaign::where('status', 'active')->count(),
+            'attributedOrderCount' => Order::whereNotNull('utm_campaign')->count(),
+            'verifiedRevenue' => Payment::query()
+                ->join('orders', 'orders.id', '=', 'payments.order_id')
+                ->whereNotNull('orders.utm_campaign')
+                ->where('payments.status', 'verified')
+                ->sum('payments.amount'),
+        ]);
     }
 }

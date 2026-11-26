@@ -11,11 +11,13 @@
         </div>
     </div>
 
-    <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Total captured leads</p><p class="mt-2 text-3xl font-black text-slate-900">{{ number_format($totalLeads) }}</p><p class="mt-1 text-xs text-slate-500">All non-archived website inquiries</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">New leads</p><p class="mt-2 text-3xl font-black text-blue-700">{{ number_format($newLeads) }}</p><p class="mt-1 text-xs text-slate-500">Awaiting first follow-up</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Converted leads</p><p class="mt-2 text-3xl font-black text-emerald-700">{{ number_format($convertedLeads) }}</p><p class="mt-1 text-xs text-slate-500">Marked converted by an admin</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Lead conversion rate</p><p class="mt-2 text-3xl font-black text-orange-700">{{ number_format($conversionRate, 1) }}%</p><p class="mt-1 text-xs text-slate-500">Converted leads ÷ captured leads</p></article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Attributed orders</p><p class="mt-2 text-3xl font-black text-slate-900">{{ number_format($attributedOrderCount) }}</p><p class="mt-1 text-xs text-slate-500">{{ $campaignCount }} campaigns · {{ $activeCampaignCount }} active</p></article>
+        <article class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm"><p class="text-xs font-semibold text-emerald-700">Verified campaign collections</p><p class="mt-2 text-3xl font-black text-emerald-900">৳{{ number_format((float) $verifiedRevenue, 2) }}</p><p class="mt-1 text-xs text-emerald-700">Verified payments on attributed orders</p></article>
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -39,8 +41,8 @@
             <div class="divide-y divide-slate-100">
                 @forelse($campaigns as $campaign)
                     <div class="flex items-center justify-between gap-3 p-4">
-                        <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-800">{{ $campaign->name }}</p><p class="mt-1 text-xs text-slate-500">{{ ucfirst($campaign->channel) }} · {{ $campaign->status }} · {{ $campaign->converted_leads_count }} converted</p></div>
-                        <a href="{{ route('admin.marketing.leads.index', ['campaign' => $campaign->slug]) }}" class="shrink-0 text-sm font-black text-orange-700 underline">{{ $campaign->leads_count }} leads</a>
+                        <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-800">{{ $campaign->name }}</p><p class="mt-1 text-xs text-slate-500">{{ ucfirst($campaign->channel) }} · {{ $campaign->status }} · {{ $campaign->converted_leads_count }} converted · {{ $campaign->orders_count }} orders</p></div>
+                        <a href="{{ route('admin.marketing.leads.index', ['campaign' => $campaign->slug]) }}" class="shrink-0 text-sm font-black text-orange-700 underline">{{ $campaign->leads_count }} leads <span class="block text-right text-xs font-bold text-emerald-700">৳{{ number_format((float) $campaign->verified_revenue, 2) }}</span></a>
                     </div>
                 @empty
                     <p class="p-6 text-sm text-slate-500">No campaigns have been created yet.</p>
@@ -59,6 +61,6 @@
             </div>
         </section>
     </div>
-    <p class="rounded-xl bg-amber-50 p-4 text-xs leading-5 text-amber-900">Reporting scope: this dashboard measures submitted inquiries and admin-marked conversions. It does not claim total website visits, ad spend, revenue attribution or provider-reported conversions.</p>
+    <p class="rounded-xl bg-amber-50 p-4 text-xs leading-5 text-amber-900">Reporting scope: lead counts and admin-marked conversions come from the LMS database. Revenue is the sum of verified payment ledger entries on orders with a captured UTM campaign; it excludes unattributed orders and does not represent ad spend or provider-reported ad conversions.</p>
 </div>
 @endsection
