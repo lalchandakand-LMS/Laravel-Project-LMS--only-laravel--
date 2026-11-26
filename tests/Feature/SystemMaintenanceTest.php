@@ -88,15 +88,15 @@ class SystemMaintenanceTest extends TestCase
         $this->assertNotFalse($target);
 
         try {
-            new \\PDO('sqlite:'.$source);
+            new \PDO('sqlite:'.$source);
             $targetBefore = file_get_contents($target);
-            $controller = app(\\App\\Http\\Controllers\\Admin\\SystemBackupController::class);
-            $method = new \\ReflectionMethod($controller, 'replaceSqliteDatabase');
+            $controller = app(\App\\Http\\Controllers\\Admin\\SystemBackupController::class);
+            $method = new \ReflectionMethod($controller, 'replaceSqliteDatabase');
 
             try {
                 $method->invoke($controller, $source, $target);
                 $this->fail('An SQLite database without the LMS schema must not be restored.');
-            } catch (\\RuntimeException $exception) {
+            } catch (\RuntimeException $exception) {
                 $this->assertStringContainsString('missing required LMS table', $exception->getMessage());
             }
 
