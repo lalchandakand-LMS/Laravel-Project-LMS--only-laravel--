@@ -7,6 +7,7 @@ use App\Models\StaffPayroll;
 use App\Models\StaffProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
@@ -108,16 +109,6 @@ class StaffPayrollController extends Controller
             'notes' => 'nullable|string|max:2000',
         ]);
 
-        $staffUser = User::findOrFail($data['staff_user_id']);
-        abort_unless($staffUser->is_active, 422, 'Inactive staff cannot be added to a new payroll.');
-
-        $profile = $staffUser->staffProfile()->firstOrCreate([], ['employment_status' => 'active']);
-        abort_unless($profile->employment_status === 'active', 422, 'Only active staff can receive a new payroll entry.');
-
-        if (StaffPayroll::where('staff_profile_id', $profile->id)->where('payroll_month', $data['payroll_month'])->exists()) {
-            throw ValidationException::withMessages(['payroll_month' => 'Payroll for this staff member and month already exists.']);
-        }
-
         $basic = (float) $data['basic_salary'];
         $allowances = (float) ($data['allowances'] ?? 0);
         $deductions = (float) ($data['deductions'] ?? 0);
@@ -125,24 +116,59 @@ class StaffPayrollController extends Controller
             throw ValidationException::withMessages(['deductions' => 'Deductions cannot exceed gross salary.']);
         }
 
-        StaffPayroll::create([
-            'staff_profile_id' => $profile->id,
-            'payroll_month' => $data['payroll_month'],
-            'basic_salary' => $basic,
-            'allowances' => $allowances,
-            'deductions' => $deductions,
-            'net_salary' => $basic + $allowances - $deductions,
-            'status' => 'draft',
-            'notes' => $data['notes'] ?? null,
-        ]);
+        try {
+            DB::transaction(function () use ($data, $basic, $allowances, $deductions) {
+                // Serialize payroll creation for the same staff member so two
+                // concurrent requests cannot both pass the monthly duplicate check.
+                $staffUser = User::query()->lockForUpdate()->findOrFail($data['staff_user_id']);
+                if (! $staffUser->is_active) {
+                    throw ValidationException::withMessages([
+                        'staff_user_id' => 'Inactive staff cannot be added to a new payroll.',
+                    ]);
+                }
+
+                $profile = $staffUser->staffProfile()->firstOrCreate([], ['employment_status' => 'active']);
+                $profile = StaffProfile::query()->lockForUpdate()->findOrFail($profile->id);
+                if ($profile->employment_status !== 'active') {
+                    throw ValidationException::withMessages([
+                        'staff_user_id' => 'Only active staff can receive a new payroll entry.',
+                    ]);
+                }
+
+                if (StaffPayroll::where('staff_profile_id', $profile->id)
+                    ->where('payroll_month', $data['payroll_month'])->exists()) {
+                    throw ValidationException::withMessages(['payroll_month' => 'Payroll for this staff member and month already exists.']);
+                }
+
+                StaffPayroll::create([
+                    'staff_profile_id' => $profile->id,
+                    'payroll_month' => $data['payroll_month'],
+                    'basic_salary' => $basic,
+                    'allowances' => $allowances,
+                    'deductions' => $deductions,
+                    'net_salary' => $basic + $allowances - $deductions,
+                    'status' => 'draft',
+                    'notes' => $data['notes'] ?? null,
+                ]);
+            });
+        } catch (QueryException $exception) {
+            if ($this->isDuplicatePayrollConflict($exception)) {
+                throw ValidationException::withMessages(['payroll_month' => 'Payroll for this staff member and month already exists.']);
+            }
+
+            throw $exception;
+        }
 
         return back()->with('success', 'Payroll draft created.');
     }
 
     public function approve(StaffPayroll $payroll)
     {
-        abort_unless($payroll->status === 'draft', 409, 'Only draft payroll can be approved.');
-        $payroll->update(['status' => 'approved']);
+        DB::transaction(function () use ($payroll) {
+            $locked = StaffPayroll::query()->lockForUpdate()->findOrFail($payroll->id);
+            abort_unless($locked->status === 'draft', 409, 'Only draft payroll can be approved.');
+            $locked->update(['status' => 'approved']);
+        });
 
         return back()->with('success', 'Payroll approved.');
     }
@@ -173,9 +199,20 @@ class StaffPayrollController extends Controller
 
     public function destroy(StaffPayroll $payroll)
     {
-        abort_unless($payroll->status === 'draft', 409, 'Approved or paid payroll records cannot be deleted.');
-        $payroll->delete();
+        DB::transaction(function () use ($payroll) {
+            $locked = StaffPayroll::query()->lockForUpdate()->findOrFail($payroll->id);
+            abort_unless($locked->status === 'draft', 409, 'Approved or paid payroll records cannot be deleted.');
+            $locked->delete();
+        });
 
         return back()->with('success', 'Draft payroll deleted.');
+    }
+
+    private function isDuplicatePayrollConflict(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'staff_payrolls_staff_profile_id_payroll_month_unique')
+            || (str_contains($message, 'staff_payrolls.staff_profile_id') && str_contains($message, 'payroll_month'));
     }
 }
