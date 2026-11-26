@@ -148,7 +148,7 @@ class LmsFlowTest extends TestCase
             'password_confirmation' => 'StrongPass123!',
         ]);
 
-        $response->assertRedirect('/my');
+        $response->assertRedirect(route('verification.notice'));
         $response->assertSessionHas('success', "Welcome to ".config('app.name')."!");
         $this->assertDatabaseHas('users', [
             'email' => 'new-student@example.test',
