@@ -36,7 +36,7 @@ class EbookController extends Controller
         abort_unless($ebook->is_published && $ebook->ownedBy($request->user()), 403, 'Please purchase this e-book first.');
         abort_unless($ebook->file, 404, 'E-book file not found.');
 
-        if (preg_match('/^https?:\\/\\//i', $ebook->file)) {
+        if ((str_starts_with(strtolower($ebook->file), 'http://') || str_starts_with(strtolower($ebook->file), 'https://'))) {
             return redirect()->away($ebook->file)->withHeaders([
                 'Cache-Control' => 'private, no-store, max-age=0',
                 'Referrer-Policy' => 'no-referrer',
