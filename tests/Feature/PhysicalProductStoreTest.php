@@ -374,6 +374,56 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertFalse($item->fresh()->stock_reserved);
     }
 
+    public function test_admin_edit_keeps_reservation_for_an_existing_product_line(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $branch = Branch::create([
+            'name' => 'Edit Reservation Branch',
+            'code' => 'RSV-EDIT',
+            'is_active' => true,
+            'payment_methods' => ['bank'],
+        ]);
+        $product = Product::create([
+            'title' => 'Editable Reservation Book',
+            'price' => 320,
+            'stock_quantity' => 4,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'branch_id' => $branch->id,
+            'subtotal' => 320,
+            'discount' => 0,
+            'total' => 320,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 320,
+            'qty' => 1,
+        ]);
+        OrderService::reserveProducts($order);
+
+        $this->actingAs($admin)
+            ->put(route('admin.orders.update', $order->order_no), [
+                'name' => $student->name,
+                'phone' => '01712345678',
+                'email' => $student->email,
+                'address' => 'Dhaka, Bangladesh',
+                'items' => [['type' => 'product', 'id' => $product->id]],
+            ])->assertRedirect();
+
+        $this->assertSame(1, $product->fresh()->reserved_quantity);
+        $this->assertTrue((bool) $order->fresh()->items()->first()->stock_reserved);
+    }
+
     public function test_admin_cancellation_releases_reservations_and_reopening_reserves_again(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
