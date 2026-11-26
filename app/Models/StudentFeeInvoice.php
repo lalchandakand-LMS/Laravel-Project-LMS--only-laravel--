@@ -25,10 +25,11 @@ class StudentFeeInvoice extends Model
     public function batch() { return $this->belongsTo(Batch::class); }
     public function branch() { return $this->belongsTo(Branch::class); }
     public function payments() { return $this->hasMany(StudentFeePayment::class, 'invoice_id'); }
+    public function creditApplications() { return $this->hasMany(StudentFeeCreditApplication::class, 'invoice_id'); }
 
     public function paidAmount(): float
     {
-        return (float) $this->payments()->sum('applied_amount');
+        return (float) $this->payments()->sum('applied_amount') + (float) $this->creditApplications()->sum('amount');
     }
 
     public function dueAmount(): float
