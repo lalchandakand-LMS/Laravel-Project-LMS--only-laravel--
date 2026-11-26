@@ -35,7 +35,7 @@ class BkashCheckoutAdapterTest extends TestCase
             ]),
             'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/create' => Http::response([
                 'paymentID' => 'BKASH-PAY-1001',
-                'bkashURL' => 'https://merchantdemo.sandbox.bka.sh/checkout/BKASH-PAY-1001',
+                'bkashURL' => 'https://sandbox.payment.bkash.com/redirect/tokenized/?paymentID=BKASH-PAY-1001&hash=test',
             ]),
         ]);
 
