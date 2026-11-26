@@ -9,13 +9,14 @@ class Exam extends Model
     use TracksDeletionActor;
     protected $fillable = [
         'course_id','lesson_id','title','description','duration_minutes','total_marks','pass_marks',
-        'negative_marking','starts_at','ends_at','attempt_limit','shuffle_questions','is_free','is_published',
+        'negative_marking','starts_at','ends_at','attempt_limit','shuffle_questions','random_question_count','is_free','is_published',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'shuffle_questions' => 'boolean',
+        'random_question_count' => 'integer',
         'is_free' => 'boolean',
         'is_published' => 'boolean',
         'total_marks' => 'float',
