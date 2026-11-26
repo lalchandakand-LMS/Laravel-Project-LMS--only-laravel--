@@ -2,6 +2,7 @@
 @section('title', $user->name)
 @section('heading', $user->name)
 @section('actions')
+    @if(in_array($user->role, ['student','instructor','branch_manager'], true))<a href="{{ route('admin.users.id-card', $user) }}" class="rounded-lg border border-emerald-700 px-4 py-2 text-sm font-bold text-emerald-700">Print ID card</a>@endif
     <a href="{{ route('admin.users.edit', $user) }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">Edit user</a>
 @endsection
 @section('content')
@@ -12,7 +13,7 @@
         <p class="text-sm text-slate-600">{{ $user->email }}</p>
         <p class="mt-1 text-xs font-bold uppercase tracking-wide text-emerald-700">{{ $user->roleLabel() }}</p>
         <dl class="mt-5 space-y-2 text-left text-sm">
-            <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2"><dt class="text-slate-500">Phone</dt><dd class="font-semibold">{{ $user->phone ?? '—' }}</dd></div>
+            <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2"><dt class="text-slate-500">Phone</dt><dd class="text-right font-semibold">{{ $user->phone ?? '—' }}<span class="block text-xs {{ $user->phone_verified_at ? 'text-emerald-700' : 'text-amber-700' }}">{{ $user->phone_verified_at ? 'Verified' : 'Not verified' }}</span></dd></div>
             <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2"><dt class="text-slate-500">Branch</dt><dd class="font-semibold">{{ $user->branch?->name ?? '—' }}</dd></div>
             <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2"><dt class="text-slate-500">Joined</dt><dd class="font-semibold">{{ $user->created_at->format('d M Y') }}</dd></div>
             <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2"><dt class="text-slate-500">Login status</dt><dd class="font-semibold">{{ $user->is_active ? 'Active' : 'Disabled' }}</dd></div>
