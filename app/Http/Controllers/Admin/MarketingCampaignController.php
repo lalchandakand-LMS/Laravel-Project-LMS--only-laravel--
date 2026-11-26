@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\MarketingCampaign;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\MarketingCampaign;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MarketingCampaignController extends Controller
 {
@@ -69,15 +69,15 @@ class MarketingCampaignController extends Controller
 
     private function validated(Request $request): array
     {
-        $safeDestination = function (string $attribute, mixed $value, \\Closure $fail): void {
+        $safeDestination = function (string $attribute, mixed $value, \Closure $fail): void {
             if (! is_string($value) || trim($value) === '') {
                 return;
             }
 
             $url = trim($value);
             if (str_starts_with($url, '/') && ! str_starts_with($url, '//')
-                && ! str_contains($url, '\\\\')
-                && preg_match('/[\\x00-\\x20]/', $url) !== 1
+                && ! str_contains($url, '\\')
+                && preg_match('/[\x00-\x20]/', $url) !== 1
                 && ! str_contains($url, '#')) {
                 return;
             }
