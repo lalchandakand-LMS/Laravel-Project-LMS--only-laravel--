@@ -84,8 +84,26 @@ class LearnController extends Controller
         abort_unless($user->isAdmin() || $this->activeEnrollment($user, $course) || $hasPreview, 403,
             'An active course enrollment is required.');
 
-        $lesson = $this->accessibleLessons($course, $user)->orderBy('position')->first();
-        abort_if(! $lesson, 404, 'There are no lessons available to you yet. Check the release schedule or your enrollment.');
+        $lessons = $this->accessibleLessons($course, $user)->orderBy('position')->get();
+        abort_if($lessons->isEmpty(), 404, 'There are no lessons available to you yet. Check the release schedule or your enrollment.');
+
+        $lessonIds = $lessons->pluck('id');
+        $completedIds = LessonProgress::where('user_id', $user->id)
+            ->whereIn('lesson_id', $lessonIds)
+            ->whereNotNull('completed_at')
+            ->pluck('lesson_id');
+
+        // The player creates a progress row as soon as a learner opens a lesson.
+        // Resume the most recently visited accessible lesson that is not complete.
+        $recentLessonId = LessonProgress::where('user_id', $user->id)
+            ->whereIn('lesson_id', $lessonIds)
+            ->whereNull('completed_at')
+            ->latest('updated_at')
+            ->value('lesson_id');
+
+        $lesson = $lessons->first(fn ($item) => (int) $item->id === (int) $recentLessonId)
+            ?? $lessons->first(fn ($item) => ! $completedIds->contains($item->id))
+            ?? $lessons->last();
 
         return redirect()->route('student.learn.lesson', [$course->slug, $lesson->id]);
     }
