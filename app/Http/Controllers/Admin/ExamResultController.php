@@ -61,6 +61,7 @@ class ExamResultController extends Controller
             $attempt->update([
                 'score' => max(0, round($score, 2)),
                 'manual_reviewed_at' => now(),
+                'manual_feedback' => $data['feedback'] ?? null,
             ]);
         });
 
@@ -77,8 +78,10 @@ class ExamResultController extends Controller
         $average = (float) (clone $attempts)->avg('score');
         $uniqueStudents = (clone $attempts)->distinct('user_id')->count('user_id');
 
-        $questionStats = $exam->questions()->with('answers')->get()->map(function ($question) {
-            $answers = $question->answers;
+        $questionStats = $exam->questions()->get()->map(function ($question) use ($exam) {
+            $answers = \App\Models\AttemptAnswer::where('question_id', $question->id)
+                ->whereHas('attempt', fn ($query) => $query->where('exam_id', $exam->id)->whereIn('status', ['submitted', 'expired']))
+                ->get();
             return [
                 'question' => $question,
                 'responses' => $answers->count(),
