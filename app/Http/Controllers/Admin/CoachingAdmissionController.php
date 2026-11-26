@@ -55,6 +55,13 @@ class CoachingAdmissionController extends Controller
                 $student->update(['phone' => $admission->student_phone, 'branch_id' => $admission->branch_id, 'is_active' => true]);
             }
 
+            if ($admission->guardian_email && $admission->guardian_email !== $admission->student_email) {
+                $guardian = User::query()->where('email', $admission->guardian_email)->lockForUpdate()->first();
+                if ($guardian?->isGuardian()) {
+                    $guardian->children()->syncWithoutDetaching([$student->id => ['relation' => 'guardian']]);
+                }
+            }
+
             $admission->update([
                 'student_id' => $student->id,
                 'status' => 'awaiting_payment',
