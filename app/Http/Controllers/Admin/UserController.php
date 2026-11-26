@@ -7,7 +7,6 @@ use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -127,12 +126,12 @@ class UserController extends Controller
 
         if ($request->hasFile('avatar')) {
             if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
-                Storage::disk('public')->delete($user->avatar);
+                delete_stored_media('public', $user->avatar);
             }
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
         } elseif ($request->filled('avatar_url')) {
             if ($user->avatar && ! str_starts_with(strtolower($user->avatar), 'http://') && ! str_starts_with(strtolower($user->avatar), 'https://')) {
-                Storage::disk('public')->delete($user->avatar);
+                delete_stored_media('public', $user->avatar);
             }
             $data['avatar'] = $data['avatar_url'];
         }
