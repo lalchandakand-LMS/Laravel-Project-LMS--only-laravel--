@@ -2,6 +2,7 @@
 @section('title', 'Exams')
 @section('heading', 'Exams')
 @section('actions')
+    <a href="{{ route('admin.question-bank.index') }}" class="mr-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700">Question Bank</a>
     <a href="{{ route('admin.exams.create') }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">+ New exam</a>
 @endsection
 @section('content')
@@ -31,6 +32,8 @@
                     </td>
                     <td class="px-5 py-3 text-right">
                         <a href="{{ route('admin.exams.questions.index', $exam) }}" class="text-sm font-semibold text-emerald-700">Questions</a>
+                        <a href="{{ route('admin.exams.results.index', $exam) }}" class="ml-3 text-sm font-semibold text-indigo-700">Results</a>
+                        <a href="{{ route('admin.exams.analytics', $exam) }}" class="ml-3 text-sm font-semibold text-violet-700">Analytics</a>
                         <a href="{{ route('admin.exams.edit', $exam) }}" class="ml-3 text-sm font-semibold text-slate-600">Edit</a>
                         <form method="POST" action="{{ route('admin.exams.destroy', $exam) }}" class="inline" onsubmit="return confirm('Delete exam?')">
                             @csrf @method('DELETE')<button class="ml-3 text-sm font-semibold text-rose-600">Delete</button>
