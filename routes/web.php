@@ -207,6 +207,12 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::get('search', [Admin\DashboardController::class, 'search'])->name('search');
         Route::get('reports', [Admin\ReportsController::class, 'index'])->name('reports.index');
         Route::get('marketing/leads', [Admin\MarketingLeadController::class, 'index'])->name('marketing.leads.index');
+        Route::get('marketing/campaigns', [Admin\MarketingCampaignController::class, 'index'])->name('marketing.campaigns.index');
+        Route::get('marketing/campaigns/create', [Admin\MarketingCampaignController::class, 'create'])->name('marketing.campaigns.create');
+        Route::post('marketing/campaigns', [Admin\MarketingCampaignController::class, 'store'])->name('marketing.campaigns.store');
+        Route::get('marketing/campaigns/{campaign}/edit', [Admin\MarketingCampaignController::class, 'edit'])->name('marketing.campaigns.edit');
+        Route::put('marketing/campaigns/{campaign}', [Admin\MarketingCampaignController::class, 'update'])->name('marketing.campaigns.update');
+        Route::delete('marketing/campaigns/{campaign}', [Admin\MarketingCampaignController::class, 'destroy'])->name('marketing.campaigns.destroy');
         Route::patch('marketing/leads/{lead}', [Admin\MarketingLeadController::class, 'update'])->name('marketing.leads.update');
         Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
         Route::post('certificates', [Admin\CertificateController::class, 'store'])->name('certificates.store');
