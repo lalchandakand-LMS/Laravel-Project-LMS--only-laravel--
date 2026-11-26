@@ -22,10 +22,10 @@
                 <span class="mt-1 block text-xs font-normal text-slate-500">Percentage discounts cannot exceed 100%.</span>
             </label>
             <label class="text-sm font-semibold text-slate-700">Starts at *
-                <input type="datetime-local" name="starts_at" required value="{{ old('starts_at', optional($flashSale->starts_at)->format('Y-m-d\\TH:i')) }}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                <input type="datetime-local" name="starts_at" required value="{{ old('starts_at', optional($flashSale->starts_at)->format('Y-m-d\TH:i')) }}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
             </label>
             <label class="text-sm font-semibold text-slate-700">Ends at *
-                <input type="datetime-local" name="ends_at" required value="{{ old('ends_at', optional($flashSale->ends_at)->format('Y-m-d\\TH:i')) }}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
+                <input type="datetime-local" name="ends_at" required value="{{ old('ends_at', optional($flashSale->ends_at)->format('Y-m-d\TH:i')) }}" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">
             </label>
             <label class="text-sm font-semibold text-slate-700 md:col-span-2">Description
                 <textarea name="description" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5">{{ old('description', $flashSale->description) }}</textarea>
