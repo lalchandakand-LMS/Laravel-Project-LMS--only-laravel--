@@ -292,6 +292,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::put('orders/{order:order_no}', [Admin\OrderController::class, 'update'])->name('orders.update');
         Route::get('orders/{order:order_no}', [Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{order:order_no}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('orders/{order:order_no}/shipping', [Admin\OrderController::class, 'updateShipping'])->name('orders.shipping');
         Route::post('payments/{payment}/verify', [Admin\OrderController::class, 'verifyPayment'])->name('payments.verify');
         Route::get('payments/{payment}/proof', [Admin\OrderController::class, 'paymentProof'])->name('payments.proof');
         Route::post('orders/{order:order_no}/offline-payment', [Admin\OrderController::class, 'recordOfflinePayment'])->name('orders.offline-payment');
