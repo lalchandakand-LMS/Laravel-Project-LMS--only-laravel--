@@ -507,7 +507,7 @@ class LiveClassSchedulingTest extends TestCase
     public function test_live_class_sms_channel_dispatches_a_queued_job(): void
     {
         Queue::fake();
-        config(['live_classes.sms_notifications' => true]);
+        config(['live_classes.sms_notifications' => true, 'live_classes.sms.username' => 'panel@example.test', 'live_classes.sms.api_key' => 'test-key', 'live_classes.sms.sender_name' => 'ALOMS']);
 
         $student = User::factory()->create([
             'role' => 'student',
@@ -539,6 +539,10 @@ class LiveClassSchedulingTest extends TestCase
         config([
             'live_classes.email_notifications' => true,
             'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'smtp.example.test',
+            'mail.mailers.smtp.username' => 'test-user',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'noreply@example.test',
         ]);
 
         $student = User::factory()->create([
