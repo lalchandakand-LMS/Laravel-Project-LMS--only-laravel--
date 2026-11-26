@@ -62,7 +62,7 @@ class SeoManagementTest extends TestCase
         auth()->logout();
         $this->get('/contact')->assertOk()
             ->assertSee('Your privacy choices')
-            ->assertSee('Accept analytics &amp; marketing', false)
+            ->assertSee('Accept analytics & marketing', false)
             ->assertSee('Reject optional');
     }
 
