@@ -20,8 +20,8 @@
     </div>
     <div id="aec-cookie-preferences" class="mt-4 hidden rounded-xl bg-slate-50 p-4">
         <label class="flex items-center justify-between gap-3 py-2 text-sm"><span><b>Essential</b><small class="block text-xs text-slate-500">Required for core site functions; always active.</small></span><input type="checkbox" checked disabled class="rounded border-slate-300"></label>
-        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Analytics</b><small class="block text-xs text-slate-500">Google Analytics 4 measurement.</small></span><input id="aec-consent-analytics" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
-        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Marketing</b><small class="block text-xs text-slate-500">Meta Pixel and advertising conversion measurement.</small></span><input id="aec-consent-marketing" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
+        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Analytics</b><small class="block text-xs text-slate-500">Google Analytics 4 or analytics tags configured through Google Tag Manager.</small></span><input id="aec-consent-analytics" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
+        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Marketing</b><small class="block text-xs text-slate-500">Meta Pixel or marketing tags configured through Google Tag Manager.</small></span><input id="aec-consent-marketing" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
         <button id="aec-cookie-save" type="button" class="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white">Save my choices</button>
     </div>
     <div id="aec-cookie-actions" class="mt-4 flex flex-wrap gap-2">
