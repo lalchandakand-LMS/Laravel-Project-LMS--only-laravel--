@@ -221,7 +221,7 @@
 @if (!$privateSeoRoute)
     @php
         $activeMarketingPopup = null;
-        $popupQuery = \\App\\Models\\MarketingPopup::currentlyActive()
+        $popupQuery = \App\Models\MarketingPopup::currentlyActive()
             ->whereIn('target_audience', ['all', 'guest']);
         if (request()->routeIs('home')) {
             $popupQuery->whereIn('display_on', ['all_public_pages', 'homepage_only']);
