@@ -279,7 +279,7 @@ class OrderController extends Controller
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
                 }
 
-                if (! in_array($order->status, ['pending', 'partially_paid'], true)) {
+                if ($data['action'] === 'verify' && ! in_array($order->status, ['pending', 'partially_paid'], true)) {
                     throw ValidationException::withMessages(['payment' => 'Payments cannot be approved for an order that is no longer awaiting payment.']);
                 }
 
