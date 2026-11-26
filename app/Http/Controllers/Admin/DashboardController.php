@@ -59,7 +59,7 @@ class DashboardController extends Controller
             'sample_size' => $progressRows->count(),
         ];
 
-        $liveClass = LiveClass::with(['course', 'batch'])
+        $liveClass = LiveClass::with(['course.instructor', 'batch'])
             ->where('is_published', true)->whereNull('cancelled_at')
             ->whereBetween('starts_at', [$now->copy()->subHours(8), $now])
             ->latest('starts_at')->get()->first(fn ($class) => $class->isLive());
