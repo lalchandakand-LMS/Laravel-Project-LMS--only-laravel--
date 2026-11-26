@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Branch;
+use App\Models\Course;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -134,5 +136,61 @@ class BranchPaymentAvailabilityTest extends TestCase
             ->assertForbidden();
 
         $this->assertDatabaseCount('payments', 0);
+    }
+
+    public function test_global_payment_switch_filters_checkout_and_blocks_unavailable_branch_orders(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $disabledBranch = Branch::create([
+            'name' => 'Globally Disabled Branch',
+            'code' => 'GLOBAL-OFF',
+            'is_active' => true,
+            'payment_methods' => ['bkash'],
+        ]);
+        $enabledBranch = Branch::create([
+            'name' => 'Globally Enabled Branch',
+            'code' => 'GLOBAL-ON',
+            'is_active' => true,
+            'payment_methods' => ['nagad'],
+        ]);
+        $course = Course::create([
+            'title' => 'Global Payment Checkout Course',
+            'slug' => 'global-payment-checkout-course',
+            'price' => 500,
+            'is_published' => true,
+        ]);
+        Setting::set('payment_methods.global_enabled', json_encode(['nagad']));
+
+        $this->actingAs($student)->withSession(['cart' => ['course:'.$course->id]])
+            ->get(route('checkout.index'))
+            ->assertOk()
+            ->assertSee('Globally Enabled Branch')
+            ->assertDontSee('Globally Disabled Branch');
+
+        $this->actingAs($student)->withSession(['cart' => ['course:'.$course->id]])
+            ->post(route('checkout.store'), [
+                'name' => $student->name,
+                'phone' => '01700000000',
+                'email' => $student->email,
+                'branch_id' => $disabledBranch->id,
+            ])
+            ->assertSessionHasErrors('branch_id');
+
+        $this->assertDatabaseCount('orders', 0);
+
+        $this->actingAs($student)->withSession(['cart' => ['course:'.$course->id]])
+            ->post(route('checkout.store'), [
+                'name' => $student->name,
+                'phone' => '01700000000',
+                'email' => $student->email,
+                'branch_id' => $enabledBranch->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('orders', [
+            'user_id' => $student->id,
+            'branch_id' => $enabledBranch->id,
+            'status' => 'pending',
+        ]);
     }
 }
