@@ -39,7 +39,7 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $category->update($this->validated($request));
+        $category->update($this->validated($request, $category));
         return redirect()->route('admin.categories.index')->with('success', 'Category updated.');
     }
 
@@ -49,7 +49,7 @@ class CategoryController extends Controller
         return back()->with('success', 'Category deleted.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Category $category = null): array
     {
         $data = $request->validate([
             'name' => 'required|string|max:120',
@@ -63,13 +63,13 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             $newImage = $request->file('image')->store('categories', 'public');
-            if (! empty($data['image']) && ! str_starts_with($data['image'], 'https://')) {
-                Storage::disk('public')->delete($data['image']);
+            if ($category?->image && ! str_starts_with($category->image, 'https://')) {
+                Storage::disk('public')->delete($category->image);
             }
             $data['image'] = $newImage;
         } elseif (! empty($data['image_url'])) {
-            if (! empty($data['image']) && ! str_starts_with($data['image'], 'https://')) {
-                Storage::disk('public')->delete($data['image']);
+            if ($category?->image && ! str_starts_with($category->image, 'https://')) {
+                Storage::disk('public')->delete($category->image);
             }
             $data['image'] = $data['image_url'];
         }
