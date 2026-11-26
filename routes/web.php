@@ -68,7 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order:order_no}/receipt', [CheckoutController::class, 'receipt'])->name('orders.receipt');
     Route::post('/checkout/success/{order:order_no}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
 
-    Route::get('/coaching-fees', [CoachingFeeReportController::class, 'student'])->middleware('role:student,instructor,admin')->name('coaching-fees.student');
+    Route::get('/online-batches', [OnlineBatchApplicationController::class, 'index'])->name('student.online-batches');\n    Route::post('/online-batches/apply', [OnlineBatchApplicationController::class, 'store'])->name('student.online-batches.apply');\n    Route::get('/coaching-fees', [CoachingFeeReportController::class, 'student'])->middleware('role:student,instructor,admin')->name('coaching-fees.student');
     Route::get('/notices', [NoticeController::class, 'index'])->name('notices.index');
     Route::get('/notices/{announcement}', [NoticeController::class, 'show'])->name('notices.show');
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
@@ -136,7 +136,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('attendance', [AttendanceController::class, 'adminIndex'])->name('attendance.index');
-        Route::get('coaching-admissions', [Admin\CoachingAdmissionController::class, 'index'])->name('coaching-admissions.index');
+        Route::get('online-batch-applications', [Admin\\OnlineBatchApplicationController::class, 'index'])->name('online-batch-applications.index');\n        Route::post('online-batch-applications/{application}/approve', [Admin\\OnlineBatchApplicationController::class, 'approve'])->name('online-batch-applications.approve');\n        Route::post('online-batch-applications/{application}/reject', [Admin\\OnlineBatchApplicationController::class, 'reject'])->name('online-batch-applications.reject');\n        Route::resource('coaching-batches', Admin\\CoachingBatchController::class)->except('show');\n        Route::get('coaching-admissions', [Admin\CoachingAdmissionController::class, 'index'])->name('coaching-admissions.index');
         Route::get('coaching-fees', [Admin\StudentFeeController::class, 'index'])->name('coaching-fees.index');
         Route::post('coaching-fees/invoices', [Admin\StudentFeeController::class, 'storeInvoice'])->name('coaching-fees.invoices.store');
         Route::post('coaching-fees/invoices/{invoice}/payments', [Admin\StudentFeeController::class, 'collectPayment'])->name('coaching-fees.payments.store');
