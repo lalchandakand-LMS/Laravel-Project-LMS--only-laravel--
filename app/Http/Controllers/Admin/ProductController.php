@@ -85,9 +85,7 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        abort_if(DB::table('order_items')->where('item_type', 'product')->where('item_id', $product->id)->exists(), 409,
-            'This product has order history. Unpublish it instead of deleting its purchase record.');
-
+        // Soft-delete only: immutable order-item snapshots and historical references remain intact.
         $product->delete();
 
         return redirect()->route('admin.products.index')->with('success', 'Product archived.');
