@@ -162,7 +162,8 @@ class OrderController extends Controller
         }
 
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
-        $order = DB::transaction(function () use ($student, $branch, $data, $lines, $subtotal) {
+        $shippingFee = ShippingFeeCalculator::calculate($lines, $subtotal);
+        $order = DB::transaction(function () use ($student, $branch, $data, $lines, $subtotal, $shippingFee) {
             foreach ($lines as $line) {
                 if ($line['type'] !== 'product') {
                     continue;
@@ -175,7 +176,7 @@ class OrderController extends Controller
 
             $order = Order::create([
                 'user_id' => $student->id, 'branch_id' => $branch->id,
-                'subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal,
+                'subtotal' => $subtotal, 'discount' => 0, 'shipping_fee' => $shippingFee, 'total' => round($subtotal + $shippingFee, 2),
                 'status' => 'pending', 'name' => $data['name'], 'phone' => $data['phone'],
                 'email' => $data['email'], 'address' => $data['address'] ?? null, 'note' => $data['note'] ?? null,
             ]);
@@ -243,8 +244,9 @@ class OrderController extends Controller
             $lines[] = ['type' => $line['type'], 'id' => $product->id, 'title' => $product->title, 'price' => $price];
         }
         $subtotal = round(array_sum(array_column($lines, 'price')), 2);
+        $shippingFee = ShippingFeeCalculator::calculate($lines, $subtotal);
         $customerData = collect($data)->except('items')->all();
-        DB::transaction(function () use ($order, $customerData, $lines, $subtotal, $existingProductIds) {
+        DB::transaction(function () use ($order, $customerData, $lines, $subtotal, $shippingFee, $existingProductIds) {
             $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
             if ($locked->payments()->exists()) {
                 abort(403, 'Orders with payment records cannot be edited.');
@@ -267,7 +269,7 @@ class OrderController extends Controller
                     'stock_reserved' => false,
                 ]);
             }
-            $locked->update($customerData + ['subtotal' => $subtotal, 'discount' => 0, 'total' => $subtotal]);
+            $locked->update($customerData + ['subtotal' => $subtotal, 'discount' => 0, 'shipping_fee' => $shippingFee, 'total' => round($subtotal + $shippingFee, 2)]);
             OrderService::reserveProducts($locked);
         });
         return redirect()->route('admin.orders.show', $order)->with('success', 'Order details and items updated.');
