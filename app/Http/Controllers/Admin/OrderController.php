@@ -395,6 +395,13 @@ class OrderController extends Controller
         try {
             DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+                if (! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
+                    throw ValidationException::withMessages([
+                        'order' => 'Offline payments can only be recorded for orders awaiting payment. Reopen a refunded order explicitly before collecting a replacement payment.',
+                    ]);
+                }
+
                 $alreadyPaid = $lockedOrder->amountPaid();
                 if (round($alreadyPaid + (float) $data['amount'], 2) > round($lockedOrder->total, 2)) {
                     throw ValidationException::withMessages(['amount' => 'The amount exceeds the outstanding balance.']);
