@@ -303,6 +303,13 @@ class OrderController extends Controller
             DB::transaction(function () use ($request, $order, $data) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
+                if (in_array($data['status'], ['paid', 'failed', 'cancelled'], true)
+                    && $lockedOrder->payments()->where('status', 'pending')->whereNotNull('provider_payment_id')->exists()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'A provider-initiated payment is still being reconciled. Wait for the bKash callback/webhook before changing the order status.',
+                    ]);
+                }
+
                 if ($lockedOrder->amountPaid() > 0
                     && $data['status'] !== 'paid'
                     && $data['status'] !== $lockedOrder->status) {
@@ -387,6 +394,12 @@ class OrderController extends Controller
 
                 if ($lockedPayment->status !== 'pending') {
                     throw ValidationException::withMessages(['payment' => 'This payment has already been reviewed.']);
+                }
+
+                if (filled($lockedPayment->provider_payment_id)) {
+                    throw ValidationException::withMessages([
+                        'payment' => 'Provider-initiated payments can only be settled or rejected by the provider callback/webhook after server-side status verification.',
+                    ]);
                 }
 
                 if ($data['action'] === 'verify' && filled($lockedPayment->provider_payment_id)) {
