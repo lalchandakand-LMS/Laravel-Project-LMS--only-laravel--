@@ -43,10 +43,10 @@ php artisan serve
 
 Open <http://127.0.0.1:8000>.
 
-> **CI verification:** the current GitHub Actions run on 26 November 2026 passed
-> the full Laravel suite with 276 tests / 1,468 assertions (all passed).
-> CI validates the application in a clean SQLite test environment; still run a
-> staging install and acceptance test before production. The writable directories
+> **CI verification:** GitHub Actions on 26 November 2026 passed the full Laravel
+> suite with 398 tests / 2,173 assertions. CI validates clean SQLite and MySQL 8.0
+> environments; still run a staging install and acceptance test before production.
+> The writable directories
 > (`storage/framework/{cache,sessions,views}`, `storage/logs`,
 > `storage/app/public`, `bootstrap/cache`) ship with `.gitignore` placeholders;
 > if your unzip/mover drops empty folders, recreate them with
