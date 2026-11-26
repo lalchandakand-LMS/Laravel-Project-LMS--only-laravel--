@@ -21,7 +21,8 @@ class PublicBoardResultsTest extends TestCase
             ->assertOk()
             ->assertSee('HSC Board Results 2026')
             ->assertSee('Student achievements')
-            ->assertSee('Student A — GPA 5.00');
+            ->assertSee('Student A — GPA 5.00')
+            ->assertSee('Board Results');
     }
 
     public function test_public_board_results_page_has_clear_empty_state(): void
