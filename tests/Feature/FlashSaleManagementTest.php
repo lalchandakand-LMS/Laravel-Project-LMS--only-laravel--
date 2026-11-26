@@ -98,7 +98,7 @@ class FlashSaleManagementTest extends TestCase
         $this->assertSame(750.0, (float) $order->items()->where('item_type', 'course')->firstOrFail()->price);
 
         $this->actingAs($this->admin())->put(route('admin.flash-sales.update', $sale), $this->campaignPayload([
-            'name' => 'Updated course offer', 'type' => 'fixed', 'value' => 100,
+            'name' => 'Updated course offer', 'type' => 'fixed', 'value' => 200,
             'course_ids' => [$course->id],
         ]))->assertRedirect(route('admin.flash-sales.index'));
         $this->assertSame(800.0, $course->fresh()->final_price);
