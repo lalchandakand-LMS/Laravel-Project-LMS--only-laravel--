@@ -37,6 +37,14 @@
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
                     <b>Delivery address</b>
                     <p class="mt-1 whitespace-pre-line">{{ $order->address }}</p>
+                    @if($order->shipping_status)
+                        <p class="mt-3 text-sm"><b>Delivery status:</b> {{ ucfirst($order->shipping_status) }}</p>
+                        @if($order->shipping_carrier || $order->tracking_number)
+                            <p class="mt-1 text-sm">Carrier: {{ $order->shipping_carrier ?: '—' }} · Tracking: {{ $order->tracking_number ?: '—' }}</p>
+                        @endif
+                        @if($order->shipped_at)<p class="mt-1 text-xs text-slate-500">Shipped {{ $order->shipped_at->format('d M Y, h:i A') }}</p>@endif
+                        @if($order->delivered_at)<p class="mt-1 text-xs text-slate-500">Delivered {{ $order->delivered_at->format('d M Y, h:i A') }}</p>@endif
+                    @endif
                     <p class="mt-2 text-xs text-slate-500">The branch will process and dispatch your physical items.</p>
                 </div>
             @endif
