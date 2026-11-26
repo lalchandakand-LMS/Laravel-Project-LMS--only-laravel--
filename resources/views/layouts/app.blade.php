@@ -5,21 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php($brandName = \App\Models\Setting::get('site_name', "Alom's English Center"))
-    @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.')))))
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{{ url()->current() }}">
+    @php($pageTitle = trim($__env->yieldContent('meta_title', $__env->yieldContent('title', ''))))
+    @php($seoTitle = $pageTitle !== '' ? $pageTitle.' — '.$brandName : \App\Models\Setting::get('seo_title', $brandName))
+    @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('seo_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.'))))))
+    @php($privateSeoRoute = auth()->check() || request()->is('admin', 'admin/*', 'my', 'my/*', 'teacher', 'teacher/*', 'guardian', 'guardian/*', 'branch', 'branch/*', 'cart', 'checkout', 'checkout/*', 'messages', 'messages/*', 'notifications', 'notifications/*'))
+    @php($seoIndexEnabled = \App\Models\Setting::get('seo_robots_index', '1') === '1')
+    @php($robotsDirective = $privateSeoRoute || !$seoIndexEnabled ? 'noindex, nofollow' : $__env->yieldContent('meta_robots', 'index, follow'))
+    @php($canonicalUrl = $__env->yieldContent('canonical_url', url()->current()))
+    @php($socialImage = \App\Models\Setting::get('seo_default_image') ?: media_url(setting('logo'), asset('images/aec-logo.svg')))
+    <meta name="robots" content="{{ $robotsDirective }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ $brandName }}">
-    <meta property="og:title" content="@yield('title', $brandName) — {{ $brandName }}">
+    <meta property="og:title" content="{{ $seoTitle !== '' ? $seoTitle : trim($__env->yieldContent('title', $brandName).' — '.$brandName) }}">
     <meta property="og:description" content="{{ $brandDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ media_url(setting('logo'), asset('images/aec-logo.svg')) }}">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="@yield('title', $brandName) — {{ $brandName }}">
+    <meta property="og:image" content="{{ $socialImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $seoTitle !== '' ? $seoTitle : trim($__env->yieldContent('title', $brandName).' — '.$brandName) }}">
     <meta name="twitter:description" content="{{ $brandDescription }}">
-    <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
+    <title>{{ $seoTitle !== '' ? $seoTitle : trim($__env->yieldContent('title', $brandName).' — '.$brandName) }}</title>
     <meta name="description" content="{{ $brandDescription }}">
+    @if (filled(\App\Models\Setting::get('google_site_verification')) && !$privateSeoRoute)
+        <meta name="google-site-verification" content="{{ \App\Models\Setting::get('google_site_verification') }}">
+    @endif
     @include('partials.assets')
     <style>
         :root {
