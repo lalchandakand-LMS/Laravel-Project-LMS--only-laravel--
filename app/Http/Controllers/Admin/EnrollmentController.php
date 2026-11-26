@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Carbon;
 
 class EnrollmentController extends Controller
 {
@@ -149,7 +150,7 @@ class EnrollmentController extends Controller
             'price_paid' => $data['price_paid'],
             'status' => $data['status'],
             'enrolled_at' => $data['enrolled_at'],
-            'expires_at' => $data['expires_at'] ?? null,
+            'expires_at' => ! empty($data['expires_at']) ? Carbon::parse($data['expires_at'])->endOfDay() : null,
             'completed_at' => $data['status'] === 'completed' ? ($enrollment->completed_at ?? now()) : null,
             'admin_note' => $data['admin_note'] ?? null,
         ]);
