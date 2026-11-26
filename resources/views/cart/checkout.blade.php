@@ -65,6 +65,7 @@
             <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
                 <div class="flex justify-between"><dt class="text-slate-500">Subtotal</dt><dd>৳{{ number_format($subtotal, 2) }}</dd></div>
                 @if ($discount > 0)<div class="flex justify-between text-emerald-700"><dt>Discount</dt><dd>−৳{{ number_format($discount, 2) }}</dd></div>@endif
+                @if (collect($items)->contains('type', 'product'))<div class="flex justify-between"><dt class="text-slate-500">Delivery fee</dt><dd>{{ $shipping_fee > 0 ? '৳'.number_format($shipping_fee, 2) : 'Free' }}</dd></div>@endif
                 <div class="flex justify-between border-t border-slate-100 pt-2 text-base font-extrabold"><dt>Total</dt><dd>৳{{ number_format($total, 2) }}</dd></div>
             </dl>
             <button class="mt-5 w-full rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white hover:bg-emerald-800">
