@@ -66,6 +66,7 @@ class LiveClassController extends Controller
         return view('admin.live-classes.form', [
             'liveClass' => $liveClass,
             'courses' => $this->courses(),
+            'batches' => $this->batches(),
             'platforms' => LiveClass::PLATFORMS,
         ]);
     }
