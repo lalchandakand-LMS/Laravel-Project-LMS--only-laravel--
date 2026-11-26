@@ -143,8 +143,16 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Permanent deletion blocked: this record still has linked learning, account, or transaction data. Keep it in the Recycle Bin or remove dependent records first.');
         }
 
-        $ebookMedia = $record instanceof Ebook ? ['cover' => $record->cover, 'file' => $record->file] : null;
-        $postThumbnail = $record instanceof Post ? $record->thumbnail : null;
+        $media = match (true) {
+            $record instanceof User => [['public', $record->avatar]],
+            $record instanceof Course => [['public', $record->thumbnail]],
+            $record instanceof Category => [['public', $record->image]],
+            $record instanceof Lesson => [['local', $record->attachment]],
+            $record instanceof Slider => [['public', $record->image]],
+            $record instanceof Ebook => [['public', $record->cover], ['local', $record->file]],
+            $record instanceof Post => [['public', $record->thumbnail]],
+            default => [],
+        };
 
         try {
             $record->forceDelete();
@@ -153,12 +161,8 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Permanent deletion was blocked by a linked database record. The item remains safely in the Recycle Bin.');
         }
 
-        if ($ebookMedia) {
-            delete_stored_media('public', $ebookMedia['cover']);
-            delete_stored_media('local', $ebookMedia['file']);
-        }
-        if ($postThumbnail) {
-            delete_stored_media('public', $postThumbnail);
+        foreach ($media as [$disk, $path]) {
+            delete_stored_media($disk, $path);
         }
 
         return back()->with('success', class_basename($class).' permanently deleted.');
