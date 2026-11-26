@@ -6,6 +6,7 @@ use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Ebook;
 use App\Models\Product;
+use App\Services\ShippingFeeCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
