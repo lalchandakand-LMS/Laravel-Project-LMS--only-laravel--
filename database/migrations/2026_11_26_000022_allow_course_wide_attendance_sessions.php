@@ -14,8 +14,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        if (Schema::table('attendance_sessions', fn ($table) => null) === null) {
-            // Keep batch_id nullable: course-wide attendance sessions may depend on it.
-        }
+        // Keep batch_id nullable because course-wide attendance sessions may exist.
     }
 };
