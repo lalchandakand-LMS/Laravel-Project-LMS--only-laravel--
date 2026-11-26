@@ -9,7 +9,6 @@ use App\Services\OrderService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
@@ -136,7 +135,7 @@ class CheckoutController extends Controller
         $proofPath = null;
 
         try {
-            DB::transaction(function () use ($request, $order, $data, &$proofPath) {
+            \\Illuminate\\Support\\Facades\\DB::transaction(function () use ($request, $order, $data, &$proofPath) {
                 // Serialize submissions for this order so simultaneous requests cannot
                 // both pass the "one pending payment" and outstanding-balance checks.
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
