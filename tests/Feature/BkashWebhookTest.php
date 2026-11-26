@@ -6,7 +6,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
-use App\Services\Payments\BkashTokenizedCheckoutAdapter;
+use App\Services\Payments\BkashCheckoutAdapter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -50,11 +50,11 @@ class BkashWebhookTest extends TestCase
     {
         Http::fake([
             $this->certificateUrl => Http::response($this->certificate, 200),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/token/grant' => Http::response([
                 'id_token' => 'sandbox-id-token',
                 'expires_in' => 3600,
             ]),
-            'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/general/searchTransaction' => Http::response([
+            'https://checkout.sandbox.bka.sh/v1.2.0-beta/checkout/payment/search' => Http::response([
                 'trxID' => 'BKASH-WEBHOOK-TRX-1',
                 'merchantInvoiceNumber' => 'AEC-WEBHOOK-ORDER-1',
                 'amount' => '500.00',
@@ -146,7 +146,7 @@ class BkashWebhookTest extends TestCase
         $event['TopicArn'] = 'arn:aws:sns:ap-southeast-1:123456789012:other-topic';
 
         $this->expectException(ValidationException::class);
-        app(BkashTokenizedCheckoutAdapter::class)->verifyWebhook(
+        app(BkashCheckoutAdapter::class)->verifyWebhook(
             request()->create('/payments/bkash/webhook', 'POST', [], [], [], [
                 'CONTENT_TYPE' => 'application/json',
             ], json_encode($event))
