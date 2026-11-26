@@ -142,4 +142,25 @@ class EnrollmentManagementTest extends TestCase
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
+
+    public function test_manual_enrollment_rejects_a_full_batch(): void
+    {
+        $admin = $this->admin();
+        $student = $this->student();
+        $otherStudent = $this->student();
+        $course = $this->course();
+        $batch = Batch::create(['course_id' => $course->id, 'name' => 'Full Batch', 'code' => 'ENR-FULL', 'status' => 'ongoing', 'capacity' => 1]);
+        Enrollment::create(['user_id' => $otherStudent->id, 'course_id' => $course->id, 'batch_id' => $batch->id, 'price_paid' => 0, 'status' => 'active', 'enrolled_at' => now()]);
+
+        $this->actingAs($admin)->post(route('admin.enrollments.store'), [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'batch_id' => $batch->id,
+            'price_paid' => 0,
+            'status' => 'active',
+            'enrolled_at' => now()->toDateString(),
+        ])->assertStatus(422);
+
+        $this->assertDatabaseMissing('enrollments', ['user_id' => $student->id, 'course_id' => $course->id]);
+    }
 }
