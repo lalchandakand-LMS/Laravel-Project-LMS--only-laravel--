@@ -30,13 +30,12 @@ class StaffAttendanceWorkflowTest extends TestCase
             ]],
         ])->assertRedirect(route('admin.staff-attendance.index', ['date' => '2026-11-26']));
 
-        $this->assertDatabaseHas('staff_attendances', [
-            'branch_id' => $branch->id,
-            'attendance_date' => '2026-11-26',
-            'status' => 'present',
-            'check_in' => '08:55',
-            'marked_by' => $admin->id,
-        ]);
+        $firstRecord = StaffAttendance::firstOrFail();
+        $this->assertSame($branch->id, $firstRecord->branch_id);
+        $this->assertSame('2026-11-26', $firstRecord->attendance_date->toDateString());
+        $this->assertSame('present', $firstRecord->status);
+        $this->assertSame('08:55', $firstRecord->check_in);
+        $this->assertSame($admin->id, $firstRecord->marked_by);
 
         $this->post(route('admin.staff-attendance.save'), [
             'attendance_date' => '2026-11-26',
