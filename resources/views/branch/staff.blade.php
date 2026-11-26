@@ -1,11 +1,12 @@
 @extends('layouts.portal')
 @section('title', 'Branch staff')
 @section('heading', 'Staff — '.$branch->name)
+@section('actions')<a href="{{ route('branch.staff.create') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">+ Add teacher</a>@endsection
 @section('content')
 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
     <table class="w-full text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr><th class="px-5 py-3">Name</th><th class="px-5 py-3">Role</th><th class="px-5 py-3">Designation</th><th class="px-5 py-3">Contact</th><th class="px-5 py-3">Status</th></tr>
+            <tr><th class="px-5 py-3">Name</th><th class="px-5 py-3">Role</th><th class="px-5 py-3">Designation</th><th class="px-5 py-3">Contact</th><th class="px-5 py-3">Status</th><th class="px-5 py-3 text-right">Actions</th></tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
             @forelse ($staff as $member)
@@ -27,7 +28,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">No staff assigned to this branch.</td></tr>
+                <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">No staff assigned to this branch.</td></tr>
             @endforelse
         </tbody>
     </table>
