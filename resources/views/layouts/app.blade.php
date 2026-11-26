@@ -23,8 +23,8 @@
     @include('partials.assets')
     <style>
         :root {
-            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) ? setting('site_primary_color') : '#ea580c' }};
-            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) ? setting('site_secondary_color') : '#9a3412' }};
+            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) && strtolower((string) setting('site_primary_color')) !== '#ea580c' ? setting('site_primary_color') : '#ea580c' }};
+            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) && strtolower((string) setting('site_secondary_color')) !== '#9a3412' ? setting('site_secondary_color') : '#9a3412' }};
         }
         .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
         .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
@@ -48,6 +48,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
+
 @php($brandLoaderEnabled = \App\Models\Setting::get('brand_loader_enabled', '0') === '1')
 @if ($brandLoaderEnabled)
 <style>
@@ -57,9 +58,9 @@
     #brand-page-loader .brand-loader-logo{width:76px;height:76px;object-fit:contain;border-radius:16px}
     #brand-page-loader .brand-loader-name{font-weight:800;font-size:1.15rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
     #brand-page-loader .brand-loader-message{font-size:.9rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
-    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
-    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
-    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};animation:brand-loader-pulse 1s ease-in-out infinite}
+    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }} 18%, transparent);border-top-color:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
+    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};box-shadow:-16px 0 0 {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }},16px 0 0 {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
+    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};animation:brand-loader-pulse 1s ease-in-out infinite}
     @keyframes brand-loader-spin{to{transform:rotate(360deg)}}
     @keyframes brand-loader-dots{to{transform:scale(1.25);opacity:.55}}
     @keyframes brand-loader-pulse{50%{transform:scale(.72);opacity:.55}}
@@ -96,65 +97,76 @@
     @yield('content')
 </main>
 
-<footer class="mt-16 border-t border-slate-200" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#ffffff') }}; color: {{ \App\Models\Setting::get('footer_text', '#475569') }}">
-    <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
+<footer class="mt-0 border-t border-slate-800" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#071b26') }}; color: {{ \App\Models\Setting::get('footer_text', '#cbd5e1') }}">
+    <div class="mx-auto grid max-w-7xl gap-9 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-            <div class="flex items-center gap-2">
-                <img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-9 w-9 rounded-lg object-contain">
-                <span class="font-extrabold text-slate-900">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span>
-            </div>
-            <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>
-        </div>
-        <div>
-            <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Learn</h4>
-            <ul class="mt-3 space-y-2 text-sm text-slate-600">
-                <li><a class="hover:text-emerald-700" href="{{ route('courses.index') }}">All Courses</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('blog.index') }}">Blog & News</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('ebooks.index') }}">E-Books</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('student.exams.index') }}">Exams</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('certificates.verify', 'CERT-XXXXXXXX') }}">Verify Certificate</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Company</h4>
-            <ul class="mt-3 space-y-2 text-sm text-slate-600">
-                <li><a class="hover:text-emerald-700" href="{{ route('about') }}">About us</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('contact') }}">Contact</a></li>
-                <li><a class="hover:text-emerald-700" href="{{ route('login') }}">Student login</a></li>
-                @foreach (\App\Models\MenuItem::publicNavigation('footer', 'desktop') as $footerItem)
-                    <li><a class="hover:text-emerald-700" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
-                @endforeach
-            </ul>
-        </div>
-        <div>
-            <h4 class="text-sm font-bold uppercase tracking-wide" style="color: {{ \App\Models\Setting::get('footer_heading', '#0f172a') }}">Get in touch</h4>
-            <ul class="mt-3 space-y-2 text-sm text-slate-600">
-                <li>{{ \App\Models\Setting::get('site_email', 'support@example.com') }}</li>
-                <li>{{ \App\Models\Setting::get('site_phone', '+880 1700-000000') }}</li>
-                @if (\App\Models\Setting::get('site_address'))
-                    <li>{{ \App\Models\Setting::get('site_address') }}</li>
-                @endif
-            </ul>
-            <div class="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
-                @foreach (['facebook' => 'Facebook', 'youtube' => 'YouTube', 'instagram' => 'Instagram'] as $key => $label)
+            <div class="flex items-center gap-2"><img src="{{ \App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-10 w-10 rounded-lg object-contain"><span class="font-extrabold text-white">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</span></div>
+            <p class="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">{{ \App\Models\Setting::get('site_tagline', 'Quality education for everyone, everywhere.') }}</p>
+            <div class="mt-5 flex flex-wrap gap-2">
+                @foreach (['facebook' => ['Facebook','f'], 'youtube' => ['YouTube','▶'], 'instagram' => ['Instagram','◎']] as $key => [$label,$symbol])
                     @if ($url = \App\Models\Setting::get($key))
-                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:underline">{{ $label }}</a>
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-extrabold text-orange-200 transition hover:bg-orange-500 hover:text-slate-950">{{ $symbol }}</a>
                     @endif
                 @endforeach
             </div>
         </div>
+        <div>
+            <h4 class="text-sm font-extrabold uppercase tracking-wider text-white">Links</h4>
+            <ul class="mt-4 space-y-3 text-sm text-slate-400">
+                <li><a class="hover:text-orange-300" href="{{ route('courses.index') }}">All Courses</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('blog.index') }}">Blog & News</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('ebooks.index') }}">E-Books</a></li>
+                <li><a class="hover:text-orange-300" href="{{ route('about') }}">About us</a></li>
+                @foreach (\App\Models\MenuItem::publicNavigation('footer', 'desktop') as $footerItem)
+                    <li><a class="hover:text-orange-300" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
+                @endforeach
+            </ul>
+        </div>
+        <div>
+            <h4 class="text-sm font-extrabold uppercase tracking-wider text-white">Company Details</h4>
+            <ul class="mt-4 space-y-3 text-sm text-slate-400">
+                <li>{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</li>
+                @if (\App\Models\Setting::get('company_license'))<li>License: {{ \App\Models\Setting::get('company_license') }}</li>@endif
+                @if (\App\Models\Setting::get('site_address'))<li>{{ \App\Models\Setting::get('site_address') }}</li>@endif
+                <li><a class="hover:text-orange-300" href="{{ route('contact') }}">Contact company</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="text-sm font-extrabold uppercase tracking-wider text-white">Contact</h4>
+            <ul class="mt-4 space-y-3 text-sm text-slate-400">
+                <li>{{ \App\Models\Setting::get('site_email', 'support@example.com') }}</li>
+                <li>{{ \App\Models\Setting::get('site_phone', '+880 1700-000000') }}</li>
+                @if (\App\Models\Setting::get('site_address'))<li>{{ \App\Models\Setting::get('site_address') }}</li>@endif
+            </ul>
+        </div>
     </div>
-    <div class="border-t border-slate-100 py-4 text-center text-xs text-slate-500">
-        © {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. {{ \App\Models\Setting::get('footer_copyright', 'All rights reserved.') }}
+    <div class="border-t border-white/10">
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-5 text-xs text-slate-400 sm:justify-between">
+            <span class="font-bold uppercase tracking-wider text-slate-300">Pay With</span>
+            <div class="flex flex-wrap items-center justify-center gap-2" aria-label="Accepted payment methods">
+                @foreach (['bkash' => 'bKash', 'nagad' => 'Nagad', 'rocket' => 'Rocket', 'bank' => 'Bank transfer'] as $method => $label)
+                    @if (isset($branch) && $branch
+                        ? in_array($method, $branch->enabledStudentPaymentMethods(), true)
+                        : \App\Models\Branch::active()->get()->contains(fn ($paymentBranch) => in_array($method, $paymentBranch->enabledStudentPaymentMethods(), true)))
+                        <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-extrabold {{ $method === 'bkash' ? 'text-pink-600' : ($method === 'nagad' ? 'text-orange-600' : 'text-slate-800') }}">{{ $label }}</span>
+                    @endif
+                @endforeach
+                <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-black italic text-blue-900">VISA <small class="ml-1 font-medium not-italic text-slate-500">Coming soon</small></span>
+                <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-black text-slate-800">Mastercard <small class="ml-1 font-medium text-slate-500">Coming soon</small></span>
+                <span class="rounded-md border border-white/15 bg-white px-3 py-2 text-xs font-black text-emerald-700">SSLCommerz <small class="ml-1 font-medium text-slate-500">Coming soon</small></span>
+            </div>
+        </div>
+    </div>
+    <div class="border-t border-white/10">
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-xs text-slate-400">
+            <span>© {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. {{ \App\Models\Setting::get('footer_copyright', 'All rights reserved.') }}</span>
+            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-orange-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-orange-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-orange-300">Refund Policy</a></nav>
+        </div>
     </div>
     @if (\App\Models\Setting::get('developer_show', '0') === '1' && \App\Models\Setting::get('developer_name'))
-    <div class="border-t border-white/10 px-4 py-3 text-center text-xs" style="background-color: {{ \App\Models\Setting::get('developer_bg', '#0f172a') }}; color: {{ \App\Models\Setting::get('developer_text_color', '#ffffff') }}">
-        {{ \App\Models\Setting::get('developer_text', 'Developed by') }}
-        @if ($developerUrl = \App\Models\Setting::get('developer_url'))<a href="{{ $developerUrl }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ \App\Models\Setting::get('developer_name') }}</a>@else <strong>{{ \App\Models\Setting::get('developer_name') }}</strong>@endif
-    </div>
+    <div class="border-t border-white/10 px-4 py-3 text-center text-xs" style="background-color: {{ \App\Models\Setting::get('developer_bg', '#0f172a') }}; color: {{ \App\Models\Setting::get('developer_text_color', '#ffffff') }}">{{ \App\Models\Setting::get('developer_text', 'Developed by') }} @if ($developerUrl = \App\Models\Setting::get('developer_url'))<a href="{{ $developerUrl }}" target="_blank" rel="noopener noreferrer" class="font-bold underline">{{ \App\Models\Setting::get('developer_name') }}</a>@else <strong>{{ \App\Models\Setting::get('developer_name') }}</strong>@endif</div>
     @endif
-</footer>
-@stack('scripts')
+</footer>@stack('scripts')
 </body>
 </html>

@@ -9,7 +9,7 @@
             'General' => [
                 ['site_name', 'Site name'], ['site_tagline', 'Tagline'],
                 ['site_email', 'Support email'], ['site_phone', 'Support phone'],
-                ['site_address', 'Address'], ['currency', 'Currency symbol'],
+                ['site_address', 'Address'], ['company_license', 'Company license / registration'], ['currency', 'Currency symbol'],
             ],
             'Payments' => [['bkash_number', 'bKash number'], ['nagad_number', 'Nagad number']],
             'Social' => [['facebook', 'Facebook URL'], ['youtube', 'YouTube URL'], ['instagram', 'Instagram URL']],
@@ -53,8 +53,8 @@
             <h4 class="font-bold text-slate-900">Public website brand colors</h4>
             <p class="mt-1 text-xs text-slate-600">These colors control public navigation, buttons, links, badges and accent highlights. Homepage section backgrounds can still be customized separately below.</p>
             <div class="mt-3 grid gap-4 sm:grid-cols-2">
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#ea580c') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#9a3412') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#06b6d4') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#0d9488') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             </div>
         </div>
     </section>
@@ -144,7 +144,7 @@
         </div>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @foreach (['hero' => 'Hero slider / banner', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
-                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? '1') === '1')> {{ $label }}</label>
+                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked((in_array($key, ['hero','categories','online_batches','reviews'], true) ? ($settings['homepage_show_'.$key] ?? '1') : ($settings['homepage_show_'.$key] ?? '0')) === '1')> {{ $label }}</label>
             @endforeach
         </div>
         <div class="mt-6 grid gap-4 md:grid-cols-2">
@@ -225,19 +225,20 @@
         </div>
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ([
-                'homepage_learning_bg' => ['Learning path background', '#ffffff'],
+                'homepage_learning_bg' => ['Learning path background', '#f1f3ff'],
                 'homepage_learning_text' => ['Learning path text', '#0f172a'],
-                'homepage_testimonial_bg' => ['Testimonial background', '#f1f5f9'],
-                'homepage_testimonial_text' => ['Testimonial text', '#0f172a'],
-                'homepage_stats_bg' => ['Statistics background', '#ea580c'],
+                'homepage_testimonial_bg' => ['Testimonial background', '#111827'],
+                'homepage_testimonial_text' => ['Testimonial text', '#ffffff'],
+                'homepage_stats_bg' => ['Statistics background', '#062c30'],
                 'homepage_stats_text' => ['Statistics text', '#ffffff'],
-                'footer_bg' => ['Footer background', '#ffffff'],
-                'footer_text' => ['Footer text', '#475569'],
-                'footer_heading' => ['Footer heading', '#0f172a'],
+                'footer_bg' => ['Footer background', '#071b26'],
+                'footer_text' => ['Footer text', '#cbd5e1'],
+                'footer_heading' => ['Footer heading', '#ffffff'],
                 'developer_bg' => ['Developer strip background', '#0f172a'],
                 'developer_text_color' => ['Developer strip text', '#ffffff'],
             ] as $key => [$label, $default])
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                @php($colorValue = $settings[$key] ?? $default)
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $colorValue) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             @endforeach
         </div>
         <label class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="developer_show" value="1" @checked(($settings['developer_show'] ?? '0') === '1')> Show developer credit strip on website</label>
@@ -255,7 +256,7 @@
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Minimum display time (ms)</label><input type="number" min="0" max="2000" step="100" name="brand_loader_min_time" value="{{ old('brand_loader_min_time', $settings['brand_loader_min_time'] ?? '250') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
         </div>
         <div class="mt-4 grid gap-4 sm:grid-cols-3">
-            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#ea580c'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
+            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#06b6d4'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
                 <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             @endforeach
         </div>

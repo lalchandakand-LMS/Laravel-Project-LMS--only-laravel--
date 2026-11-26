@@ -4,169 +4,146 @@
 @section('content')
 <div id="homepage-sections">
 
-{{-- HERO SLIDER --}}
-@php
-    $slides = $sliders ?? collect();
-@endphp
-@if (($homepageSettings['homepage_show_hero'] ?? '1') === '1' && $slides->count())
-<section data-home-section="hero" class="relative overflow-hidden bg-slate-900 text-white">
-    <div id="heroSlides" class="hero-carousel relative" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
-        @foreach ($slides as $i => $slide)
-            @php
-                [$theme, $badge, $accent, $button] = $slide->palette();
-            @endphp
-            <div class="hero-slide {{ $i === 0 ? 'is-active' : 'hidden' }} bg-gradient-to-br {{ $theme }}" data-slide="{{ $i }}" data-hero-slide aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
-                <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
-                <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 lg:grid-cols-2 lg:py-20">
-                    <div>
-                        @if ($slide->badge)
-                            <span class="inline-flex items-center gap-2 rounded-full border {{ $badge }} px-3 py-1 text-xs font-semibold">
-                                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span> {{ $slide->badge }}
-                            </span>
-                        @endif
-                        <h1 class="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">{{ $slide->title }}</h1>
-                        @if ($slide->subtitle)
-                            <p class="mt-4 max-w-xl text-lg text-slate-300">{{ $slide->subtitle }}</p>
-                        @endif
-                        <div class="mt-8 flex flex-wrap gap-3">
-                            <a href="{{ $slide->button_url ?: route('courses.index') }}" class="rounded-xl px-6 py-3 font-bold shadow-lg transition hover:-translate-y-0.5 {{ $button }}">{{ $slide->button_text ?: 'Explore courses' }}</a>
-                            <a href="{{ auth()->check() ? auth()->user()->dashboardRoute() : route('register') }}" class="rounded-xl border px-6 py-3 font-semibold border-white/20 text-white hover:bg-white/10">Create free account</a>
-                        </div>
-                        <dl class="mt-10 grid max-w-md grid-cols-3 gap-4">
-                            @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']]] as [$label, $value])
-                                <div>
-                                    <dt class="text-xs uppercase tracking-wide text-slate-400">{{ $label }}</dt>
-                                    <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
-                    </div>
-                    <div class="relative">
-                        <div class="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-2xl backdrop-blur">
-                            <img src="{{ $slide->imageUrl() ?: asset('images/aec-logo.svg') }}"
-                                 alt="{{ $slide->title }}" class="h-72 w-full rounded-2xl object-cover sm:h-96">
-                        </div>
-                        <div class="absolute -bottom-6 -left-4 rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
-                            <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}</p>
-                            <p class="text-xs text-slate-300">learning activities</p>
-                        </div>
-                    </div>
+{{-- HERO + TOP FEATURE CARDS --}}
+@php($slides = $sliders ?? collect())
+@if (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
+<section data-home-section="hero" class="home-hero-shell overflow-hidden text-white">
+    <div class="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:pt-12">
+        @if ($slides->count())
+            <div id="heroSlides" class="coverflow-carousel relative mx-auto" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
+                <div class="coverflow-stage relative mx-auto">
+                    @foreach ($slides as $i => $slide)
+                        <article class="coverflow-slide {{ $i === 0 ? 'is-active' : '' }}" data-hero-slide data-slide="{{ $i }}" aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
+                            <img src="{{ $slide->imageUrl() ?: asset('images/aec-logo.svg') }}" alt="{{ $slide->title ?: 'Alom’s English Center learning banner' }}" class="h-full w-full rounded-[1.6rem] object-cover">
+                        </article>
+                    @endforeach
                 </div>
+                @if ($slides->count() > 1)
+                    <button type="button" onclick="heroGo(-1)" aria-label="Previous banner" class="coverflow-arrow left-2 sm:left-[7%]">‹</button>
+                    <button type="button" onclick="heroGo(1)" aria-label="Next banner" class="coverflow-arrow right-2 sm:right-[7%]">›</button>
+                    <div class="coverflow-dots" aria-label="Choose banner">
+                        @foreach ($slides as $i => $slide)
+                            <button type="button" onclick="heroShow({{ $i }})" data-hero-dot aria-label="Banner {{ $i + 1 }}" aria-current="{{ $i === 0 ? 'true' : 'false' }}"></button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
-        @endforeach
-
-        @if ($slides->count() > 1)
-            <button type="button" onclick="heroGo(-1)" aria-label="Previous slide"
-                class="hero-arrow absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-3 text-slate-900 shadow-lg hover:bg-white">‹</button>
-            <button type="button" onclick="heroGo(1)" aria-label="Next slide"
-                class="hero-arrow absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-3 text-slate-900 shadow-lg hover:bg-white">›</button>
-            <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-                @foreach ($slides as $i => $slide)
-                    <button type="button" onclick="heroShow({{ $i }})" aria-label="Slide {{ $i + 1 }}"
-                        data-hero-dot class="hero-dot h-2.5 w-2.5 rounded-full transition" aria-current="{{ $i === 0 ? 'true' : 'false' }}"></button>
-                @endforeach
+        @else
+            <div class="coverflow-stage relative mx-auto max-w-5xl overflow-hidden rounded-[1.6rem] border border-white/10 bg-white/5 shadow-2xl">
+                <div class="grid h-full min-h-64 place-items-center"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ \App\Models\Setting::get('site_name', 'Alom English Center') }} banner placeholder" class="h-32 w-32 object-contain opacity-80"></div>
             </div>
         @endif
+
+        <div class="mt-9 grid gap-4 {{ (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1' && ($homepageSettings['homepage_show_stats'] ?? '1') === '1') ? 'lg:grid-cols-2' : 'lg:grid-cols-1' }}">
+            @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
+            <section class="home-glass-card">
+                <div class="flex items-center justify-between gap-3">
+                    <div><span class="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">Online Course</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
+                    <a href="{{ route('courses.index') }}" class="shrink-0 text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a>
+                </div>
+                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                    @forelse ($onlineBatches->take(4) as $batch)
+                        <a href="{{ route('courses.index') }}" class="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[.045] px-3 py-3 transition hover:bg-white/10">
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-400/15 text-lg text-cyan-200">▣</span>
+                            <span class="min-w-0"><strong class="block truncate text-sm text-white">{{ $batch->name }}</strong><small class="block truncate text-xs text-slate-300">{{ $batch->course?->title ?: 'Online learning batch' }}</small></span>
+                        </a>
+                    @empty
+                        <p class="text-sm text-slate-300 sm:col-span-2">New online batches will be announced soon.</p>
+                    @endforelse
+                </div>
+            </section>
+            @endif
+            @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
+            <section class="home-glass-card">
+                <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">See the stats!</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
+                <div class="mt-5 grid grid-cols-2 gap-3">
+                    @foreach ([['Students', $stats['students'], '♙'], ['Courses', $stats['courses'], '▤'], ['Teachers', $stats['instructors'], '♧'], ['Videos / Lessons', $stats['lessons'], '▷']] as [$label, $value, $icon])
+                        <div class="rounded-xl border border-white/10 bg-white/[.045] p-4"><div class="flex items-center justify-between"><span class="text-xl text-cyan-300">{{ $icon }}</span><strong class="text-2xl font-extrabold text-white">{{ number_format($value) }}+</strong></div><p class="mt-1 text-xs font-semibold text-slate-300">{{ $label }}</p></div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+        </div>
     </div>
 </section>
 
 @push('scripts')
+<style>
+.home-hero-shell{background:linear-gradient(125deg,#062c30 0%,#041c24 100%)}
+.home-glass-card{border:1px solid rgba(255,255,255,.12);border-radius:1.35rem;background:rgba(255,255,255,.075);padding:1.35rem;box-shadow:0 18px 55px rgba(0,0,0,.16);backdrop-filter:blur(16px)}
+.coverflow-carousel{max-width:1120px;padding:0 0 3.25rem}
+.coverflow-stage{height:clamp(230px,43vw,490px);overflow:visible;perspective:1200px}
+.coverflow-slide{position:absolute;left:9%;top:0;width:82%;height:100%;border:1px solid rgba(255,255,255,.16);border-radius:1.6rem;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translateX(0) scale(.78);filter:blur(5px);transition:transform .55s ease,opacity .55s ease,filter .55s ease}
+.coverflow-slide.is-active{opacity:1;pointer-events:auto;transform:translateX(0) scale(1);filter:none;z-index:3}
+.coverflow-slide.is-prev,.coverflow-slide.is-next{opacity:.62;pointer-events:auto;filter:blur(2px);z-index:2}
+.coverflow-slide.is-prev{transform:translateX(-76%) scale(.82)}
+.coverflow-slide.is-next{transform:translateX(76%) scale(.82)}
+.coverflow-arrow{position:absolute;bottom:3.5rem;z-index:5;display:grid;width:2.65rem;height:2.65rem;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.13);color:white;font-size:1.8rem;line-height:1;backdrop-filter:blur(12px)}
+.coverflow-dots{position:absolute;bottom:3.8rem;left:50%;z-index:6;display:flex;gap:.5rem;transform:translateX(-50%)}
+.coverflow-dots button{width:.48rem;height:.48rem;border-radius:999px;background:rgba(255,255,255,.35);transition:all .2s}
+.coverflow-dots button[aria-current=true]{width:1.5rem;background:#22d3ee}
+@media(max-width:639px){.coverflow-slide{left:2%;width:96%}.coverflow-slide.is-prev{transform:translateX(-84%) scale(.84)}.coverflow-slide.is-next{transform:translateX(84%) scale(.84)}}
+@media(prefers-reduced-motion:reduce){.coverflow-slide{transition:none}}
+</style>
 <script>
 (() => {
- const slides=[...document.querySelectorAll('[data-hero-slide]')],dots=[...document.querySelectorAll('[data-hero-dot]')],root=document.getElementById('heroSlides');
- if(!root||!slides.length)return;
- let active=Math.max(0,slides.findIndex(s=>!s.classList.contains('hidden'))),timer=null,startX=0,startY=0;
+ const root=document.getElementById('heroSlides');if(!root)return;
+ const slides=[...root.querySelectorAll('[data-hero-slide]')],dots=[...root.querySelectorAll('[data-hero-dot]')];if(!slides.length)return;
+ let active=0,timer=null;
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
- const stop=()=>{if(timer)clearInterval(timer);timer=null;};
- function restart(){stop();if(slides.length>1&&!reduced.matches&&!root.matches(':hover')&&!root.contains(document.activeElement))timer=setInterval(()=>show(active+1),6500);}
- function show(index){
-  const next=(index+slides.length)%slides.length;if(next===active&&!slides[next].classList.contains('hidden')){restart();return;}
-  const old=slides[active],incoming=slides[next];old.classList.remove('is-active');old.setAttribute('aria-hidden','true');
-  setTimeout(()=>{if(old!==slides[active])old.classList.add('hidden');},reduced.matches?0:450);incoming.classList.remove('hidden');incoming.setAttribute('aria-hidden','false');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>incoming.classList.add('is-active')));active=next;
-  dots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===active);dot.setAttribute('aria-current',i===active?'true':'false');});restart();
+ const stop=()=>{if(timer)clearInterval(timer);timer=null};
+ function render(){
+  slides.forEach((slide,i)=>{
+   const prev=(active-1+slides.length)%slides.length,next=(active+1)%slides.length;
+   slide.classList.toggle('is-active',i===active);slide.classList.toggle('is-prev',slides.length>2&&i===prev);slide.classList.toggle('is-next',slides.length>2&&i===next);
+   if(slides.length===2){slide.classList.toggle('is-prev',i===prev);slide.classList.toggle('is-next',i===next);}
+   slide.setAttribute('aria-hidden',i===active?'false':'true');
+  });
+  dots.forEach((dot,i)=>dot.setAttribute('aria-current',i===active?'true':'false'));
  }
- window.heroShow=show;window.heroGo=dir=>show(active+dir);
- root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',restart);root.addEventListener('focusin',stop);root.addEventListener('focusout',e=>{if(!root.contains(e.relatedTarget))restart();});
- root.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();show(active+1);}if(e.key==='ArrowLeft'){e.preventDefault();show(active-1);}});
- root.addEventListener('touchstart',e=>{startX=e.changedTouches[0].clientX;startY=e.changedTouches[0].clientY;stop();},{passive:true});
- root.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))show(active+(dx<0?1:-1));else restart();},{passive:true});
- slides.forEach((s,i)=>{s.setAttribute('aria-hidden',i===active?'false':'true');if(i===active)s.classList.add('is-active');});
- dots.forEach((d,i)=>{d.setAttribute('aria-current',i===active?'true':'false');d.classList.toggle('is-active',i===active);});reduced.addEventListener('change',restart);restart();
+ function restart(){stop();if(slides.length>1&&!reduced.matches&&!root.matches(':hover')&&!root.contains(document.activeElement))timer=setInterval(()=>show(active+1),6500)}
+ function show(index){active=(index+slides.length)%slides.length;render();restart()}
+ window.heroShow=show;window.heroGo=direction=>show(active+direction);
+ root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',restart);root.addEventListener('focusin',stop);root.addEventListener('focusout',e=>{if(!root.contains(e.relatedTarget))restart()});
+ root.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();show(active+1)}if(e.key==='ArrowLeft'){e.preventDefault();show(active-1)}});
+ let x=0,y=0;root.addEventListener('touchstart',e=>{x=e.changedTouches[0].clientX;y=e.changedTouches[0].clientY;stop()},{passive:true});
+ root.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-x,dy=e.changedTouches[0].clientY-y;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))show(active+(dx<0?1:-1));else restart()},{passive:true});
+ reduced.addEventListener('change',restart);render();restart();
 })();
 </script>
 @endpush
-@elseif (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
-{{-- HERO --}}
-<section data-home-section="hero" class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white">
-    <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
-    <div class="pointer-events-none absolute -bottom-32 left-1/3 h-96 w-96 rounded-full bg-teal-400/10 blur-3xl"></div>
-    <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 lg:grid-cols-2">
-        <div>
-            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span> Build practical English skills at your own pace
-            </span>
-            <h1 class="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
-                Learn English with confidence at <span class="text-emerald-400">Alom's English Center</span>
-            </h1>
-            <p class="mt-4 max-w-xl text-lg text-slate-300">
-                Improve your English with structured lessons, expert guidance, speaking practice and progress tracking.
-            </p>
-            <div class="mt-8 flex flex-wrap gap-3">
-                <a href="{{ route('courses.index') }}" class="rounded-xl bg-emerald-500 px-6 py-3 font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400">Explore courses</a>
-                <a href="{{ route('register') }}" class="rounded-xl border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/10">Create free account</a>
-            </div>
-            <dl class="mt-10 grid max-w-md grid-cols-3 gap-4">
-                @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']]] as [$label, $value])
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-slate-400">{{ $label }}</dt>
-                        <dd class="text-2xl font-extrabold text-white">{{ number_format($value) }}</dd>
-                    </div>
-                @endforeach
-            </dl>
-        </div>
-        <div class="relative">
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-2xl backdrop-blur">
-                <div class="grid h-72 place-items-center rounded-2xl bg-white/5 text-center sm:h-96"><div><span class="text-7xl">📚</span><p class="mt-4 text-2xl font-bold">Learn. Practise. Progress.</p><p class="mt-2 text-sm text-slate-300">Alom’s English Center</p></div></div>
-            </div>
-            <div class="absolute -bottom-6 -left-4 rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
-                <p class="text-2xl font-extrabold text-emerald-400">{{ number_format($stats['lessons']) }}</p>
-                <p class="text-xs text-slate-300">video lessons</p>
-            </div>
-        </div>
-    </div>
-</section>
-
 @endif
 
-{{-- CATEGORIES --}}
+{{-- LEARNING PATH CATEGORIES --}}
 @if (($homepageSettings['homepage_show_categories'] ?? '1') === '1')
-<section data-home-section="categories" data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16" style="background-color: {{ $homepageSettings['homepage_learning_bg'] ?? '#ffffff' }}; color: {{ $homepageSettings['homepage_learning_text'] ?? '#0f172a' }}">
-    <div class="flex items-end justify-between">
-        <div>
-            <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose your learning path' }}</h2>
-            <p class="mt-1">{{ $homepageSettings['homepage_learning_subtitle'] ?? 'Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.' }}</p>
+<section data-home-section="categories" data-home-carousel="categories" data-home-carousel-layout="{{ $homepageSettings['homepage_learning_layout'] ?? 'grid' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="learning-path-section py-16" style="background:{{ $homepageSettings['homepage_learning_bg'] ?? '#f1f3ff' }}">
+    <div class="mx-auto max-w-7xl px-4">
+        <div class="mx-auto max-w-2xl text-center">
+            <p class="text-xs font-extrabold uppercase tracking-[.22em] text-teal-600">Explore your interests</p>
+            <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-cyan-800 sm:text-4xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose your learning path' }}</h2>
+            <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ $homepageSettings['homepage_learning_subtitle'] ?? 'Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.' }}</p>
         </div>
-        <a href="{{ route('courses.index') }}" class="hidden text-sm font-semibold text-emerald-700 hover:underline sm:block">See all courses →</a>
-    </div>
-    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @foreach ($categories as $category)
-            <a href="{{ route('categories.show', $category->slug) }}"
-               class="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md">
-                <span class="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-2xl">{{ $category->icon ?: '📘' }}</span>
-                <div>
-                    <h3 class="font-bold text-slate-900 group-hover:text-emerald-700">{{ $category->name }}</h3>
+        @php($categoryPalettes = [['from-sky-100 to-blue-50','bg-sky-500'],['from-emerald-100 to-green-50','bg-emerald-500'],['from-violet-100 to-purple-50','bg-violet-500'],['from-orange-100 to-amber-50','bg-[#22d3ee]'],['from-pink-100 to-rose-50','bg-pink-500']])
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ($categories as $index => $category)
+                @php([$gradient, $iconColor] = $categoryPalettes[$index % count($categoryPalettes)])
+                <a href="{{ route('categories.show', $category->slug) }}" class="group rounded-2xl border border-white/80 bg-gradient-to-br {{ $gradient }} p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                    <div class="flex items-start justify-between gap-4">
+                        <span class="grid h-12 w-12 place-items-center rounded-xl {{ $iconColor }} text-2xl text-white shadow-sm">{{ $category->icon ?: '📘' }}</span>
+                        <span class="text-sm font-extrabold text-slate-600 transition group-hover:translate-x-1">Explore ›</span>
+                    </div>
+                    <h3 class="mt-5 text-lg font-extrabold text-slate-900">{{ $category->name }}</h3>
                     <p class="mt-1 line-clamp-2 text-sm text-slate-600">{{ $category->description }}</p>
-                    <span class="mt-2 inline-block text-xs font-semibold text-emerald-700">{{ $category->published_courses_count ?? $category->publishedCourses()->count() }} courses →</span>
-                </div>
-            </a>
-        @endforeach
+                    <span class="mt-4 inline-block text-xs font-bold text-slate-600">{{ $category->published_courses_count ?? $category->publishedCourses()->count() }} courses</span>
+                </a>
+            @endforeach
+        </div>
     </div>
 </section>
 @endif
 
 {{-- FEATURED --}}
-@if (($homepageSettings['homepage_show_featured'] ?? '1') === '1' && $featured->count())
+@if (($homepageSettings['homepage_show_featured'] ?? '0') === '1' && $featured->count())
 <section data-home-section="featured" data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_featured_title'] ?? 'Featured courses' }}</h2>
@@ -181,46 +158,10 @@
 @endif
 
 
-{{-- ONLINE BATCHES --}}
-@if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1' && $onlineBatches->isNotEmpty())
-<section data-home-section="online_batches" data-home-carousel="online_batches" data-home-carousel-layout="carousel" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}" class="bg-orange-50 py-14">
-    <div class="mx-auto max-w-7xl px-4">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-            <div><p class="text-sm font-bold uppercase tracking-wider text-orange-700">Online Course</p><h2 class="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online batches are ongoing!' }}</h2><p class="mt-1 text-slate-600">{{ $homepageSettings['homepage_online_batches_subtitle'] ?? 'Book your seat in an upcoming live learning batch.' }}</p></div>
-            <a href="{{ auth()->check() && auth()->user()->isStudent() ? route('student.online-batches') : route('login') }}" class="rounded-xl bg-orange-600 px-5 py-3 text-sm font-bold text-white hover:bg-orange-700">Apply for a seat</a>
-        </div>
-        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($onlineBatches as $batch)
-                <article class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-                    <span class="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800">{{ ucfirst($batch->status) }}</span>
-                    <h3 class="mt-3 text-lg font-extrabold text-slate-900">{{ $batch->name }}</h3>
-                    <p class="mt-1 text-sm text-slate-600">{{ $batch->course?->title }}</p>
-                    @if ($batch->starts_at)<p class="mt-3 text-xs text-slate-500">Starts: {{ $batch->starts_at->format('d M Y') }}</p>@endif
-                    @if ($batch->schedule_days || $batch->schedule_time)<p class="mt-1 text-xs text-slate-500">{{ $batch->schedule_days }} {{ $batch->schedule_time }}</p>@endif
-                    <a href="{{ auth()->check() && auth()->user()->isStudent() ? route('student.online-batches') : route('login') }}" class="mt-4 inline-flex text-sm font-bold text-orange-700 hover:underline">Book your seat →</a>
-                </article>
-            @endforeach
-        </div>
-    </div>
-</section>
-@endif
-
-{{-- STATS BANNER --}}
-@if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
-<section data-home-section="stats" style="background-color: {{ $homepageSettings['homepage_stats_bg'] ?? '#ea580c' }}; color: {{ $homepageSettings['homepage_stats_text'] ?? '#ffffff' }}">
-    <div class="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-center text-white sm:grid-cols-4">
-        @foreach ([['Students', $stats['students']], ['Courses', $stats['courses']], ['Teachers', $stats['instructors']], ['Lessons', $stats['lessons']]] as [$label, $value])
-            <div>
-                <p class="text-3xl font-extrabold">{{ number_format($value) }}+</p>
-                <p class="text-sm text-emerald-100">{{ $label }}</p>
-            </div>
-        @endforeach
-    </div>
-</section>
-@endif
+{{-- Online batches and statistics are displayed inside the hero section above. --}}
 
 {{-- LATEST --}}
-@if (($homepageSettings['homepage_show_latest'] ?? '1') === '1')
+@if (($homepageSettings['homepage_show_latest'] ?? '0') === '1')
 <section data-home-section="latest" data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_latest_title'] ?? 'Latest courses' }}</h2>
@@ -235,7 +176,7 @@
 @endif
 
 {{-- UPCOMING LIVE CLASSES --}}
-@if (($homepageSettings['homepage_show_live_classes'] ?? '1') === '1' && $upcomingLiveClasses->isNotEmpty())
+@if (($homepageSettings['homepage_show_live_classes'] ?? '0') === '1' && $upcomingLiveClasses->isNotEmpty())
 <section data-home-section="live_classes" data-home-carousel="live_classes" data-home-carousel-layout="{{ $homepageSettings['homepage_live_classes_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
@@ -258,7 +199,7 @@
 @endif
 
 {{-- UPCOMING EXAMS --}}
-@if (($homepageSettings['homepage_show_exams'] ?? '1') === '1' && $upcomingExams->isNotEmpty())
+@if (($homepageSettings['homepage_show_exams'] ?? '0') === '1' && $upcomingExams->isNotEmpty())
 <section data-home-section="exams" data-home-carousel="exams" data-home-carousel-layout="{{ $homepageSettings['homepage_exams_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_exams_title'] ?? 'Exams & assessments' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_exams_subtitle'] ?? 'Prepare, practise and track your progress.' }}</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -275,7 +216,7 @@
 @endif
 
 {{-- TEACHER PROFILES --}}
-@if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
+@if (($homepageSettings['homepage_show_teachers'] ?? '0') === '1' && $teachers->isNotEmpty())
 <section data-home-section="teachers" data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_teachers_title'] ?? 'Meet our teachers' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_teachers_subtitle'] ?? 'Learn with experienced instructors and practical guidance.' }}</p></div>
@@ -295,7 +236,7 @@
 @endif
 
 {{-- VERIFIED BOARD RESULTS / ACHIEVEMENTS --}}
-@if (($homepageSettings['homepage_show_board_results'] ?? '1') === '1' && !empty($homepageSettings['homepage_board_results_body']))
+@if (($homepageSettings['homepage_show_board_results'] ?? '0') === '1' && !empty($homepageSettings['homepage_board_results_body']))
 <section data-home-section="board_results" id="board-results" class="bg-emerald-950 py-16 text-white">
     <div class="mx-auto max-w-5xl px-4 text-center">
         <span class="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">Student achievements {{ $homepageSettings['homepage_board_results_year'] ?? '' }}</span>
@@ -306,32 +247,47 @@
 </section>
 @endif
 
-{{-- REVIEWS --}}
+{{-- STUDENT TESTIMONIALS --}}
 @if (($homepageSettings['homepage_show_reviews'] ?? '1') === '1' && $reviews->count())
-<section data-home-section="reviews" data-home-carousel="reviews" data-home-carousel-layout="{{ $homepageSettings['homepage_reviews_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="py-16" style="background-color: {{ $homepageSettings['homepage_testimonial_bg'] ?? '#f1f5f9' }}; color: {{ $homepageSettings['homepage_testimonial_text'] ?? '#0f172a' }}">
+<section data-home-section="reviews" class="student-testimonials py-16 text-white">
     <div class="mx-auto max-w-7xl px-4">
-        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What our students say' }}</h2><p class="mt-1 text-sm text-slate-500">{{ $homepageSettings['homepage_reviews_subtitle'] ?? 'Real feedback from our learning community.' }}</p>
-        <div class="mt-8 grid gap-5 md:grid-cols-3">
-            @foreach ($reviews as $review)
-                <figure class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="text-amber-700">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></div>
-                    <blockquote class="mt-3 line-clamp-4 text-sm leading-relaxed text-slate-600">“{{ $review->comment }}”</blockquote>
-                    <figcaption class="mt-4 flex items-center gap-3">
-                        <img src="{{ $review->user->avatarUrl() }}" class="h-9 w-9 rounded-full" alt="">
-                        <div>
-                            <p class="text-sm font-bold text-slate-900">{{ $review->user->name }}</p>
-                            <p class="text-xs text-slate-500">{{ Str::limit($review->course->title, 32) }}</p>
-                        </div>
-                    </figcaption>
-                </figure>
+        <div class="text-center">
+            <p class="text-xs font-extrabold uppercase tracking-[.22em] text-cyan-300">Student stories</p>
+            <h2 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $homepageSettings['homepage_testimonial_title'] ?? 'What Our Students Say' }}</h2>
+            <p class="mt-3 text-sm text-slate-300">{{ $homepageSettings['homepage_reviews_subtitle'] ?? 'Real feedback from our learning community.' }}</p>
+            <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-sm font-bold text-amber-200"><span>★★★★★</span><strong>{{ number_format((float) $reviews->avg('rating'), 1) }}</strong><span class="text-slate-300">Average rating</span></div>
+        </div>
+        @php($reviewRows = $reviews->values()->chunk((int) ceil($reviews->count() / 2)))
+        <div class="mt-9 space-y-4">
+            @foreach ($reviewRows as $row)
+                <div class="testimonial-track flex gap-4 overflow-x-auto pb-3">
+                    @foreach ($row as $review)
+                        <figure class="testimonial-card min-w-[min(88vw,340px)] max-w-[340px] flex-1 rounded-2xl border border-white/10 bg-slate-800/90 p-5 shadow-xl">
+                            <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
+                            <blockquote class="mt-2 min-h-20 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
+                            <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
+                                <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
+                                <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
+                            </figcaption>
+                        </figure>
+                    @endforeach
+                </div>
             @endforeach
         </div>
     </div>
 </section>
+@push('scripts')
+<style>
+.student-testimonials{background:linear-gradient(135deg,#111827 0%,#172554 55%,#0f172a 100%)}
+.testimonial-track{scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#475569 transparent}
+.testimonial-card{scroll-snap-align:start}
+@media(prefers-reduced-motion:reduce){.testimonial-track{scroll-behavior:auto}}
+</style>
+@endpush
 @endif
 
 {{-- EBOOKS --}}
-@if (($homepageSettings['homepage_show_ebooks'] ?? '1') === '1' && $ebooks->count())
+@if (($homepageSettings['homepage_show_ebooks'] ?? '0') === '1' && $ebooks->count())
 <section data-home-section="ebooks" data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_ebooks_title'] ?? 'E-books & notes' }}</h2><p class="mt-1 text-sm text-slate-500">{{ $homepageSettings['homepage_ebooks_subtitle'] ?? 'Study guides and resources for learning anywhere.' }}</p>
@@ -352,7 +308,7 @@
 @endif
 
 {{-- ONLINE / CLASSROOM ADMISSION --}}
-@if (($homepageSettings['homepage_show_admission'] ?? '1') === '1')
+@if (($homepageSettings['homepage_show_admission'] ?? '0') === '1')
 <section data-home-section="admission" class="mx-auto max-w-7xl px-4 pb-8 pt-4">
     <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-14 text-center text-white sm:px-12">
         <div class="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
