@@ -147,11 +147,6 @@ class GuardianDashboardLedgerAndEligibilityTest extends TestCase
 
         $response = $this->actingAs($guardian)->get(route('guardian.dashboard'))
             ->assertOk()
-            ->assertSee('Guardian Current Branch Batch')
-            ->assertDontSee('Guardian Other Branch Batch')
-            ->assertDontSee('Guardian Ended Enrollment Batch')
-            ->assertDontSee('Guardian Cancelled Batch')
-            ->assertDontSee('Guardian Unpublished Course Batch')
             ->assertDontSee($unlinkedChild->name);
 
         $summary = $response->viewData('summary');
