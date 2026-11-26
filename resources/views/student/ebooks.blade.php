@@ -9,6 +9,9 @@
                 <img src="{{ $purchase->ebook->coverUrl() }}" class="h-48 w-full object-cover" alt="">
                 <div class="p-4">
                     <h3 class="line-clamp-2 font-bold text-slate-900">{{ $purchase->ebook->title }}</h3>
+                    @if ($purchase->ebook->trashed())
+                        <p class="mt-1 text-xs font-medium text-amber-700">Archived by Admin · Your access remains active</p>
+                    @endif
                     <a href="{{ route('student.ebooks.read', $purchase->ebook->slug) }}" class="mt-3 block rounded-lg bg-emerald-700 px-3 py-2 text-center text-sm font-bold text-white">Read</a>
                 </div>
             </div>

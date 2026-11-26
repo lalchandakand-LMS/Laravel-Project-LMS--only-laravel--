@@ -139,11 +139,18 @@ class RecycleBinController extends Controller
             return back()->with('error', 'Permanent deletion blocked: this record still has linked learning, account, or transaction data. Keep it in the Recycle Bin or remove dependent records first.');
         }
 
+        $ebookMedia = $record instanceof Ebook ? ['cover' => $record->cover, 'file' => $record->file] : null;
+
         try {
             $record->forceDelete();
         } catch (QueryException $exception) {
             report($exception);
             return back()->with('error', 'Permanent deletion was blocked by a linked database record. The item remains safely in the Recycle Bin.');
+        }
+
+        if ($ebookMedia) {
+            delete_stored_media('public', $ebookMedia['cover']);
+            delete_stored_media('local', $ebookMedia['file']);
         }
 
         return back()->with('success', class_basename($class).' permanently deleted.');

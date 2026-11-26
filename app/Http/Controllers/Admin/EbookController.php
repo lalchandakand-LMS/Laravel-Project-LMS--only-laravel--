@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Ebook;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class EbookController extends Controller
 {
@@ -20,7 +22,29 @@ class EbookController extends Controller
 
     public function store(Request $request)
     {
-        Ebook::create($this->validated($request));
+        $data = $this->validated($request);
+        $stored = [];
+
+        try {
+            foreach (['cover' => 'public', 'file' => 'local'] as $field => $disk) {
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store($field === 'cover' ? 'ebooks' : 'ebook-files', $disk);
+                    $data[$field] = $path;
+                    $stored[] = [$disk, $path];
+                } elseif ($request->filled($field.'_url')) {
+                    $data[$field] = $data[$field.'_url'];
+                }
+                unset($data[$field.'_url']);
+            }
+
+            Ebook::create($data);
+        } catch (\Throwable $exception) {
+            foreach ($stored as [$disk, $path]) {
+                delete_stored_media($disk, $path);
+            }
+            throw $exception;
+        }
+
         return redirect()->route('admin.ebooks.index')->with('success', 'E-book created.');
     }
 
@@ -32,31 +56,77 @@ class EbookController extends Controller
     public function update(Request $request, Ebook $ebook)
     {
         $data = $this->validated($request, $ebook);
+
+        if ($this->hasSales($ebook)) {
+            if ($request->hasFile('file')) {
+                throw ValidationException::withMessages([
+                    'file' => 'This e-book has purchases or order history. Its PDF/EPUB cannot be replaced because existing buyers must retain the exact purchased content.',
+                ]);
+            }
+
+            if ($request->filled('file_url') && $request->input('file_url') !== $ebook->file) {
+                throw ValidationException::withMessages([
+                    'file_url' => 'This e-book has purchases or order history. Its PDF/EPUB link cannot be changed because existing buyers must retain the exact purchased content.',
+                ]);
+            }
+        }
+
         $oldCover = $ebook->cover;
         $oldFile = $ebook->file;
-        $ebook->update($data);
+        $stored = [];
+
+        try {
+            foreach (['cover' => 'public', 'file' => 'local'] as $field => $disk) {
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store($field === 'cover' ? 'ebooks' : 'ebook-files', $disk);
+                    $data[$field] = $path;
+                    $stored[] = [$disk, $path];
+                } elseif ($request->filled($field.'_url')) {
+                    $data[$field] = $data[$field.'_url'];
+                }
+                unset($data[$field.'_url']);
+            }
+
+            $ebook->update($data);
+        } catch (\Throwable $exception) {
+            foreach ($stored as [$disk, $path]) {
+                delete_stored_media($disk, $path);
+            }
+            throw $exception;
+        }
+
         if (isset($data['cover']) && $data['cover'] !== $oldCover) {
             delete_stored_media('public', $oldCover);
         }
-        if (isset($data['file']) && $data['file'] !== $oldFile) {
+        if (isset($data['file']) && $data['file'] !== $oldFile && ! $this->hasSales($ebook)) {
             delete_stored_media('local', $oldFile);
         }
+
         return redirect()->route('admin.ebooks.index')->with('success', 'E-book updated.');
     }
 
     public function destroy(Ebook $ebook)
     {
-        $cover = $ebook->cover;
-        $file = $ebook->file;
         $ebook->delete();
-        delete_stored_media('public', $cover);
-        delete_stored_media('local', $file);
-        return back()->with('success', 'E-book deleted.');
+
+        return redirect()->route('admin.ebooks.index')->with(
+            'success',
+            'E-book archived. Its files and purchase history are preserved. Restore it from Recycle Bin if needed.'
+        );
+    }
+
+    private function hasSales(Ebook $ebook): bool
+    {
+        return $ebook->purchases()->exists()
+            || DB::table('order_items')
+                ->where('item_type', 'ebook')
+                ->where('item_id', $ebook->getKey())
+                ->exists();
     }
 
     private function validated(Request $request, ?Ebook $ebook = null): array
     {
-        $data = $request->validate([
+        return $request->validate([
             'title' => 'required|string|max:180',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -66,25 +136,5 @@ class EbookController extends Controller
             'file' => 'nullable|file|mimes:pdf,epub|max:51200',
             'file_url' => 'nullable|url:http,https|max:2048',
         ]);
-
-        if ($request->hasFile('cover')) {
-            $data['cover'] = $request->file('cover')->store('ebooks', 'public');
-        } elseif ($request->filled('cover_url')) {
-            $data['cover'] = $data['cover_url'];
-        }
-        unset($data['cover_url']);
-
-        if ($request->hasFile('file')) {
-            $data['file'] = $request->file('file')->store('ebook-files', 'local');
-        } elseif ($request->filled('file_url')) {
-            $data['file'] = $data['file_url'];
-        }
-        unset($data['file_url']);
-
-        $data['is_free'] = $request->boolean('is_free');
-        $data['is_published'] = $request->boolean('is_published');
-        $data['price'] = $data['is_free'] ? 0 : $data['price'];
-
-        return $data;
     }
 }
