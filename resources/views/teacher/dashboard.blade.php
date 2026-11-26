@@ -3,7 +3,7 @@
 @section('heading', 'Assalamu alaikum, '.auth()->user()->name)
 @section('content')
 @include('partials.dashboard-banner')
-<div class="mb-5 flex flex-wrap gap-3"><a href="{{ route('teacher.attendance.index') }}" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Take / submit attendance</a></div>
+<div class="mb-5 flex flex-wrap gap-3"><a href="{{ route('teacher.attendance.index') }}" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Take / submit attendance</a></div><a href="{{ route('teacher.id-card') }}" class="rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-700">My staff ID card</a>
 @php $cur = \App\Models\Setting::get('currency', '৳'); @endphp
 
 @if (\App\Models\Setting::get('dashboard_widget_teacher_stats', '1') === '1')
