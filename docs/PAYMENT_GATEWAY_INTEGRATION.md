@@ -21,24 +21,40 @@ All provider callbacks must be idempotent. Lock the payment and order rows in a 
 
 ## Provider readiness and Live-mode lock (2026-11)
 
-The application deliberately rejects Live mode for bKash, Nagad and Rocket until a provider-specific adapter is implemented and independently tested. Storing credentials or enabling a method at branch level must never be mistaken for automated payment collection.
+### bKash Tokenized Checkout v1.2.0-beta — sandbox adapter implemented
 
-Current integration boundaries:
+The application now contains a sandbox-only `BkashTokenizedCheckoutAdapter` and a provider callback flow.
 
-- **bKash:** official Tokenized Checkout / Checkout onboarding and API documentation are provided through the bKash Developer Portal. The merchant must obtain its own sandbox/live app key, app secret, username and password. Checkout creation is not settlement; server-side execute/query verification is required. See [bKash Tokenized Checkout](https://www.bkash.com/en/page/tokenized_checkout) and [bKash Developer Portal](https://developer.bka.sh/).
-- **Nagad:** obtain the current merchant integration package, credential requirements and approved callback/signature procedure directly from Nagad. Do not implement guessed endpoint or cryptographic behavior from unofficial copied examples. See [Nagad](https://nagad.com.bd/).
-- **Rocket:** DBBL publicly describes Rocket merchant payment, but public merchant information is not a server API specification. Obtain DBBL's approved merchant integration/API specification and credentials before implementing automated checkout or callback. See [DBBL Rocket Merchant Payment](https://www.dutchbanglabank.com/rocket/merchant-payment.html).
+- Uses the bKash Tokenized Checkout v1.2.0-beta grant-token, create, execute and payment-status endpoints.
+- Only the official HTTPS sandbox host `tokenized.sandbox.bka.sh` is allowed. The configured base URL cannot point to arbitrary hosts, preventing an Admin setting from becoming an SSRF vector.
+- Merchant credentials are read from the existing encrypted Admin payment settings. Required fields are app key, app secret, API username and API password. Access tokens are cached and API calls use a 30-second timeout.
+- The create-payment response only creates a pending local payment session and redirects the customer to the provider-hosted checkout.
+- The browser return is not trusted as proof of payment. The callback runs provider execute and an independent server-to-server payment-status query, then compares provider payment ID, invoice/order number, exact amount, BDT currency and transaction ID under order/payment row locks.
+- Provider payment IDs and transaction IDs are unique in the local ledger. Repeated callbacks are idempotent. Manual Admin approval is blocked for provider-initiated pending payments.
+- The checkout button is exposed only outside the production environment and only when required sandbox credentials are complete and bKash is enabled for the order's branch.
 
-Do not expose a generic callback endpoint that accepts unverified provider claims. Each adapter must define its exact signature/authentication mechanism, transaction query/execute sequence, amount and currency mapping, idempotency key, retry policy, timeout handling and reconciliation rules. A browser redirect alone must never mark an order paid.
+**Not yet certified:** no merchant sandbox credentials were provided in this repository task, so a real bKash sandbox wallet transaction could not be run. CI uses mocked provider responses. Obtain the merchant's own sandbox credentials and run create → customer PIN approval → execute/query → duplicate callback → failure/timeout reconciliation before any production rollout.
 
-Live-mode acceptance gate for each provider:
+### Not implemented / Live remains disabled
+
+- **bKash Webhook/IPN:** the browser callback is implemented with server-side execute/query verification. A separate provider webhook endpoint is not enabled until the merchant's current official webhook/SNS signature specification and certificate verification procedure are confirmed.
+- **Nagad:** obtain the current official merchant integration package, API endpoints, credentials and callback/signature rules. No guessed cryptographic behavior is accepted.
+- **Rocket:** obtain DBBL's approved merchant integration/API specification and credentials. Public merchant payment information is not enough to implement a server API.
+- **SSLCommerz:** the static website badge is not a gateway integration. No adapter or route is enabled.
+
+Official starting points:
+- bKash Developer Portal: https://developer.bka.sh/
+- bKash Tokenized Checkout product information: https://www.bkash.com/en/page/tokenized_checkout
+- bKash official sandbox merchant demo: https://merchantdemo.sandbox.bka.sh/
+
+### Live-mode acceptance gate for each provider
 
 1. Official merchant contract and current provider API specification received.
-2. Sandbox credentials stored encrypted and never returned to the browser.
-3. Create/execute/query flow tested against provider sandbox.
-4. Callback authentication and replay/idempotency tests pass.
+2. Merchant sandbox credentials stored encrypted and never returned to the browser.
+3. Create/execute/query flow tested against the provider sandbox.
+4. Callback/webhook authenticity, replay and idempotency tests pass.
 5. Order reference, BDT currency and exact amount match under database row locks.
-6. Provider timeout, duplicate callback, late callback, failure and refund/reconciliation paths tested.
+6. Provider timeout, duplicate callback, late callback, failure, partial payment and refund/reconciliation paths tested.
 7. Explicit Admin activation after review; no implicit Live activation from a settings dropdown.
 
-Until all gates pass, manual payment submission and staff verification remain the active payment workflow.
+Until all gates pass, manual payment submission and staff verification remain available. bKash automated checkout is sandbox-only and hidden in production. Nagad, Rocket and SSLCommerz remain manual/not integrated.
