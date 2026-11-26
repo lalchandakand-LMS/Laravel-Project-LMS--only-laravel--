@@ -34,7 +34,8 @@
             </div>
         @endif
 
-        <div class="mt-9 grid gap-4 lg:grid-cols-2">
+        <div class="mt-9 grid gap-4 {{ (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1' && ($homepageSettings['homepage_show_stats'] ?? '1') === '1') ? 'lg:grid-cols-2' : 'lg:grid-cols-1' }}">
+            @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
             <section class="home-glass-card">
                 <div class="flex items-center justify-between gap-3">
                     <div><span class="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-200">Online Course</span><h2 class="mt-3 text-xl font-extrabold sm:text-2xl">{{ $homepageSettings['homepage_online_batches_title'] ?? 'Online Batches are ongoing!' }}</h2></div>
@@ -51,6 +52,8 @@
                     @endforelse
                 </div>
             </section>
+            @endif
+            @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
             <section class="home-glass-card">
                 <div class="flex items-center justify-between gap-3"><h2 class="text-xl font-extrabold sm:text-2xl">See the stats!</h2><a href="{{ route('courses.index') }}" class="text-sm font-bold text-cyan-200 hover:text-white">See All Courses →</a></div>
                 <div class="mt-5 grid grid-cols-2 gap-3">
@@ -59,6 +62,7 @@
                     @endforeach
                 </div>
             </section>
+            @endif
         </div>
     </div>
 </section>
@@ -119,7 +123,7 @@
             <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-cyan-800 sm:text-4xl">{{ $homepageSettings['homepage_learning_title'] ?? 'Choose Your Learning Path' }}</h2>
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ $homepageSettings['homepage_learning_subtitle'] ?? 'Choose a course to improve speaking, grammar, vocabulary, writing or IELTS skills.' }}</p>
         </div>
-        @php($categoryPalettes = [['from-sky-100 to-blue-50','bg-sky-500'],['from-emerald-100 to-green-50','bg-emerald-500'],['from-violet-100 to-purple-50','bg-violet-500'],['from-orange-100 to-amber-50','bg-orange-500'],['from-pink-100 to-rose-50','bg-pink-500']])
+        @php($categoryPalettes = [['from-sky-100 to-blue-50','bg-sky-500'],['from-emerald-100 to-green-50','bg-emerald-500'],['from-violet-100 to-purple-50','bg-violet-500'],['from-orange-100 to-amber-50','bg-[#f97316]'],['from-pink-100 to-rose-50','bg-pink-500']])
         <div class="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($categories as $index => $category)
                 @php([$gradient, $iconColor] = $categoryPalettes[$index % count($categoryPalettes)])
@@ -139,7 +143,7 @@
 @endif
 
 {{-- FEATURED --}}
-@if (($homepageSettings['homepage_show_featured'] ?? '1') === '1' && $featured->count())
+@if (($homepageSettings['homepage_show_featured'] ?? '0') === '1' && $featured->count())
 <section data-home-section="featured" data-home-carousel="featured" data-home-carousel-layout="{{ $homepageSettings['homepage_featured_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_featured_title'] ?? 'Featured courses' }}</h2>
@@ -157,7 +161,7 @@
 {{-- Online batches and statistics are displayed inside the hero section above. --}}
 
 {{-- LATEST --}}
-@if (($homepageSettings['homepage_show_latest'] ?? '1') === '1')
+@if (($homepageSettings['homepage_show_latest'] ?? '0') === '1')
 <section data-home-section="latest" data-home-carousel="latest" data-home-carousel-layout="{{ $homepageSettings['homepage_latest_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_latest_title'] ?? 'Latest courses' }}</h2>
@@ -172,7 +176,7 @@
 @endif
 
 {{-- UPCOMING LIVE CLASSES --}}
-@if (($homepageSettings['homepage_show_live_classes'] ?? '1') === '1' && $upcomingLiveClasses->isNotEmpty())
+@if (($homepageSettings['homepage_show_live_classes'] ?? '0') === '1' && $upcomingLiveClasses->isNotEmpty())
 <section data-home-section="live_classes" data-home-carousel="live_classes" data-home-carousel-layout="{{ $homepageSettings['homepage_live_classes_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex flex-wrap items-end justify-between gap-3">
@@ -195,7 +199,7 @@
 @endif
 
 {{-- UPCOMING EXAMS --}}
-@if (($homepageSettings['homepage_show_exams'] ?? '1') === '1' && $upcomingExams->isNotEmpty())
+@if (($homepageSettings['homepage_show_exams'] ?? '0') === '1' && $upcomingExams->isNotEmpty())
 <section data-home-section="exams" data-home-carousel="exams" data-home-carousel-layout="{{ $homepageSettings['homepage_exams_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_exams_title'] ?? 'Exams & assessments' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_exams_subtitle'] ?? 'Prepare, practise and track your progress.' }}</p></div><a href="{{ route('login') }}" class="text-sm font-bold text-emerald-700">Student login →</a></div>
     <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -212,7 +216,7 @@
 @endif
 
 {{-- TEACHER PROFILES --}}
-@if (($homepageSettings['homepage_show_teachers'] ?? '1') === '1' && $teachers->isNotEmpty())
+@if (($homepageSettings['homepage_show_teachers'] ?? '0') === '1' && $teachers->isNotEmpty())
 <section data-home-section="teachers" data-home-carousel="teachers" data-home-carousel-layout="{{ $homepageSettings['homepage_teachers_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  id="teachers" class="bg-slate-50 py-16">
     <div class="mx-auto max-w-7xl px-4">
         <div class="text-center"><h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_teachers_title'] ?? 'Meet our teachers' }}</h2><p class="mt-1 text-slate-500">{{ $homepageSettings['homepage_teachers_subtitle'] ?? 'Learn with experienced instructors and practical guidance.' }}</p></div>
@@ -232,7 +236,7 @@
 @endif
 
 {{-- VERIFIED BOARD RESULTS / ACHIEVEMENTS --}}
-@if (($homepageSettings['homepage_show_board_results'] ?? '1') === '1' && !empty($homepageSettings['homepage_board_results_body']))
+@if (($homepageSettings['homepage_show_board_results'] ?? '0') === '1' && !empty($homepageSettings['homepage_board_results_body']))
 <section data-home-section="board_results" id="board-results" class="bg-emerald-950 py-16 text-white">
     <div class="mx-auto max-w-5xl px-4 text-center">
         <span class="text-xs font-bold uppercase tracking-[.2em] text-emerald-300">Student achievements {{ $homepageSettings['homepage_board_results_year'] ?? '' }}</span>
@@ -283,7 +287,7 @@
 @endif
 
 {{-- EBOOKS --}}
-@if (($homepageSettings['homepage_show_ebooks'] ?? '1') === '1' && $ebooks->count())
+@if (($homepageSettings['homepage_show_ebooks'] ?? '0') === '1' && $ebooks->count())
 <section data-home-section="ebooks" data-home-carousel="ebooks" data-home-carousel-layout="{{ $homepageSettings['homepage_ebooks_layout'] ?? 'carousel' }}" data-home-carousel-autoplay="{{ ($homepageSettings['homepage_carousel_autoplay'] ?? '0') === '1' ? '1' : '0' }}" data-home-carousel-speed="{{ (int) ($homepageSettings['homepage_carousel_speed'] ?? 6) }}"  class="mx-auto max-w-7xl px-4 py-16">
     <div class="flex items-end justify-between">
         <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ $homepageSettings['homepage_ebooks_title'] ?? 'E-books & notes' }}</h2><p class="mt-1 text-sm text-slate-500">{{ $homepageSettings['homepage_ebooks_subtitle'] ?? 'Study guides and resources for learning anywhere.' }}</p>
@@ -304,7 +308,7 @@
 @endif
 
 {{-- ONLINE / CLASSROOM ADMISSION --}}
-@if (($homepageSettings['homepage_show_admission'] ?? '1') === '1')
+@if (($homepageSettings['homepage_show_admission'] ?? '0') === '1')
 <section data-home-section="admission" class="mx-auto max-w-7xl px-4 pb-8 pt-4">
     <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-14 text-center text-white sm:px-12">
         <div class="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
