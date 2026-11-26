@@ -293,3 +293,13 @@ Route::middleware(['auth', 'role:branch_manager,admin'])->prefix('branch')->name
     Route::get('/staff', [Branch\DashboardController::class, 'staff'])->name('staff');
     Route::get('/revenue', [Branch\DashboardController::class, 'revenue'])->name('revenue');
 });
+
+/* ------------------------------------------------------------------
+ |  AI AGENT WORKSPACE
+ |------------------------------------------------------------------*/
+Route::middleware('auth')->prefix('ai-agent')->name('ai-agent.')->group(function () {
+    Route::get('/', [App\\Http\\Controllers\\AiAgentController::class, 'index'])->name('index');
+    Route::post('/', [App\\Http\\Controllers\\AiAgentController::class, 'ask'])->name('ask');
+    Route::post('/actions/{proposal}/approve', [App\\Http\\Controllers\\AiAgentController::class, 'approve'])->name('approve');
+    Route::post('/actions/{proposal}/reject', [App\\Http\\Controllers\\AiAgentController::class, 'reject'])->name('reject');
+});
