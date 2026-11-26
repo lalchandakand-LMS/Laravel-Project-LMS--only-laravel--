@@ -123,7 +123,7 @@ class RecycleBinPruneCommand extends Command
             ],
             'categories' => [['categories', 'parent_id'], ['courses', 'category_id'], ['posts', 'category_id']],
             'sections' => [['lessons', 'section_id']],
-            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id'], ['assignments', 'lesson_id']],
+            'lessons' => [['lesson_progress', 'lesson_id'], ['exams', 'lesson_id'], ['assignments', 'lesson_id'], ['lessons', 'prerequisite_lesson_id']],
             'exams' => [['questions', 'exam_id'], ['exam_attempts', 'exam_id']],
             'questions' => [['attempt_answers', 'question_id']],
             'ebooks' => [['ebook_purchases', 'ebook_id'], ['order_items', 'item_id']],

@@ -130,4 +130,94 @@ class CourseBuilderSafetyTest extends TestCase
 
         $this->assertSame(1, Enrollment::where('course_id', $course->id)->where('status', 'active')->count());
     }
+
+    public function test_prerequisite_lesson_cannot_be_archived_while_other_lessons_depend_on_it(): void
+    {
+        $admin = $this->admin();
+        $course = Course::create([
+            'title' => 'Prerequisite Integrity Course',
+            'slug' => 'prerequisite-integrity-course',
+            'is_published' => true,
+        ]);
+        $prerequisite = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Required Foundation Lesson',
+            'type' => 'text',
+            'position' => 1,
+            'is_published' => true,
+        ]);
+        $dependent = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Dependent Advanced Lesson',
+            'type' => 'text',
+            'position' => 2,
+            'prerequisite_lesson_id' => $prerequisite->id,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.lessons.destroy', $prerequisite))
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('lessons', [
+            'id' => $prerequisite->id,
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseHas('lessons', [
+            'id' => $dependent->id,
+            'prerequisite_lesson_id' => $prerequisite->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_lesson_with_learning_history_cannot_be_moved_to_another_course(): void
+    {
+        $admin = $this->admin();
+        $student = User::where('role', 'student')->firstOrFail();
+        $source = Course::create([
+            'title' => 'Source Lesson Course',
+            'slug' => 'source-lesson-course',
+            'is_published' => true,
+        ]);
+        $target = Course::create([
+            'title' => 'Target Lesson Course',
+            'slug' => 'target-lesson-course',
+            'is_published' => true,
+        ]);
+        $lesson = Lesson::create([
+            'course_id' => $source->id,
+            'title' => 'Lesson with Progress',
+            'type' => 'text',
+            'position' => 1,
+            'is_published' => true,
+        ]);
+        LessonProgress::create([
+            'user_id' => $student->id,
+            'lesson_id' => $lesson->id,
+            'watched_seconds' => 120,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.lessons.edit', $lesson))
+            ->put(route('admin.lessons.update', $lesson), [
+                'course_id' => $target->id,
+                'title' => $lesson->title,
+                'type' => $lesson->type,
+                'position' => 1,
+                'is_published' => 1,
+            ])
+            ->assertRedirect(route('admin.lessons.edit', $lesson))
+            ->assertSessionHasErrors('course_id');
+
+        $this->assertDatabaseHas('lessons', [
+            'id' => $lesson->id,
+            'course_id' => $source->id,
+        ]);
+        $this->assertDatabaseHas('lesson_progress', [
+            'lesson_id' => $lesson->id,
+            'user_id' => $student->id,
+            'watched_seconds' => 120,
+        ]);
+    }
+
 }
