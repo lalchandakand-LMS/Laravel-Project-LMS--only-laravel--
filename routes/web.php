@@ -209,6 +209,8 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('admin')->name('adm
         Route::post('staff-attendance', [Admin\StaffAttendanceController::class, 'save'])->name('staff-attendance.save');
 
         Route::get('staff-payroll', [Admin\StaffPayrollController::class, 'index'])->name('staff-payroll.index');
+        Route::get('staff-payroll/report', [Admin\StaffPayrollController::class, 'report'])->name('staff-payroll.report');
+        Route::get('staff-payroll/report/export', [Admin\StaffPayrollController::class, 'exportReport'])->name('staff-payroll.report.export');
         Route::post('staff-payroll', [Admin\StaffPayrollController::class, 'store'])->name('staff-payroll.store');
         Route::post('staff-payroll/{payroll}/approve', [Admin\StaffPayrollController::class, 'approve'])->name('staff-payroll.approve');
         Route::post('staff-payroll/{payroll}/paid', [Admin\StaffPayrollController::class, 'markPaid'])->name('staff-payroll.paid');
