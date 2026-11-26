@@ -139,69 +139,94 @@ class CheckoutController extends Controller
     /** Student submits a full or partial manual payment for branch-approved verification. */
     public function pay(Request $request, Order $order)
     {
-        abort_unless($order->user_id === auth()->id(), 403);
-        abort_unless(in_array($order->status, ['pending', 'partially_paid'], true), 403, 'This order is not awaiting payment.');
-
-        $branch = $order->branch;
-        abort_unless($branch && $branch->is_active, 403, 'The selected branch is no longer accepting payments.');
-
-        $enabledMethods = $branch->enabledStudentPaymentMethods();
-        if ($enabledMethods === []) {
-            throw ValidationException::withMessages(['gateway' => 'No online payment method is enabled for this branch.']);
-        }
-
-        if ($order->dueAmount() <= 0) {
-            return back()->with('info', 'This order has no outstanding balance.');
-        }
-
-        if ($order->payments()->where('status', 'pending')->exists()) {
-            throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order. Please wait for the branch to review it.']);
-        }
+        abort_unless($order->user_id === $request->user()->id, 403);
 
         $data = $request->validate([
-            'gateway' => ['required', 'string', 'in:'.implode(',', $enabledMethods)],
-            'amount' => ['required', 'numeric', 'min:1', 'max:'.$order->dueAmount()],
+            'gateway' => ['required', 'string', 'max:30'],
+            'amount' => ['required', 'numeric', 'min:1'],
             'sender_number' => 'required|string|max:80',
             'transaction_id' => 'required|string|max:80',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf,webp|max:5120',
         ]);
 
-        if ($data['gateway'] === 'bank' && ! $request->hasFile('proof')) {
-            throw ValidationException::withMessages(['proof' => 'Please upload the bank deposit slip or transfer receipt.']);
+        if ($request->file('proof') && ! in_array(strtolower($request->file('proof')->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'pdf', 'webp'], true)) {
+            throw ValidationException::withMessages(['proof' => 'Unsupported payment proof file type.']);
         }
 
-        if (Payment::where('transaction_id', $data['transaction_id'])->whereNotNull('transaction_id')->exists()) {
-            throw ValidationException::withMessages(['transaction_id' => 'This transaction ID has already been submitted.']);
-        }
-
-        $proofPath = $request->file('proof')?->store('payment-proofs', 'local');
+        $proofPath = null;
 
         try {
-            Payment::create([
-                'order_id' => $order->id,
-                'gateway' => $data['gateway'],
-                'amount' => $data['amount'],
-                'sender_number' => $data['sender_number'],
-                'transaction_id' => $data['transaction_id'],
-                'proof_path' => $proofPath,
-                'status' => 'pending',
-            ]);
-        } catch (QueryException $exception) {
-            if (! $this->isTransactionReferenceConflict($exception)) {
-                throw $exception;
-            }
+            \Illuminate\Support\Facades\DB::transaction(function () use ($request, $order, $data, &$proofPath) {
+                // Serialize submissions for this order so simultaneous requests cannot
+                // both pass the "one pending payment" and outstanding-balance checks.
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
+                if ($lockedOrder->user_id !== $request->user()->id) {
+                    abort(403);
+                }
+                if (! in_array($lockedOrder->status, ['pending', 'partially_paid'], true)) {
+                    throw ValidationException::withMessages(['payment' => 'This order is not awaiting payment.']);
+                }
+
+                $branch = Branch::whereKey($lockedOrder->branch_id)->where('is_active', true)->first();
+                if (! $branch) {
+                    throw ValidationException::withMessages(['gateway' => 'The selected branch is no longer accepting payments.']);
+                }
+
+                $enabledMethods = $branch->enabledStudentPaymentMethods();
+                if (! in_array($data['gateway'], $enabledMethods, true)) {
+                    throw ValidationException::withMessages(['gateway' => 'This payment method is not enabled for the order branch.']);
+                }
+
+                $due = $lockedOrder->dueAmount();
+                if ($due <= 0) {
+                    throw ValidationException::withMessages(['amount' => 'This order has no outstanding balance.']);
+                }
+                if ((float) $data['amount'] > $due) {
+                    throw ValidationException::withMessages(['amount' => 'The payment amount exceeds the current outstanding balance.']);
+                }
+
+                if ($lockedOrder->payments()->where('status', 'pending')->exists()) {
+                    throw ValidationException::withMessages(['payment' => 'A payment is already awaiting verification for this order. Please wait for the branch to review it.']);
+                }
+
+                if ($data['gateway'] === 'bank' && ! $request->hasFile('proof')) {
+                    throw ValidationException::withMessages(['proof' => 'Please upload the bank deposit slip or transfer receipt.']);
+                }
+
+                if (Payment::where('transaction_id', $data['transaction_id'])->exists()) {
+                    throw ValidationException::withMessages(['transaction_id' => 'This transaction ID has already been submitted.']);
+                }
+
+                $proofPath = $request->file('proof')?->store('payment-proofs', 'local');
+
+                Payment::create([
+                    'order_id' => $lockedOrder->id,
+                    'gateway' => $data['gateway'],
+                    'amount' => $data['amount'],
+                    'sender_number' => $data['sender_number'],
+                    'transaction_id' => $data['transaction_id'],
+                    'proof_path' => $proofPath,
+                    'status' => 'pending',
+                ]);
+            });
+        } catch (\Throwable $exception) {
             if ($proofPath) {
                 Storage::disk('local')->delete($proofPath);
             }
 
-            throw ValidationException::withMessages([
-                'transaction_id' => 'This transaction ID has already been submitted.',
-            ]);
+            if ($exception instanceof QueryException && $this->isTransactionReferenceConflict($exception)) {
+                throw ValidationException::withMessages([
+                    'transaction_id' => 'This transaction ID has already been submitted.',
+                ]);
+            }
+
+            throw $exception;
         }
 
         return back()->with('success', 'Payment submitted for verification. Your remaining balance and course access will update after approval.');
     }
+
     private function isTransactionReferenceConflict(QueryException $exception): bool
     {
         $message = strtolower($exception->getMessage());
