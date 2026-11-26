@@ -93,7 +93,10 @@ class OrderService
                 }
             }
 
-            $order->update(['status' => 'paid']);
+            $order->update([
+                'status' => 'paid',
+                'shipping_status' => $order->items->contains('item_type', 'product') ? ($order->shipping_status ?: 'processing') : $order->shipping_status,
+            ]);
         });
     }
 
