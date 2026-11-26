@@ -1,14 +1,14 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\Branch;
-use App\\Models\\Order;
-use App\\Models\\Payment;
-use App\\Models\\PaymentAdjustment;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Models\Branch;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\PaymentAdjustment;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PaymentReportFilterTest extends TestCase
 {
