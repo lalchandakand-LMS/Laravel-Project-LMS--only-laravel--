@@ -45,7 +45,7 @@ Open <http://127.0.0.1:8000>.
 
 > **CI verification:** the current GitHub Actions run on 26 November 2026 passed
 > the full Laravel suite with 400 tests / 2,177 assertions (all passed).
-> CI validates the application in a clean SQLite test environment; still run a
+> CI validates clean SQLite and MySQL 8.0 test environments; still run a
 > staging install and acceptance test before production. The writable directories
 > (`storage/framework/{cache,sessions,views}`, `storage/logs`,
 > `storage/app/public`, `bootstrap/cache`) ship with `.gitignore` placeholders;
