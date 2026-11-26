@@ -33,7 +33,7 @@
                             <a href="{{ route('admin.courses.edit', $course) }}" class="font-semibold text-slate-800 hover:text-emerald-700">{{ Str::limit($course->title, 40) }}</a>
                         </div>
                     </td>
-                    <td class="px-5 py-3 text-slate-500">{{ $course->category?->name ?? '—' }}</td>
+                    <td class="px-5 py-3 text-slate-500">{{ $course->categories->pluck('name')->join(', ') ?: ($course->category?->name ?? '—') }}</td>
                     <td class="px-5 py-3 text-slate-500">{{ $course->instructor?->name ?? '—' }}</td>
                     <td class="px-5 py-3">{{ $course->lessons_count }}</td>
                     <td class="px-5 py-3">{{ $course->enrollments_count }}</td>
