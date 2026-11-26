@@ -56,7 +56,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 Route::middleware('auth')->group(function () {
     Route::post('/account/phone-verification/send', [App\Http\Controllers\PhoneVerificationController::class, 'send'])->middleware('throttle:3,10')->name('account.phone.send');
-    Route::post('/account/phone-verification/verify', [App\Http\Controllers\PhoneVerificationController::class, 'verify'])->middleware('throttle:5,10')->name('account.phone.verify');
+    Route::post('/account/phone-verification/verify', [App\Http\Controllers\PhoneVerificationController::class, 'verify'])->middleware('throttle:10,10')->name('account.phone.verify');
 });
 
 /* ------------------------------------------------------------------
