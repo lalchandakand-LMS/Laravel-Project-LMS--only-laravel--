@@ -29,7 +29,7 @@ class MediaUploadAndUrlFallbackTest extends TestCase
 
     private function student(): User
     {
-        return User::where('role', 'student')->firstOrFail();
+        return User::where('email', 'student@lms.test')->firstOrFail();
     }
 
     public function test_course_thumbnail_and_slider_images_accept_hosted_urls(): void
