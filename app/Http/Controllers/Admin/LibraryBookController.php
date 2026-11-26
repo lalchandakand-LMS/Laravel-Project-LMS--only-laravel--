@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\LibraryBook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class LibraryBookController extends Controller
@@ -15,7 +16,7 @@ class LibraryBookController extends Controller
     {
         $books = LibraryBook::with('branch')
             ->when($request->filled('q'), fn ($query) => $query->where(function ($search) use ($request) {
-                $term = '%'.$request->string('q').'%';
+                $term = '%'.(string) $request->input('q').'%';
                 $search->where('title', 'like', $term)
                     ->orWhere('author', 'like', $term)
                     ->orWhere('isbn', 'like', $term);
@@ -52,7 +53,7 @@ class LibraryBookController extends Controller
 
     public function update(Request $request, LibraryBook $book)
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $book);
 
         DB::transaction(function () use ($book, $data) {
             $locked = LibraryBook::whereKey($book->id)->lockForUpdate()->firstOrFail();
@@ -71,13 +72,13 @@ class LibraryBookController extends Controller
         return redirect()->route('admin.library.books.index')->with('success', 'Library book updated.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?LibraryBook $book = null): array
     {
         $data = $request->validate([
             'branch_id' => 'nullable|exists:branches,id',
             'title' => 'required|string|max:180',
             'author' => 'required|string|max:180',
-            'isbn' => 'nullable|string|max:30',
+            'isbn' => ['nullable', 'string', 'max:30', Rule::unique('library_books', 'isbn')->ignore($book?->id)],
             'category' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:5000',
             'shelf_location' => 'nullable|string|max:100',
