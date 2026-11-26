@@ -1,19 +1,19 @@
 <?php
 
-namespace Tests\\Feature;
+namespace Tests\Feature;
 
-use App\\Models\\Branch;
-use App\\Models\\CoachingAdmission;
-use App\\Models\\CoachingBatch;
-use App\\Models\\CoachingEnrollment;
-use App\\Models\\Course;
-use App\\Models\\Order;
-use App\\Models\\Payment;
-use App\\Models\\PaymentAdjustment;
-use App\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Str;
-use Tests\\TestCase;
+use App\Models\Branch;
+use App\Models\CoachingAdmission;
+use App\Models\CoachingBatch;
+use App\Models\CoachingEnrollment;
+use App\Models\Course;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\PaymentAdjustment;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class GuardianDashboardLedgerAndEligibilityTest extends TestCase
 {
