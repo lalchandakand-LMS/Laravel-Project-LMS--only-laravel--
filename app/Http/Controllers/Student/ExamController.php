@@ -315,7 +315,8 @@ class ExamController extends Controller
                 ['exam_id' => $attempt->exam_id, 'attempt_id' => $attempt->id]
             );
 
-            if ($attempt->isPassed()) {
+            $requiresManualReview = $attempt->questions()->whereIn('type', ['cq', 'short'])->exists();
+            if (! $requiresManualReview && $attempt->isPassed()) {
                 GamificationService::award(
                     $student,
                     'exam_passed',
