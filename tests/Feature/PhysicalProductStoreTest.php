@@ -414,6 +414,48 @@ class PhysicalProductStoreTest extends TestCase
         $this->assertSame('pending', $order->fresh()->status);
     }
 
+    public function test_expiry_does_not_cancel_orders_with_payment_awaiting_review(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $product = Product::create([
+            'title' => 'Awaiting Review Book',
+            'price' => 300,
+            'stock_quantity' => 2,
+            'is_published' => true,
+        ]);
+        $order = Order::create([
+            'user_id' => $student->id,
+            'subtotal' => 300,
+            'discount' => 0,
+            'total' => 300,
+            'status' => 'pending',
+            'name' => $student->name,
+            'phone' => '01712345678',
+            'email' => $student->email,
+            'address' => 'Dhaka, Bangladesh',
+        ]);
+        $order->forceFill(['created_at' => now()->subHours(30), 'updated_at' => now()->subHours(30)])->save();
+        $order->items()->create([
+            'item_type' => 'product',
+            'item_id' => $product->id,
+            'title' => $product->title,
+            'price' => 300,
+            'qty' => 1,
+        ]);
+        OrderService::reserveProducts($order);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway' => 'bkash',
+            'provider_payment_id' => 'BKASH-PENDING-REVIEW-1',
+            'amount' => 300,
+            'status' => 'pending',
+        ]);
+
+        $this->assertSame(0, OrderService::expireUnpaidOrders(24));
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(1, $product->fresh()->reserved_quantity);
+    }
+
     public function test_admin_cannot_reduce_total_stock_below_reserved_quantity(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
