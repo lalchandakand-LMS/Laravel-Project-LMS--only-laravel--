@@ -78,6 +78,23 @@ class CourseVideoResumeTest extends TestCase
         ]);
     }
 
+
+    public function test_heartbeat_accepts_the_maximum_supported_video_position(): void
+    {
+        [$student, $course, $lesson] = $this->enrolledLesson();
+
+        $this->actingAs($student)
+            ->postJson(route('student.learn.heartbeat', [$course->slug, $lesson->id]), ['seconds' => 86400])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'watched_seconds' => 86400]);
+
+        $this->assertDatabaseHas('lesson_progress', [
+            'user_id' => $student->id,
+            'lesson_id' => $lesson->id,
+            'watched_seconds' => 86400,
+        ]);
+    }
+
     public function test_video_heartbeat_rejects_invalid_positions(): void
     {
         [$student, $course, $lesson] = $this->enrolledLesson();
