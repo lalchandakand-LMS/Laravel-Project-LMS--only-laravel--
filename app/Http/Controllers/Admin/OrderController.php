@@ -29,14 +29,16 @@ class OrderController extends Controller
     {
         $this->validateOrderFilters($request);
         $query = $this->ordersQuery($request);
+        $grossReceived = (float) Payment::where('status', 'verified')->sum('amount');
+        $refunds = (float) PaymentAdjustment::where('type', 'refund')->sum('amount');
         $totals = [
             'all' => Order::count(),
             'paid' => Order::where('status', 'paid')->count(),
             'pending' => Order::whereIn('status', ['pending', 'partially_paid'])->count(),
             'cancelled' => Order::where('status', 'cancelled')->count(),
-            'revenue' => max(0, (float) Payment::where('status', 'verified')->sum('amount')
-                - (float) PaymentAdjustment::where('type', 'refund')->sum('amount')
-                + (float) PaymentAdjustment::where('type', 'credit')->sum('amount')),
+            // Credit adjustments transfer existing value between balances; they
+            // are not new cash receipts and must not inflate collected revenue.
+            'revenue' => max(0, round($grossReceived - $refunds, 2)),
         ];
 
         return view('admin.orders.index', [
