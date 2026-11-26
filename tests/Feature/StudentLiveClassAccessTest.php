@@ -129,7 +129,6 @@ class StudentLiveClassAccessTest extends TestCase
             ->assertOk()
             ->assertDontSee($class->title);
 
-        $student->update(['expires_at' => null]);
         $branchA = Branch::create(['name' => 'Student Branch', 'code' => 'ST-BR', 'is_active' => true]);
         $branchB = Branch::create(['name' => 'Other Branch', 'code' => 'OT-BR', 'is_active' => true]);
         $student->update(['branch_id' => $branchA->id]);
