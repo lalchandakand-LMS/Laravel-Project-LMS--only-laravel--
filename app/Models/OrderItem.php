@@ -15,6 +15,7 @@ class OrderItem extends Model
         return match ($this->item_type) {
             'course' => Course::find($this->item_id),
             'ebook'  => Ebook::find($this->item_id),
+            'product' => Product::withTrashed()->find($this->item_id),
             default  => null,
         };
     }
