@@ -21,6 +21,22 @@
     <title>@yield('title', \App\Models\Setting::get('site_name', "Alom's English Center")) — {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</title>
     <meta name="description" content="{{ $brandDescription }}">
     @include('partials.assets')
+    <style>
+        :root {
+            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) ? setting('site_primary_color') : '#ea580c' }};
+            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) ? setting('site_secondary_color') : '#9a3412' }};
+        }
+        .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
+        .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
+        .bg-emerald-50,[class~="bg-emerald-400/10"] { background-color: color-mix(in srgb, var(--aec-primary) 9%, white) !important; }
+        .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500 { color: var(--aec-primary-dark) !important; }
+        .text-emerald-400,.text-emerald-300,.text-emerald-200 { color: color-mix(in srgb, var(--aec-primary) 65%, white) !important; }
+        .border-emerald-400,[class~="border-emerald-400/30"],.border-emerald-500 { border-color: color-mix(in srgb, var(--aec-primary) 42%, transparent) !important; }
+        [class~="hover:bg-emerald-800"]:hover,[class~="hover:bg-emerald-700"]:hover,[class~="hover:bg-emerald-400"]:hover { background-color: var(--aec-primary-dark) !important; }
+        [class~="hover:text-emerald-700"]:hover,[class~="hover:text-emerald-800"]:hover { color: var(--aec-primary-dark) !important; }
+        .to-emerald-950 { --tw-gradient-to: var(--aec-primary-dark) var(--tw-gradient-to-position) !important; }
+        [class~="shadow-emerald-500/20"] { --tw-shadow-color: color-mix(in srgb, var(--aec-primary) 20%, transparent) !important; }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 @php($brandLoaderEnabled = \App\Models\Setting::get('brand_loader_enabled', '0') === '1')
@@ -32,9 +48,9 @@
     #brand-page-loader .brand-loader-logo{width:76px;height:76px;object-fit:contain;border-radius:16px}
     #brand-page-loader .brand-loader-name{font-weight:800;font-size:1.15rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
     #brand-page-loader .brand-loader-message{font-size:.9rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
-    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color','#047857') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
-    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
-    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color','#047857') }};animation:brand-loader-pulse 1s ease-in-out infinite}
+    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }} 18%, transparent);border-top-color:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
+    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};box-shadow:-16px 0 0 {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }},16px 0 0 {{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
+    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ \App\Models\Setting::get('brand_loader_color', '#ea580c') }};animation:brand-loader-pulse 1s ease-in-out infinite}
     @keyframes brand-loader-spin{to{transform:rotate(360deg)}}
     @keyframes brand-loader-dots{to{transform:scale(1.25);opacity:.55}}
     @keyframes brand-loader-pulse{50%{transform:scale(.72);opacity:.55}}

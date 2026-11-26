@@ -16,7 +16,7 @@ class Slider extends Model
     protected $casts = ['is_active' => 'boolean'];
 
     public const THEMES = [
-        'emerald' => 'Emerald (default)',
+        'emerald' => 'Primary brand color (default)',
         'indigo'  => 'Indigo',
         'rose'    => 'Rose',
         'amber'   => 'Amber',
