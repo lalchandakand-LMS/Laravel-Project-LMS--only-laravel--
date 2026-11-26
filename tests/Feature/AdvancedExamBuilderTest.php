@@ -236,6 +236,44 @@ class AdvancedExamBuilderTest extends TestCase
     }
 
 
+    public function test_students_cannot_submit_an_option_from_another_question_or_oversized_written_answers(): void
+    {
+        $student = $this->student();
+        $exam = $this->freeExam();
+        $first = $this->addMcq($exam, 'First question');
+        $second = $this->addMcq($exam, 'Second question');
+        $written = Question::create([
+            'exam_id' => $exam->id,
+            'type' => 'short',
+            'question' => 'Write a short explanation.',
+            'marks' => 2,
+            'position' => 2,
+        ]);
+
+        $this->actingAs($student)->post(route('student.exams.start', $exam))->assertRedirect();
+        $attempt = ExamAttempt::where('exam_id', $exam->id)->where('user_id', $student->id)->firstOrFail();
+
+        $foreignOption = $second->options()->firstOrFail();
+        $this->actingAs($student)->postJson(route('student.attempts.save', $attempt), [
+            'answers' => [$first->id => $foreignOption->id],
+        ])->assertUnprocessable()->assertJsonValidationErrors('option_id');
+
+        $this->assertDatabaseMissing('attempt_answers', [
+            'exam_attempt_id' => $attempt->id,
+            'question_id' => $first->id,
+        ]);
+
+        $this->actingAs($student)->postJson(route('student.attempts.submit', $attempt), [
+            'answers' => [$written->id => str_repeat('A', 20001)],
+        ])->assertUnprocessable()->assertJsonValidationErrors('answer_text');
+
+        $this->assertSame('in_progress', $attempt->fresh()->status);
+        $this->assertDatabaseMissing('attempt_answers', [
+            'exam_attempt_id' => $attempt->id,
+            'question_id' => $written->id,
+        ]);
+    }
+
     public function test_attempt_snapshots_and_question_pool_are_protected_from_historical_mutation(): void
     {
         $admin = $this->admin();
