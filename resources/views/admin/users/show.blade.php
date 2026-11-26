@@ -25,7 +25,7 @@
             <section class="rounded-2xl border border-sky-200 bg-white shadow-sm">
                 <h3 class="border-b border-slate-100 px-5 py-4 font-bold">Student academic profile</h3>
                 <dl class="grid gap-3 p-5 text-sm sm:grid-cols-2">
-                    @foreach (['student_code'=>'Student ID','date_of_birth'=>'Date of birth','gender'=>'Gender','school_name'=>'School / College','academic_class'=>'Class','academic_roll'=>'Roll','academic_session'=>'Session','academic_group'=>'Group','present_address'=>'Present address','permanent_address'=>'Permanent address','emergency_contact_name'=>'Emergency contact','emergency_contact_phone'=>'Emergency phone','status'=>'Student status'] as $field=>$label)
+                    @foreach (['student_code'=>'Student ID','date_of_birth'=>'Date of birth','gender'=>'Gender','school_name'=>'School / College','academic_class'=>'Class','academic_roll'=>'Roll','academic_session'=>'Session','academic_group'=>'Group','present_address'=>'Present address','permanent_address'=>'Permanent address','emergency_contact_name'=>'Emergency contact','emergency_contact_phone'=>'Emergency phone','guardian_name'=>'Guardian name','guardian_phone'=>'Guardian phone','guardian_email'=>'Guardian email','quota_type'=>'Quota / special category','quota_notes'=>'Quota notes','status'=>'Student status'] as $field=>$label)
                         <div class="rounded-lg bg-slate-50 p-3"><dt class="text-xs text-slate-500">{{ $label }}</dt><dd class="mt-1 font-semibold">{{ $profile->{$field} instanceof \Carbon\CarbonInterface ? $profile->{$field}->format('d M Y') : ($profile->{$field} ?: '—') }}</dd></div>
                     @endforeach
                 </dl>
