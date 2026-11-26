@@ -51,7 +51,11 @@ class LessonController extends Controller
         $this->authorizeCourse(Course::findOrFail($data['course_id']));
         $this->assertSectionBelongsToCourse($data);
         $this->assertPrerequisiteBelongsToCourse($data, $lesson);
+        $oldAttachment = $lesson->attachment;
         $lesson->update($data);
+        if (isset($data['attachment']) && $data['attachment'] !== $oldAttachment) {
+            delete_stored_media('local', $oldAttachment);
+        }
         return redirect()->route('admin.courses.edit', $lesson->course_id)->with('success', 'Lesson updated.');
     }
 
@@ -80,7 +84,9 @@ class LessonController extends Controller
     {
         $this->authorizeCourse($lesson->course);
         $courseId = $lesson->course_id;
+        $attachment = $lesson->attachment;
         $lesson->delete();
+        delete_stored_media('local', $attachment);
         return redirect()->route('admin.courses.edit', $courseId)->with('success', 'Lesson deleted.');
     }
 
