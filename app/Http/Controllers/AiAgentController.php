@@ -199,8 +199,9 @@ class AiAgentController extends Controller
 
         if ($type === 'create_announcement_draft') {
             if ($user->isBranchManager()) {
-                if (! $user->branch_id) return;
-                $payload['branch_id'] = $user->branch_id;
+                $branch = Branch::forManager($user);
+                if (! $branch || ! $branch->is_active) return;
+                $payload['branch_id'] = $branch->id;
                 $payload['audience_role'] = $payload['audience_role'] ?? 'student';
             } elseif ($user->isAdmin() && ! empty($payload['branch_id'])) {
                 if (! Branch::whereKey($payload['branch_id'])->exists()) return;
@@ -289,8 +290,9 @@ class AiAgentController extends Controller
         ]);
         if ($validator->fails()) throw new ValidationException($validator);
 
-        $branchId = $user->isBranchManager() ? $user->branch_id : ($payload['branch_id'] ?? null);
-        abort_if($user->isBranchManager() && ! $branchId, 422, 'Your branch account is not linked to a branch.');
+        $managedBranch = $user->isBranchManager() ? Branch::forManager($user) : null;
+        $branchId = $user->isBranchManager() ? $managedBranch?->id : ($payload['branch_id'] ?? null);
+        abort_if($user->isBranchManager() && (! $managedBranch || ! $managedBranch->is_active), 422, 'Your branch account is not linked to an active branch.');
 
         $announcement = Announcement::create([
             'branch_id' => $branchId,
