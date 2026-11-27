@@ -32,7 +32,16 @@ class MarketingPopupLeadCaptureTest extends TestCase
             'email' => 'Amina@Example.test',
             'phone' => '01700000000',
             'consent' => '1',
-        ])->assertRedirect()->assertSessionHas('success');
+        ])->assertRedirect()->assertSessionHas('success')
+            ->assertSessionHas('aec_lead_event', fn ($event) => isset($event['event_id']) && $event['method'] === 'marketing_popup');
+
+        Setting::set('ga_measurement_id', 'G-ABC1234567');
+        Setting::set('meta_pixel_id', '123456789012345');
+        $this->get('/')->assertOk()
+            ->assertSee('window.aecLeadEvent =', false)
+            ->assertSee('generate_lead', false)
+            ->assertSee("fbq('track', 'Lead'", false)
+            ->assertDontSee('amina@example.test');
 
         $this->assertDatabaseHas('marketing_leads', [
             'name' => 'Amina Rahman',
