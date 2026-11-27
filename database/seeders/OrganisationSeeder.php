@@ -13,6 +13,10 @@ class OrganisationSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            throw new \\RuntimeException('Demo organisation seeding is disabled in production.');
+        }
+
         $password = Hash::make('password');
 
         $branches = [
