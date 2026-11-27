@@ -251,13 +251,13 @@ class RecycleBinController extends Controller
         };
 
         // Preserve polymorphic user notifications and profile documents as well as direct foreign keys.
-        if (Schema::hasTable('notifications') && Schema::hasColumn('notifications', 'notifiable_type') &&
+        if ($type === 'users' && Schema::hasTable('notifications') && Schema::hasColumn('notifications', 'notifiable_type') &&
             Schema::hasColumn('notifications', 'notifiable_id') &&
             DB::table('notifications')->where('notifiable_type', User::class)->where('notifiable_id', $id)->exists()) {
             return true;
         }
 
-        if (Schema::hasTable('profile_documents') && Schema::hasColumn('profile_documents', 'documentable_type') &&
+        if ($type === 'users' && Schema::hasTable('profile_documents') && Schema::hasColumn('profile_documents', 'documentable_type') &&
             Schema::hasColumn('profile_documents', 'documentable_id') &&
             DB::table('profile_documents')->where('documentable_type', User::class)->where('documentable_id', $id)->exists()) {
             return true;
