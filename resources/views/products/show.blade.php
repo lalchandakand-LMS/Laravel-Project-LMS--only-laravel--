@@ -1,5 +1,9 @@
 @extends('layouts.app')
 @section('title', $product->title)
+@section('meta_description', $product->description)
+@section('meta_image', $product->imageUrl())
+@section('meta_image_alt', $product->title)
+@section('og_type', 'product')
 @section('content')
 <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-2">
     <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white"><img src="{{ $product->imageUrl() }}" alt="{{ $product->title }}" class="h-full max-h-[560px] w-full object-cover"></div>
