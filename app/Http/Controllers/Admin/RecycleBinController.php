@@ -209,10 +209,24 @@ class RecycleBinController extends Controller
                 ['exam_attempts', 'user_id'], ['certificates', 'user_id'], ['ebook_purchases', 'user_id'],
                 ['reviews', 'user_id'], ['courses', 'instructor_id'], ['branches', 'manager_id'],
                 ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
-                ['complaints', 'user_id'], ['complaint_replies', 'user_id'],
+                ['complaints', 'user_id'], ['complaints', 'assigned_to'], ['complaint_replies', 'user_id'],
                 ['complaint_attachments', 'uploaded_by'], ['complaint_events', 'created_by'],
                 ['library_loans', 'student_id'], ['library_loans', 'issued_by'], ['library_loans', 'reviewed_by'],
                 ['ai_agent_runs', 'user_id'], ['ai_action_proposals', 'user_id'], ['ai_action_proposals', 'reviewed_by'],
+                ['staff_payrolls', 'paid_by'], ['payments', 'verified_by'], ['payment_adjustments', 'created_by'],
+                ['messages', 'sender_id'], ['messages', 'recipient_id'], ['announcement_reads', 'user_id'],
+                ['activity_logs', 'user_id'], ['course_views', 'user_id'], ['gamification_events', 'user_id'],
+                ['marketing_leads', 'user_id'], ['marketing_leads', 'assigned_to'], ['marketing_leads', 'converted_user_id'],
+                ['marketing_campaigns', 'created_by'], ['media_assets', 'uploaded_by'],
+                ['attendance_sessions', 'instructor_id'], ['attendance_sessions', 'reviewed_by'],
+                ['attendances', 'student_id'], ['attendances', 'marked_by'],
+                ['student_fee_invoices', 'student_id'], ['student_fee_invoices', 'created_by'],
+                ['student_fee_payments', 'student_id'], ['student_fee_payments', 'collected_by'],
+                ['student_fee_credits', 'student_id'],
+                ['coaching_batches', 'instructor_id'], ['coaching_admissions', 'student_id'], ['coaching_admissions', 'reviewed_by'],
+                ['staff_leave_requests', 'user_id'], ['staff_leave_requests', 'reviewed_by'],
+                ['profile_documents', 'uploaded_by'], ['profile_documents', 'reviewed_by'],
+                ['staff_attendances', 'marked_by'],
                 ['student_profiles', 'user_id'], ['staff_profiles', 'user_id'],
             ],
             'courses' => [
@@ -237,6 +251,19 @@ class RecycleBinController extends Controller
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };
+
+        // Preserve polymorphic user notifications and profile documents as well as direct foreign keys.
+        if ($type === 'users' && Schema::hasTable('notifications') && Schema::hasColumn('notifications', 'notifiable_type') &&
+            Schema::hasColumn('notifications', 'notifiable_id') &&
+            DB::table('notifications')->where('notifiable_type', User::class)->where('notifiable_id', $id)->exists()) {
+            return true;
+        }
+
+        if ($type === 'users' && Schema::hasTable('profile_documents') && Schema::hasColumn('profile_documents', 'documentable_type') &&
+            Schema::hasColumn('profile_documents', 'documentable_id') &&
+            DB::table('profile_documents')->where('documentable_type', User::class)->where('documentable_id', $id)->exists()) {
+            return true;
+        }
 
         // Payroll rows are linked through staff_profiles rather than directly to users.
         if ($type === 'users' && Schema::hasTable('staff_payrolls') && Schema::hasColumn('staff_payrolls', 'staff_profile_id') &&

@@ -480,4 +480,233 @@ class RecycleBinTest extends TestCase
         $this->assertDatabaseHas('lessons', ['id' => $dependent->id, 'deleted_at' => null]);
     }
 
+
+    public function test_user_permanent_delete_is_blocked_when_assigned_complaint_history_exists(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $assignee = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $complaintOwner = User::factory()->create(['role' => 'student']);
+        $now = now();
+
+        $complaintId = DB::table('complaints')->insertGetId([
+            'tracking_code' => 'CMP-ASSIGNED-'.strtoupper(substr(uniqid(), -8)),
+            'user_id' => $complaintOwner->id,
+            'assigned_to' => $assignee->id,
+            'category' => 'administration',
+            'subject' => 'Retain assignment audit history',
+            'body' => 'The assigned staff identity must remain available.',
+            'priority' => 'normal',
+            'status' => 'submitted',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $assignee->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $assignee->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $assignee->id]);
+        $this->assertDatabaseHas('complaints', [
+            'id' => $complaintId,
+            'assigned_to' => $assignee->id,
+        ]);
+    }
+
+    public function test_user_permanent_delete_is_blocked_when_payroll_payment_actor_history_exists(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $paymentActor = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $staffUser = User::factory()->create(['role' => 'teacher']);
+        $now = now();
+
+        $staffProfileId = DB::table('staff_profiles')->insertGetId([
+            'user_id' => $staffUser->id,
+            'employment_status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $payrollId = DB::table('staff_payrolls')->insertGetId([
+            'staff_profile_id' => $staffProfileId,
+            'payroll_month' => now()->format('Y-m'),
+            'basic_salary' => 12000,
+            'net_salary' => 12000,
+            'status' => 'paid',
+            'paid_at' => now()->toDateString(),
+            'paid_by' => $paymentActor->id,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $paymentActor->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $paymentActor->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $paymentActor->id]);
+        $this->assertDatabaseHas('staff_payrolls', [
+            'id' => $payrollId,
+            'paid_by' => $paymentActor->id,
+        ]);
+    }
+
+
+    public function test_user_permanent_delete_preserves_messages_and_staff_audit_records(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $actor = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $staffMember = User::factory()->create(['role' => 'teacher']);
+        $documentOwner = User::factory()->create(['role' => 'student']);
+        $now = now();
+
+        $messageId = DB::table('messages')->insertGetId([
+            'sender_id' => $actor->id,
+            'recipient_id' => $admin->id,
+            'body' => 'Retain sender attribution.',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $leaveId = DB::table('staff_leave_requests')->insertGetId([
+            'user_id' => $staffMember->id,
+            'start_date' => now()->addDays(2)->toDateString(),
+            'end_date' => now()->addDays(3)->toDateString(),
+            'leave_type' => 'annual',
+            'reason' => 'Retain reviewer attribution.',
+            'status' => 'approved',
+            'reviewed_by' => $actor->id,
+            'reviewed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $documentId = DB::table('profile_documents')->insertGetId([
+            'documentable_type' => User::class,
+            'documentable_id' => $documentOwner->id,
+            'document_type' => 'identity',
+            'disk' => 'local',
+            'path' => 'profile-documents/audit-test.pdf',
+            'original_name' => 'audit-test.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 128,
+            'status' => 'approved',
+            'uploaded_by' => $actor->id,
+            'reviewed_by' => $actor->id,
+            'reviewed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $ownedDocumentId = DB::table('profile_documents')->insertGetId([
+            'documentable_type' => User::class,
+            'documentable_id' => $actor->id,
+            'document_type' => 'identity',
+            'disk' => 'local',
+            'path' => 'profile-documents/user-owned-audit-test.pdf',
+            'original_name' => 'user-owned-audit-test.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 128,
+            'status' => 'approved',
+            'uploaded_by' => $admin->id,
+            'reviewed_by' => $admin->id,
+            'reviewed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $actor->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $actor->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $actor->id]);
+        $this->assertDatabaseHas('messages', ['id' => $messageId, 'sender_id' => $actor->id]);
+        $this->assertDatabaseHas('staff_leave_requests', ['id' => $leaveId, 'reviewed_by' => $actor->id]);
+        $this->assertDatabaseHas('profile_documents', [
+            'id' => $ownedDocumentId,
+            'documentable_id' => $actor->id,
+        ]);
+        $this->assertDatabaseHas('profile_documents', [
+            'id' => $documentId,
+            'uploaded_by' => $actor->id,
+            'reviewed_by' => $actor->id,
+        ]);
+    }
+
+
+    public function test_user_permanent_delete_preserves_marketing_and_learning_analytics_history(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $actor = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $leadOwner = User::factory()->create(['role' => 'student']);
+        $course = Course::create(['title' => 'Analytics Retention Course', 'slug' => 'analytics-retention-course']);
+        $now = now();
+
+        $leadId = DB::table('marketing_leads')->insertGetId([
+            'user_id' => $leadOwner->id,
+            'name' => 'Audit Lead',
+            'email' => 'audit-lead@example.test',
+            'message' => 'Retain marketing assignment history.',
+            'source' => 'website',
+            'status' => 'new',
+            'assigned_to' => $actor->id,
+            'converted_user_id' => $actor->id,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $campaignId = DB::table('marketing_campaigns')->insertGetId([
+            'created_by' => $actor->id,
+            'name' => 'Audit Campaign',
+            'slug' => 'audit-campaign-'.strtolower(substr(uniqid(), -8)),
+            'channel' => 'email',
+            'source' => 'newsletter',
+            'medium' => 'email',
+            'destination_url' => 'https://example.test/courses',
+            'status' => 'draft',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $viewId = DB::table('course_views')->insertGetId([
+            'course_id' => $course->id,
+            'user_id' => $actor->id,
+            'visitor_key' => 'recycle-audit-'.strtolower(substr(uniqid(), -10)),
+            'viewed_on' => now()->toDateString(),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $eventId = DB::table('gamification_events')->insertGetId([
+            'user_id' => $actor->id,
+            'event_type' => 'course_completed',
+            'event_key' => 'recycle-audit-'.strtolower(substr(uniqid(), -10)),
+            'points' => 10,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $assetId = DB::table('media_assets')->insertGetId([
+            'title' => 'Audit media asset',
+            'source_type' => 'upload',
+            'uploaded_by' => $actor->id,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $actor->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $actor->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $actor->id]);
+        $this->assertDatabaseHas('marketing_leads', ['id' => $leadId, 'assigned_to' => $actor->id, 'converted_user_id' => $actor->id]);
+        $this->assertDatabaseHas('marketing_campaigns', ['id' => $campaignId, 'created_by' => $actor->id]);
+        $this->assertDatabaseHas('course_views', ['id' => $viewId, 'user_id' => $actor->id]);
+        $this->assertDatabaseHas('gamification_events', ['id' => $eventId, 'user_id' => $actor->id]);
+        $this->assertDatabaseHas('media_assets', ['id' => $assetId, 'uploaded_by' => $actor->id]);
+    }
+
 }
