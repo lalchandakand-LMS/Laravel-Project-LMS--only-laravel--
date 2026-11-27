@@ -96,7 +96,10 @@ class CartController extends Controller
                 return back()->with('info', 'You already own this course.');
             }
             if ($course->final_price <= 0) {
-                return redirect()->route('courses.enroll-free', $course->slug);
+                // Enrollment is a state-changing POST route; never redirect a browser
+                // to it with a GET. Send the learner to the course page's POST form.
+                return redirect()->route('courses.show', $course->slug)
+                    ->with('info', 'This course is free. Select “Enroll free” on the course page to get access.');
             }
         } elseif ($type === 'ebook') {
             $ebook = Ebook::where('is_published', true)->findOrFail($id);
