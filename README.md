@@ -32,7 +32,7 @@ touch database/database.sqlite
 #    …or MySQL: set DB_CONNECTION=mysql + DB_DATABASE/DB_USERNAME/DB_PASSWORD in .env
 
 # 4. schema + demo data
-php artisan migrate --seed
+php artisan migrate --seed  # local/demo only; never run the demo seeder in production
 
 # 5. public storage symlink (course thumbnails, e-book PDFs, avatars)
 php artisan storage:link
@@ -69,7 +69,7 @@ Open <http://127.0.0.1:8000>.
 `migrate` only applies **new** migration files; every migration in this project
 is additive, so existing users/orders/enrolments are untouched. Never run
 `migrate:fresh`, `db:wipe`, `migrate:refresh` or `db:seed` on a live database.
-The Admin backup panel and scheduled `system:backup` command still handle the database only. The `backup.sh` and `update.sh` scripts now also create separate public- and private-upload archives; the Admin restore screen does not restore those archives, so restore the matching `uploads-*.tar.gz` and `private-*.tar.gz` files to `storage/app/` after database recovery. Keep an encrypted off-server copy before production changes.
+The Admin Backup & Restore panel can restore database snapshots and the `uploads-*.tar.gz` / `private-*.tar.gz` media archives created by `backup.sh`. The script and Admin restore flow create a pre-restore safety archive; verify a restore on staging before production. Keep an encrypted off-server copy before production changes.
 Full step-by-step (VPS, cPanel, manual update, rollback, restore, backup cron)
 lives in **[UPDATE.md](UPDATE.md)**.
 
@@ -83,8 +83,7 @@ lives in **[UPDATE.md](UPDATE.md)**.
 | Guardian | `guardian1@lms.test` | `password` | `/guardian` |
 | Branch manager | `manager1@lms.test` | `password` | `/branch` |
 
-> These are demo credentials only. Delete or rotate every seeded account before
-> exposing the site publicly; never leave the shared `password` password in production.
+> These are local/staging demo credentials only. Production seeders now refuse to run, so these demo users are not created by a production `db:seed` attempt. Create the first production administrator with `php artisan lms:admin:create` and a unique password. Never expose these shared demo credentials publicly.
 > Each role is redirected to its own dashboard automatically
 > and blocked from the others by `RoleMiddleware`; disabled users are logged out.
 
@@ -193,16 +192,17 @@ students outside the manager's branch) instead of relying on seed order.
 
 ## 5. Production notes
 
-1. **Tailwind/Vite**: `public/build` is generated, not stored in Git. Every production release must include the output of `npm ci && npm run build`; upload that directory to `public/build` before switching the release live. The CDN fallback in `resources/views/partials/assets.blade.php` is a development safety net, not the production asset pipeline.
-2. **Payments**: the live application currently supports manual payment submission and staff verification; it does not yet have a live bKash/Nagad provider adapter. See [Payment gateway integration contract](docs/PAYMENT_GATEWAY_INTEGRATION.md). Provider credentials, signature verification, idempotent callbacks, reconciliation and sandbox tests are required before enabling a real gateway. Do not treat a browser redirect or transaction screenshot as settlement proof.
-3. **Media**: use a CDN or S3 by changing `FILESYSTEM_DISK` and the `->store(..., 'public')`
+1. **Secrets & first administrator**: use the private server `.env` copied from `.env.production.example`; never commit real MySQL, SMTP, Google, MiMSMS or Gemini credentials. Demo seeders are blocked in production. Run `php artisan lms:admin:create` interactively to create the first admin with a hidden, unique password. Follow [cPanel production checklist](docs/CPANEL_PRODUCTION_CHECKLIST.md).
+2. **Tailwind/Vite**: `public/build` is generated, not stored in Git. Every production release must include the output of `npm ci && npm run build`; upload that directory to `public/build` before switching the release live. The CDN fallback in `resources/views/partials/assets.blade.php` is a development safety net, not the production asset pipeline.
+3. **Payments**: the live application currently supports manual payment submission and staff verification; it does not yet have a live bKash/Nagad provider adapter. See [Payment gateway integration contract](docs/PAYMENT_GATEWAY_INTEGRATION.md). Provider credentials, signature verification, idempotent callbacks, reconciliation and sandbox tests are required before enabling a real gateway. Do not treat a browser redirect or transaction screenshot as settlement proof.
+4. **Media**: use a CDN or S3 by changing `FILESYSTEM_DISK` and the `->store(..., 'public')`
    calls to your disk; YouTube/Vimeo URLs are already supported for videos.
-4. Set `APP_ENV=production`, `APP_DEBUG=false`, run `php artisan config:cache`
+5. Set `APP_ENV=production`, `APP_DEBUG=false`, run `php artisan config:cache`
    `route:cache` `view:cache`, and point the web root at `public/`.
-5. Seed data uses Unsplash course photos, Unsplash slider images and
+6. Seed data uses Unsplash course photos, Unsplash slider images and
    `ui-avatars.com` avatars; upload real thumbnails in the admin panel to
    replace them.
-6. Routes: run `php artisan route:list` for the current named route map; route count changes as modules evolve.
+7. Routes: run `php artisan route:list` for the current named route map; route count changes as modules evolve.
 
 ## 6. Recycle Bin & safe system upgrades
 
