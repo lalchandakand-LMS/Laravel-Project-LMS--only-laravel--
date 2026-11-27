@@ -14,6 +14,7 @@ class SystemMediaRestoreTest extends TestCase
     private string $archiveDirectory;
     private string $backupDirectory;
     private string $destination;
+    private array $safetyFilesBefore = [];
 
     protected function setUp(): void
     {
@@ -22,6 +23,7 @@ class SystemMediaRestoreTest extends TestCase
         $this->archiveDirectory = storage_path('framework/testing/media-restore-'.uniqid());
         $this->backupDirectory = base_path('storage/backups');
         $this->destination = storage_path('app/public/media-restore-test.txt');
+        $this->safetyFilesBefore = glob(storage_path('app/private/system-backups/aec-media-public-*.tar.gz')) ?: [];
 
         mkdir($this->archiveDirectory.'/source/public', 0750, true);
         mkdir($this->backupDirectory, 0750, true);
@@ -31,10 +33,8 @@ class SystemMediaRestoreTest extends TestCase
     protected function tearDown(): void
     {
         @unlink($this->destination);
-        foreach (glob(storage_path('app/private/system-backups/aec-media-public-*.tar.gz')) ?: [] as $file) {
-            if (filemtime($file) >= time() - 120) {
-                @unlink($file);
-            }
+        foreach (array_diff(glob(storage_path('app/private/system-backups/aec-media-public-*.tar.gz')) ?: [], $this->safetyFilesBefore) as $file) {
+            @unlink($file);
         }
         $this->removeDirectory($this->archiveDirectory);
         parent::tearDown();
