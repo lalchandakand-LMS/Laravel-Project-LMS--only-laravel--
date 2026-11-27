@@ -87,12 +87,12 @@ Use the actual cPanel home directory, project path and PHP binary shown by your 
 
 ```cron
 * * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
-* * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> /dev/null 2>&1
+* * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan queue:work database --queue=notifications,default --stop-when-empty --max-time=50 --tries=3 --timeout=60 >> storage/logs/queue-worker.log 2>&1
 0 3 * * * cd /home/CPANEL_USER/path/to/project && /bin/bash backup.sh >> storage/logs/backup.log 2>&1
 ```
 
 - **Scheduler:** the once-per-minute `schedule:run` triggers existing tasks: `system:backup --keep=14` at 02:00, Recycle Bin pruning at 02:30 and unpaid-order expiry at 03:00.
-- **Queue:** the app uses the database queue. The worker drains available jobs and exits within the cron interval; `--timeout=45` stays below the default 90-second retry window. If jobs need longer, tune worker timeout and `DB_QUEUE_RETRY_AFTER` together and confirm the host permits it.
+- **Queue:** the app uses the database queue. The worker must listen to `notifications,default` in that order; a worker listening only to `default` leaves newsletter jobs waiting. The example drains jobs and exits within the cron interval; `--timeout=60` stays below the default 90-second retry window. Confirm the host permits the command and inspect `storage/logs/queue-worker.log`. If jobs need longer, tune worker timeout and `DB_QUEUE_RETRY_AFTER` together.
 - **Full backup:** `backup.sh` captures the database, private `.env`, public uploads and private uploads. It requires `mysqldump` for MySQL backups. Verify the script can execute and that the hosting shell has the required binary; if not, configure the host's supported database backup or phpMyAdmin export and a separate media backup.
 - Confirm cron's timezone and backup retention against the hosting plan. The script keeps 30 timestamped snapshots; Laravel's database backup command has its own retention setting.
 
