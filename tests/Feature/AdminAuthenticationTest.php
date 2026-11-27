@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\AdminLoginOtpNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -12,8 +13,10 @@ class AdminAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_sign_in_only_through_the_admin_login_page(): void
+    public function test_admin_must_complete_email_otp_before_entering_admin_portal(): void
     {
+        Notification::fake();
+
         $admin = User::factory()->create([
             'email' => 'admin@example.test',
             'password' => Hash::make('Strong-password-123'),
@@ -26,13 +29,28 @@ class AdminAuthenticationTest extends TestCase
         $this->post(route('admin.login.store'), [
             'email' => $admin->email,
             'password' => 'Strong-password-123',
-        ])->assertRedirect(route('admin.dashboard'));
+        ])->assertRedirect(route('admin.login.verify'));
+
+        $this->assertGuest();
+        $this->get(route('admin.login.verify'))->assertOk();
+
+        $code = null;
+        Notification::assertSentTo($admin, AdminLoginOtpNotification::class, function ($notification) use (&$code) {
+            $code = $notification->code;
+
+            return true;
+        });
+
+        $this->post(route('admin.login.verify.store'), ['code' => $code])
+            ->assertRedirect(route('admin.dashboard'));
 
         $this->assertAuthenticatedAs($admin);
     }
 
     public function test_non_admin_cannot_authenticate_through_admin_login(): void
     {
+        Notification::fake();
+
         $student = User::factory()->create([
             'email' => 'student@example.test',
             'password' => Hash::make('Strong-password-123'),
@@ -47,6 +65,7 @@ class AdminAuthenticationTest extends TestCase
             ->assertSessionHasErrors('email');
 
         $this->assertGuest();
+        Notification::assertNothingSent();
     }
 
     public function test_admin_cannot_use_the_public_login_endpoint(): void
@@ -77,6 +96,30 @@ class AdminAuthenticationTest extends TestCase
 
             $this->actingAs($user)->get('/admin')->assertForbidden();
         }
+    }
+
+    public function test_invalid_admin_otp_does_not_authenticate_the_user(): void
+    {
+        Notification::fake();
+
+        $admin = User::factory()->create([
+            'email' => 'admin@example.test',
+            'password' => Hash::make('Strong-password-123'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $admin->email,
+            'password' => 'Strong-password-123',
+        ])->assertRedirect(route('admin.login.verify'));
+
+        $this->from(route('admin.login.verify'))->post(route('admin.login.verify.store'), [
+            'code' => '000000',
+        ])->assertRedirect(route('admin.login.verify'))
+            ->assertSessionHasErrors('code');
+
+        $this->assertGuest();
     }
 
     public function test_public_registration_cannot_assign_a_privileged_role(): void
