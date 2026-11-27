@@ -50,6 +50,7 @@ Route::get('/instructors', [InstructorController::class, 'index'])->name('instru
 Route::get('/instructors/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('instructors.show');
 Route::get('/teacher/{user}', [InstructorController::class, 'show'])->whereNumber('user')->name('teachers.public.show');
 Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:5,10')->name('contact.send');
+Route::post('/marketing-popup/capture', [App\Http\Controllers\MarketingPopupController::class, 'capture'])->middleware('throttle:3,10')->name('marketing.popup.capture');
 Route::post('/newsletter/subscribe', [App\Http\Controllers\NewsletterController::class, 'subscribe'])->middleware('throttle:3,10')->name('newsletter.subscribe');
 Route::get('/newsletter/confirm/{subscriber}/{token}', [App\Http\Controllers\NewsletterController::class, 'confirm'])->middleware('throttle:10,10')->name('newsletter.confirm');
 Route::get('/newsletter/unsubscribe/{subscriber}', [App\Http\Controllers\NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
@@ -218,6 +219,8 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::put('marketing/campaigns/{campaign}', [Admin\MarketingCampaignController::class, 'update'])->name('marketing.campaigns.update');
         Route::delete('marketing/campaigns/{campaign}', [Admin\MarketingCampaignController::class, 'destroy'])->name('marketing.campaigns.destroy');
         Route::patch('marketing/leads/{lead}', [Admin\MarketingLeadController::class, 'update'])->name('marketing.leads.update');
+        Route::get('marketing/popup', [Admin\MarketingPopupController::class, 'edit'])->name('marketing.popup.edit');
+        Route::put('marketing/popup', [Admin\MarketingPopupController::class, 'update'])->name('marketing.popup.update');
         Route::get('marketing/newsletter', [Admin\NewsletterSubscriberController::class, 'index'])->name('marketing.newsletter.index');
         Route::delete('marketing/newsletter/{subscriber}', [Admin\NewsletterSubscriberController::class, 'destroy'])->name('marketing.newsletter.destroy');
         Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
