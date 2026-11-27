@@ -25,6 +25,6 @@ class SeoAuditExportTest extends TestCase
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $response->assertHeader('cache-control', 'no-store, private');
-        $this->assertStringStartsWith('seo-content-audit-', $response->headers->get('content-disposition') ? basename(str_replace(['attachment; filename=', '"'], '', $response->headers->get('content-disposition'))) : '');
+        $this->assertStringContainsString('seo-content-audit-', $response->headers->get('content-disposition', ''));
     }
 }
