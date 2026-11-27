@@ -637,4 +637,76 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+
+    public function test_user_permanent_delete_preserves_marketing_and_learning_analytics_history(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $actor = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $leadOwner = User::factory()->create(['role' => 'student']);
+        $course = Course::create(['title' => 'Analytics Retention Course', 'slug' => 'analytics-retention-course']);
+        $now = now();
+
+        $leadId = DB::table('marketing_leads')->insertGetId([
+            'user_id' => $leadOwner->id,
+            'name' => 'Audit Lead',
+            'email' => 'audit-lead@example.test',
+            'message' => 'Retain marketing assignment history.',
+            'source' => 'website',
+            'status' => 'new',
+            'assigned_to' => $actor->id,
+            'converted_user_id' => $actor->id,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $campaignId = DB::table('marketing_campaigns')->insertGetId([
+            'created_by' => $actor->id,
+            'name' => 'Audit Campaign',
+            'slug' => 'audit-campaign-'.strtolower(substr(uniqid(), -8)),
+            'channel' => 'email',
+            'source' => 'newsletter',
+            'medium' => 'email',
+            'destination_url' => 'https://example.test/courses',
+            'status' => 'draft',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $viewId = DB::table('course_views')->insertGetId([
+            'course_id' => $course->id,
+            'user_id' => $actor->id,
+            'visitor_key' => 'recycle-audit-'.strtolower(substr(uniqid(), -10)),
+            'viewed_on' => now()->toDateString(),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $eventId = DB::table('gamification_events')->insertGetId([
+            'user_id' => $actor->id,
+            'event_type' => 'course_completed',
+            'event_key' => 'recycle-audit-'.strtolower(substr(uniqid(), -10)),
+            'points' => 10,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $assetId = DB::table('media_assets')->insertGetId([
+            'title' => 'Audit media asset',
+            'source_type' => 'upload',
+            'uploaded_by' => $actor->id,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $actor->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $actor->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $actor->id]);
+        $this->assertDatabaseHas('marketing_leads', ['id' => $leadId, 'assigned_to' => $actor->id, 'converted_user_id' => $actor->id]);
+        $this->assertDatabaseHas('marketing_campaigns', ['id' => $campaignId, 'created_by' => $actor->id]);
+        $this->assertDatabaseHas('course_views', ['id' => $viewId, 'user_id' => $actor->id]);
+        $this->assertDatabaseHas('gamification_events', ['id' => $eventId, 'user_id' => $actor->id]);
+        $this->assertDatabaseHas('media_assets', ['id' => $assetId, 'uploaded_by' => $actor->id]);
+    }
+
 }
