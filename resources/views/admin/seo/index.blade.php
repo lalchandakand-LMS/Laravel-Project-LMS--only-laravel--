@@ -9,6 +9,27 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div><h2 class="font-bold text-slate-900">Course & Blog SEO score</h2><p class="mt-1 text-sm text-slate-500">Automatic checklist based on metadata, content length, URL and featured image. This is internal guidance, not a Google ranking metric.</p></div>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{{ $contentScores->count() }} published pages</span>
+        </div>
+        <div class="mt-4 space-y-3">
+            @forelse($contentScores as $item)
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div><span class="text-[10px] font-bold uppercase text-slate-400">{{ $item['type'] }}</span><p class="font-semibold text-slate-800">{{ $item['title'] }}</p></div>
+                        <div class="text-right"><span class="text-xl font-black {{ $item['score'] >= 80 ? 'text-emerald-700' : ($item['score'] >= 50 ? 'text-amber-700' : 'text-rose-700') }}">{{ $item['score'] }}/100</span><a href="{{ $item['url'] }}" class="ml-3 text-xs font-bold text-orange-700 underline">Edit →</a></div>
+                    </div>
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full {{ $item['score'] >= 80 ? 'bg-emerald-500' : ($item['score'] >= 50 ? 'bg-amber-500' : 'bg-rose-500') }}" style="width: {{ $item['score'] }}%"></div></div>
+                    <div class="mt-3 flex flex-wrap gap-2">@foreach($item['checks'] as $check)<span class="rounded-full px-2 py-1 text-[10px] font-semibold {{ $check['passed'] ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">{{ $check['passed'] ? '✓' : '!' }} {{ $check['label'] }}</span>@endforeach</div>
+                </div>
+            @empty
+                <p class="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">No published courses or blog posts to score yet.</p>
+            @endforelse
+        </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div><h2 class="font-bold text-slate-900">On-page SEO audit</h2><p class="mt-1 text-sm text-slate-500">Checks published course and blog metadata and lists records that need attention.</p></div>
             <span class="rounded-full px-3 py-1 text-xs font-bold {{ ($coursesMissingMeta + $postsMissingMeta) > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">{{ $coursesMissingMeta + $postsMissingMeta }} records need metadata</span>
@@ -69,6 +90,14 @@
                     <p class="mt-2 text-xs text-amber-700">If Meta Pixel is already installed through GTM, leave the direct Meta Pixel ID empty to avoid duplicate events. If GA4 is configured in GTM, the standalone GA4 ID will not load.</p>
                 </div>
             </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="font-bold text-slate-900">Robots.txt editor</h2>
+            <p class="mt-1 text-sm text-slate-500">Add extra public-path Allow/Disallow rules. Protected account and checkout paths, User-agent and Sitemap are managed automatically.</p>
+            <label for="seo_robots_custom_rules" class="mt-4 mb-1 block text-sm font-semibold text-slate-700">Custom rules (one per line)</label>
+            <textarea id="seo_robots_custom_rules" name="seo_robots_custom_rules" rows="5" maxlength="4000" placeholder="Disallow: /search&#10;Disallow: /temporary-public-path" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">{{ old('seo_robots_custom_rules', $settings['seo_robots_custom_rules'] ?? '') }}</textarea>
+            <p class="mt-1 text-xs text-slate-500">Allowed formats: Allow: /path and Disallow: /path. Site-wide blocking is controlled by the indexing switch below.</p>
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
