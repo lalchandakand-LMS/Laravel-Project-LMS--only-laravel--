@@ -349,6 +349,10 @@ class SystemBackupController extends Controller
         try {
             $this->validateMediaArchive($source, $kind);
 
+            if (! is_dir($target) && ! mkdir($target, 0750, true) && ! is_dir($target)) {
+                throw new \RuntimeException('Could not prepare the media destination directory.');
+            }
+
             // Keep a private rollback archive before changing any live media.
             $tar = new Process(
                 ['tar', '--exclude=private/system-backups', '-czf', $safetyPath, '-C', $storageRoot, $kind],
@@ -404,7 +408,7 @@ class SystemBackupController extends Controller
         foreach ($entries as $entry) {
             $path = str_starts_with($entry, './') ? substr($entry, 2) : $entry;
             $parts = explode('/', rtrim($path, '/'));
-            if ($path === '' || str_starts_with($path, '/') || str_contains($path, chr(92)) ||
+            if ($path === '' || preg_match('/[\x00-\x1F\x7F]/', $path) || str_starts_with($path, '/') || str_contains($path, chr(92)) ||
                 in_array('..', $parts, true) || $parts[0] !== $expectedRoot) {
                 throw new \RuntimeException('The archive contains an unsafe or unexpected path.');
             }
