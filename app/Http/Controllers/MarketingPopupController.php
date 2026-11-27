@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MarketingLead;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class MarketingPopupController extends Controller
 {
@@ -48,6 +49,7 @@ class MarketingPopupController extends Controller
         $destination = (string) Setting::get('marketing_popup_destination_url', '');
 
         return ($destination !== '' ? redirect($destination) : back())
-            ->with('success', 'Thank you! Our team will contact you soon.');
+            ->with('success', 'Thank you! Our team will contact you soon.')
+            ->with('aec_lead_event', ['event_id' => (string) Str::uuid(), 'method' => 'marketing_popup']);
     }
 }

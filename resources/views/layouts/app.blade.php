@@ -219,6 +219,9 @@
     @endif
 </footer>
 @if (!$privateSeoRoute || request()->routeIs('checkout.success'))
+    @if (session('aec_lead_event'))
+        <script>window.aecLeadEvent = @json(session('aec_lead_event'));</script>
+    @endif
     @include('partials.cookie-consent')
 @endif
 @include('partials.marketing-popup')
