@@ -62,6 +62,8 @@ class SeoManagementTest extends TestCase
             ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
             ->assertSee('Disallow: /admin')
             ->assertSee('Disallow: /my/')
+            // /teacher/{user} is also a public instructor profile route and must remain crawlable.
+            ->assertDontSee('Disallow: /teacher/', false)
             ->assertSee('Sitemap: '.route('sitemap'));
     }
 
