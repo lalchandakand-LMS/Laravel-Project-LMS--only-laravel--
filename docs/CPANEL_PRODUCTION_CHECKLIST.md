@@ -1,23 +1,20 @@
 # cPanel production deployment checklist
 
-This repository template is intentionally secret-free. Copy values into the production environment privately in cPanel; never commit a real `.env`, API key, SMTP password, database password or gateway credential.
+This repository template is secret-free. Keep production .env files, API keys, SMTP passwords, database credentials and gateway credentials private.
 
 ## Before deployment
+- Create a separate staging subdomain and MySQL database/user. Never test migrations or payment callbacks against production.
+- Confirm PHP 8.3 and required extensions: OpenSSL, PDO MySQL, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD and cURL.
+- Set the web document root to Laravel public/. Do not expose .env, storage/, vendor/ or application source.
+- Install production Composer dependencies and configure APP_ENV=production, APP_DEBUG=false, HTTPS APP_URL, secure session cookies, database and SMTP privately.
+- Set QUEUE_CONNECTION=database and ensure queue/cache/session tables exist as required by the selected drivers.
+- Configure a verified MAIL_FROM_ADDRESS and MAIL_FROM_NAME. Verify SPF, DKIM and DMARC.
+- Keep SMS, AI and automated payment gateways disabled until credentials, consent, provider certification and end-to-end tests are complete.
 
-- Create a separate staging subdomain and a separate MySQL database/user. Do not test migrations or payment callbacks against production.
-- Confirm the PHP version is 8.3 and required extensions are enabled: OpenSSL, PDO MySQL, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD and cURL.
-- Set the document root to Laravel's `public/` directory. Do not expose `.env`, `storage/`, `vendor/` or application source files through the web root.
-- Upload the reviewed release and install Composer dependencies with production flags where shell access is available.
-- Copy `.env.production.example` to the private production `.env`; set a unique `APP_KEY` using `php artisan key:generate --force` in the target environment.
-- Set the production MySQL database, SMTP sender/host/port/user/password, HTTPS APP_URL and secure session cookie settings privately.
-- Keep AI and SMS disabled until their credentials, provider limits, consent, delivery and failure handling are tested.
-- Do not enable automated payment gateways until each provider's official merchant sandbox certification and callback/replay tests pass.
+## Staging release
+From the Laravel project root:
 
-## First staging release
-
-Run from the Laravel project root:
-
-```sh
+~~~
 composer install --no-dev --prefer-dist --optimize-autoloader
 php artisan config:clear
 php artisan migrate --force
@@ -25,42 +22,56 @@ php artisan db:seed --force
 php artisan storage:link
 php artisan optimize
 php artisan route:list
-```
+~~~
 
-Use a fresh staging database. Review seeded demo accounts and remove/disable demo users before any public exposure. Verify login, password reset email, email verification, uploads, course enrollment, orders, payment proof, admin review, branch review, refunds, live-class scheduling and backups.
+Use a fresh staging database. Review seeded demo accounts and disable/remove demo users before public exposure. Never retain documented demo passwords in production.
 
-## Queue and scheduler
+## Frontend assets, favicon and CSP
+- [ ] Build frontend assets during release using the repository's lockfile and build script (npm ci, then npm run build). Confirm public/build/manifest.json exists and assets load.
+- [ ] Do not assume public/build/ must be committed: it is intentionally gitignored; the release pipeline or deployment process must generate and deploy it.
+- [ ] The current assets partial falls back to the Tailwind CDN when the Vite manifest is absent. Treat this as a deployment failure for production; do not rely on the CDN fallback.
+- [ ] Replace the zero-byte public/favicon.ico with a valid ICO file and verify the favicon route returns a non-empty image. The SVG favicon may remain as an additional format.
+- [ ] ID-card QR generation currently loads QRCode.js from cdnjs.cloudflare.com. If production CSP disallows that host or third-party scripts, vendor and pin the library locally, update the view and test the QR rendering under the actual CSP.
+- [ ] Define and test a CSP compatible with required local assets and approved third-party services. Do not enable an untested strict policy that breaks checkout, analytics consent, QR rendering or admin workflows.
 
-The app uses the database queue by default. Ensure the queue tables exist (the Laravel migrations should be present) and test a real queued job on staging.
+## Queue worker and scheduler
+Newsletter jobs use the dedicated notifications queue. A worker listening only to default will not send newsletter campaigns. Prefer a persistent worker:
 
-If cPanel does not support a persistent queue worker, configure a cron entry every minute to drain queued work:
+~~~
+php artisan queue:work database --queue=notifications,default --sleep=3 --tries=3 --timeout=60
+~~~
 
-```cron
-* * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan queue:work --stop-when-empty --tries=3 --timeout=120 >> /dev/null 2>&1
-```
+If the host cannot keep persistent processes, use a non-overlapping one-minute cron worker, with paths confirmed in cPanel:
 
-Configure Laravel's scheduler once per minute:
+~~~
+* * * * * cd /home/CPANEL_USER/path/to/project && /usr/bin/flock -n storage/framework/newsletter-worker.lock /usr/local/bin/php artisan queue:work database --queue=notifications,default --stop-when-empty --max-time=50 --sleep=3 --tries=3 --timeout=60 >> storage/logs/newsletter-queue.log 2>&1
+~~~
 
-```cron
+The database queue retry_after defaults to 90 seconds; keep the worker timeout below it. Confirm PHP CLI path, flock, permissions and log rotation before enabling. See deployment/newsletter-queue.md.
+
+Configure Laravel scheduler separately:
+
+~~~
 * * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
-```
+~~~
 
-The Laravel scheduler already runs `system:backup --keep=14` daily at 02:00, Recycle Bin pruning at 02:30, and `orders:expire-unpaid --hours=24` at 03:00 to cancel stale unpaid orders and release their reserved physical stock. Also schedule the repository's full backup script once daily to capture the private `.env`, database and uploaded files:
+The scheduler does not replace the queue worker. The app schedules daily backup retention, recycle-bin pruning and unpaid-order expiry. The repository backup script stores local backups under storage/backups; this alone is not encrypted off-site storage.
 
-```cron
-0 3 * * * cd /home/CPANEL_USER/path/to/project && /bin/bash backup.sh >> storage/logs/backup.log 2>&1
-```
+## SEO, Pixel and conversion tracking
+Configure GA4 Measurement ID, Meta Pixel ID and optional GTM ID in Admin → SEO & Marketing only after production provider properties exist. Optional scripts are consent-gated. Test reject, analytics-only, marketing-only and accept-all choices. Verify PageView, Lead and fully verified Purchase in GA4 DebugView/Realtime and Meta Events Manager Test Events. Partial/unverified orders must not emit Purchase. Browser tracking does not include Meta Conversions API. See deployment/seo-pixel-conversion.md.
 
-The script writes restricted local backup files under `storage/backups/`; it is not an off-site or encrypted backup by itself. Configure a separate encrypted off-site copy using your hosting provider's supported backup destination, and perform a restore drill. Confirm the actual PHP binary, shell path and project path in the hosting account before saving cron entries.
+## Third-party credentials
+- SMTP: verify password reset, email verification, newsletter confirmation and campaign delivery.
+- MiMSMS: only enable LIVE_CLASS_SMS_NOTIFICATIONS after real credentials, sender ID, balance, delivery receipts and OTP flows are tested.
+- Gemini AI: only enable AI_AGENTS_ENABLED after a private API key is set, quota/budget limits are configured and failures are handled.
+- Google OAuth/GA4/GSC: configure client ID/secret privately and register exact production callback URLs in Google Cloud and the app. Verify OAuth consent, token refresh and each reporting API separately.
+- Payment gateways: bKash production activation requires merchant onboarding, official credentials, callback/SNS configuration and provider certification. Nagad, Rocket, SSLCommerz and card acquiring remain unavailable until an adapter, routes, callback verification, reconciliation and tests exist. Do not unlock live mode by changing a flag alone.
 
-## Backup and recovery
-
-- Schedule encrypted off-server database and uploaded-media backups.
-- Keep multiple restore points and restrict backup download access to authorized administrators.
-- Perform a restore drill into a separate database and directory before production launch.
-- Record the restore procedure and verify uploaded files, database relationships and login after restore.
-- Do not treat a successful backup command as proof of recoverability.
+## Backup and restore
+- [ ] Configure encrypted off-server backups for database and uploaded files, separate from the web host.
+- [ ] Restrict backup access and retention; never expose storage/app/private or backup archives publicly.
+- [ ] Restore into a separate database and directory; verify login, uploaded files, course records, orders and payment ledger.
+- [ ] Record restore owner, duration, recovery point and result. A successful backup command is not proof of recoverability.
 
 ## Production go-live gate
-
-Go live only after staging browser acceptance, clean migrations, no failing/skipped required CI jobs, working mail delivery, tested queue/scheduler, successful restore drill, HTTPS/security review and a documented rollback point. Do not enable real bKash/Nagad/Rocket/SSLCommerz transactions until the corresponding provider's official merchant credentials and end-to-end verification tests are available.
+Go live only after required CI jobs pass without skipped required checks, staging browser acceptance is complete, migrations are clean, mail/queue/scheduler work, assets build, favicon and CSP are checked, consent tracking is verified, backups restore successfully, HTTPS/security review passes and a rollback point is documented. Do not claim production-ready while external credentials, provider certification or cPanel acceptance tests remain pending.
