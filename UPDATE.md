@@ -52,7 +52,7 @@ prefer. Point the web root at `lms/public` (never at the project root).
    $app = require_once __DIR__.'/../lms/bootstrap/app.php';
    ```
 3. Create the MySQL database in cPanel, put the credentials in `.env`.
-4. In Terminal: `php artisan key:generate && php artisan migrate --seed && php artisan storage:link`.
+4. Build assets with `npm ci && npm run build` and upload `public/build/` from that same commit. In Terminal, run `php artisan key:generate --force` only for a new install, then `php artisan migrate --force`, `php artisan storage:link`, and `php artisan lms:admin:create` to create the first admin interactively.
 5. If `storage/` is not writable, set permission `755` (files `644`) on
    `storage/` and `bootstrap/cache/`.
 
