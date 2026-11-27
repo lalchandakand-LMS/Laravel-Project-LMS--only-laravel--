@@ -239,7 +239,8 @@ class RecycleBinController extends Controller
         };
 
         // Payroll rows are linked through staff_profiles rather than directly to users.
-        if ($type === 'users' && Schema::hasTable('staff_payrolls') && Schema::hasTable('staff_profiles') &&
+        if ($type === 'users' && Schema::hasTable('staff_payrolls') && Schema::hasColumn('staff_payrolls', 'staff_profile_id') &&
+            Schema::hasTable('staff_profiles') && Schema::hasColumn('staff_profiles', 'id') && Schema::hasColumn('staff_profiles', 'user_id') &&
             DB::table('staff_payrolls')->join('staff_profiles', 'staff_profiles.id', '=', 'staff_payrolls.staff_profile_id')
                 ->where('staff_profiles.user_id', $id)->exists()) {
             return true;
