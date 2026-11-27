@@ -1,18 +1,22 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\\Http\\Controllers\\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Setting;
-use App\Models\Course;
-use App\Models\Post;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\Setting;
+use App\\Models\\Course;
+use App\\Models\\Post;
+use Illuminate\\Http\\Request;
+use Illuminate\\Validation\\ValidationException;
 
 class SeoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->query('export') === 'csv') {
+            return $this->exportContentAudit();
+        }
+
         $missingMeta = collect();
         $contentScores = collect();
 
@@ -60,6 +64,57 @@ class SeoController extends Controller
             'postsMissingMeta' => $postsMissingMeta,
             'missingMeta' => $missingMeta,
             'contentScores' => $contentScores->sortBy('score')->values(),
+        ]);
+    }
+
+    private function exportContentAudit()
+    {
+        $filename = 'seo-content-audit-'.now()->format('Y-m-d-His').'.csv';
+
+        return response()->streamDownload(function () {
+            $output = fopen('php://output', 'w');
+            // UTF-8 BOM keeps Bangla titles readable in common spreadsheet apps.
+            fwrite($output, "\\xEF\\xBB\\xBF");
+            fputcsv($output, ['Content type', 'Title', 'Edit URL', 'SEO score', 'Passed checks', 'Failed checks']);
+
+            Course::query()->where('is_published', true)
+                ->orderBy('id')
+                ->cursor()
+                ->each(function ($item) use ($output) {
+                    $item->loadMissing([]);
+                    $item->setRawAttributes(array_merge($item->getAttributes(), [
+                        'subtitle' => $item->subtitle,
+                        'description' => $item->description,
+                        'thumbnail' => $item->thumbnail,
+                        'meta_title' => $item->meta_title,
+                        'meta_description' => $item->meta_description,
+                    ]));
+                    $this->writeAuditRow($output, 'Course', $item);
+                });
+
+            Post::published()->orderBy('id')->cursor()
+                ->each(fn ($item) => $this->writeAuditRow($output, 'Blog post', $item));
+
+            fclose($output);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, private',
+        ]);
+    }
+
+    private function writeAuditRow($output, string $type, object $item): void
+    {
+        $audit = $this->scoreContent($type, $item);
+        $passed = collect($audit['checks'])->where('passed', true)->pluck('label')->implode('; ');
+        $failed = collect($audit['checks'])->where('passed', false)->pluck('label')->implode('; ');
+
+        fputcsv($output, [
+            $type,
+            $item->title,
+            $audit['url'],
+            $audit['score'],
+            $passed,
+            $failed,
         ]);
     }
 
@@ -114,11 +169,11 @@ class SeoController extends Controller
             $lines[] = 'Sitemap: '.route('sitemap');
             $customRules = $this->validatedRobotsRules((string) Setting::get('seo_robots_custom_rules', ''));
             if ($customRules !== '') {
-                $lines = array_merge($lines, preg_split('/\r\n|\r|\n/', $customRules));
+                $lines = array_merge($lines, preg_split('/\\r\\n|\\r|\\n/', $customRules));
             }
         }
 
-        return response(implode("\n", $lines)."\n", 200, [
+        return response(implode("\\n", $lines)."\\n", 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
             'X-Robots-Tag' => Setting::get('seo_robots_index', '1') === '1' ? 'all' : 'noindex, nofollow',
         ]);
@@ -127,13 +182,13 @@ class SeoController extends Controller
     private function validatedRobotsRules(string $rules): string
     {
         $safe = [];
-        foreach (preg_split('/\r\n|\r|\n/', $rules) ?: [] as $line) {
+        foreach (preg_split('/\\r\\n|\\r|\\n/', $rules) ?: [] as $line) {
             $line = trim($line);
             if ($line === '' || str_starts_with($line, '#')) {
                 continue;
             }
 
-            if (! preg_match('/^(Allow|Disallow):\s*(\/[A-Za-z0-9._~*\/-]*)$/i', $line, $matches)) {
+            if (! preg_match('/^(Allow|Disallow):\\s*(\\/[A-Za-z0-9._~*\\/-]*)$/i', $line, $matches)) {
                 throw ValidationException::withMessages([
                     'seo_robots_custom_rules' => 'Use only Allow: /path or Disallow: /path rules, one per line. User-agent and Sitemap are managed automatically.',
                 ]);
@@ -151,7 +206,7 @@ class SeoController extends Controller
             $safe[] = ucfirst(strtolower($matches[1])).': '.$path;
         }
 
-        return implode("\n", array_unique($safe));
+        return implode("\\n", array_unique($safe));
     }
 
     private function scoreContent(string $type, object $item): array
@@ -159,7 +214,7 @@ class SeoController extends Controller
         $title = trim((string) ($item->meta_title ?: $item->title));
         $description = trim((string) ($item->meta_description ?: ($item->excerpt ?? $item->subtitle ?? '')));
         $body = trim(strip_tags((string) ($item->content ?? $item->description ?? '')));
-        $wordCount = preg_match_all('/[\p{L}\p{N}]+/u', $body) ?: 0;
+        $wordCount = preg_match_all('/[\\p{L}\\p{N}]+/u', $body) ?: 0;
         $checks = [
             ['label' => 'SEO title present', 'passed' => $title !== '', 'points' => 20],
             ['label' => 'Meta description present', 'passed' => $description !== '', 'points' => 20],
