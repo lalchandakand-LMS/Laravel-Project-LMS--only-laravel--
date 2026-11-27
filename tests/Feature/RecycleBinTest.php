@@ -599,6 +599,23 @@ class RecycleBinTest extends TestCase
             'updated_at' => $now,
         ]);
 
+        $ownedDocumentId = DB::table('profile_documents')->insertGetId([
+            'documentable_type' => User::class,
+            'documentable_id' => $actor->id,
+            'document_type' => 'identity',
+            'disk' => 'local',
+            'path' => 'profile-documents/user-owned-audit-test.pdf',
+            'original_name' => 'user-owned-audit-test.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 128,
+            'status' => 'approved',
+            'uploaded_by' => $admin->id,
+            'reviewed_by' => $admin->id,
+            'reviewed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
         $actor->delete();
 
         $this->actingAs($admin)
@@ -609,6 +626,10 @@ class RecycleBinTest extends TestCase
         $this->assertSoftDeleted('users', ['id' => $actor->id]);
         $this->assertDatabaseHas('messages', ['id' => $messageId, 'sender_id' => $actor->id]);
         $this->assertDatabaseHas('staff_leave_requests', ['id' => $leaveId, 'reviewed_by' => $actor->id]);
+        $this->assertDatabaseHas('profile_documents', [
+            'id' => $ownedDocumentId,
+            'documentable_id' => $actor->id,
+        ]);
         $this->assertDatabaseHas('profile_documents', [
             'id' => $documentId,
             'uploaded_by' => $actor->id,
