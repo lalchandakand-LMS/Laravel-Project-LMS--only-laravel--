@@ -268,8 +268,8 @@ class AdminAuthenticationTest extends TestCase
     {
         $this->app->detectEnvironment(fn () => 'production');
 
-        $this->expectException(\\LogicException::class);
-        $this->expectExceptionMessage('demo DatabaseSeeder is disabled in production');
+        $this->expectException(\\RuntimeException::class);
+        $this->expectExceptionMessage('Demo seeding is disabled in production');
 
         (new DatabaseSeeder())->run();
     }
