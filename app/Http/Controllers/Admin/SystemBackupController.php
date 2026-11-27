@@ -404,7 +404,7 @@ class SystemBackupController extends Controller
         foreach ($entries as $entry) {
             $path = str_starts_with($entry, './') ? substr($entry, 2) : $entry;
             $parts = explode('/', rtrim($path, '/'));
-            if ($path === '' || str_starts_with($path, '/') || str_contains($path, '\\\\') ||
+            if ($path === '' || str_starts_with($path, '/') || str_contains($path, chr(92)) ||
                 in_array('..', $parts, true) || $parts[0] !== $expectedRoot) {
                 throw new \RuntimeException('The archive contains an unsafe or unexpected path.');
             }
@@ -427,6 +427,9 @@ class SystemBackupController extends Controller
 
     private function copyRestoredMedia(string $source, string $target, bool $preserveSystemBackups): void
     {
+        if (is_link($target)) {
+            throw new \RuntimeException('Media destination cannot be a symbolic link.');
+        }
         if (! is_dir($target) && ! mkdir($target, 0750, true) && ! is_dir($target)) {
             throw new \RuntimeException('Could not access the media destination directory.');
         }
@@ -446,6 +449,9 @@ class SystemBackupController extends Controller
             }
 
             $destination = $target.'/'.$relative;
+            if (is_link($destination)) {
+                throw new \RuntimeException('A media destination path is a symbolic link.');
+            }
             if ($item->isDir()) {
                 if (! is_dir($destination) && ! mkdir($destination, 0750, true) && ! is_dir($destination)) {
                     throw new \RuntimeException('Could not create a media directory.');
