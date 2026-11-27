@@ -362,7 +362,7 @@ class AdminAuthenticationTest extends TestCase
             'is_active' => true,
         ]);
 
-        \\Illuminate\\Support\\Facades\\Event::fake([
+        Event::fake([
             \\Illuminate\\Auth\\Events\\Login::class,
         ]);
 
@@ -377,7 +377,7 @@ class AdminAuthenticationTest extends TestCase
             'id' => $admin->id,
             'remember_token' => 'existing-remember-token',
         ]);
-        \\Illuminate\\Support\\Facades\\Event::assertNotDispatched(\\Illuminate\\Auth\\Events\\Login::class);
+        Event::assertNotDispatched(\\Illuminate\\Auth\\Events\\Login::class);
         Notification::assertSentTo($admin, AdminLoginOtpNotification::class);
     }
 
