@@ -480,4 +480,78 @@ class RecycleBinTest extends TestCase
         $this->assertDatabaseHas('lessons', ['id' => $dependent->id, 'deleted_at' => null]);
     }
 
+
+    public function test_user_permanent_delete_is_blocked_when_assigned_complaint_history_exists(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $assignee = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $complaintOwner = User::factory()->create(['role' => 'student']);
+        $now = now();
+
+        $complaintId = DB::table('complaints')->insertGetId([
+            'tracking_code' => 'CMP-ASSIGNED-'.strtoupper(substr(uniqid(), -8)),
+            'user_id' => $complaintOwner->id,
+            'assigned_to' => $assignee->id,
+            'category' => 'administration',
+            'subject' => 'Retain assignment audit history',
+            'body' => 'The assigned staff identity must remain available.',
+            'priority' => 'normal',
+            'status' => 'submitted',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $assignee->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $assignee->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $assignee->id]);
+        $this->assertDatabaseHas('complaints', [
+            'id' => $complaintId,
+            'assigned_to' => $assignee->id,
+        ]);
+    }
+
+    public function test_user_permanent_delete_is_blocked_when_payroll_payment_actor_history_exists(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $paymentActor = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $staffUser = User::factory()->create(['role' => 'teacher']);
+        $now = now();
+
+        $staffProfileId = DB::table('staff_profiles')->insertGetId([
+            'user_id' => $staffUser->id,
+            'employment_status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $payrollId = DB::table('staff_payrolls')->insertGetId([
+            'staff_profile_id' => $staffProfileId,
+            'payroll_month' => now()->format('Y-m'),
+            'basic_salary' => 12000,
+            'net_salary' => 12000,
+            'status' => 'paid',
+            'paid_at' => now()->toDateString(),
+            'paid_by' => $paymentActor->id,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $paymentActor->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $paymentActor->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $paymentActor->id]);
+        $this->assertDatabaseHas('staff_payrolls', [
+            'id' => $payrollId,
+            'paid_by' => $paymentActor->id,
+        ]);
+    }
+
 }
