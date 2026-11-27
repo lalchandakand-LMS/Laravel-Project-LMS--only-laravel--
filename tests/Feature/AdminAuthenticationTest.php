@@ -122,6 +122,32 @@ class AdminAuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+
+    public function test_expired_admin_otp_requires_a_fresh_password_login(): void
+    {
+        Notification::fake();
+
+        $admin = User::factory()->create([
+            'email' => 'admin@example.test',
+            'password' => Hash::make('Strong-password-123'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $admin->email,
+            'password' => 'Strong-password-123',
+        ])->assertRedirect(route('admin.login.verify'));
+
+        $this->travel(6)->minutes();
+
+        $this->get(route('admin.login.verify'))
+            ->assertRedirect(route('admin.login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
     public function test_public_registration_cannot_assign_a_privileged_role(): void
     {
         Notification::fake();
