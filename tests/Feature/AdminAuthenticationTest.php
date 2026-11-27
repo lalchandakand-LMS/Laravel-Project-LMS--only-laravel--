@@ -205,6 +205,55 @@ class AdminAuthenticationTest extends TestCase
             'id' => $admin->id,
             'role' => 'admin',
         ]);
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'provider' => null,
+            'provider_id' => null,
+        ]);
+    }
+
+
+    public function test_linked_google_identity_for_admin_still_requires_admin_password_and_otp(): void
+    {
+        config([
+            'services.google.client_id' => 'google-client-id',
+            'services.google.client_secret' => 'google-client-secret',
+            'services.google.redirect' => 'https://lms.example.test/auth/google/callback',
+        ]);
+
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'google-access-token'], 200),
+            'openidconnect.googleapis.com/v1/userinfo' => Http::response([
+                'sub' => 'already-linked-admin-subject',
+                'email' => 'linked-admin@example.test',
+                'email_verified' => true,
+                'name' => 'Linked Admin',
+            ], 200),
+        ]);
+
+        $admin = User::factory()->create([
+            'email' => 'linked-admin@example.test',
+            'role' => 'admin',
+            'provider' => 'google',
+            'provider_id' => 'already-linked-admin-subject',
+            'is_active' => true,
+        ]);
+
+        $this->withSession(['google_oauth_state' => 'expected-oauth-state'])
+            ->get(route('auth.google.callback', [
+                'code' => 'google-auth-code',
+                'state' => 'expected-oauth-state',
+            ]))
+            ->assertRedirect(route('admin.login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'role' => 'admin',
+            'provider' => 'google',
+            'provider_id' => 'already-linked-admin-subject',
+        ]);
     }
 
 }
