@@ -37,4 +37,5 @@
         <button class="w-full rounded-lg bg-emerald-700 px-4 py-3 font-semibold text-white hover:bg-emerald-800">Send message</button>
     </form>
 </div>
+<section class="mx-auto max-w-5xl px-4 pb-16"><div class="rounded-2xl border border-orange-200 bg-orange-50 p-6"><h2 class="text-xl font-extrabold text-slate-900">Get course news and learning updates</h2><p class="mt-1 mb-4 text-sm text-slate-600">Subscribe by email. We will send a confirmation link before adding you to the newsletter.</p>@include('home.newsletter-form')</div></section>
 @endsection
