@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            throw new \\RuntimeException('Demo seeding is disabled in production. Run php artisan lms:admin:create to create the first production administrator.');
+        }
+
         /* ---------------- Users ---------------- */
         $admin = User::create([
             'name' => "Alom's English Center Admin", 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
