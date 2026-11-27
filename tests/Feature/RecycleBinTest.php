@@ -385,4 +385,103 @@ class RecycleBinTest extends TestCase
         $this->assertDatabaseHas('lessons', ['id' => $dependent->id, 'deleted_at' => null]);
     }
 
+
+    public function test_user_permanent_delete_is_blocked_when_only_protected_history_relations_exist(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $user = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+
+        $complaintId = DB::table('complaints')->insertGetId([
+            'tracking_code' => 'RECYCLE-'.strtoupper(substr(sha1((string) $user->id), 0, 12)),
+            'user_id' => $user->id,
+            'category' => 'other',
+            'subject' => 'Retained complaint history',
+            'body' => 'This complaint must remain linked to its original user.',
+            'priority' => 'normal',
+            'status' => 'submitted',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $replyId = DB::table('complaint_replies')->insertGetId([
+            'complaint_id' => $complaintId,
+            'user_id' => $user->id,
+            'body' => 'Retained complaint reply',
+            'is_internal' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $bookId = DB::table('library_books')->insertGetId([
+            'title' => 'Recycle Bin History Book',
+            'author' => 'Test Author',
+            'total_copies' => 1,
+            'available_copies' => 0,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $loanId = DB::table('library_loans')->insertGetId([
+            'book_id' => $bookId,
+            'student_id' => $user->id,
+            'status' => 'issued',
+            'fine_amount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $runId = DB::table('ai_agent_runs')->insertGetId([
+            'user_id' => $user->id,
+            'agent_type' => 'teacher',
+            'prompt' => 'Retained AI audit prompt',
+            'status' => 'completed',
+            'provider' => 'gemini',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $proposalId = DB::table('ai_action_proposals')->insertGetId([
+            'ai_agent_run_id' => $runId,
+            'user_id' => $user->id,
+            'action_type' => 'create_assignment_draft',
+            'payload' => json_encode(['title' => 'Retained proposal']),
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $staffProfileId = DB::table('staff_profiles')->insertGetId([
+            'user_id' => $user->id,
+            'employee_code' => 'RECYCLE-STAFF-'.$user->id,
+            'employment_status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $payrollId = DB::table('staff_payrolls')->insertGetId([
+            'staff_profile_id' => $staffProfileId,
+            'payroll_month' => '2026-11',
+            'basic_salary' => 20000,
+            'allowances' => 0,
+            'deductions' => 0,
+            'net_salary' => 20000,
+            'status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $user->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $user->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('complaints', ['id' => $complaintId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('complaint_replies', ['id' => $replyId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('library_loans', ['id' => $loanId, 'student_id' => $user->id]);
+        $this->assertDatabaseHas('ai_agent_runs', ['id' => $runId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('ai_action_proposals', ['id' => $proposalId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('staff_profiles', ['id' => $staffProfileId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('staff_payrolls', ['id' => $payrollId, 'staff_profile_id' => $staffProfileId]);
+    }
+
 }
