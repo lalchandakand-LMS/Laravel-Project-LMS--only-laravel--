@@ -50,6 +50,10 @@
         @endif
     </section>
 
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold text-slate-900">Google performance reports</h2><p class="mt-1 text-sm text-slate-500">Connect Search Console and GA4 using a read-only Google OAuth connection to view actual search and analytics metrics.</p></div><a href="{{ route('admin.seo.google.index') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Open Google Reports →</a></div>
+    </section>
+
     <form method="POST" action="{{ route('admin.seo.update') }}" class="space-y-6">
         @csrf
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -73,6 +77,18 @@
                     <label for="google_site_verification" class="mb-1 block text-sm font-semibold text-slate-700">Google Search Console verification token</label>
                     <input id="google_site_verification" name="google_site_verification" value="{{ old('google_site_verification', $settings['google_site_verification'] ?? '') }}" autocomplete="off" spellcheck="false" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                     <p class="mt-1 text-xs text-slate-500">Paste only the content token from Google's HTML meta-tag verification method.</p>
+                </div>
+                <div>
+                    <label for="google_search_console_property" class="mb-1 block text-sm font-semibold text-slate-700">Search Console property</label>
+                    <input id="google_search_console_property" name="google_search_console_property" value="{{ old('google_search_console_property', $settings['google_search_console_property'] ?? '') }}" placeholder="https://alomsenglishcenter.com/ or sc-domain:alomsenglishcenter.com" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">Use the exact verified URL-prefix property or sc-domain property from Search Console.</p>
+                    @error('google_search_console_property')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="google_analytics_property_id" class="mb-1 block text-sm font-semibold text-slate-700">GA4 Property ID (numeric)</label>
+                    <input id="google_analytics_property_id" name="google_analytics_property_id" value="{{ old('google_analytics_property_id', $settings['google_analytics_property_id'] ?? '') }}" placeholder="123456789" inputmode="numeric" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">This is the numeric GA4 property ID, not the G- measurement ID.</p>
+                    @error('google_analytics_property_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label for="ga_measurement_id" class="mb-1 block text-sm font-semibold text-slate-700">Google Analytics 4 Measurement ID</label>
