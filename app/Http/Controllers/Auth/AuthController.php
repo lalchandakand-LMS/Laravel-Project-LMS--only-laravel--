@@ -193,6 +193,7 @@ class AuthController extends Controller
         }
 
         RateLimiter::hit($throttleKey, 60);
+        RateLimiter::clear('admin-otp|'.$user->id.'|'.$request->ip());
         $code = (string) random_int(100000, 999999);
         $challenge['code_hash'] = Hash::make($code);
         $challenge['expires_at'] = now()->addMinutes(5)->timestamp;
