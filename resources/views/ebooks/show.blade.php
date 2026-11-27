@@ -1,5 +1,28 @@
 @extends('layouts.app')
 @section('title', $ebook->title)
+@section('meta_description', $ebook->description)
+@section('meta_image', $ebook->coverUrl())
+@section('meta_image_alt', $ebook->title)
+@section('og_type', 'book')
+@push('structured_data')
+<script type="application/ld+json"><?php echo json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'Book',
+    'name' => $ebook->title,
+    'description' => $ebook->description,
+    'image' => $ebook->coverUrl(),
+    'url' => route('ebooks.show', $ebook->slug),
+    'numberOfPages' => $ebook->pages,
+    'bookFormat' => 'https://schema.org/EBook',
+    'offers' => [
+        '@type' => 'Offer',
+        'priceCurrency' => 'BDT',
+        'price' => number_format((float) $ebook->final_price, 2, '.', ''),
+        'availability' => 'https://schema.org/InStock',
+        'url' => route('ebooks.show', $ebook->slug),
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+@endpush
 @section('content')
 <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[320px_1fr]">
     <img src="{{ $ebook->coverUrl() }}" alt="{{ $ebook->title }}" class="w-full rounded-2xl border border-slate-200 object-cover shadow-sm">

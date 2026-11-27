@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title', $post->meta_title ?: $post->title)
 @section('meta_description', $post->meta_description ?: $post->excerpt)
+@section('meta_image', $post->thumbnail ? media_url($post->thumbnail) : '')
+@section('meta_image_alt', $post->title)
+@section('og_type', 'article')
 @push('structured_data')
 <script type="application/ld+json"><?php echo json_encode([
     '@context' => 'https://schema.org',
