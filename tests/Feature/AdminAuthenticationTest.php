@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
 use App\Notifications\AdminLoginOtpNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class AdminAuthenticationTest extends TestCase
@@ -204,6 +206,95 @@ class AdminAuthenticationTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $admin->id,
             'role' => 'admin',
+        ]);
+    }
+
+
+    public function test_admin_password_reset_does_not_create_an_authenticated_session_and_still_requires_admin_otp(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'reset-admin@example.test',
+            'password' => Hash::make('Old-Strong-Password-123'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $token = Password::createToken($admin);
+
+        $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => $admin->email,
+            'password' => 'New-Strong-Password-123',
+            'password_confirmation' => 'New-Strong-Password-123',
+        ])->assertRedirect(route('login'));
+
+        $this->assertGuest();
+
+        $this->post(route('login'), [
+            'email' => $admin->email,
+            'password' => 'New-Strong-Password-123',
+        ])->assertRedirect(route('admin.login'));
+
+        $this->assertGuest();
+    }
+
+    public function test_public_registration_ignores_teacher_guardian_and_branch_manager_role_injection(): void
+    {
+        Notification::fake();
+
+        foreach (['instructor', 'teacher', 'guardian', 'branch_manager'] as $index => $role) {
+            $email = 'role-injection-'.$index.'@example.test';
+
+            $this->post(route('register'), [
+                'name' => 'Untrusted Signup',
+                'email' => $email,
+                'phone' => '01700000000',
+                'password' => 'Strong-password-123',
+                'password_confirmation' => 'Strong-password-123',
+                'role' => $role,
+            ])->assertRedirect(route('verification.notice'));
+
+            $this->assertDatabaseHas('users', [
+                'email' => $email,
+                'role' => 'student',
+            ]);
+
+            $this->post(route('logout'));
+        }
+    }
+
+    public function test_demo_database_seeder_refuses_to_run_in_production(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+
+        $this->expectException(\\LogicException::class);
+        $this->expectExceptionMessage('demo DatabaseSeeder is disabled in production');
+
+        (new DatabaseSeeder())->run();
+    }
+
+    public function test_admin_cannot_remove_own_admin_access_from_user_management(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.users.update', $admin), [
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => 'student',
+                'password' => '',
+                'is_active' => '0',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'role' => 'admin',
+            'is_active' => true,
         ]);
     }
 
