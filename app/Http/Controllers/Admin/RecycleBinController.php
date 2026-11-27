@@ -210,8 +210,10 @@ class RecycleBinController extends Controller
                 ['reviews', 'user_id'], ['courses', 'instructor_id'], ['branches', 'manager_id'],
                 ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
                 ['complaints', 'user_id'], ['complaint_replies', 'user_id'],
-                ['library_loans', 'student_id'], ['ai_agent_runs', 'user_id'],
-                ['ai_action_proposals', 'user_id'], ['staff_profiles', 'user_id'],
+                ['complaint_attachments', 'uploaded_by'], ['complaint_events', 'created_by'],
+                ['library_loans', 'student_id'], ['library_loans', 'issued_by'], ['library_loans', 'reviewed_by'],
+                ['ai_agent_runs', 'user_id'], ['ai_action_proposals', 'user_id'], ['ai_action_proposals', 'reviewed_by'],
+                ['student_profiles', 'user_id'], ['staff_profiles', 'user_id'],
             ],
             'courses' => [
                 ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
@@ -244,7 +246,7 @@ class RecycleBinController extends Controller
         }
 
         foreach ($checks as [$table, $column]) {
-            if (\Illuminate\Support\Facades\Schema::hasTable($table)) {
+            if (Schema::hasTable($table) && Schema::hasColumn($table, $column)) {
                 $query = DB::table($table)->where($column, $id);
                 if ($table === 'order_items') {
                     $query->where('item_type', $type === 'ebooks' ? 'ebook' : 'course');
