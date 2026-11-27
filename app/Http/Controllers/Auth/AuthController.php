@@ -50,6 +50,56 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+    public function showAdminLogin()
+    {
+        return view('auth.admin-login');
+    }
+
+    public function adminLogin(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        $throttleKey = 'admin|'.Str::transliterate(Str::lower($credentials['email']).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => 'Too many login attempts. Please try again in '.$seconds.' seconds.',
+            ]);
+        }
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::hit($throttleKey, 60);
+
+            return back()->withErrors(['email' => 'These credentials do not match our records.'])
+                ->onlyInput('email');
+        }
+
+        $user = Auth::user();
+
+        if (! $user->isAdmin() || ! $user->is_active) {
+            Auth::logout();
+            RateLimiter::hit($throttleKey, 60);
+
+            return back()->withErrors(['email' => 'You are not authorized to access the Admin portal.'])
+                ->onlyInput('email');
+        }
+
+        RateLimiter::clear($throttleKey);
+        $request->session()->regenerate();
+
+        if ($user->email_verification_required && ! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        return redirect()->intended(route('admin.dashboard'))
+            ->with('success', 'Welcome back, '.$user->name.'!');
+    }
+
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -77,6 +127,15 @@ class AuthController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
+
+        if (Auth::user()->isAdmin()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('admin.login')
+                ->withErrors(['email' => 'Please use the secure Admin login page.']);
+        }
 
         if (! Auth::user()->is_active) {
             Auth::logout();
