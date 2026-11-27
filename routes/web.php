@@ -221,6 +221,8 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::patch('marketing/leads/{lead}', [Admin\MarketingLeadController::class, 'update'])->name('marketing.leads.update');
         Route::get('marketing/popup', [Admin\MarketingPopupController::class, 'edit'])->name('marketing.popup.edit');
         Route::put('marketing/popup', [Admin\MarketingPopupController::class, 'update'])->name('marketing.popup.update');
+        Route::get('marketing/newsletter/campaigns', [Admin\NewsletterCampaignController::class, 'index'])->name('marketing.newsletter.campaigns');
+        Route::post('marketing/newsletter/campaigns', [Admin\NewsletterCampaignController::class, 'store'])->middleware('throttle:5,10')->name('marketing.newsletter.campaigns.store');
         Route::get('marketing/newsletter', [Admin\NewsletterSubscriberController::class, 'index'])->name('marketing.newsletter.index');
         Route::delete('marketing/newsletter/{subscriber}', [Admin\NewsletterSubscriberController::class, 'destroy'])->name('marketing.newsletter.destroy');
         Route::get('certificates', [Admin\CertificateController::class, 'index'])->name('certificates.index');
