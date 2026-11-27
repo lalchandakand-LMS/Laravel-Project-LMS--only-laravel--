@@ -134,28 +134,55 @@
     }
 
     function sendPendingConversions() {
-        var event = window.aecPurchaseEvent;
-        if (!event) return;
-        var transactionId = String(event.transaction_id || '');
-        if (!transactionId) return;
-        if (consent && consent.analytics && window.gtag && !window.__aecGaPurchaseSent) {
-            var gaKey = 'aec_ga_purchase_' + transactionId;
-            var gaAlreadySent = false;
-            try { gaAlreadySent = !!window.localStorage.getItem(gaKey); } catch (error) {}
-            if (!gaAlreadySent) {
-                window.gtag('event', 'purchase', event);
-                window.__aecGaPurchaseSent = true;
-                try { window.localStorage.setItem(gaKey, '1'); } catch (error) {}
+        var purchase = window.aecPurchaseEvent;
+        if (purchase) {
+            var transactionId = String(purchase.transaction_id || '');
+            if (transactionId) {
+                if (consent && consent.analytics && window.gtag && !window.__aecGaPurchaseSent) {
+                    var gaKey = 'aec_ga_purchase_' + transactionId;
+                    var gaAlreadySent = false;
+                    try { gaAlreadySent = !!window.localStorage.getItem(gaKey); } catch (error) {}
+                    if (!gaAlreadySent) {
+                        window.gtag('event', 'purchase', purchase);
+                        window.__aecGaPurchaseSent = true;
+                        try { window.localStorage.setItem(gaKey, '1'); } catch (error) {}
+                    }
+                }
+                if (consent && consent.marketing && window.fbq && !window.__aecMetaPurchaseSent) {
+                    var metaKey = 'aec_meta_purchase_' + transactionId;
+                    var metaAlreadySent = false;
+                    try { metaAlreadySent = !!window.localStorage.getItem(metaKey); } catch (error) {}
+                    if (!metaAlreadySent) {
+                        window.fbq('track', 'Purchase', { value: purchase.value, currency: purchase.currency });
+                        window.__aecMetaPurchaseSent = true;
+                        try { window.localStorage.setItem(metaKey, '1'); } catch (error) {}
+                    }
+                }
             }
         }
-        if (consent && consent.marketing && window.fbq && !window.__aecMetaPurchaseSent) {
-            var metaKey = 'aec_meta_purchase_' + transactionId;
-            var metaAlreadySent = false;
-            try { metaAlreadySent = !!window.localStorage.getItem(metaKey); } catch (error) {}
-            if (!metaAlreadySent) {
-                window.fbq('track', 'Purchase', { value: event.value, currency: event.currency });
-                window.__aecMetaPurchaseSent = true;
-                try { window.localStorage.setItem(metaKey, '1'); } catch (error) {}
+
+        var lead = window.aecLeadEvent;
+        var eventId = lead && String(lead.event_id || '');
+        if (!eventId) return;
+
+        if (consent && consent.analytics && window.gtag && !window.__aecGaLeadSent) {
+            var gaLeadKey = 'aec_ga_lead_' + eventId;
+            var gaLeadAlreadySent = false;
+            try { gaLeadAlreadySent = !!window.localStorage.getItem(gaLeadKey); } catch (error) {}
+            if (!gaLeadAlreadySent) {
+                window.gtag('event', 'generate_lead', { method: String(lead.method || 'website'), event_id: eventId });
+                window.__aecGaLeadSent = true;
+                try { window.localStorage.setItem(gaLeadKey, '1'); } catch (error) {}
+            }
+        }
+        if (consent && consent.marketing && window.fbq && !window.__aecMetaLeadSent) {
+            var metaLeadKey = 'aec_meta_lead_' + eventId;
+            var metaLeadAlreadySent = false;
+            try { metaLeadAlreadySent = !!window.localStorage.getItem(metaLeadKey); } catch (error) {}
+            if (!metaLeadAlreadySent) {
+                window.fbq('track', 'Lead', { content_name: String(lead.method || 'website') }, { eventID: eventId });
+                window.__aecMetaLeadSent = true;
+                try { window.localStorage.setItem(metaLeadKey, '1'); } catch (error) {}
             }
         }
     }
@@ -209,6 +236,7 @@
     });
     window.aecOpenCookieSettings = openPreferences;
     window.addEventListener('aec:purchase-ready', sendPendingConversions);
+    window.addEventListener('aec:lead-ready', sendPendingConversions);
 
     consent = readConsent();
     if (consent) {
