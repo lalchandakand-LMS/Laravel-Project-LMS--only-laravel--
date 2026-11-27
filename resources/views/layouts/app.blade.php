@@ -12,16 +12,19 @@
     @php($seoIndexEnabled = \App\Models\Setting::get('seo_robots_index', '1') === '1')
     @php($robotsDirective = $privateSeoRoute || !$seoIndexEnabled ? 'noindex, nofollow' : $__env->yieldContent('meta_robots', 'index, follow'))
     @php($canonicalUrl = $__env->yieldContent('canonical_url', url()->current()))
-    @php($socialImage = \App\Models\Setting::get('seo_default_image') ?: media_url(setting('logo'), asset('images/aec-logo.svg')))
+    @php($socialImage = trim($__env->yieldContent('meta_image', '')) ?: (\App\Models\Setting::get('seo_default_image') ?: media_url(setting('logo'), asset('images/aec-logo.svg'))))
+    @php($socialType = trim($__env->yieldContent('og_type', 'website')) ?: 'website')
     <meta name="robots" content="{{ $robotsDirective }}">
     <link rel="canonical" href="{{ $canonicalUrl }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ $socialType }}">
     <meta property="og:site_name" content="{{ $brandName }}">
     <meta property="og:title" content="{{ $seoTitle !== '' ? $seoTitle : trim($__env->yieldContent('title', $brandName).' — '.$brandName) }}">
     <meta property="og:description" content="{{ $brandDescription }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
     <meta property="og:image" content="{{ $socialImage }}">
+    <meta property="og:image:alt" content="{{ trim($__env->yieldContent('meta_image_alt', $seoTitle)) }}">
+    <meta name="twitter:image" content="{{ $socialImage }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $seoTitle !== '' ? $seoTitle : trim($__env->yieldContent('title', $brandName).' — '.$brandName) }}">
     <meta name="twitter:description" content="{{ $brandDescription }}">
