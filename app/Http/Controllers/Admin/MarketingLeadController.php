@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\MarketingLead;
-use App\\Services\\Sms\\MiMSmsGateway;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\MarketingLead;
+use App\Services\Sms\MiMSmsGateway;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MarketingLeadController extends Controller
 {
@@ -72,7 +72,7 @@ class MarketingLeadController extends Controller
                 // Prevent spreadsheet formula execution from untrusted lead input.
                 $values = array_map(function ($value) {
                     $value = (string) ($value ?? '');
-                    return preg_match('/^[=+@\\-\\t\\r]/', $value) ? "'".$value : $value;
+                    return preg_match('/^[=+@\-\t\r]/', $value) ? "'".$value : $value;
                 }, $values);
 
                 fputcsv($output, $values);
