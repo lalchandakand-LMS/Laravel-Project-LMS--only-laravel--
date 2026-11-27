@@ -186,7 +186,7 @@ jobs:
             --exclude='storage/framework/views/*' \
             --exclude='public/storage'
           mkdir -p package/storage/framework/cache/data package/storage/framework/sessions package/storage/framework/views package/storage/logs package/storage/app/public package/bootstrap/cache
-          printf '%s\\n' "$GITHUB_SHA" > package/RELEASE_COMMIT.txt
+          printf '%s\n' "$GITHUB_SHA" > package/RELEASE_COMMIT.txt
           (cd package && zip -qr ../aloms-lms-cpanel-package.zip .)
           unzip -t aloms-lms-cpanel-package.zip
           test -f package/vendor/autoload.php
