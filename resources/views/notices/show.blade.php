@@ -10,7 +10,10 @@
     </div>
     <h2 class="mt-4 text-2xl font-black text-slate-900">{{ $announcement->title }}</h2>
     <p class="mt-2 text-xs text-slate-500">{{ $announcement->branch?->name ?? 'All branches' }} · {{ $announcement->batch?->name ?? $announcement->course?->title ?? 'All relevant users' }}</p>
-    <div class="prose prose-slate mt-6 max-w-none text-sm leading-7">{!! \Illuminate\Support\Str::markdown($announcement->body) !!}</div>
+    <div class="prose prose-slate mt-6 max-w-none text-sm leading-7">{!! \Illuminate\Support\Str::markdown($announcement->body, [
+        'html_input' => 'strip',
+        'allow_unsafe_links' => false,
+    ]) !!}</div>
     @if($announcement->attachments->isNotEmpty())
         <section class="mt-8 border-t border-slate-200 pt-5">
             <h3 class="font-bold text-slate-900">Attachments</h3>
