@@ -214,18 +214,21 @@ class AiAgentWorkspaceTest extends TestCase
 
     public function test_student_and_guardian_can_create_and_approve_complaint_drafts(): void
     {
-        Http::fakeSequence('generativelanguage.googleapis.com/*')
-            ->push($this->geminiResponse(['message' => 'Complaint draft ready.', 'actions' => [[
-                'type' => 'create_complaint_draft',
-                'payload' => ['category' => 'class', 'subject' => 'Class schedule issue', 'body' => 'The class schedule conflicts with the published teacher announcement.'],
-            ]]]), 200)
-            ->push($this->geminiResponse(['message' => 'Complaint draft ready.', 'actions' => [[
-                'type' => 'create_complaint_draft',
-                'payload' => ['category' => 'administration', 'subject' => 'Guardian meeting request', 'body' => 'I need a meeting to discuss my child progress and attendance records.'],
-            ]]]), 200);
-
         foreach (['student', 'guardian'] as $role) {
             $user = User::factory()->create(['role' => $role, 'is_active' => true]);
+            $payload = [
+                'message' => 'Complaint draft ready.',
+                'actions' => [[
+                    'type' => 'create_complaint_draft',
+                    'payload' => [
+                        'category' => $role === 'student' ? 'class' : 'administration',
+                        'subject' => $role === 'student' ? 'Class schedule issue' : 'Guardian meeting request',
+                        'body' => 'The class schedule conflicts with the published teacher announcement and needs review.',
+                    ],
+                ]],
+            ];
+            Http::fake(['generativelanguage.googleapis.com/*' => $this->geminiResponse($payload)]);
+
             $this->actingAs($user)->post(route('ai-agent.ask'), [
                 'agent_type' => $role === 'student' ? 'student' : 'support',
                 'prompt' => 'Prepare a complaint draft.',
