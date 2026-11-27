@@ -41,9 +41,9 @@
         <p class="mt-5 text-center text-sm text-slate-600">New here?
             <a href="{{ route('register') }}" class="font-semibold text-emerald-700 hover:underline">Create a free account</a>
         </p>
-        <div class="mt-5 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-            <b>Demo:</b> admin@lms.test / password &nbsp;•&nbsp; teacher@lms.test / password &nbsp;•&nbsp; student@lms.test / password
-        </div>
+        <p class="mt-5 text-center text-xs text-slate-500">
+            Authorized staff? <a href="{{ route('admin.login') }}" class="font-semibold text-slate-700 hover:underline">Admin / Staff login</a>
+        </p>
     </div>
 </div>
 @endsection
