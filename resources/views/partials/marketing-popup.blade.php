@@ -27,17 +27,17 @@
 (function(){
     var modal=document.getElementById('aec-marketing-popup'); if(!modal)return;
     var key='aec-marketing-popup-seen', frequency=@json(\App\Models\Setting::get('marketing_popup_frequency','week'));
-    var now=Date.now(), previous=Number(localStorage.getItem(key)||0);
+    var now=Date.now(), previous=Number(localStorage.getItem(key)||0), hasErrors=@json($errors->has('name') || $errors->has('email') || $errors->has('consent'));
     var interval=frequency==='session' ? Infinity : (frequency==='day' ? 86400000 : 604800000);
-    if(frequency==='session' && sessionStorage.getItem(key)==='1')return;
-    if(frequency!=='session' && previous && now-previous<interval)return;
+    if(!hasErrors && frequency==='session' && sessionStorage.getItem(key)==='1')return;
+    if(!hasErrors && frequency!=='session' && previous && now-previous<interval)return;
     var close=function(){modal.classList.add('hidden');modal.classList.remove('flex');};
     document.getElementById('aec-popup-close').addEventListener('click',close);
     modal.addEventListener('click',function(e){if(e.target===modal)close();});
     document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
     window.setTimeout(function(){
         modal.classList.remove('hidden');modal.classList.add('flex');
-        if(frequency==='session')sessionStorage.setItem(key,'1');else localStorage.setItem(key,String(Date.now()));
+        if(!hasErrors){if(frequency==='session')sessionStorage.setItem(key,'1');else localStorage.setItem(key,String(Date.now()));}
         var first=modal.querySelector('input[name="name"]'); if(first)first.focus();
     },{{ (int) \App\Models\Setting::get('marketing_popup_delay','8') }}*1000);
 })();
