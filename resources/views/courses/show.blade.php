@@ -42,10 +42,10 @@
             </div>
 
             <div class="mt-6 flex items-center gap-3">
-                <img src="{{ $course->instructor->avatarUrl() ?? '' }}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white/20" alt="">
+                <img src="{{ $course->instructor?->avatarUrl() ?? asset('images/aec-logo.svg') }}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white/20" alt="">
                 <div>
-                    <p class="text-sm font-bold">{{ $course->instructor->name ?? "Alom's English Center" }}</p>
-                    <p class="text-xs text-slate-400">{{ $course->instructor->designation ?? 'Instructor' }}</p>
+                    <p class="text-sm font-bold">{{ $course->instructor?->name ?? "Alom's English Center" }}</p>
+                    <p class="text-xs text-slate-400">{{ $course->instructor?->designation ?? 'Instructor' }}</p>
                 </div>
             </div>
         </div>
@@ -214,9 +214,9 @@
             <ul class="mt-6 space-y-4">
                 @forelse ($reviews as $review)
                     <li class="flex gap-3">
-                        <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full" alt="">
+                        <img src="{{ $review->user?->avatarUrl() ?? asset('images/aec-logo.svg') }}" class="h-10 w-10 rounded-full" alt="">
                         <div>
-                            <p class="text-sm font-bold text-slate-900">{{ $review->user->name }}</p>
+                            <p class="text-sm font-bold text-slate-900">{{ $review->user?->name ?? 'Former student' }}</p>
                             <p class="text-xs text-amber-700">{{ str_repeat('★', $review->rating) }}</p>
                             <p class="mt-1 text-sm text-slate-600">{{ $review->comment }}</p>
                         </div>

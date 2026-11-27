@@ -268,8 +268,8 @@
                     <div class="flex items-center justify-between"><span class="text-sm tracking-wider text-amber-300">{{ str_repeat('★', $review->rating) }}<span class="text-slate-500">{{ str_repeat('★', 5 - $review->rating) }}</span></span><span class="text-3xl leading-none text-cyan-300/70">“</span></div>
                     <blockquote class="mt-2 flex-1 text-sm leading-relaxed text-slate-200">“{{ $review->comment }}”</blockquote>
                     <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
-                        <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full object-cover" alt="">
-                        <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user->name }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
+                        <img src="{{ $review->user?->avatarUrl() ?? asset('images/aec-logo.svg') }}" class="h-10 w-10 rounded-full object-cover" alt="">
+                        <div class="min-w-0"><p class="truncate text-sm font-bold text-white">{{ $review->user?->name ?? 'Former student' }}</p><p class="text-xs font-semibold text-cyan-300">@if ($review->user && $review->course && \App\Services\EnrollmentEligibility::hasCourse($review->user, $review->course)) ✓ Verified Student @else Student Review @endif</p></div>
                     </figcaption>
                 </figure>
             @endforeach

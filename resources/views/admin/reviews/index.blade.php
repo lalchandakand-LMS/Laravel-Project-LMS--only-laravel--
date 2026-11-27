@@ -5,9 +5,9 @@
 <div class="space-y-3">
     @forelse ($reviews as $review)
         <div class="flex flex-wrap items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <img src="{{ $review->user->avatarUrl() }}" class="h-10 w-10 rounded-full" alt="">
+            <img src="{{ $review->user?->avatarUrl() ?? asset('images/aec-logo.svg') }}" class="h-10 w-10 rounded-full" alt="">
             <div class="min-w-0 flex-1">
-                <p class="font-semibold text-slate-900">{{ $review->user->name }} <span class="text-xs font-normal text-slate-500">on {{ optional($review->course)->title }}</span></p>
+                <p class="font-semibold text-slate-900">{{ $review->user?->name ?? 'Former student' }} <span class="text-xs font-normal text-slate-500">on {{ optional($review->course)->title }}</span></p>
                 <p class="text-amber-700 text-sm">{{ str_repeat('★', $review->rating) }}</p>
                 <p class="mt-1 text-sm text-slate-600">{{ $review->comment }}</p>
             </div>

@@ -3,9 +3,7 @@
 A full-featured Learning Management System foundation for Alom's English Center, with courses, curriculum builder, video player, MCQ/CQ exams,
 e-books, cart and manual bKash/Nagad payment verification, certificates, reviews and role-based management. Live payment-gateway activation and production deployment remain separate release tasks.
 
-Built with **Laravel 12 + Blade + Tailwind CSS**. The compiled Vite bundle is
-already shipped in `public/build`, so it runs without `npm` (Tailwind falls back
-to the CDN if you delete that folder).
+Built with **Laravel 12 + Blade + Tailwind CSS**. The compiled Vite bundle is generated during CI/release packaging. `public/build` is intentionally ignored by Git; build it before deploying so production serves the compiled assets.
 
 ---
 
@@ -44,6 +42,10 @@ php artisan serve
 ```
 
 Open <http://127.0.0.1:8000>.
+
+### Frontend assets (required for production)
+
+`public/build` is generated output and is not committed. Before uploading a release to cPanel, run `npm ci && npm run build` in the project root, then upload the generated `public/build` directory together with the release. Do not rely on the CDN fallback for production. GitHub Actions runs the same npm build as part of CI.
 
 > **CI verification:** the current GitHub Actions run on 26 November 2026 passed
 > the full Laravel suite with 402 tests / 2,197 assertions (all passed).
@@ -191,10 +193,7 @@ students outside the manager's branch) instead of relying on seed order.
 
 ## 5. Production notes
 
-1. **Tailwind**: the production bundle (`public/build`) is included, so
-   `@vite()` is used out of the box. To restyle, edit the Blade files and run
-   `npm install && npm run build`. Delete `public/build` and the layout falls
-   back to the Tailwind CDN (`resources/views/partials/assets.blade.php`).
+1. **Tailwind/Vite**: `public/build` is generated, not stored in Git. Every production release must include the output of `npm ci && npm run build`; upload that directory to `public/build` before switching the release live. The CDN fallback in `resources/views/partials/assets.blade.php` is a development safety net, not the production asset pipeline.
 2. **Payments**: the live application currently supports manual payment submission and staff verification; it does not yet have a live bKash/Nagad provider adapter. See [Payment gateway integration contract](docs/PAYMENT_GATEWAY_INTEGRATION.md). Provider credentials, signature verification, idempotent callbacks, reconciliation and sandbox tests are required before enabling a real gateway. Do not treat a browser redirect or transaction screenshot as settlement proof.
 3. **Media**: use a CDN or S3 by changing `FILESYSTEM_DISK` and the `->store(..., 'public')`
    calls to your disk; YouTube/Vimeo URLs are already supported for videos.

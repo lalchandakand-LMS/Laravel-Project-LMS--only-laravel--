@@ -54,6 +54,8 @@ class CourseController extends Controller
 
     public function category(Category $category)
     {
+        abort_unless($category->is_active, 404);
+
         $categoryIds = $category->descendants()->pluck('id')->push($category->id)->all();
 
         return view('courses.index', [
@@ -105,6 +107,9 @@ class CourseController extends Controller
 
         DB::transaction(function () use ($request, $course) {
             $lockedCourse = Course::whereKey($course->id)->lockForUpdate()->firstOrFail();
+            $expiresAt = (int) $lockedCourse->access_duration_days > 0
+                ? now()->addDays((int) $lockedCourse->access_duration_days)
+                : null;
             $existing = Enrollment::where('user_id', $request->user()->id)
                 ->where('course_id', $lockedCourse->id)->first();
 
@@ -126,7 +131,7 @@ class CourseController extends Controller
                     'price_paid' => 0,
                     'status' => 'active',
                     'enrolled_at' => now(),
-                    'expires_at' => null,
+                    'expires_at' => $expiresAt,
                 ]);
             } else {
                 Enrollment::create([
@@ -135,6 +140,7 @@ class CourseController extends Controller
                     'price_paid' => 0,
                     'status' => 'active',
                     'enrolled_at' => now(),
+                    'expires_at' => $expiresAt,
                 ]);
             }
         });

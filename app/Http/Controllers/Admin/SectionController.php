@@ -34,22 +34,24 @@ class SectionController extends Controller
 
     public function edit(Section $section)
     {
-        $this->authorizeCourse($section->course);
+        $course = $section->course;
+        $this->authorizeCourse($course);
         return view('admin.sections.form', [
             'section' => $section,
-            'course' => $section->course,
+            'course' => $course,
         ]);
     }
 
     public function update(Request $request, Section $section)
     {
-        $this->authorizeCourse($section->course);
+        $course = $section->course;
+        $this->authorizeCourse($course);
         $section->update($request->validate([
             'title' => 'required|string|max:180',
             'position' => 'nullable|integer|min:0',
         ]));
 
-        return redirect()->route('admin.courses.edit', $section->course_id)->with('success', 'Section updated.');
+        return redirect()->route('admin.courses.edit', $course)->with('success', 'Section updated.');
     }
 
     public function reorder(Request $request, Course $course)
@@ -73,16 +75,18 @@ class SectionController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function authorizeCourse(Course $course): void
+    private function authorizeCourse(?Course $course): void
     {
+        abort_unless($course, 404);
+
         $user = auth()->user();
         abort_unless($user && ($user->isAdmin() || (int) $course->instructor_id === (int) $user->id), 403);
     }
 
     public function destroy(Section $section)
     {
-        $this->authorizeCourse($section->course);
         $course = $section->course;
+        $this->authorizeCourse($course);
 
         // Keep lesson records and learning history intact: move lessons to the
         // course-level curriculum before the section enters the recycle bin.

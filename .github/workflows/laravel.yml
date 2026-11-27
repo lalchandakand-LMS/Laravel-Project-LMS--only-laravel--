@@ -61,6 +61,13 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+      - name: Upload production frontend bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-production-build
+          path: public/build/
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Run test suite
         env:

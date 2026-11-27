@@ -128,7 +128,13 @@ class ProductController extends Controller
             ]);
         }
 
-        $data['slug'] = filled($data['slug'] ?? null) ? Str::slug($data['slug']) : Str::slug($data['title']);
+        // Leave an empty slug empty so Product's creating hook can generate a
+        // collision-safe title slug (including soft-deleted products).
+        if (filled($data['slug'] ?? null)) {
+            $data['slug'] = Str::slug($data['slug']);
+        } else {
+            $data['slug'] = null;
+        }
 
         return $data;
     }

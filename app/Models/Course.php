@@ -163,9 +163,13 @@ class Course extends Model
 
     public function nextLessonFor(User $user): ?Lesson
     {
-        return $this->lessons()
-            ->whereNotIn('id', LessonProgress::where('user_id', $user->id)
-                ->whereNotNull('completed_at')->pluck('lesson_id'))
-            ->orderBy('position')->first() ?? $this->lessons()->first();
+        $publishedLessons = fn () => $this->lessons()->where('is_published', true);
+        $completedLessonIds = LessonProgress::where('user_id', $user->id)
+            ->whereNotNull('completed_at')->pluck('lesson_id');
+
+        return $publishedLessons()
+            ->whereNotIn('id', $completedLessonIds)
+            ->orderBy('position')->first()
+            ?? $publishedLessons()->orderBy('position')->first();
     }
 }
