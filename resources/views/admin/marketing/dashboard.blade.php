@@ -11,8 +11,17 @@
         </div>
     </div>
 
+    <form method="GET" action="{{ route('admin.marketing.dashboard') }}" class="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
+        <div><label for="from" class="mb-1 block text-xs font-semibold text-slate-600">From</label><input id="from" type="date" name="from" value="{{ request('from', $from->toDateString()) }}" required class="rounded-lg border-slate-300 text-sm"></div>
+        <div><label for="to" class="mb-1 block text-xs font-semibold text-slate-600">To</label><input id="to" type="date" name="to" value="{{ request('to', $to->toDateString()) }}" required class="rounded-lg border-slate-300 text-sm"></div>
+        <button class="rounded-lg bg-orange-600 px-4 py-2.5 text-xs font-bold text-white">Apply period</button>
+        <a href="{{ route('admin.marketing.dashboard') }}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700">Last 30 days</a>
+        @error('from')<p class="w-full text-xs text-rose-600">{{ $message }}</p>@enderror
+        @error('to')<p class="w-full text-xs text-rose-600">{{ $message }}</p>@enderror
+    </form>
+
     <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Total captured leads</p><p class="mt-2 text-3xl font-black text-slate-900">{{ number_format($totalLeads) }}</p><p class="mt-1 text-xs text-slate-500">All non-archived website inquiries</p></article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Total captured leads</p><p class="mt-2 text-3xl font-black text-slate-900">{{ number_format($totalLeads) }}</p><p class="mt-1 text-xs text-slate-500">Website inquiries in selected period</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">New leads</p><p class="mt-2 text-3xl font-black text-blue-700">{{ number_format($newLeads) }}</p><p class="mt-1 text-xs text-slate-500">Awaiting first follow-up</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Converted leads</p><p class="mt-2 text-3xl font-black text-emerald-700">{{ number_format($convertedLeads) }}</p><p class="mt-1 text-xs text-slate-500">Marked converted by an admin</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Lead conversion rate</p><p class="mt-2 text-3xl font-black text-orange-700">{{ number_format($conversionRate, 1) }}%</p><p class="mt-1 text-xs text-slate-500">Converted leads ÷ captured leads</p></article>
