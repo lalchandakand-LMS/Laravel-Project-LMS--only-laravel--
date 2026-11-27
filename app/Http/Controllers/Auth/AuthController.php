@@ -73,19 +73,17 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        // Validate credentials without authenticating a session or rotating remember tokens.
+        if (! Auth::validate($credentials)) {
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors(['email' => 'These credentials do not match our records.'])
                 ->onlyInput('email');
         }
 
-        $user = Auth::user();
+        $user = User::where('email', $credentials['email'])->first();
 
-        if (! $user->isAdmin() || ! $user->is_active) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        if (! $user || ! $user->isAdmin() || ! $user->is_active) {
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors(['email' => 'You are not authorized to access the Admin portal.'])
