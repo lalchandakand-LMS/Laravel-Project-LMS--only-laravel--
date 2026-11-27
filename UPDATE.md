@@ -34,7 +34,7 @@ touch database/database.sqlite
 #   DB_USERNAME=lms_user
 #   DB_PASSWORD=secret
 
-php artisan migrate --force     # production schema only; demo seeders are blocked in production
+php artisan migrate --seed      # local/demo install only; production uses migrate --force and lms:admin:create
 php artisan storage:link        # thumbnails, PDFs, avatars
 php artisan serve               # http://127.0.0.1:8000
 ```
