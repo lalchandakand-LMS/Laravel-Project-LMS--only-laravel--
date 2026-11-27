@@ -19,7 +19,7 @@ class DispatchNewsletterCampaign implements ShouldQueue, ShouldBeUnique
 
     public int $tries = 3;
     public array $backoff = [30, 120, 300];
-    public int $timeout = 120;
+    public int $timeout = 60;
     public int $uniqueFor = 3600;
 
     public function __construct(public readonly int $campaignId)
