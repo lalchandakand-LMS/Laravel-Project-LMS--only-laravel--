@@ -202,7 +202,8 @@ students outside the manager's branch) instead of relying on seed order.
 6. Seed data uses Unsplash course photos, Unsplash slider images and
    `ui-avatars.com` avatars; upload real thumbnails in the admin panel to
    replace them.
-7. Routes: run `php artisan route:list` for the current named route map; route count changes as modules evolve.
+7. **Cron & queue**: configure `schedule:run` and `queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45` every minute, plus daily `backup.sh`. Use the exact cPanel PHP binary and project path; see the cPanel checklist.
+8. Routes: run `php artisan route:list` for the current named route map; route count changes as modules evolve.
 
 ## 6. Recycle Bin & safe system upgrades
 
