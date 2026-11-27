@@ -107,4 +107,41 @@ class SystemMaintenanceTest extends TestCase
         }
     }
 
+    public function test_admin_can_list_and_download_private_media_restore_safety_archives(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $directory = storage_path('app/private/system-backups');
+        if (! is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
+
+        $name = 'aec-media-private-20261127-120000.tar.gz';
+        $path = $directory.'/'.$name;
+        file_put_contents($path, 'test media safety archive');
+
+        try {
+            $this->actingAs($admin)
+                ->get(route('admin.system.backups.index'))
+                ->assertOk()
+                ->assertSee($name)
+                ->assertSee('Media safety backup');
+
+            $this->actingAs($admin)
+                ->get(route('admin.system.backups.download', ['name' => $name]))
+                ->assertOk()
+                ->assertDownload($name);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_media_safety_backup_download_rejects_unexpected_names(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get(route('admin.system.backups.download', ['name' => '../aec-media-private-20261127-120000.tar.gz']))
+            ->assertNotFound();
+    }
+
 }
