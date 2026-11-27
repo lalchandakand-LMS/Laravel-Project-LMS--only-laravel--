@@ -101,6 +101,7 @@ class AuthController extends Controller
             'code_hash' => Hash::make($code),
             'expires_at' => now()->addMinutes(5)->timestamp,
             'remember' => $request->boolean('remember'),
+            'resend_count' => 0,
         ]);
 
         Auth::logout();
@@ -177,7 +178,15 @@ class AuthController extends Controller
     public function resendAdminLoginOtp(Request $request)
     {
         $challenge = $request->session()->get('admin_login_challenge');
-        $user = $challenge ? User::find($challenge['user_id'] ?? null) : null;
+
+        if (! $challenge || ($challenge['expires_at'] ?? 0) < now()->timestamp || ($challenge['resend_count'] ?? 0) >= 3) {
+            $request->session()->forget('admin_login_challenge');
+
+            return redirect()->route('admin.login')
+                ->withErrors(['email' => 'Your sign-in challenge expired. Please sign in again.']);
+        }
+
+        $user = User::find($challenge['user_id'] ?? null);
 
         if (! $user || ! $user->isAdmin() || ! $user->is_active) {
             $request->session()->forget('admin_login_challenge');
@@ -197,6 +206,7 @@ class AuthController extends Controller
         $code = (string) random_int(100000, 999999);
         $challenge['code_hash'] = Hash::make($code);
         $challenge['expires_at'] = now()->addMinutes(5)->timestamp;
+        $challenge['resend_count'] = ($challenge['resend_count'] ?? 0) + 1;
         $request->session()->put('admin_login_challenge', $challenge);
         $user->notify(new AdminLoginOtpNotification($code));
 
