@@ -161,7 +161,12 @@ class SystemBackupController extends Controller
             ->map(fn ($path) => ['name' => basename($path), 'size' => filesize($path), 'date' => filemtime($path)])
             ->sortByDesc('date')->values();
 
-        return view('admin.system.backups', compact('files'));
+        $mediaFiles = collect(glob(base_path('storage/backups/*')) ?: [])
+            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^(uploads|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz$/', basename($path)))
+            ->map(fn ($path) => ['name' => basename($path), 'kind' => str_starts_with(basename($path), 'uploads-') ? 'Public uploads' : 'Private uploads', 'size' => filesize($path), 'date' => filemtime($path)])
+            ->sortByDesc('date')->values();
+
+        return view('admin.system.backups', compact('files', 'mediaFiles'));
     }
 
     public function create()
@@ -397,9 +402,9 @@ class SystemBackupController extends Controller
         }
 
         foreach ($entries as $entry) {
-            $path = ltrim($entry, './');
-            $parts = explode('/', $path);
-            if ($path === '' || str_starts_with($entry, '/') || str_contains($entry, '\\') ||
+            $path = str_starts_with($entry, './') ? substr($entry, 2) : $entry;
+            $parts = explode('/', rtrim($path, '/'));
+            if ($path === '' || str_starts_with($path, '/') || str_contains($path, '\\\\') ||
                 in_array('..', $parts, true) || $parts[0] !== $expectedRoot) {
                 throw new \RuntimeException('The archive contains an unsafe or unexpected path.');
             }
