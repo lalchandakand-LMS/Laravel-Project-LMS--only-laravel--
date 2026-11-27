@@ -81,7 +81,7 @@ class AdminAuthenticationTest extends TestCase
 
     public function test_public_registration_cannot_assign_a_privileged_role(): void
     {
-        Mail::fake();
+        Notification::fake();
 
         $this->post(route('register'), [
             'name' => 'New Learner',
