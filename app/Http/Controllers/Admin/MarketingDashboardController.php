@@ -15,7 +15,7 @@ class MarketingDashboardController extends Controller
     public function index(Request $request)
     {
         $validated = $request->validate([
-            'from' => ['nullable', 'date_format:Y-m-d'],
+            'from' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
@@ -26,9 +26,9 @@ class MarketingDashboardController extends Controller
             ? now()->parse($validated['to'])->endOfDay()
             : now()->endOfDay();
 
-        if ($from->diffInDays($to) > 90) {
+        if ($from->diffInDays($to) > 30) {
             throw ValidationException::withMessages([
-                'to' => 'Choose a reporting period of 90 days or less.',
+                'to' => 'Choose a reporting period of 31 days or less.',
             ]);
         }
 
