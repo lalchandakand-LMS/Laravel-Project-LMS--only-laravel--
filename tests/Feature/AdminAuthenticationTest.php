@@ -348,4 +348,36 @@ class AdminAuthenticationTest extends TestCase
         ]);
     }
 
+
+    public function test_admin_password_check_before_otp_does_not_authenticate_or_rotate_remember_token(): void
+    {
+        Notification::fake();
+
+        $admin = User::factory()->create([
+            'email' => 'admin-pre-otp@example.test',
+            'password' => Hash::make('Strong-password-123'),
+            'remember_token' => 'existing-remember-token',
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        \\Illuminate\\Support\\Facades\\Event::fake([
+            \\Illuminate\\Auth\\Events\\Login::class,
+        ]);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $admin->email,
+            'password' => 'Strong-password-123',
+            'remember' => '1',
+        ])->assertRedirect(route('admin.login.verify'));
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'remember_token' => 'existing-remember-token',
+        ]);
+        \\Illuminate\\Support\\Facades\\Event::assertNotDispatched(\\Illuminate\\Auth\\Events\\Login::class);
+        Notification::assertSentTo($admin, AdminLoginOtpNotification::class);
+    }
+
 }
