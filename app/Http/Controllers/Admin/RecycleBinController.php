@@ -25,6 +25,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RecycleBinController extends Controller
 {
@@ -208,6 +209,9 @@ class RecycleBinController extends Controller
                 ['exam_attempts', 'user_id'], ['certificates', 'user_id'], ['ebook_purchases', 'user_id'],
                 ['reviews', 'user_id'], ['courses', 'instructor_id'], ['branches', 'manager_id'],
                 ['guardian_students', 'guardian_id'], ['guardian_students', 'student_id'],
+                ['complaints', 'user_id'], ['complaint_replies', 'user_id'],
+                ['library_loans', 'student_id'], ['ai_agent_runs', 'user_id'],
+                ['ai_action_proposals', 'user_id'], ['staff_profiles', 'user_id'],
             ],
             'courses' => [
                 ['sections', 'course_id'], ['lessons', 'course_id'], ['enrollments', 'course_id'],
@@ -231,6 +235,13 @@ class RecycleBinController extends Controller
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };
+
+        // Payroll rows are linked through staff_profiles rather than directly to users.
+        if (Schema::hasTable('staff_payrolls') && Schema::hasTable('staff_profiles') &&
+            DB::table('staff_payrolls')->join('staff_profiles', 'staff_profiles.id', '=', 'staff_payrolls.staff_profile_id')
+                ->where('staff_profiles.user_id', $id)->exists()) {
+            return true;
+        }
 
         foreach ($checks as [$table, $column]) {
             if (\Illuminate\Support\Facades\Schema::hasTable($table)) {

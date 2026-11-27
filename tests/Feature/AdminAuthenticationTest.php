@@ -323,6 +323,46 @@ class AdminAuthenticationTest extends TestCase
         (new DatabaseSeeder())->run();
     }
 
+
+    public function test_inactive_admin_can_be_deleted_when_another_active_admin_exists(): void
+    {
+        $activeAdmin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $inactiveAdmin = User::factory()->create(['role' => 'admin', 'is_active' => false]);
+
+        $this->actingAs($activeAdmin)
+            ->delete(route('admin.users.destroy', $inactiveAdmin))
+            ->assertRedirect(route('admin.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('users', ['id' => $inactiveAdmin->id]);
+        $this->assertDatabaseHas('users', ['id' => $activeAdmin->id, 'deleted_at' => null, 'is_active' => true]);
+    }
+
+    public function test_admin_password_validation_before_otp_does_not_rotate_remember_token(): void
+    {
+        Notification::fake();
+        $rememberToken = 'existing-admin-remember-token';
+        $admin = User::factory()->create([
+            'email' => 'remember-admin@example.test',
+            'password' => Hash::make('Strong-password-123'),
+            'remember_token' => $rememberToken,
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $admin->email,
+            'password' => 'Strong-password-123',
+            'remember' => '1',
+        ])->assertRedirect(route('admin.login.verify'));
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'remember_token' => $rememberToken,
+        ]);
+    }
+
     public function test_admin_cannot_remove_own_admin_access_from_user_management(): void
     {
         $admin = User::factory()->create([

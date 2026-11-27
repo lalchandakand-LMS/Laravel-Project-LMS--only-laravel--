@@ -69,6 +69,22 @@ class SystemMediaRestoreTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame('restored media', file_get_contents($this->destination));
+
+        $safetyArchives = array_values(array_diff(
+            glob(storage_path('app/private/system-backups/aec-media-public-*.tar.gz')) ?: [],
+            $this->safetyFilesBefore
+        ));
+        $this->assertCount(1, $safetyArchives);
+        $safetyName = basename($safetyArchives[0]);
+
+        $this->get(route('admin.system.backups.index'))
+            ->assertOk()
+            ->assertSee($safetyName);
+
+        $this->get(route('admin.system.backups.download', ['name' => $safetyName]))
+            ->assertOk()
+            ->assertHeader('content-disposition');
+
         @unlink($archive);
     }
 

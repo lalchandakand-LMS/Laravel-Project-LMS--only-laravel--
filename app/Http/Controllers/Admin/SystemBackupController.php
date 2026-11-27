@@ -166,7 +166,12 @@ class SystemBackupController extends Controller
             ->map(fn ($path) => ['name' => basename($path), 'kind' => str_starts_with(basename($path), 'uploads-') ? 'Public uploads' : 'Private uploads', 'size' => filesize($path), 'date' => filemtime($path)])
             ->sortByDesc('date')->values();
 
-        return view('admin.system.backups', compact('files', 'mediaFiles'));
+        $safetyMediaFiles = collect(glob($this->directory().'/aec-media-*.tar.gz') ?: [])
+            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^aec-media-(public|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz$/', basename($path)))
+            ->map(fn ($path) => ['name' => basename($path), 'kind' => str_contains(basename($path), '-public-') ? 'Public media safety backup' : 'Private media safety backup', 'size' => filesize($path), 'date' => filemtime($path)])
+            ->sortByDesc('date')->values();
+
+        return view('admin.system.backups', compact('files', 'mediaFiles', 'safetyMediaFiles'));
     }
 
     public function create()
@@ -206,7 +211,10 @@ class SystemBackupController extends Controller
     public function download(string $name)
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
-        abort_unless(basename($name) === $name && preg_match('/^aec-(mysql|sqlite)-[0-9]{8}-[0-9]{6}\.(sql|sqlite)$/', $name), 404);
+        abort_unless(basename($name) === $name && (
+            preg_match('/^aec-(mysql|sqlite)-[0-9]{8}-[0-9]{6}\.(sql|sqlite)$/', $name) ||
+            preg_match('/^aec-media-(public|private)-[0-9]{8}-[0-9]{6}\.tar\.gz$/', $name)
+        ), 404);
         $path = $this->directory().'/'.$name;
         abort_unless(is_file($path), 404);
 

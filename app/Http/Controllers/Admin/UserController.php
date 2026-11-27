@@ -113,7 +113,7 @@ class UserController extends Controller
         if ($user->is(auth()->user())) {
             return back()->with('error', 'You cannot delete your own account while signed in.');
         }
-        if ($user->isAdmin() && User::where('role', 'admin')->where('is_active', true)->count() <= 1) {
+        if ($user->isAdmin() && $user->is_active && User::where('role', 'admin')->where('is_active', true)->count() <= 1) {
             return back()->with('error', 'The last active administrator cannot be deleted.');
         }
         $user->delete();

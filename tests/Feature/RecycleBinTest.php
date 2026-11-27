@@ -84,6 +84,101 @@ class RecycleBinTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $student->id, 'deleted_at' => null]);
     }
 
+
+    public function test_user_permanent_delete_is_blocked_when_complaint_library_ai_or_staff_history_exists(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $user = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $now = now();
+
+        $complaintId = DB::table('complaints')->insertGetId([
+            'tracking_code' => 'CMP-RECYCLE-'.strtoupper(substr(uniqid(), -8)),
+            'user_id' => $user->id,
+            'category' => 'administration',
+            'subject' => 'Retain complaint history',
+            'body' => 'This complaint must remain attached to the account.',
+            'priority' => 'normal',
+            'status' => 'submitted',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('complaint_replies')->insert([
+            'complaint_id' => $complaintId,
+            'user_id' => $user->id,
+            'body' => 'Retain reply history.',
+            'is_internal' => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $bookId = DB::table('library_books')->insertGetId([
+            'title' => 'Protected library history',
+            'author' => 'Test Author',
+            'total_copies' => 1,
+            'available_copies' => 1,
+            'is_active' => true,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('library_loans')->insert([
+            'book_id' => $bookId,
+            'student_id' => $user->id,
+            'status' => 'returned',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $runId = DB::table('ai_agent_runs')->insertGetId([
+            'user_id' => $user->id,
+            'agent_type' => 'support',
+            'prompt' => 'Retain AI audit history.',
+            'status' => 'completed',
+            'provider' => 'gemini',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('ai_action_proposals')->insert([
+            'ai_agent_run_id' => $runId,
+            'user_id' => $user->id,
+            'action_type' => 'create_announcement_draft',
+            'payload' => json_encode(['title' => 'Retain proposal']),
+            'status' => 'pending',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $staffProfileId = DB::table('staff_profiles')->insertGetId([
+            'user_id' => $user->id,
+            'employment_status' => 'inactive',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('staff_payrolls')->insert([
+            'staff_profile_id' => $staffProfileId,
+            'payroll_month' => now()->format('Y-m'),
+            'basic_salary' => 10000,
+            'net_salary' => 10000,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $user->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $user->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('complaints', ['id' => $complaintId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('complaint_replies', ['complaint_id' => $complaintId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('library_loans', ['student_id' => $user->id, 'book_id' => $bookId]);
+        $this->assertDatabaseHas('ai_agent_runs', ['id' => $runId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('ai_action_proposals', ['user_id' => $user->id]);
+        $this->assertDatabaseHas('staff_profiles', ['id' => $staffProfileId, 'user_id' => $user->id]);
+        $this->assertDatabaseHas('staff_payrolls', ['staff_profile_id' => $staffProfileId]);
+    }
+
     public function test_permanent_delete_is_blocked_when_course_has_enrolment_history(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
