@@ -34,7 +34,7 @@ class GoogleAnalyticsSearchConsoleIntegrationTest extends TestCase
         $this->assertStringContainsString('accounts.google.com/o/oauth2/v2/auth', $response->headers->get('Location'));
         $this->assertStringContainsString('webmasters.readonly', $response->headers->get('Location'));
         $this->assertStringContainsString('analytics.readonly', $response->headers->get('Location'));
-        $this->assertSessionHas('google_oauth_state');
+        $response->assertSessionHas('google_oauth_state');
     }
 
     public function test_oauth_callback_rejects_invalid_state(): void
