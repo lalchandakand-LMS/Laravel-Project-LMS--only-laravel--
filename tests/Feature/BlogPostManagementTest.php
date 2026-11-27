@@ -129,13 +129,15 @@ class BlogPostManagementTest extends TestCase
             ->assertDontSee('Private Sitemap Draft');
     }
 
-    public function test_robots_file_advertises_the_public_sitemap(): void
+    public function test_dynamic_robots_route_advertises_the_public_sitemap(): void
     {
-        $robots = file_get_contents(public_path('robots.txt'));
-
-        $this->assertIsString($robots);
-        $this->assertStringContainsString('User-agent: *', $robots);
-        $this->assertStringContainsString('Sitemap: https://alomsenglishcenter.com/sitemap.xml', $robots);
+        $this->get(route('robots'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
+            ->assertSee('User-agent: *')
+            ->assertSee('Disallow: /admin')
+            ->assertSee('Disallow: /checkout')
+            ->assertSee('Sitemap: '.route('sitemap'));
     }
 
     public function test_public_blog_only_lists_published_posts_and_instructors_cannot_manage_posts(): void
