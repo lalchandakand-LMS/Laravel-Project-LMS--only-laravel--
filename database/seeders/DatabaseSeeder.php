@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \LogicException('The demo DatabaseSeeder is disabled in production because it creates accounts with public demo credentials. Run only explicitly reviewed production-specific seeders.');
+        }
+
         /* ---------------- Users ---------------- */
         $admin = User::create([
             'name' => "Alom's English Center Admin", 'email' => 'admin@lms.test', 'password' => Hash::make('password'),
