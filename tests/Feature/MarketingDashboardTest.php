@@ -93,6 +93,42 @@ class MarketingDashboardTest extends TestCase
             ->assertSee('google');
     }
 
+    public function test_dashboard_date_filter_limits_lead_metrics_and_rejects_long_ranges(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        MarketingLead::create([
+            'name' => 'Recent lead',
+            'email' => 'recent-period@example.test',
+            'message' => 'Recent',
+            'status' => 'new',
+            'created_at' => now()->subDays(3),
+        ]);
+        MarketingLead::create([
+            'name' => 'Old lead',
+            'email' => 'old-period@example.test',
+            'message' => 'Old',
+            'status' => 'new',
+            'created_at' => now()->subDays(40),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.marketing.dashboard', [
+                'from' => now()->subDays(7)->toDateString(),
+                'to' => now()->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertSee('Recent lead')
+            ->assertSee('Total captured leads');
+
+        $this->actingAs($admin)
+            ->get(route('admin.marketing.dashboard', [
+                'from' => now()->subDays(45)->toDateString(),
+                'to' => now()->toDateString(),
+            ]))
+            ->assertSessionHasErrors('to');
+    }
+
     public function test_non_admin_cannot_view_marketing_dashboard(): void
     {
         $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
