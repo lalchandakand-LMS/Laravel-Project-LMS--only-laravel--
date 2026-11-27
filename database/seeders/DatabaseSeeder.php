@@ -25,8 +25,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        if (app()->isProduction()) {
-            throw new \LogicException('The demo DatabaseSeeder is disabled in production because it creates accounts with public demo credentials. Run only explicitly reviewed production-specific seeders.');
+        if (app()->environment('production')) {
+            throw new \RuntimeException('Demo seeding is disabled in production. Run php artisan lms:admin:create to create the first production administrator.');
         }
 
         /* ---------------- Users ---------------- */
