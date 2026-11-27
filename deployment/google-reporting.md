@@ -21,7 +21,7 @@ Set these values in the hosting account's environment configuration:
 ```dotenv
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-GOOGLE_REDIRECT_URI=https://alomsenglishcenter.com/admin/seo/google/callback
+GOOGLE_REPORTING_REDIRECT_URI=https://alomsenglishcenter.com/admin/seo/google/callback
 ```
 
 Keep the existing `APP_KEY` stable and private. The Google refresh token is encrypted with Laravel Crypt before it is stored in the settings table.
