@@ -10,7 +10,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withCommands([\App\Console\Commands\SystemBackupCommand::class, \App\Console\Commands\RecycleBinPruneCommand::class])
+    ->withCommands([\App\Console\Commands\SystemBackupCommand::class, \App\Console\Commands\RecycleBinPruneCommand::class, \App\Console\Commands\CreateProductionAdminCommand::class])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\HandleSeoRedirects::class);
         $middleware->web(append: [\App\Http\Middleware\CaptureMarketingAttribution::class, \App\Http\Middleware\RecordActivity::class]);
