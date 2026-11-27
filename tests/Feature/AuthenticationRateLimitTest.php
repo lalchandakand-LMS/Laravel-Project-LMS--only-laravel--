@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -25,6 +26,33 @@ class AuthenticationRateLimitTest extends TestCase
     private function throttleKey(string $email): string
     {
         return Str::transliterate(Str::lower($email).'|127.0.0.1');
+    }
+
+    public function test_public_registration_is_throttled_after_five_signups_from_the_same_ip(): void
+    {
+        Notification::fake();
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->post(route('register'), [
+                'name' => 'New Learner '.$attempt,
+                'email' => 'new-learner-'.$attempt.'@example.test',
+                'phone' => '01700000000',
+                'password' => 'Strong-password-123',
+                'password_confirmation' => 'Strong-password-123',
+            ])->assertRedirect(route('verification.notice'));
+
+            $this->post(route('logout'))->assertRedirect(route('home'));
+        }
+
+        $this->post(route('register'), [
+            'name' => 'Rate Limited Learner',
+            'email' => 'rate-limited-learner@example.test',
+            'phone' => '01700000000',
+            'password' => 'Strong-password-123',
+            'password_confirmation' => 'Strong-password-123',
+        ])->assertStatus(429);
+
+        $this->assertDatabaseCount('users', 5);
     }
 
     public function test_password_login_is_throttled_after_five_failed_attempts_for_the_same_email_and_ip(): void
@@ -98,3 +126,4 @@ class AuthenticationRateLimitTest extends TestCase
         $this->assertAuthenticatedAs($first);
     }
 }
+
