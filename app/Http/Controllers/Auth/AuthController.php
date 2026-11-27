@@ -83,6 +83,8 @@ class AuthController extends Controller
 
         if (! $user->isAdmin() || ! $user->is_active) {
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors(['email' => 'You are not authorized to access the Admin portal.'])
@@ -139,6 +141,9 @@ class AuthController extends Controller
 
         if (! Auth::user()->is_active) {
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return back()->withErrors(['email' => 'Your account has been disabled.']);
         }
 
