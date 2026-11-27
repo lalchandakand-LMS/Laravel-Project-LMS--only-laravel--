@@ -73,14 +73,16 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        // Validate credentials without creating an authenticated session or
+        // rotating the remember token. Authentication happens only after OTP.
+        if (! Auth::validate($credentials)) {
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors(['email' => 'These credentials do not match our records.'])
                 ->onlyInput('email');
         }
 
-        $user = Auth::user();
+        $user = User::where('email', $credentials['email'])->first();
 
         if (! $user->isAdmin() || ! $user->is_active) {
             Auth::logout();
