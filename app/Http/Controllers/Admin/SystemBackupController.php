@@ -161,7 +161,12 @@ class SystemBackupController extends Controller
             ->map(fn ($path) => ['name' => basename($path), 'size' => filesize($path), 'date' => filemtime($path)])
             ->sortByDesc('date')->values();
 
-        return view('admin.system.backups', compact('files'));
+        $mediaFiles = collect(glob(base_path('storage/backups/*')) ?: [])
+            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^(uploads|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz$/', basename($path)))
+            ->map(fn ($path) => ['name' => basename($path), 'kind' => str_starts_with(basename($path), 'uploads-') ? 'Public uploads' : 'Private uploads', 'size' => filesize($path), 'date' => filemtime($path)])
+            ->sortByDesc('date')->values();
+
+        return view('admin.system.backups', compact('files', 'mediaFiles'));
     }
 
     public function create()
@@ -311,4 +316,181 @@ class SystemBackupController extends Controller
 
         return back()->with('success', 'Database restored and verified. Pre-restore safety backup: '.$safetyName);
     }
+
+    /**
+     * Restore one of the media archives created by backup.sh.
+     *
+     * Archives are validated before extraction: only regular files/directories
+     * under the expected public/ or private/ prefix are accepted. Symlinks,
+     * hard links, absolute paths and parent traversal are rejected.
+     */
+    public function restoreMedia(Request $request)
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'regex:/^(uploads|private)-[0-9]{8}-[0-9]{6}\.tar\.gz$/'],
+            'confirmation' => ['required', 'in:RESTORE MEDIA'],
+        ]);
+
+        $name = $data['name'];
+        $source = base_path('storage/backups/'.$name);
+        abort_unless(is_file($source) && ! is_link($source), 404);
+
+        $kind = str_starts_with($name, 'uploads-') ? 'public' : 'private';
+        $storageRoot = storage_path('app');
+        $target = $storageRoot.'/'.$kind;
+        $stamp = now()->format('Ymd-His');
+        $safetyName = 'aec-media-'.$kind.'-'.$stamp.'.tar.gz';
+        $safetyPath = $this->directory().'/'.$safetyName;
+        $temporary = $this->directory().'/.media-restore-'.Str::random(12);
+        $stagedRoot = $temporary.'/'.$kind;
+
+        try {
+            $this->validateMediaArchive($source, $kind);
+
+            if (! is_dir($target) && ! mkdir($target, 0750, true) && ! is_dir($target)) {
+                throw new \RuntimeException('Could not prepare the media destination directory.');
+            }
+
+            // Keep a private rollback archive before changing any live media.
+            $tar = new Process(
+                ['tar', '--exclude=private/system-backups', '-czf', $safetyPath, '-C', $storageRoot, $kind],
+                base_path()
+            );
+            $tar->setTimeout(900);
+            $tar->run();
+            if (! $tar->isSuccessful() || ! is_file($safetyPath) || filesize($safetyPath) === 0) {
+                throw new \RuntimeException('Could not create a pre-restore media safety backup.');
+            }
+            chmod($safetyPath, 0600);
+
+            if (! mkdir($temporary, 0700, true) && ! is_dir($temporary)) {
+                throw new \RuntimeException('Could not create a temporary restore directory.');
+            }
+
+            $extract = new Process(
+                ['tar', '--no-same-owner', '--no-same-permissions', '-xzf', $source, '-C', $temporary],
+                base_path()
+            );
+            $extract->setTimeout(900);
+            $extract->run();
+            if (! $extract->isSuccessful() || ! is_dir($stagedRoot)) {
+                throw new \RuntimeException('The media archive could not be extracted.');
+            }
+
+            $this->copyRestoredMedia($stagedRoot, $target, $kind === 'private');
+            return back()->with('success', ucfirst($kind).' media restored from '.$name.'. Existing matching paths were overwritten; unrelated files were kept. Safety backup: '.$safetyName);
+        } catch (Throwable $exception) {
+            report($exception);
+            return back()->with('error', 'Media restore failed. No archive contents were accepted unless validation completed. Check server logs before retrying.');
+        } finally {
+            if (is_dir($temporary)) {
+                $this->removeRestoreDirectory($temporary);
+            }
+        }
+    }
+
+    private function validateMediaArchive(string $archive, string $expectedRoot): void
+    {
+        $listing = new Process(['tar', '-tzf', $archive], base_path());
+        $listing->setTimeout(120);
+        $listing->run();
+        if (! $listing->isSuccessful()) {
+            throw new \RuntimeException('The selected media archive is damaged or unreadable.');
+        }
+
+        $entries = preg_split('/\r?\n/', trim($listing->getOutput())) ?: [];
+        if ($entries === [] || count($entries) > 100000) {
+            throw new \RuntimeException('The media archive is empty or contains too many entries.');
+        }
+
+        foreach ($entries as $entry) {
+            $path = str_starts_with($entry, './') ? substr($entry, 2) : $entry;
+            $parts = explode('/', rtrim($path, '/'));
+            if ($path === '' || preg_match('/[\x00-\x1F\x7F]/', $path) || str_starts_with($path, '/') || str_contains($path, chr(92)) ||
+                in_array('..', $parts, true) || $parts[0] !== $expectedRoot) {
+                throw new \RuntimeException('The archive contains an unsafe or unexpected path.');
+            }
+        }
+
+        // Reject symbolic and hard links before extraction; tar -tv starts
+        // regular files with "-" and directories with "d".
+        $verbose = new Process(['tar', '-tvzf', $archive], base_path());
+        $verbose->setTimeout(120);
+        $verbose->run();
+        if (! $verbose->isSuccessful()) {
+            throw new \RuntimeException('Could not inspect media archive entries.');
+        }
+        foreach (preg_split('/\r?\n/', trim($verbose->getOutput())) ?: [] as $line) {
+            if ($line !== '' && ! in_array($line[0], ['-', 'd'], true)) {
+                throw new \RuntimeException('Links and special files are not allowed in media backups.');
+            }
+        }
+    }
+
+    private function copyRestoredMedia(string $source, string $target, bool $preserveSystemBackups): void
+    {
+        if (is_link($target)) {
+            throw new \RuntimeException('Media destination cannot be a symbolic link.');
+        }
+        if (! is_dir($target) && ! mkdir($target, 0750, true) && ! is_dir($target)) {
+            throw new \RuntimeException('Could not access the media destination directory.');
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $relative = substr($item->getPathname(), strlen($source) + 1);
+            if ($preserveSystemBackups && ($relative === 'system-backups' || str_starts_with($relative, 'system-backups/'))) {
+                continue;
+            }
+            if ($item->isLink()) {
+                throw new \RuntimeException('Symbolic links are not allowed in restored media.');
+            }
+
+            $destination = $target.'/'.$relative;
+            $cursor = $target;
+            foreach (explode(DIRECTORY_SEPARATOR, $relative) as $segment) {
+                $cursor .= DIRECTORY_SEPARATOR.$segment;
+                if (is_link($cursor)) {
+                    throw new \RuntimeException('A media destination path is a symbolic link.');
+                }
+            }
+            if ($item->isDir()) {
+                if (! is_dir($destination) && ! mkdir($destination, 0750, true) && ! is_dir($destination)) {
+                    throw new \RuntimeException('Could not create a media directory.');
+                }
+                continue;
+            }
+            if (! $item->isFile()) {
+                throw new \RuntimeException('Only regular files can be restored.');
+            }
+
+            $parent = dirname($destination);
+            if (! is_dir($parent) && ! mkdir($parent, 0750, true) && ! is_dir($parent)) {
+                throw new \RuntimeException('Could not create a media destination directory.');
+            }
+            if (! copy($item->getPathname(), $destination)) {
+                throw new \RuntimeException('A media file could not be restored.');
+            }
+            @chmod($destination, 0640);
+        }
+    }
+
+    private function removeRestoreDirectory(string $directory): void
+    {
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($iterator as $item) {
+            $item->isDir() && ! $item->isLink() ? @rmdir($item->getPathname()) : @unlink($item->getPathname());
+        }
+        @rmdir($directory);
+    }
+
 }

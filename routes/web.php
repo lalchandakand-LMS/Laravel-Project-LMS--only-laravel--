@@ -350,6 +350,7 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
         Route::post('system/backups', [Admin\SystemBackupController::class, 'create'])->name('system.backups.create');
         Route::get('system/backups/{name}', [Admin\SystemBackupController::class, 'download'])->name('system.backups.download');
         Route::post('system/backups/restore', [Admin\SystemBackupController::class, 'restore'])->name('system.backups.restore');
+        Route::post('system/backups/media-restore', [Admin\SystemBackupController::class, 'restoreMedia'])->name('system.backups.media-restore');
         Route::post('recycle-bin/{type}/{id}/restore', [Admin\RecycleBinController::class, 'restore'])->name('recycle-bin.restore');
         Route::post('recycle-bin/{type}/bulk-restore', [Admin\RecycleBinController::class, 'bulkRestore'])->name('recycle-bin.bulk-restore');
         Route::delete('recycle-bin/{type}/{id}', [Admin\RecycleBinController::class, 'destroy'])->name('recycle-bin.destroy');
