@@ -19,7 +19,7 @@
     </section>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 p-4"><div><h2 class="font-bold text-slate-900">Website inquiries</h2><p class="text-xs text-slate-500">Contact form inquiries and their recorded UTM campaign attribution.</p></div><span class="text-xs font-semibold text-slate-500">{{ $leads->total() }} leads</span></div>
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 p-4"><div><h2 class="font-bold text-slate-900">Website inquiries</h2><p class="text-xs text-slate-500">Contact form inquiries and their recorded UTM campaign attribution.</p></div><div class="flex items-center gap-3"><span class="text-xs font-semibold text-slate-500">{{ $leads->total() }} leads</span><a href="{{ route('admin.marketing.leads.index', array_merge(request()->query(), ['export' => 'csv'])) }}" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Export filtered CSV ↓</a></div></div>
         <div class="divide-y divide-slate-100">
             @forelse($leads as $lead)
                 <article class="grid gap-4 p-4 xl:grid-cols-[1fr_1fr_1.2fr]">
