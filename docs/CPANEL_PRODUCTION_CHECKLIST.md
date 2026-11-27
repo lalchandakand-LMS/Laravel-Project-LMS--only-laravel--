@@ -1,66 +1,110 @@
 # cPanel production deployment checklist
 
-This repository template is intentionally secret-free. Copy values into the production environment privately in cPanel; never commit a real `.env`, API key, SMTP password, database password or gateway credential.
+This repository is prepared for a private production environment. Real database, mail, OAuth, SMS and AI credentials must be entered only in the server-side `.env` through cPanel Terminal/File Manager or a protected deployment secret store. Never commit a populated `.env`, paste API keys into GitHub, or expose credentials in browser code.
 
-## Before deployment
+## 1. Hosting and document root
 
-- Create a separate staging subdomain and a separate MySQL database/user. Do not test migrations or payment callbacks against production.
-- Confirm the PHP version is 8.3 and required extensions are enabled: OpenSSL, PDO MySQL, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD and cURL.
-- Set the document root to Laravel's `public/` directory. Do not expose `.env`, `storage/`, `vendor/` or application source files through the web root.
-- Upload the reviewed release and install Composer dependencies with production flags where shell access is available.
-- Copy `.env.production.example` to the private production `.env`; set a unique `APP_KEY` using `php artisan key:generate --force` in the target environment.
-- Set the production MySQL database, SMTP sender/host/port/user/password, HTTPS APP_URL and secure session cookie settings privately.
-- Keep AI and SMS disabled until their credentials, provider limits, consent, delivery and failure handling are tested.
-- Do not enable automated payment gateways until each provider's official merchant sandbox certification and callback/replay tests pass.
+- Create a separate staging subdomain and a separate MySQL database/user. Do not test migrations, mail, OAuth callbacks or payment callbacks against production.
+- Confirm PHP 8.3 and required extensions: OpenSSL, PDO MySQL, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath, Fileinfo, GD and cURL.
+- Point the domain document root to Laravel's `public/` directory. If the hosting plan forces `public_html`, keep the Laravel project, `.env`, `vendor/`, `storage/` and application source outside the web root and use the documented front-controller path.
+- Confirm HTTPS and the certificate work before setting secure cookies.
+- Ensure `storage/`, `bootstrap/cache/`, and the backup directory are writable by the cPanel account and not publicly accessible.
 
-## First staging release
+## 2. Build and upload a release
 
-Run from the Laravel project root:
+Build frontend assets on a trusted local/CI machine (cPanel Node.js is not required if the artifact is built before upload):
 
-```sh
+```bash
+npm ci
+npm run build
+```
+
+Upload the generated `public/build/` directory with the same code release. Do not upload a stale build from another commit. GitHub Actions also builds Vite assets and publishes the `vite-production-build` artifact; use the artifact from the exact release commit.
+
+Install PHP dependencies on the server:
+
+```bash
 composer install --no-dev --prefer-dist --optimize-autoloader
+```
+
+## 3. Private production environment
+
+Copy `.env.production.example` to the Laravel project's private `.env`. Replace every `CHANGE_ME_*` placeholder and generate the application key once on the target server:
+
+```bash
+php artisan key:generate --force
+```
+
+Never regenerate an existing production `APP_KEY`: doing so invalidates encrypted cookies/sessions and any encrypted application data.
+
+### Required MySQL values
+
+Create a database and database user in cPanel → MySQL Databases. Grant that user only the permissions Laravel needs for the application database. Set:
+
+- `DB_CONNECTION=mysql`
+- `DB_HOST` (often `localhost`, confirm with the host)
+- `DB_PORT=3306`
+- `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` using the exact cPanel-prefixed names
+
+### SMTP mail
+
+Use the mailbox and SMTP host supplied by Web Host BD (or the selected mail provider). Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SCHEME=tls`, and a verified `MAIL_FROM_ADDRESS`. Do not assume the host or mailbox password. Test password reset, email verification and notification delivery; verify SPF, DKIM and DMARC for the sender domain.
+
+### Google OAuth and Analytics / Search Console
+
+- Create a Web OAuth client in Google Cloud.
+- Add the exact authorized redirect URIs: `https://alomsenglishcenter.com/auth/google/callback` for sign-in and `https://alomsenglishcenter.com/admin/seo/google/callback` for reporting.
+- Put the client ID and secret in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; keep the two redirect URI variables aligned with the Google Cloud console.
+- Enable Google Analytics Data API and Search Console API, and authorize an account that has access to the correct GA4 property and verified Search Console property.
+- After deployment, an Admin connects Google in Admin → SEO → Google Reports and sets the GA4 property ID and Search Console property URL there. OAuth credentials alone do not identify the properties or grant account access.
+
+### MiMSMS and Gemini
+
+- Keep `LIVE_CLASS_SMS_NOTIFICATIONS=false` until MiMSMS supplies the exact production endpoint, username, API key and approved sender name. Add those to the server `.env`; test one consented destination and verify delivery/credits before enabling SMS.
+- Keep `AI_AGENTS_ENABLED=false` until a Gemini API key is created and the usage/billing limits are set. Store it only as `GEMINI_API_KEY` on the server. Enable the feature only after a successful restricted admin test.
+
+Optional integrations must remain disabled when their credentials are absent. Do not add real secrets to this repository's example files.
+
+## 4. First production database setup (NO demo seeding)
+
+Run only after verifying the database name and completing a backup:
+
+```bash
 php artisan config:clear
 php artisan migrate --force
-php artisan db:seed --force
 php artisan storage:link
+php artisan lms:admin:create
 php artisan optimize
-php artisan route:list
 ```
 
-Use a fresh staging database. Review seeded demo accounts and remove/disable demo users before any public exposure. Verify login, password reset email, email verification, uploads, course enrollment, orders, payment proof, admin review, branch review, refunds, live-class scheduling and backups.
+The `lms:admin:create` command prompts for the first admin name/email and a hidden password (minimum 14 characters). It creates an active, email-verified administrator. It does not print or store the password in source control.
 
-## Queue and scheduler
+**Do not run `php artisan db:seed` in production.** Demo seeders are now blocked in the production environment because they create public demo users with the shared `password` credential. The seeders remain available for local/test/staging demo databases. Never run `migrate:fresh`, `db:wipe`, `migrate:refresh` or `db:seed` against a live database.
 
-The app uses the database queue by default. Ensure the queue tables exist (the Laravel migrations should be present) and test a real queued job on staging.
+## 5. cPanel Cron Jobs
 
-If cPanel does not support a persistent queue worker, configure a cron entry every minute to drain queued work:
-
-```cron
-* * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan queue:work --stop-when-empty --tries=3 --timeout=120 >> /dev/null 2>&1
-```
-
-Configure Laravel's scheduler once per minute:
+Use the actual cPanel home directory, project path and PHP binary shown by your hosting account. Example only:
 
 ```cron
 * * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
-```
-
-The Laravel scheduler already runs `system:backup --keep=14` daily at 02:00, Recycle Bin pruning at 02:30, and `orders:expire-unpaid --hours=24` at 03:00 to cancel stale unpaid orders and release their reserved physical stock. Also schedule the repository's full backup script once daily to capture the private `.env`, database and uploaded files:
-
-```cron
+* * * * * cd /home/CPANEL_USER/path/to/project && /usr/local/bin/php artisan queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> /dev/null 2>&1
 0 3 * * * cd /home/CPANEL_USER/path/to/project && /bin/bash backup.sh >> storage/logs/backup.log 2>&1
 ```
 
-The script writes restricted local backup files under `storage/backups/`; it is not an off-site or encrypted backup by itself. Configure a separate encrypted off-site copy using your hosting provider's supported backup destination, and perform a restore drill. Confirm the actual PHP binary, shell path and project path in the hosting account before saving cron entries.
+- **Scheduler:** the once-per-minute `schedule:run` triggers existing tasks: `system:backup --keep=14` at 02:00, Recycle Bin pruning at 02:30 and unpaid-order expiry at 03:00.
+- **Queue:** the app uses the database queue. The worker drains available jobs and exits within the cron interval; `--timeout=45` stays below the default 90-second retry window. If jobs need longer, tune worker timeout and `DB_QUEUE_RETRY_AFTER` together and confirm the host permits it.
+- **Full backup:** `backup.sh` captures the database, private `.env`, public uploads and private uploads. It requires `mysqldump` for MySQL backups. Verify the script can execute and that the hosting shell has the required binary; if not, configure the host's supported database backup or phpMyAdmin export and a separate media backup.
+- Confirm cron's timezone and backup retention against the hosting plan. The script keeps 30 timestamped snapshots; Laravel's database backup command has its own retention setting.
 
-## Backup and recovery
+The local backup directory is not an off-site backup. Configure an encrypted off-server copy, restrict access to backup archives, and complete a restore drill into a separate database and directory.
 
-- Schedule encrypted off-server database and uploaded-media backups.
-- Keep multiple restore points and restrict backup download access to authorized administrators.
-- Perform a restore drill into a separate database and directory before production launch.
-- Record the restore procedure and verify uploaded files, database relationships and login after restore.
-- Do not treat a successful backup command as proof of recoverability.
+## 6. Post-deploy checks and release gate
 
-## Production go-live gate
+- Check `php artisan about`, `php artisan migrate:status`, `php artisan route:list` and `php artisan schedule:list`.
+- Confirm the Vite manifest exists under `public/build/manifest.json` and the public pages load compiled CSS/JS.
+- Test admin login, password reset, email verification, file uploads, course enrollment, order/payment verification, branch access, live-class schedule, queue processing and backup/restore.
+- Confirm Google OAuth callbacks, Google reporting access, SMS provider response and Gemini response only after their credentials are installed.
+- Verify `APP_ENV=production`, `APP_DEBUG=false`, correct HTTPS `APP_URL`, secure cookies, no public `.env`, and no publicly accessible backup archives.
+- Confirm all required CI jobs pass on the exact release commit, staging acceptance is complete, and a rollback point exists before go-live.
 
-Go live only after staging browser acceptance, clean migrations, no failing/skipped required CI jobs, working mail delivery, tested queue/scheduler, successful restore drill, HTTPS/security review and a documented rollback point. Do not enable real bKash/Nagad/Rocket/SSLCommerz transactions until the corresponding provider's official merchant credentials and end-to-end verification tests are available.
+No production deployment should be considered complete until the hosting account, real credentials, mail delivery, scheduled jobs, queue, backup restore and live-site smoke tests have been verified.

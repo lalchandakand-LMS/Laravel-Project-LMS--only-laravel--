@@ -34,7 +34,7 @@ touch database/database.sqlite
 #   DB_USERNAME=lms_user
 #   DB_PASSWORD=secret
 
-php artisan migrate --seed      # local/demo fresh install only; review production checklist before public launch
+php artisan migrate --seed      # local/demo install only; production uses migrate --force and lms:admin:create
 php artisan storage:link        # thumbnails, PDFs, avatars
 php artisan serve               # http://127.0.0.1:8000
 ```
@@ -52,7 +52,7 @@ prefer. Point the web root at `lms/public` (never at the project root).
    $app = require_once __DIR__.'/../lms/bootstrap/app.php';
    ```
 3. Create the MySQL database in cPanel, put the credentials in `.env`.
-4. In Terminal: `php artisan key:generate && php artisan migrate --seed && php artisan storage:link`.
+4. Build assets with `npm ci && npm run build` and upload `public/build/` from that same commit. In Terminal, run `php artisan key:generate --force` only for a new install, then `php artisan migrate --force`, `php artisan storage:link`, and `php artisan lms:admin:create` to create the first admin interactively.
 5. If `storage/` is not writable, set permission `755` (files `644`) on
    `storage/` and `bootstrap/cache/`.
 
@@ -64,12 +64,12 @@ prefer. Point the web root at `lms/public` (never at the project root).
 
 ### After installing (production checklist)
 
-- The seeder creates demo accounts with the documented `password` password. These are for local/demo use only. Before any public deployment, replace the demo credentials with unique strong passwords or remove demo accounts; never expose seeded credentials to the public internet.
+- Demo seeders create accounts using the shared `password` password only in local/test/staging environments. Both `DatabaseSeeder` and `OrganisationSeeder` now refuse to run in production. Never run `db:seed` on a live database. Create the first production administrator with `php artisan lms:admin:create`; it prompts for a hidden password of at least 14 characters.
 - `APP_ENV=production`, `APP_DEBUG=false`, correct `APP_URL`.
 - `php artisan config:cache && php artisan route:cache && php artisan view:cache`.
-- Add the cron entry for scheduled tasks (if you enable any):
-  `* * * * * cd /path/to/lms && php artisan schedule:run >> /dev/null 2>&1`
-- Add a daily backup cron: `0 3 * * * cd /path/to/lms && ./backup.sh`.
+- Add cPanel cron entries for `schedule:run` and the database queue worker every minute; use `queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45` so the worker exits within the cron interval.
+- Add a daily full backup cron: `0 3 * * * cd /path/to/lms && /bin/bash backup.sh >> storage/logs/backup.log 2>&1`.
+- See `docs/CPANEL_PRODUCTION_CHECKLIST.md` for the exact cron examples, Google OAuth/GA4, SMTP, MiMSMS and Gemini setup, and staging acceptance steps.
 
 ---
 
