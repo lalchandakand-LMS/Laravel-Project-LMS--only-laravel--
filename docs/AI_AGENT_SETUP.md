@@ -4,8 +4,8 @@ The AI Agent Workspace uses Google's Gemini API. It is optional and disabled by 
 
 ## Configure
 
-1. Create a Gemini API key in Google AI Studio: https://aistudio.google.com/app/apikey
-2. Add the following values to the server's `.env` file:
+1. Create a Gemini API key: https://aistudio.google.com/app/apikey
+2. Add these values to the server's `.env`:
 
 ```dotenv
 AI_AGENTS_ENABLED=true
@@ -24,29 +24,38 @@ php artisan config:clear
 php artisan config:cache
 ```
 
-Keep the API key on the server. Never place it in Blade, JavaScript, public assets, source control or a browser request.
+Keep the API key on the server. Never place it in Blade, JavaScript, public assets, source control or browser requests.
 
-## Agent roles
+## Role-specific agents and actions
 
-- Student Agent: vocabulary, grammar, English practice and exam preparation.
-- Teacher Agent: lesson planning and learning material drafts.
-- Admin Agent: general LMS operations support (no direct account, finance or settings changes).
-- Support Agent: platform help and troubleshooting.
-- Learning Agent: study plans, revision and learning recommendations.
+| Signed-in role | Agent access | Action proposals |
+|---|---|---|
+| Student | Student, Learning, Support | `create_complaint_draft` |
+| Teacher / Instructor | Teacher, Learning, Support | `create_assignment_draft` for courses they own |
+| Guardian | Support, Learning | `create_complaint_draft` |
+| Branch Manager | Support, Learning | `create_announcement_draft` for their managed branch |
+| Admin | All agents | `create_assignment_draft`, `create_announcement_draft` |
 
-Available agents are restricted by the signed-in user's role.
+The authenticated role is passed into the server-side Gemini system instruction. The server independently enforces the action allowlist; model output cannot grant itself extra permissions.
 
-## Human approval and audit
+## Supported action workflow
 
-The model cannot directly execute LMS actions. The current supported proposal is `create_assignment_draft` from the Teacher Agent:
+Every action is a proposal, never an automatic mutation:
 
-1. Gemini may suggest a draft assignment.
-2. The proposal is stored with status `pending`.
-3. A teacher who owns the course or an administrator must explicitly approve it.
-4. Approval creates an **unpublished** assignment draft. The teacher must review it before publishing.
-5. Rejected proposals do not create LMS records.
+1. Gemini returns a JSON response with a message and optional `actions` array.
+2. The server validates the action type against the signed-in role and validates every payload field.
+3. The proposal is stored as `pending` in `ai_action_proposals`.
+4. The proposal owner reviews and approves or rejects it. Admins may also review proposals where authorized.
+5. Approval locks the proposal in a database transaction, rechecks authorization and status, executes once, and records reviewer, timestamps and result.
+6. A rejected proposal creates no LMS record. Duplicate approval returns HTTP 409.
 
-Unsupported action types and proposals for courses the teacher does not own are ignored. Approval and rejection are recorded with the reviewer and timestamps.
+### Action details
+
+- `create_assignment_draft`: Teacher can propose assignments only for their own courses; Admin can propose for any course. Approval creates an unpublished assignment. It is never auto-published.
+- `create_complaint_draft`: Student or Guardian can propose a complaint. Approval submits it under that user's own account and branch and creates a complaint audit event / tracking code.
+- `create_announcement_draft`: Admin can target a branch or all branches. Branch Manager's branch is derived from the server-side manager-to-branch relationship; model-supplied branch IDs are ignored. Approval creates an unpublished announcement draft; an authorized administrator must review and publish it through the announcement manager.
+
+Unsupported actions, invalid payloads, unauthorized course IDs, cross-branch announcement targeting and cross-user proposal access are rejected or ignored. AI cannot publish announcements or assignments, send messages, change payments, grant access, edit accounts, delete data or change system settings.
 
 ## Privacy and operations
 
@@ -55,6 +64,6 @@ Unsupported action types and proposals for courses the teacher does not own are 
 - The Gemini API key is sent in the `x-goog-api-key` request header and is never stored in the database.
 - Requests are made server-side with a timeout. Provider errors are not retried automatically.
 - If the provider is unavailable or the key is missing, the run is marked failed and no action is executed.
-- Disable the feature by setting `AI_AGENTS_ENABLED=false` and clearing the configuration cache.
+- Disable the feature with `AI_AGENTS_ENABLED=false`, then clear the configuration cache.
 
-See Google's official [Gemini generateContent API documentation](https://ai.google.dev/api/generate-content) for request format and model availability. The configured model can be changed with `GEMINI_MODEL` without changing application code.
+See Google's official [Gemini generateContent API documentation](https://ai.google.dev/api/generate-content) for request format and model availability. Change the configured model with `GEMINI_MODEL` without changing application code.

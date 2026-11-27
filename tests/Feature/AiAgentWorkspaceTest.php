@@ -5,6 +5,9 @@ namespace Tests\Feature;
 use App\Models\AiActionProposal;
 use App\Models\AiAgentRun;
 use App\Models\Assignment;
+use App\Models\Announcement;
+use App\Models\Branch;
+use App\Models\Complaint;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -208,4 +211,133 @@ class AiAgentWorkspaceTest extends TestCase
             ->post(route('ai-agent.approve', $proposal))
             ->assertForbidden();
     }
+
+    public function test_student_and_guardian_can_create_and_approve_complaint_drafts(): void
+    {
+        foreach (['student', 'guardian'] as $role) {
+            $user = User::factory()->create(['role' => $role, 'is_active' => true]);
+            $payload = [
+                'message' => 'Complaint draft ready.',
+                'actions' => [[
+                    'type' => 'create_complaint_draft',
+                    'payload' => [
+                        'category' => $role === 'student' ? 'class' : 'administration',
+                        'subject' => $role === 'student' ? 'Class schedule issue' : 'Guardian meeting request',
+                        'body' => 'The class schedule conflicts with the published teacher announcement and needs review.',
+                    ],
+                ]],
+            ];
+            Http::fake(['generativelanguage.googleapis.com/*' => $this->geminiResponse($payload)]);
+
+            $this->actingAs($user)->post(route('ai-agent.ask'), [
+                'agent_type' => $role === 'student' ? 'student' : 'support',
+                'prompt' => 'Prepare a complaint draft.',
+            ])->assertRedirect(route('ai-agent.index'));
+
+            $proposal = AiActionProposal::where('user_id', $user->id)->firstOrFail();
+            $this->assertSame('create_complaint_draft', $proposal->action_type);
+            $this->assertSame('pending', $proposal->status);
+            $this->assertSame(Complaint::where('user_id', '!=', $user->id)->count(), Complaint::count());
+
+            $this->actingAs($user)->post(route('ai-agent.approve', $proposal))
+                ->assertRedirect(route('ai-agent.index'));
+
+            $complaint = Complaint::where('user_id', $user->id)->firstOrFail();
+            $this->assertSame('submitted', $complaint->status);
+            $this->assertDatabaseHas('complaint_events', [
+                'complaint_id' => $complaint->id, 'created_by' => $user->id, 'event_type' => 'submitted',
+            ]);
+            $this->assertSame('executed', $proposal->fresh()->status);
+        }
+    }
+
+    public function test_branch_manager_can_only_create_announcement_drafts_for_their_own_branch(): void
+    {
+        $branch = Branch::create(['name' => 'North AI Branch', 'code' => 'NORTH-AI', 'is_active' => true]);
+        $otherBranch = Branch::create(['name' => 'South AI Branch', 'code' => 'SOUTH-AI', 'is_active' => true]);
+        $manager = User::factory()->create(['role' => 'branch_manager', 'branch_id' => $branch->id, 'is_active' => true]);
+
+        Http::fake(['generativelanguage.googleapis.com/*' => $this->geminiResponse(['message' => 'Branch notice draft ready.', 'actions' => [[
+            'type' => 'create_announcement_draft',
+            'payload' => [
+                'title' => 'Branch schedule update',
+                'body' => 'The branch class schedule will be updated next week.',
+                'audience_role' => 'student',
+                'branch_id' => $otherBranch->id,
+                'priority' => 'important',
+            ],
+        ]]])]);
+
+        $this->actingAs($manager)->post(route('ai-agent.ask'), [
+            'agent_type' => 'support', 'prompt' => 'Prepare a notice for my branch students.',
+        ])->assertRedirect(route('ai-agent.index'));
+
+        $proposal = AiActionProposal::where('user_id', $manager->id)->firstOrFail();
+        $this->assertSame($branch->id, $proposal->payload['branch_id']);
+        $this->assertSame(0, Announcement::count());
+
+        $this->actingAs($manager)->post(route('ai-agent.approve', $proposal))
+            ->assertRedirect(route('ai-agent.index'));
+
+        $announcement = Announcement::firstOrFail();
+        $this->assertSame($branch->id, $announcement->branch_id);
+        $this->assertFalse($announcement->is_published);
+        $this->assertSame('executed', $proposal->fresh()->status);
+    }
+
+    public function test_admin_can_create_an_announcement_draft_without_auto_publishing(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        Http::fake(['generativelanguage.googleapis.com/*' => $this->geminiResponse(['message' => 'Announcement draft ready.', 'actions' => [[
+            'type' => 'create_announcement_draft',
+            'payload' => ['title' => 'Exam registration reminder', 'body' => 'Please review the examination registration dates.', 'audience_role' => 'student', 'priority' => 'important'],
+        ]]])]);
+
+        $this->actingAs($admin)->post(route('ai-agent.ask'), [
+            'agent_type' => 'admin', 'prompt' => 'Prepare an announcement for students.',
+        ])->assertRedirect(route('ai-agent.index'));
+
+        $proposal = AiActionProposal::where('user_id', $admin->id)->firstOrFail();
+        $this->assertSame('create_announcement_draft', $proposal->action_type);
+
+        $this->actingAs($admin)->post(route('ai-agent.approve', $proposal))
+            ->assertRedirect(route('ai-agent.index'));
+
+        $announcement = Announcement::firstOrFail();
+        $this->assertFalse($announcement->is_published);
+        $this->assertSame('student', $announcement->audience_role);
+    }
+
+    public function test_student_cannot_smuggle_an_action_reserved_for_another_role(): void
+    {
+        $student = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        Http::fake(['generativelanguage.googleapis.com/*' => $this->geminiResponse(['message' => 'No action available.', 'actions' => [[
+            'type' => 'create_assignment_draft',
+            'payload' => ['course_id' => 1, 'title' => 'Unauthorized assignment', 'total_marks' => 10],
+        ]]])]);
+
+        $this->actingAs($student)->post(route('ai-agent.ask'), [
+            'agent_type' => 'student', 'prompt' => 'Create an assignment.',
+        ])->assertRedirect(route('ai-agent.index'));
+
+        $this->assertSame(0, AiActionProposal::count());
+        $this->assertSame(0, Assignment::count());
+    }
+
+    public function test_user_cannot_approve_another_users_action_proposal(): void
+    {
+        $owner = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $other = User::factory()->create(['role' => 'student', 'is_active' => true]);
+        $run = AiAgentRun::create(['user_id' => $owner->id, 'agent_type' => 'student', 'prompt' => 'Prepare complaint', 'status' => 'completed']);
+        $proposal = AiActionProposal::create([
+            'ai_agent_run_id' => $run->id, 'user_id' => $owner->id, 'action_type' => 'create_complaint_draft',
+            'payload' => ['category' => 'other', 'subject' => 'Private request', 'body' => 'This private request belongs to another student account.'],
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($other)->post(route('ai-agent.approve', $proposal))->assertForbidden();
+        $this->assertSame('pending', $proposal->fresh()->status);
+        $this->assertSame(0, Complaint::count());
+    }
+
 }
