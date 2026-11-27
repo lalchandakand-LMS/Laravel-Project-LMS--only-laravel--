@@ -19,9 +19,9 @@ class GoogleAnalyticsSearchConsoleIntegrationTest extends TestCase
     {
         parent::setUp();
         $this->seed();
-        Config::set('services.google.client_id', 'test-client-id');
-        Config::set('services.google.client_secret', 'test-client-secret');
-        Config::set('services.google.redirect', 'https://alomsenglishcenter.com/admin/seo/google/callback');
+        Config::set('services.google_reporting.client_id', 'test-client-id');
+        Config::set('services.google_reporting.client_secret', 'test-client-secret');
+        Config::set('services.google_reporting.redirect', 'https://alomsenglishcenter.com/admin/seo/google/callback');
     }
 
     public function test_admin_can_start_google_read_only_oauth_connection(): void
