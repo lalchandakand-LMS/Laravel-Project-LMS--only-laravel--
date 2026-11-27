@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MarketingLead;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class MarketingPopupController extends Controller
 {
