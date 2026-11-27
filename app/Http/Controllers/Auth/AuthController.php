@@ -102,7 +102,6 @@ class AuthController extends Controller
             'resend_count' => 0,
         ]);
 
-        Auth::logout();
         $user->notify(new AdminLoginOtpNotification($code));
 
         return redirect()->route('admin.login.verify')
