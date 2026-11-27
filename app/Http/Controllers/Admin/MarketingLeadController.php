@@ -1,29 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\\Http\\Controllers\\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\MarketingLead;
-use App\Services\Sms\MiMSmsGateway;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\MarketingLead;
+use App\\Services\\Sms\\MiMSmsGateway;
+use Illuminate\\Http\\Request;
+use Illuminate\\Validation\\Rule;
 
 class MarketingLeadController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MarketingLead::query()
-            ->when($request->filled('q'), function ($builder) use ($request) {
-                $term = trim($request->string('q')->toString());
-                $builder->where(function ($search) use ($term) {
-                    $search->where('name', 'like', '%'.$term.'%')
-                        ->orWhere('email', 'like', '%'.$term.'%')
-                        ->orWhere('phone', 'like', '%'.$term.'%')
-                        ->orWhere('subject', 'like', '%'.$term.'%');
-                });
-            })
-            ->when($request->filled('status'), fn ($builder) => $builder->where('status', $request->input('status')))
-            ->when($request->filled('campaign'), fn ($builder) => $builder->where('utm_campaign', $request->input('campaign')));
+        $query = $this->filteredLeads($request);
+        if ($request->query('export') === 'csv') {
+            return $this->exportCsv($query);
+        }
 
         $leads = $query->latest()->paginate(25)->withQueryString();
 
@@ -42,6 +34,55 @@ class MarketingLeadController extends Controller
             ->distinct()->orderBy('utm_campaign')->pluck('utm_campaign');
 
         return view('admin.marketing.leads.index', compact('leads', 'counts', 'campaigns'));
+    }
+
+    private function filteredLeads(Request $request)
+    {
+        return MarketingLead::query()
+            ->when($request->filled('q'), function ($builder) use ($request) {
+                $term = trim($request->string('q')->toString());
+                $builder->where(function ($search) use ($term) {
+                    $search->where('name', 'like', '%'.$term.'%')
+                        ->orWhere('email', 'like', '%'.$term.'%')
+                        ->orWhere('phone', 'like', '%'.$term.'%')
+                        ->orWhere('subject', 'like', '%'.$term.'%');
+                });
+            })
+            ->when($request->filled('status'), fn ($builder) => $builder->where('status', $request->input('status')))
+            ->when($request->filled('campaign'), fn ($builder) => $builder->where('utm_campaign', $request->input('campaign')));
+    }
+
+    private function exportCsv($query)
+    {
+        $filename = 'marketing-leads-'.now()->format('Y-m-d-His').'.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Name', 'Email', 'Phone', 'Status', 'Source', 'UTM source', 'UTM medium', 'UTM campaign', 'UTM term', 'UTM content', 'Landing page', 'Referrer host', 'Created at']);
+
+            $query->latest()->cursor()->each(function (MarketingLead $lead) use ($output) {
+                $values = [
+                    $lead->name, $lead->email, $lead->phone, $lead->status, $lead->source,
+                    $lead->utm_source, $lead->utm_medium, $lead->utm_campaign, $lead->utm_term,
+                    $lead->utm_content, $lead->landing_page, $lead->referrer_host,
+                    $lead->created_at?->toDateTimeString(),
+                ];
+
+                // Prevent spreadsheet formula execution from untrusted lead input.
+                $values = array_map(function ($value) {
+                    $value = (string) ($value ?? '');
+                    return preg_match('/^[=+@\\-\\t\\r]/', $value) ? "'".$value : $value;
+                }, $values);
+
+                fputcsv($output, $values);
+            });
+
+            fclose($output);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, private',
+        ]);
     }
 
     public function update(Request $request, MarketingLead $lead)
