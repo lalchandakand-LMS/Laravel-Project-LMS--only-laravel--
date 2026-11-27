@@ -221,6 +221,7 @@
 @if (!$privateSeoRoute || request()->routeIs('checkout.success'))
     @include('partials.cookie-consent')
 @endif
+@include('partials.marketing-popup')
 @stack('scripts')
 </body>
 </html>
