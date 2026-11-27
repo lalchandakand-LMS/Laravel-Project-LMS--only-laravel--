@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Notifications\AdminLoginOtpNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -166,4 +167,44 @@ class AdminAuthenticationTest extends TestCase
             'role' => 'student',
         ]);
     }
+
+    public function test_admin_cannot_bypass_email_otp_through_google_oauth(): void
+    {
+        config([
+            'services.google.client_id' => 'google-client-id',
+            'services.google.client_secret' => 'google-client-secret',
+            'services.google.redirect' => 'https://lms.example.test/auth/google/callback',
+        ]);
+
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'google-access-token'], 200),
+            'openidconnect.googleapis.com/v1/userinfo' => Http::response([
+                'sub' => 'google-admin-subject',
+                'email' => 'admin@example.test',
+                'email_verified' => true,
+                'name' => 'Admin User',
+            ], 200),
+        ]);
+
+        $admin = User::factory()->create([
+            'email' => 'admin@example.test',
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $this->withSession(['google_oauth_state' => 'expected-oauth-state'])
+            ->get(route('auth.google.callback', [
+                'code' => 'google-auth-code',
+                'state' => 'expected-oauth-state',
+            ]))
+            ->assertRedirect(route('admin.login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'role' => 'admin',
+        ]);
+    }
+
 }

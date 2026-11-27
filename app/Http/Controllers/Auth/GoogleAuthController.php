@@ -106,6 +106,13 @@ class GoogleAuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'Your account has been disabled.']);
         }
 
+        // Google OAuth must never bypass the administrator password + email OTP flow.
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.login')->withErrors([
+                'email' => 'Administrator accounts must use the secure Admin login with email verification code.',
+            ]);
+        }
+
         auth()->login($user);
         $request->session()->regenerate();
 
