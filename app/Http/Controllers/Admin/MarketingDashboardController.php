@@ -1,14 +1,14 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\MarketingCampaign;
-use App\\Models\\MarketingLead;
-use App\\Models\\Order;
-use App\\Models\\Payment;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Models\MarketingCampaign;
+use App\Models\MarketingLead;
+use App\Models\Order;
+use App\Models\Payment;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class MarketingDashboardController extends Controller
 {
@@ -20,10 +20,10 @@ class MarketingDashboardController extends Controller
         ]);
 
         $from = isset($validated['from'])
-            ? \\Illuminate\\Support\\Carbon::parse($validated['from'])->startOfDay()
+            ? \Illuminate\Support\Carbon::parse($validated['from'])->startOfDay()
             : now()->subDays(29)->startOfDay();
         $to = isset($validated['to'])
-            ? \\Illuminate\\Support\\Carbon::parse($validated['to'])->endOfDay()
+            ? \Illuminate\Support\Carbon::parse($validated['to'])->endOfDay()
             : now()->endOfDay();
 
         if ($from->diffInDays($to) > 30) {
