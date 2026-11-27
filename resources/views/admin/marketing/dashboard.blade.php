@@ -4,15 +4,24 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-600">Lead and campaign performance from website inquiries with recorded UTM attribution.</p>
+        <div><p class="text-sm text-slate-600">Lead and campaign performance from website inquiries with recorded UTM attribution.</p><p class="mt-1 text-xs text-slate-500">Reporting period: {{ $from->format('d M Y') }} – {{ $to->format('d M Y') }}</p></div>
         <div class="flex gap-2">
             <a href="{{ route('admin.marketing.campaigns.index') }}" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700">Campaigns</a>
             <a href="{{ route('admin.marketing.leads.index') }}" class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white">Manage Leads</a>
         </div>
     </div>
 
+    <form method="GET" action="{{ route('admin.marketing.dashboard') }}" class="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
+        <div><label for="from" class="mb-1 block text-xs font-semibold text-slate-600">From</label><input id="from" type="date" name="from" value="{{ request('from', $from->toDateString()) }}" required class="rounded-lg border-slate-300 text-sm"></div>
+        <div><label for="to" class="mb-1 block text-xs font-semibold text-slate-600">To</label><input id="to" type="date" name="to" value="{{ request('to', $to->toDateString()) }}" required class="rounded-lg border-slate-300 text-sm"></div>
+        <button class="rounded-lg bg-orange-600 px-4 py-2.5 text-xs font-bold text-white">Apply period</button>
+        <a href="{{ route('admin.marketing.dashboard') }}" class="rounded-lg border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700">Last 30 days</a>
+        @error('from')<p class="w-full text-xs text-rose-600">{{ $message }}</p>@enderror
+        @error('to')<p class="w-full text-xs text-rose-600">{{ $message }}</p>@enderror
+    </form>
+
     <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Total captured leads</p><p class="mt-2 text-3xl font-black text-slate-900">{{ number_format($totalLeads) }}</p><p class="mt-1 text-xs text-slate-500">All non-archived website inquiries</p></article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Total captured leads</p><p class="mt-2 text-3xl font-black text-slate-900">{{ number_format($totalLeads) }}</p><p class="mt-1 text-xs text-slate-500">Website inquiries in selected period</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">New leads</p><p class="mt-2 text-3xl font-black text-blue-700">{{ number_format($newLeads) }}</p><p class="mt-1 text-xs text-slate-500">Awaiting first follow-up</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Converted leads</p><p class="mt-2 text-3xl font-black text-emerald-700">{{ number_format($convertedLeads) }}</p><p class="mt-1 text-xs text-slate-500">Marked converted by an admin</p></article>
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p class="text-xs font-semibold text-slate-500">Lead conversion rate</p><p class="mt-2 text-3xl font-black text-orange-700">{{ number_format($conversionRate, 1) }}%</p><p class="mt-1 text-xs text-slate-500">Converted leads ÷ captured leads</p></article>
@@ -21,8 +30,8 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2"><div><h2 class="font-bold text-slate-900">New leads · last 14 days</h2><p class="text-xs text-slate-500">Daily contact inquiries captured by the LMS.</p></div><span class="text-xs text-slate-500">14-day view</span></div>
-        <div class="mt-5 grid grid-cols-7 gap-2 sm:grid-cols-14">
+        <div class="flex flex-wrap items-center justify-between gap-2"><div><h2 class="font-bold text-slate-900">New leads · selected period</h2><p class="text-xs text-slate-500">Daily contact inquiries captured by the LMS for the selected date range.</p></div><span class="text-xs text-slate-500">{{ $dailyLeads->count() }} days</span></div>
+        <div class="mt-5 grid grid-cols-7 gap-2 sm:grid-cols-7 lg:grid-cols-14">
             @foreach($dailyLeads as $day)
                 <div class="min-w-0 text-center">
                     <div class="flex h-28 items-end justify-center rounded-lg bg-slate-50 px-1 pb-1" title="{{ $day['count'] }} leads">
