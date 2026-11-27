@@ -3,6 +3,7 @@
 @section('heading', 'Newsletter Management')
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
+    <div class="flex justify-end"><a href="{{ route('admin.marketing.newsletter.campaigns') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Create Newsletter Campaign</a></div>
     <div class="grid gap-3 sm:grid-cols-3">
         @foreach(['pending'=>'Awaiting confirmation','subscribed'=>'Confirmed subscribers','unsubscribed'=>'Unsubscribed'] as $key => $label)
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs font-semibold text-slate-500">{{ $label }}</p><p class="mt-1 text-2xl font-black text-slate-900">{{ number_format($counts[$key] ?? 0) }}</p></div>
@@ -31,6 +32,6 @@
         </div>
         <div class="border-t border-slate-100 p-4">{{ $subscribers->links() }}</div>
     </section>
-    <p class="rounded-xl bg-amber-50 p-4 text-xs leading-5 text-amber-900">Double opt-in is enabled: only subscribers who confirm the email link are marked subscribed. Bulk newsletter campaign sending and email-provider delivery analytics are not part of this subscriber register.</p>
+    <p class="rounded-xl bg-amber-50 p-4 text-xs leading-5 text-amber-900">Double opt-in is enabled: only subscribers who confirm the email link are marked subscribed. Bulk campaign delivery is available from Newsletter Campaigns. Provider-side open and click analytics require a connected email delivery provider.</p>
 </div>
 @endsection
