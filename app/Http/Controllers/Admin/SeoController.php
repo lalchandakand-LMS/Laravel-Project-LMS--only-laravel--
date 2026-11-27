@@ -11,8 +11,12 @@ use Illuminate\Validation\ValidationException;
 
 class SeoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->query('export') === 'csv') {
+            return $this->exportContentAudit();
+        }
+
         $missingMeta = collect();
         $contentScores = collect();
 
@@ -60,6 +64,49 @@ class SeoController extends Controller
             'postsMissingMeta' => $postsMissingMeta,
             'missingMeta' => $missingMeta,
             'contentScores' => $contentScores->sortBy('score')->values(),
+        ]);
+    }
+
+    private function exportContentAudit()
+    {
+        $filename = 'seo-content-audit-'.now()->format('Y-m-d-His').'.csv';
+
+        return response()->streamDownload(function () {
+            $output = fopen('php://output', 'w');
+            // UTF-8 BOM keeps Bangla titles readable in common spreadsheet apps.
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Content type', 'Title', 'Edit URL', 'SEO score', 'Passed checks', 'Failed checks']);
+
+            Course::query()->where('is_published', true)
+                ->orderBy('id')
+                ->cursor()
+                ->each(function ($item) use ($output) {
+                    $this->writeAuditRow($output, 'Course', $item);
+                });
+
+            Post::published()->orderBy('id')->cursor()
+                ->each(fn ($item) => $this->writeAuditRow($output, 'Blog post', $item));
+
+            fclose($output);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, private',
+        ]);
+    }
+
+    private function writeAuditRow($output, string $type, object $item): void
+    {
+        $audit = $this->scoreContent($type, $item);
+        $passed = collect($audit['checks'])->where('passed', true)->pluck('label')->implode('; ');
+        $failed = collect($audit['checks'])->where('passed', false)->pluck('label')->implode('; ');
+
+        fputcsv($output, [
+            $type,
+            $item->title,
+            $audit['url'],
+            $audit['score'],
+            $passed,
+            $failed,
         ]);
     }
 
