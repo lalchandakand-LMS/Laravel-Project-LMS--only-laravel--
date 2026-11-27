@@ -449,8 +449,12 @@ class SystemBackupController extends Controller
             }
 
             $destination = $target.'/'.$relative;
-            if (is_link($destination)) {
-                throw new \RuntimeException('A media destination path is a symbolic link.');
+            $cursor = $target;
+            foreach (explode(DIRECTORY_SEPARATOR, $relative) as $segment) {
+                $cursor .= DIRECTORY_SEPARATOR.$segment;
+                if (is_link($cursor)) {
+                    throw new \RuntimeException('A media destination path is a symbolic link.');
+                }
             }
             if ($item->isDir()) {
                 if (! is_dir($destination) && ! mkdir($destination, 0750, true) && ! is_dir($destination)) {
