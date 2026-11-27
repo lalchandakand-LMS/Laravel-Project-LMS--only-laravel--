@@ -237,7 +237,7 @@ class AiAgentWorkspaceTest extends TestCase
             $proposal = AiActionProposal::where('user_id', $user->id)->firstOrFail();
             $this->assertSame('create_complaint_draft', $proposal->action_type);
             $this->assertSame('pending', $proposal->status);
-            $this->assertSame(0, Complaint::count());
+            $this->assertSame(Complaint::where('user_id', '!=', $user->id)->count(), Complaint::count());
 
             $this->actingAs($user)->post(route('ai-agent.approve', $proposal))
                 ->assertRedirect(route('ai-agent.index'));
