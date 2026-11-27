@@ -157,7 +157,7 @@ class SystemBackupController extends Controller
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
         $files = collect(glob($this->directory().'/*') ?: [])
-            ->filter(fn ($path) => is_file($path) && preg_match('/^aec-(mysql|sqlite)-[0-9]{8}-[0-9]{6}\.(sql|sqlite)$/', basename($path)))
+            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^aec-(?:(mysql|sqlite)-[0-9]{8}-[0-9]{6}\\.(?:sql|sqlite)|media-(?:public|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz)$/', basename($path)))
             ->map(fn ($path) => ['name' => basename($path), 'size' => filesize($path), 'date' => filemtime($path)])
             ->sortByDesc('date')->values();
 
@@ -206,7 +206,11 @@ class SystemBackupController extends Controller
     public function download(string $name)
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
-        abort_unless(basename($name) === $name && preg_match('/^aec-(mysql|sqlite)-[0-9]{8}-[0-9]{6}\.(sql|sqlite)$/', $name), 404);
+        abort_unless(
+            basename($name) === $name
+            && preg_match('/^aec-(?:(mysql|sqlite)-[0-9]{8}-[0-9]{6}\\.(?:sql|sqlite)|media-(?:public|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz)$/', $name),
+            404
+        );
         $path = $this->directory().'/'.$name;
         abort_unless(is_file($path), 404);
 
