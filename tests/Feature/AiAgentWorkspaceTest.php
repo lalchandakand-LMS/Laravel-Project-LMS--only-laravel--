@@ -340,4 +340,77 @@ class AiAgentWorkspaceTest extends TestCase
         $this->assertSame(0, Complaint::count());
     }
 
+
+    public function test_admin_can_approve_proposal_after_instructor_creator_is_soft_deleted(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $instructor = User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+        $course = Course::create([
+            'title' => 'Archived Instructor Course',
+            'slug' => 'archived-instructor-course',
+            'price' => 1000,
+            'is_published' => true,
+            'instructor_id' => $instructor->id,
+        ]);
+        $run = AiAgentRun::create([
+            'user_id' => $instructor->id,
+            'agent_type' => 'teacher',
+            'prompt' => 'Prepare an assignment',
+            'status' => 'completed',
+        ]);
+        $proposal = AiActionProposal::create([
+            'ai_agent_run_id' => $run->id,
+            'user_id' => $instructor->id,
+            'action_type' => 'create_assignment_draft',
+            'payload' => ['course_id' => $course->id, 'title' => 'Archived creator draft', 'total_marks' => 20],
+            'status' => 'pending',
+        ]);
+
+        $instructor->delete();
+
+        $this->actingAs($admin)
+            ->post(route('ai-agent.approve', $proposal))
+            ->assertRedirect(route('ai-agent.index'));
+
+        $this->assertDatabaseHas('assignments', [
+            'course_id' => $course->id,
+            'title' => 'Archived creator draft',
+            'is_published' => false,
+        ]);
+        $this->assertSame('executed', $proposal->fresh()->status);
+    }
+
+    public function test_admin_can_reject_proposal_after_branch_manager_creator_is_soft_deleted(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $branch = Branch::create(['name' => 'Archived Manager Branch', 'code' => 'ARCH-MGR', 'is_active' => true]);
+        $manager = User::factory()->create([
+            'role' => 'branch_manager',
+            'branch_id' => $branch->id,
+            'is_active' => true,
+        ]);
+        $run = AiAgentRun::create([
+            'user_id' => $manager->id,
+            'agent_type' => 'support',
+            'prompt' => 'Prepare an announcement',
+            'status' => 'completed',
+        ]);
+        $proposal = AiActionProposal::create([
+            'ai_agent_run_id' => $run->id,
+            'user_id' => $manager->id,
+            'action_type' => 'create_announcement_draft',
+            'payload' => ['title' => 'Archived branch notice', 'body' => 'This is a draft announcement for branch students.'],
+            'status' => 'pending',
+        ]);
+
+        $manager->delete();
+
+        $this->actingAs($admin)
+            ->post(route('ai-agent.reject', $proposal))
+            ->assertRedirect(route('ai-agent.index'));
+
+        $this->assertSame('rejected', $proposal->fresh()->status);
+        $this->assertSame($admin->id, $proposal->fresh()->reviewed_by);
+    }
+
 }
