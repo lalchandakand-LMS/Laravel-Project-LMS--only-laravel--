@@ -12,8 +12,8 @@ class GoogleMarketingReporting
 {
     public function credentialsConfigured(): bool
     {
-        return filled(config('services.google.client_id'))
-            && filled(config('services.google.client_secret'));
+        return filled(config('services.google_reporting.client_id'))
+            && filled(config('services.google_reporting.client_secret'));
     }
 
     public function connected(): bool
@@ -37,7 +37,7 @@ class GoogleMarketingReporting
         }
 
         return 'https://accounts.google.com/o/oauth2/v2/auth?'.http_build_query([
-            'client_id' => config('services.google.client_id'),
+            'client_id' => config('services.google_reporting.client_id'),
             'redirect_uri' => $redirectUri,
             'response_type' => 'code',
             'scope' => implode(' ', [
@@ -55,8 +55,8 @@ class GoogleMarketingReporting
     {
         $response = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
             'code' => $code,
-            'client_id' => config('services.google.client_id'),
-            'client_secret' => config('services.google.client_secret'),
+            'client_id' => config('services.google_reporting.client_id'),
+            'client_secret' => config('services.google_reporting.client_secret'),
             'redirect_uri' => $redirectUri,
             'grant_type' => 'authorization_code',
         ]);
@@ -128,8 +128,8 @@ class GoogleMarketingReporting
 
             $refreshToken = Crypt::decryptString($encrypted);
             $response = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
-                'client_id' => config('services.google.client_id'),
-                'client_secret' => config('services.google.client_secret'),
+                'client_id' => config('services.google_reporting.client_id'),
+                'client_secret' => config('services.google_reporting.client_secret'),
                 'refresh_token' => $refreshToken,
                 'grant_type' => 'refresh_token',
             ]);
