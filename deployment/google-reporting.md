@@ -12,7 +12,8 @@ The Admin Google Performance Reports page uses Google's read-only Search Console
 
    `https://alomsenglishcenter.com/admin/seo/google/callback`
 
-6. Copy the OAuth client ID and client secret into the production environment. Do not paste secrets into GitHub or the admin SEO form.
+6. Keep the existing sign-in callback (`/auth/google/callback`) registered if Google sign-in is already enabled, and add the reporting callback (`/admin/seo/google/callback`) as a second authorized redirect URI on the same OAuth client.
+7. Copy the OAuth client ID and client secret into the production environment. Do not paste secrets into GitHub or the admin SEO form.
 
 ## 2. Production environment
 
@@ -21,6 +22,7 @@ Set these values in the hosting account's environment configuration:
 ```dotenv
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+GOOGLE_REDIRECT_URI=https://alomsenglishcenter.com/auth/google/callback
 GOOGLE_REPORTING_REDIRECT_URI=https://alomsenglishcenter.com/admin/seo/google/callback
 ```
 
@@ -33,6 +35,8 @@ Keep the existing `APP_KEY` stable and private. The Google refresh token is encr
 3. Enter the numeric GA4 Property ID (not the `G-...` Measurement ID).
 4. Save SEO settings.
 5. Open Google Performance Reports and connect the Google account that has at least read access to the configured Search Console and GA4 properties.
+
+Keep `GOOGLE_REDIRECT_URI` for existing Google sign-in. The reporting feature uses the separate `GOOGLE_REPORTING_REDIRECT_URI` so the two OAuth callbacks do not overwrite each other.
 
 The dashboard requests the last 28 complete days. It displays Search Console top queries and GA4 users, sessions, event count and total revenue. A missing property or API permission is shown as unavailable rather than replaced with estimated data.
 
