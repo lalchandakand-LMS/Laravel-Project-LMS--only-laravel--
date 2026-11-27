@@ -85,6 +85,7 @@ class SystemMediaRestoreTest extends TestCase
 
         $admin = User::factory()->create([
             'role' => 'admin',
+            'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
