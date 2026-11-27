@@ -19,7 +19,7 @@
                 <p class="mt-1">{{ optional($certificate->issued_at)->format('d F Y') }}</p>
             </div>
             <div class="text-right">
-                <p class="border-t border-slate-300 pt-1 font-semibold text-slate-700">{{ \App\Models\Setting::get('site_name', "Redwan's Method") }}</p>
+                <p class="border-t border-slate-300 pt-1 font-semibold text-slate-700">{{ \App\Models\Setting::get('site_name', config('app.name', "Alom's English Center")) }}</p>
                 <p>Verified issuer</p>
             </div>
         </div>

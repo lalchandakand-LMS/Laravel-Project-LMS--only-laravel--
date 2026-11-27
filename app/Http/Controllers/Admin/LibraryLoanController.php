@@ -35,7 +35,8 @@ class LibraryLoanController extends Controller
             abort_unless($book->is_active && $book->available_copies > 0, 409, 'No copies are currently available.');
 
             $student = $lockedLoan->student;
-            abort_unless(! $book->branch_id || (int) $book->branch_id === (int) $student->branch_id, 403,
+            abort_unless($student, 409, 'Cannot issue a book because the student account is no longer available.');
+            abort_unless(! $book->branch_id || (int) $book->branch_id === (int) $student?->branch_id, 403,
                 'This book is assigned to another branch.');
 
             $alreadyIssued = LibraryLoan::where('book_id', $book->id)

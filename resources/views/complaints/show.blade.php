@@ -15,7 +15,7 @@
         <div class="mt-4 space-y-3">
             @forelse($complaint->replies as $reply)
                 <div class="rounded-xl {{ $reply->user_id === auth()->id() ? 'bg-emerald-50' : 'bg-slate-50' }} p-4">
-                    <p class="text-xs font-bold text-slate-800">{{ $reply->user->name }} <span class="font-normal text-slate-400">· {{ $reply->created_at->format('d M Y, h:i A') }}</span></p>
+                    <p class="text-xs font-bold text-slate-800">{{ $reply->user?->name ?? 'Deleted user' }} <span class="font-normal text-slate-400">· {{ $reply->created_at->format('d M Y, h:i A') }}</span></p>
                     <p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $reply->body }}</p>
                     @foreach($reply->attachments as $file)<a class="mt-2 mr-3 inline-block text-xs font-bold text-emerald-700" href="{{ route('complaints.attachments.download',$file) }}">📎 {{ $file->original_name }}</a>@endforeach
                 </div>

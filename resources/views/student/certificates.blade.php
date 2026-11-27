@@ -6,11 +6,15 @@
     @forelse ($certificates as $certificate)
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p class="text-3xl">🏅</p>
-            <h3 class="mt-2 font-bold text-slate-900">{{ $certificate->course->title }}</h3>
+            <h3 class="mt-2 font-bold text-slate-900">{{ $certificate->course?->title ?? 'Course unavailable' }}</h3>
             <p class="mt-1 text-xs font-mono text-slate-500">{{ $certificate->code }}</p>
-            <p class="mt-1 text-xs text-slate-500">Issued {{ optional($certificate->issued_at)->format('d M Y') }}</p>
+            <p class="mt-1 text-xs text-slate-500">Issued {{ optional($certificate->issued_at)->format('d M Y') ?? '—' }}</p>
             <div class="mt-4 flex gap-2">
-                <a href="{{ route('student.certificates.show', $certificate->course->slug) }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">View</a>
+                @if ($certificate->course)
+                    <a href="{{ route('student.certificates.show', $certificate->course->slug) }}" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white">View</a>
+                @else
+                    <span class="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">Course unavailable</span>
+                @endif
                 <a href="{{ route('certificates.verify', $certificate->code) }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Verify</a>
             </div>
         </div>
