@@ -108,3 +108,21 @@ The local backup directory is not an off-site backup. Configure an encrypted off
 - Confirm all required CI jobs pass on the exact release commit, staging acceptance is complete, and a rollback point exists before go-live.
 
 No production deployment should be considered complete until the hosting account, real credentials, mail delivery, scheduled jobs, queue, backup restore and live-site smoke tests have been verified.
+
+## Newsletter queue production runbook
+Newsletter fan-out and recipient delivery jobs use the dedicated notifications queue. A worker listening only to default will leave campaigns queued. Prefer a persistent worker:
+
+~~~
+php artisan queue:work database --queue=notifications,default --sleep=3 --tries=3 --timeout=60
+~~~
+
+Restart long-running workers after deployments with `php artisan queue:restart`. If persistent workers are unsupported, use a non-overlapping cron drain only after confirming the PHP binary, project path, flock availability and writable lock/log paths:
+
+~~~
+* * * * * cd /home/CPANEL_USER/path/to/project && /usr/bin/flock -n storage/framework/newsletter-worker.lock /usr/local/bin/php artisan queue:work database --queue=notifications,default --stop-when-empty --max-time=50 --sleep=3 --tries=3 --timeout=60 >> storage/logs/newsletter-queue.log 2>&1
+~~~
+
+Keep worker timeout below the database queue retry_after (default 90 seconds). The scheduler is separate and does not process queued jobs. See deployment/newsletter-queue.md for staging acceptance, failure recovery, unsubscribe checks and operational sign-off.
+
+## SEO, consent and conversion tracking acceptance
+Configure GA4 Measurement ID, Meta Pixel ID and optional GTM ID in Admin → SEO & Marketing only after the production provider properties exist. Optional scripts are consent-gated. Test reject, analytics-only, marketing-only and accept-all choices. Verify PageView, Lead and fully verified Purchase in GA4 DebugView/Realtime and Meta Events Manager Test Events. Partial/unverified orders must not emit Purchase. Browser tracking does not include Meta Conversions API or guaranteed server/browser deduplication. See deployment/seo-pixel-conversion.md for provider setup, staging tests, production activation and rollback.
