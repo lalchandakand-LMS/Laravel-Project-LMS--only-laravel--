@@ -48,6 +48,6 @@ class MarketingPopupController extends Controller
         $destination = (string) Setting::get('marketing_popup_destination_url', '');
 
         return ($destination !== '' ? redirect($destination) : back())
-            ->with('success', 'Thank you! Our team will contact you soon.');
+            ->with('success', 'Thank you! Our team will contact you soon.')\n            ->with('aec_lead_event', ['event_id' => (string) Str::uuid(), 'method' => 'marketing_popup']);
     }
 }
