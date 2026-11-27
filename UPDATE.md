@@ -67,7 +67,7 @@ prefer. Point the web root at `lms/public` (never at the project root).
 - Demo seeders create accounts using the shared `password` password only in local/test/staging environments. Both `DatabaseSeeder` and `OrganisationSeeder` now refuse to run in production. Never run `db:seed` on a live database. Create the first production administrator with `php artisan lms:admin:create`; it prompts for a hidden password of at least 14 characters.
 - `APP_ENV=production`, `APP_DEBUG=false`, correct `APP_URL`.
 - `php artisan config:cache && php artisan route:cache && php artisan view:cache`.
-- Add cPanel cron entries for `schedule:run` and the database queue worker every minute; use `queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45` so the worker exits within the cron interval.
+- Add cPanel cron entries for `schedule:run` and the database queue worker every minute. The worker must listen to both `notifications,default` (newsletter first), for example `queue:work database --queue=notifications,default --stop-when-empty --max-time=50 --tries=3 --timeout=60`; a default-only worker will leave newsletter campaigns queued.
 - Add a daily full backup cron: `0 3 * * * cd /path/to/lms && /bin/bash backup.sh >> storage/logs/backup.log 2>&1`.
 - See `docs/CPANEL_PRODUCTION_CHECKLIST.md` for the exact cron examples, Google OAuth/GA4, SMTP, MiMSMS and Gemini setup, and staging acceptance steps.
 
