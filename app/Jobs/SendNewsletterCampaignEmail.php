@@ -26,7 +26,7 @@ class SendNewsletterCampaignEmail implements ShouldQueue, ShouldBeUnique
 
     public function __construct(public readonly int $deliveryId)
     {
-        $this->onQueue('mail');
+        $this->onQueue('notifications');
     }
 
     public function uniqueId(): string
