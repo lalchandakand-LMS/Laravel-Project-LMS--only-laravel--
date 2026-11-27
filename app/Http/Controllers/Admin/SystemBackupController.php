@@ -157,7 +157,7 @@ class SystemBackupController extends Controller
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
         $files = collect(glob($this->directory().'/*') ?: [])
-            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^aec-(?:(?:mysql|sqlite)-[0-9]{8}-[0-9]{6}\\.(?:sql|sqlite)|media-(?:public|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz)$/', basename($path)))
+            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^aec-(?:(?:mysql|sqlite)-[0-9]{8}-[0-9]{6}\.(?:sql|sqlite)|media-(?:public|private)-[0-9]{8}-[0-9]{6}\.tar\.gz)$/', basename($path)))
             ->map(fn ($path) => [
                 'name' => basename($path),
                 'kind' => str_starts_with(basename($path), 'aec-media-') ? 'Media safety backup' : 'Database backup',
@@ -167,7 +167,7 @@ class SystemBackupController extends Controller
             ->sortByDesc('date')->values();
 
         $mediaFiles = collect(glob(base_path('storage/backups/*')) ?: [])
-            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^(uploads|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz$/', basename($path)))
+            ->filter(fn ($path) => is_file($path) && ! is_link($path) && preg_match('/^(uploads|private)-[0-9]{8}-[0-9]{6}\.tar\.gz$/', basename($path)))
             ->map(fn ($path) => ['name' => basename($path), 'kind' => str_starts_with(basename($path), 'uploads-') ? 'Public uploads' : 'Private uploads', 'size' => filesize($path), 'date' => filemtime($path)])
             ->sortByDesc('date')->values();
 
@@ -212,7 +212,7 @@ class SystemBackupController extends Controller
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
         abort_unless(
-            basename($name) === $name && preg_match('/^aec-(?:(?:mysql|sqlite)-[0-9]{8}-[0-9]{6}\\.(?:sql|sqlite)|media-(?:public|private)-[0-9]{8}-[0-9]{6}\\.tar\\.gz)$/',
+            basename($name) === $name && preg_match('/^aec-(?:(?:mysql|sqlite)-[0-9]{8}-[0-9]{6}\.(?:sql|sqlite)|media-(?:public|private)-[0-9]{8}-[0-9]{6}\.tar\.gz)$/',
                 $name
             ),
             404
