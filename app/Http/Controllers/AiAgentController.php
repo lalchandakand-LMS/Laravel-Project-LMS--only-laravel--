@@ -311,7 +311,9 @@ class AiAgentController extends Controller
     private function authorizeProposal(AiActionProposal $proposal): void
     {
         $user = auth()->user();
-        abort_unless($proposal->user_id === $user->id || $user->isAdmin(), 403);
+        $isOwner = $proposal->user_id === $user->id;
+        $isAdminReview = $user->isAdmin() && $proposal->action_type !== 'create_complaint_draft';
+        abort_unless($isOwner || $isAdminReview, 403);
         abort_unless(in_array($proposal->action_type, self::ACTIONS_BY_ROLE[$proposal->user->role] ?? [], true), 403);
     }
 }
