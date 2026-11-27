@@ -60,6 +60,7 @@
                 ['admin.marketing.leads.index','Marketing Leads','♧','admin.marketing.leads.*'],
                 ['admin.marketing.campaigns.index','Campaigns','◉','admin.marketing.campaigns.*'],
                 ['admin.marketing.newsletter.index','Newsletter','✉','admin.marketing.newsletter.*'],
+                ['admin.marketing.newsletter.campaigns','Newsletter Campaigns','✉','admin.marketing.newsletter.campaigns'],
                 ['admin.marketing.popup.edit','Marketing Popup','▣','admin.marketing.popup.*'],
                 ['admin.seo.index','SEO & Marketing','⌕','admin.seo.*'],
                 ['admin.seo.redirects.index','SEO Redirects','↪','admin.seo.redirects.*'],
