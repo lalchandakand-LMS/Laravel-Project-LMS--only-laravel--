@@ -92,6 +92,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin'])
         ->middleware('throttle:10,1')->name('admin.login.store');
+    Route::get('/admin/login/verify', [AuthController::class, 'showAdminLoginVerify'])->name('admin.login.verify');
+    Route::post('/admin/login/verify', [AuthController::class, 'verifyAdminLogin'])
+        ->middleware('throttle:10,1')->name('admin.login.verify.store');
+    Route::post('/admin/login/resend', [AuthController::class, 'resendAdminLoginOtp'])
+        ->middleware('throttle:3,1')->name('admin.login.resend');
 
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->middleware('throttle:5,1')->name('password.email');
