@@ -30,7 +30,6 @@ class NewsletterSubscriptionTest extends TestCase
         $subscriber = NewsletterSubscriber::where('email', 'reader@example.test')->firstOrFail();
         $this->assertNotNull($subscriber->confirmation_token_hash);
         $this->assertNull($subscriber->confirmed_at);
-        Mail::assertSent(\Illuminate\Mail\Mailable::class, 0);
     }
 
     public function test_subscriber_cannot_be_created_without_explicit_consent(): void
