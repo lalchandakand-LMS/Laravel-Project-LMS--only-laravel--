@@ -4,6 +4,23 @@
 @section('meta_image', $product->imageUrl())
 @section('meta_image_alt', $product->title)
 @section('og_type', 'product')
+@push('structured_data')
+<script type="application/ld+json"><?php echo json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => $product->title,
+    'description' => $product->description,
+    'image' => $product->imageUrl(),
+    'url' => route('products.show', $product->slug),
+    'offers' => [
+        '@type' => 'Offer',
+        'priceCurrency' => 'BDT',
+        'price' => number_format((float) $product->price, 2, '.', ''),
+        'availability' => $product->availableQuantity() > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        'url' => route('products.show', $product->slug),
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+@endpush
 @section('content')
 <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-2">
     <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white"><img src="{{ $product->imageUrl() }}" alt="{{ $product->title }}" class="h-full max-h-[560px] w-full object-cover"></div>
