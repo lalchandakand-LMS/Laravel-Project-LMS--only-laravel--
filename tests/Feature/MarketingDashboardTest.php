@@ -97,20 +97,23 @@ class MarketingDashboardTest extends TestCase
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
 
-        MarketingLead::create([
+        $recent = MarketingLead::create([
             'name' => 'Recent lead',
             'email' => 'recent-period@example.test',
             'message' => 'Recent',
             'status' => 'new',
-            'created_at' => now()->subDays(3),
         ]);
-        MarketingLead::create([
+        $recent->forceFill(['created_at' => now()->subDays(3)])->save();
+
+        $old = MarketingLead::create([
             'name' => 'Old lead',
             'email' => 'old-period@example.test',
             'message' => 'Old',
             'status' => 'new',
-            'created_at' => now()->subDays(40),
         ]);
+        $old->forceFill(['created_at' => now()->subDays(40)])->save();
+
+        $expectedCount = MarketingLead::whereBetween('created_at', [now()->subDays(7)->startOfDay(), now()->endOfDay()])->count();
 
         $this->actingAs($admin)
             ->get(route('admin.marketing.dashboard', [
@@ -118,8 +121,8 @@ class MarketingDashboardTest extends TestCase
                 'to' => now()->toDateString(),
             ]))
             ->assertOk()
-            ->assertSee('Recent lead')
-            ->assertSee('Total captured leads');
+            ->assertSee('Total captured leads')
+            ->assertSee(number_format($expectedCount));
 
         $this->actingAs($admin)
             ->get(route('admin.marketing.dashboard', [
