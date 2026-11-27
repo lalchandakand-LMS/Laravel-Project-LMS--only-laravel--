@@ -103,8 +103,8 @@ class AuthController extends Controller
             'remember' => $request->boolean('remember'),
         ]);
 
-        $user->notify(new AdminLoginOtpNotification($code));
         Auth::logout();
+        $user->notify(new AdminLoginOtpNotification($code));
 
         return redirect()->route('admin.login.verify')
             ->with('success', 'A one-time sign-in code has been sent to your administrator email address.');
