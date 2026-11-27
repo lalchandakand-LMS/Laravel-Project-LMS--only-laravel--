@@ -124,6 +124,19 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $this->validatedData($request, $user);
+
+        $willRemainAdmin = $data['role'] === 'admin' && $request->boolean('is_active');
+        if ($user->isAdmin() && ! $willRemainAdmin) {
+            if ($user->is(auth()->user())) {
+                return back()->with('error', 'You cannot remove your own active Admin access. Ask another administrator to make this change.');
+            }
+
+            $activeAdmins = User::where('role', 'admin')->where('is_active', true)->count();
+            if ($user->is_active && $activeAdmins <= 1) {
+                return back()->with('error', 'The last active administrator cannot be deactivated or changed to another role.');
+            }
+        }
+
         $oldAvatar = $user->avatar;
         $account = $this->accountData($data, $request, $user);
 
