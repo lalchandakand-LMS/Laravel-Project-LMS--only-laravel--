@@ -20,10 +20,10 @@ class MarketingDashboardController extends Controller
         ]);
 
         $from = isset($validated['from'])
-            ? now()->parse($validated['from'])->startOfDay()
+            ? \\Illuminate\\Support\\Carbon::parse($validated['from'])->startOfDay()
             : now()->subDays(29)->startOfDay();
         $to = isset($validated['to'])
-            ? now()->parse($validated['to'])->endOfDay()
+            ? \\Illuminate\\Support\\Carbon::parse($validated['to'])->endOfDay()
             : now()->endOfDay();
 
         if ($from->diffInDays($to) > 30) {
