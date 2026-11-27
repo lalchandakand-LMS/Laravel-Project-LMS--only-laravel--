@@ -21,7 +21,7 @@ class MarketingPopupController extends Controller
         ]);
 
         if (filled($validated['website'] ?? null)) {
-            return back()->with('popup_status', 'Thank you. If your details are valid, our team will contact you.');
+            return back()->with('success', 'Thank you. Our team will contact you soon.');
         }
 
         $attribution = $request->session()->get('marketing_attribution', []);
@@ -45,6 +45,9 @@ class MarketingPopupController extends Controller
             'status' => 'new',
         ]);
 
-        return back()->with('popup_status', 'Thank you! Our team will contact you soon.');
+        $destination = (string) Setting::get('marketing_popup_destination_url', '');
+
+        return ($destination !== '' ? redirect($destination) : back())
+            ->with('success', 'Thank you! Our team will contact you soon.');
     }
 }
