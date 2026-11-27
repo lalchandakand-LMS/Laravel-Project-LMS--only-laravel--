@@ -148,7 +148,6 @@ class SeoController extends Controller
             'User-agent: *',
             'Disallow: /admin',
             'Disallow: /my/',
-            'Disallow: /teacher/',
             'Disallow: /guardian/',
             'Disallow: /branch/',
             'Disallow: /cart',
