@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class NewsletterCampaign extends Model
 {
-    public const STATUSES = ['draft', 'queued', 'sending', 'sent', 'completed_with_errors'];
+    public const STATUSES = ['draft', 'queued', 'sending', 'sent', 'completed_with_errors', 'failed'];
 
     protected $fillable = [
         'created_by', 'subject', 'title', 'body', 'status',
