@@ -5,7 +5,7 @@
 <div class="mx-auto max-w-5xl space-y-5">
     <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900">
         <p class="font-bold">AI assistance with human-controlled actions</p>
-        <p class="mt-1">Your prompt is sent to Google Gemini for a response. Do not include passwords, payment PINs, OTPs or sensitive personal information. AI suggestions never change LMS data by themselves.</p>
+        <p class="mt-1">AI may prepare role-specific drafts. Nothing is submitted, published, sent or changed until you review and approve it. Do not include passwords, payment PINs, OTPs or sensitive personal information.</p>
     </div>
 
     @unless ($configured)
@@ -30,7 +30,7 @@
                 <label for="prompt" class="mb-1 block text-sm font-semibold text-slate-700">Your question or task</label>
                 <textarea id="prompt" name="prompt" rows="5" maxlength="{{ (int) config('ai_agents.max_prompt_length', 4000) }}" required
                           class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
-                          placeholder="Ask for an explanation, lesson plan, study strategy or safe draft...">{{ old('prompt') }}</textarea>
+                          placeholder="Ask for help or request a draft action that your role is allowed to perform...">{{ old('prompt') }}</textarea>
                 @error('prompt')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
             </div>
             <button @disabled(! $configured) class="rounded-lg bg-indigo-700 px-5 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Send to AI agent</button>
@@ -53,18 +53,36 @@
                 @endif
 
                 @foreach ($run->proposals as $proposal)
+                    @php
+                        $payload = $proposal->payload ?? [];
+                        $actionLabel = match ($proposal->action_type) {
+                            'create_assignment_draft' => 'Create assignment draft',
+                            'create_complaint_draft' => 'Submit complaint',
+                            'create_announcement_draft' => 'Create announcement draft',
+                            default => 'Unsupported action',
+                        };
+                    @endphp
                     <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-bold text-amber-950">Human approval required: Create assignment draft</p>
+                            <p class="font-bold text-amber-950">Human approval required: {{ $actionLabel }}</p>
                             <span class="text-xs font-bold uppercase text-amber-800">{{ $proposal->status }}</span>
                         </div>
-                        <p class="mt-2 text-sm text-amber-950">{{ $proposal->payload['title'] ?? 'Untitled draft' }}</p>
-                        <p class="mt-1 text-xs text-amber-800">Course ID: {{ $proposal->payload['course_id'] ?? '—' }} · Marks: {{ $proposal->payload['total_marks'] ?? '—' }}</p>
-                        @if ($proposal->status === 'pending' && (auth()->user()->isAdmin() || (auth()->user()->isInstructor() && $proposal->user_id === auth()->id())))
+                        <p class="mt-2 text-sm font-semibold text-amber-950">{{ $payload['title'] ?? $payload['subject'] ?? 'Draft action' }}</p>
+                        @if ($proposal->action_type === 'create_assignment_draft')
+                            <p class="mt-1 text-xs text-amber-800">Course ID: {{ $payload['course_id'] ?? '—' }} · Marks: {{ $payload['total_marks'] ?? '—' }}</p>
+                        @elseif ($proposal->action_type === 'create_complaint_draft')
+                            <p class="mt-1 text-xs text-amber-800">Category: {{ ucfirst($payload['category'] ?? 'other') }}</p>
+                        @elseif ($proposal->action_type === 'create_announcement_draft')
+                            <p class="mt-1 text-xs text-amber-800">Audience: {{ ucfirst($payload['audience_role'] ?? 'all applicable users') }} · Priority: {{ ucfirst($payload['priority'] ?? 'general') }} · Branch: {{ $payload['branch_id'] ?? 'All branches' }}</p>
+                        @endif
+                        @if (! empty($payload['body']) || ! empty($payload['description']) || ! empty($payload['instructions']))
+                            <p class="mt-2 whitespace-pre-line text-sm text-amber-950">{{ $payload['body'] ?? $payload['description'] ?? $payload['instructions'] }}</p>
+                        @endif
+                        @if ($proposal->status === 'pending')
                             <div class="mt-3 flex flex-wrap gap-2">
                                 <form method="POST" action="{{ route('ai-agent.approve', $proposal) }}">
                                     @csrf
-                                    <button class="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white">Approve & create draft</button>
+                                    <button class="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white">Approve & execute draft</button>
                                 </form>
                                 <form method="POST" action="{{ route('ai-agent.reject', $proposal) }}">
                                     @csrf
@@ -72,9 +90,13 @@
                                 </form>
                             </div>
                         @elseif ($proposal->status === 'executed')
-                            <p class="mt-2 text-xs font-semibold text-emerald-800">Created as an unpublished draft (Assignment #{{ $proposal->result['assignment_id'] ?? '—' }}). Review it before publishing.</p>
+                            <p class="mt-2 text-xs font-semibold text-emerald-800">
+                                {{ $proposal->result['message'] ?? 'Approved action completed.' }}
+                                @if (! empty($proposal->result['tracking_code'])) · Tracking: {{ $proposal->result['tracking_code'] }} @endif
+                                @if (! empty($proposal->result['record_id'])) · Record #{{ $proposal->result['record_id'] }} @endif
+                            </p>
                         @elseif ($proposal->status === 'rejected')
-                            <p class="mt-2 text-xs text-amber-800">This suggestion was rejected and no LMS change was made.</p>
+                            <p class="mt-2 text-xs text-amber-800">This suggestion was rejected and no LMS record was created.</p>
                         @endif
                     </div>
                 @endforeach
