@@ -12,6 +12,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div><h2 class="font-bold text-slate-900">Course & Blog SEO score</h2><p class="mt-1 text-sm text-slate-500">Automatic checklist based on metadata, content length, URL and featured image. This is internal guidance, not a Google ranking metric.</p></div>
             <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{{ $contentScores->count() }} published pages</span>
+            <a href="{{ route('admin.seo.index', ['export' => 'csv']) }}" class="rounded-lg border border-orange-300 px-3 py-2 text-xs font-bold text-orange-700 hover:bg-orange-50">Export CSV report ↓</a>
         </div>
         <div class="mt-4 space-y-3">
             @forelse($contentScores as $item)
