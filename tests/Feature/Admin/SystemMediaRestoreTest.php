@@ -26,8 +26,12 @@ class SystemMediaRestoreTest extends TestCase
         $this->safetyFilesBefore = glob(storage_path('app/private/system-backups/aec-media-public-*.tar.gz')) ?: [];
 
         mkdir($this->archiveDirectory.'/source/public', 0750, true);
-        mkdir($this->backupDirectory, 0750, true);
-        mkdir(dirname($this->destination), 0750, true);
+        if (! is_dir($this->backupDirectory)) {
+            mkdir($this->backupDirectory, 0750, true);
+        }
+        if (! is_dir(dirname($this->destination))) {
+            mkdir(dirname($this->destination), 0750, true);
+        }
     }
 
     protected function tearDown(): void
