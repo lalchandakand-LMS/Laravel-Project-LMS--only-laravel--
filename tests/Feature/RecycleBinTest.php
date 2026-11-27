@@ -554,4 +554,66 @@ class RecycleBinTest extends TestCase
         ]);
     }
 
+
+    public function test_user_permanent_delete_preserves_messages_and_staff_audit_records(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $actor = User::factory()->create(['role' => 'branch_manager', 'is_active' => false]);
+        $staffMember = User::factory()->create(['role' => 'teacher']);
+        $documentOwner = User::factory()->create(['role' => 'student']);
+        $now = now();
+
+        $messageId = DB::table('messages')->insertGetId([
+            'sender_id' => $actor->id,
+            'recipient_id' => $admin->id,
+            'body' => 'Retain sender attribution.',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $leaveId = DB::table('staff_leave_requests')->insertGetId([
+            'user_id' => $staffMember->id,
+            'start_date' => now()->addDays(2)->toDateString(),
+            'end_date' => now()->addDays(3)->toDateString(),
+            'leave_type' => 'annual',
+            'reason' => 'Retain reviewer attribution.',
+            'status' => 'approved',
+            'reviewed_by' => $actor->id,
+            'reviewed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $documentId = DB::table('profile_documents')->insertGetId([
+            'documentable_type' => User::class,
+            'documentable_id' => $documentOwner->id,
+            'document_type' => 'identity',
+            'disk' => 'local',
+            'path' => 'profile-documents/audit-test.pdf',
+            'original_name' => 'audit-test.pdf',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 128,
+            'status' => 'approved',
+            'uploaded_by' => $actor->id,
+            'reviewed_by' => $actor->id,
+            'reviewed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $actor->delete();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.recycle-bin.destroy', ['type' => 'users', 'id' => $actor->id]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSoftDeleted('users', ['id' => $actor->id]);
+        $this->assertDatabaseHas('messages', ['id' => $messageId, 'sender_id' => $actor->id]);
+        $this->assertDatabaseHas('staff_leave_requests', ['id' => $leaveId, 'reviewed_by' => $actor->id]);
+        $this->assertDatabaseHas('profile_documents', [
+            'id' => $documentId,
+            'uploaded_by' => $actor->id,
+            'reviewed_by' => $actor->id,
+        ]);
+    }
+
 }
