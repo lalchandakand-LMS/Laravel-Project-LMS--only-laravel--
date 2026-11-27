@@ -8,6 +8,8 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\Ebook;
 use App\Models\Post;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PageController extends Controller
@@ -22,7 +24,12 @@ class PageController extends Controller
             ['loc' => route('courses.index')],
             ['loc' => route('blog.index')],
             ['loc' => route('ebooks.index')],
+            ['loc' => route('products.index')],
+            ['loc' => route('instructors.index')],
             ['loc' => route('coaching-admission.create')],
+            ['loc' => route('legal.terms')],
+            ['loc' => route('legal.privacy')],
+            ['loc' => route('legal.refunds')],
         ];
 
         foreach (Category::query()
@@ -45,6 +52,16 @@ class PageController extends Controller
 
         foreach (Ebook::query()->where('is_published', true)->get(['slug', 'updated_at']) as $ebook) {
             $urls[] = ['loc' => route('ebooks.show', $ebook->slug), 'lastmod' => $ebook->updated_at];
+        }
+
+        // Only publicly purchasable products belong in the public sitemap.
+        foreach (Product::published()->get(['slug', 'updated_at']) as $product) {
+            $urls[] = ['loc' => route('products.show', $product->slug), 'lastmod' => $product->updated_at];
+        }
+
+        // Instructor profiles are public only while the instructor account is active.
+        foreach (User::query()->where('role', 'instructor')->where('is_active', true)->get(['id', 'updated_at']) as $instructor) {
+            $urls[] = ['loc' => route('instructors.show', $instructor->id), 'lastmod' => $instructor->updated_at];
         }
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
