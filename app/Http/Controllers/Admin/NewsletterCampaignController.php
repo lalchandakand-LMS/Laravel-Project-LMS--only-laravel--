@@ -25,7 +25,7 @@ class NewsletterCampaignController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'subject' => ['required', 'string', 'max:180'],
+            'subject' => ['required', 'string', 'max:180', 'regex:/^[^\\r\\n]+$/u'],
             'title' => ['required', 'string', 'max:180'],
             'body' => ['required', 'string', 'max:12000'],
             'confirm_send' => ['accepted'],
