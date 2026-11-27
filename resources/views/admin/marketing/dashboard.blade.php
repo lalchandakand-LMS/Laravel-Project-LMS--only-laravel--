@@ -4,7 +4,7 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-600">Lead and campaign performance from website inquiries with recorded UTM attribution.</p>
+        <div><p class="text-sm text-slate-600">Lead and campaign performance from website inquiries with recorded UTM attribution.</p><p class="mt-1 text-xs text-slate-500">Reporting period: {{ $from->format('d M Y') }} – {{ $to->format('d M Y') }}</p></div>
         <div class="flex gap-2">
             <a href="{{ route('admin.marketing.campaigns.index') }}" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700">Campaigns</a>
             <a href="{{ route('admin.marketing.leads.index') }}" class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white">Manage Leads</a>
@@ -21,8 +21,8 @@
     </section>
 
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2"><div><h2 class="font-bold text-slate-900">New leads · last 14 days</h2><p class="text-xs text-slate-500">Daily contact inquiries captured by the LMS.</p></div><span class="text-xs text-slate-500">14-day view</span></div>
-        <div class="mt-5 grid grid-cols-7 gap-2 sm:grid-cols-14">
+        <div class="flex flex-wrap items-center justify-between gap-2"><div><h2 class="font-bold text-slate-900">New leads · selected period</h2><p class="text-xs text-slate-500">Daily contact inquiries captured by the LMS for the selected date range.</p></div><span class="text-xs text-slate-500">{{ $dailyLeads->count() }} days</span></div>
+        <div class="mt-5 grid grid-cols-7 gap-2 sm:grid-cols-7 lg:grid-cols-14">
             @foreach($dailyLeads as $day)
                 <div class="min-w-0 text-center">
                     <div class="flex h-28 items-end justify-center rounded-lg bg-slate-50 px-1 pb-1" title="{{ $day['count'] }} leads">
