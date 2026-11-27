@@ -117,6 +117,8 @@ class SeoController extends Controller
             'seo_description' => ['nullable', 'string', 'max:320'],
             'seo_default_image' => ['nullable', 'url:http,https', 'max:2048'],
             'google_site_verification' => ['nullable', 'regex:/^[A-Za-z0-9_-]{0,255}$/'],
+            'google_search_console_property' => ['nullable', 'string', 'max:255'],
+            'google_analytics_property_id' => ['nullable', 'regex:/^[0-9]{1,20}$/'],
             'ga_measurement_id' => ['nullable', 'regex:/^G-[A-Z0-9]{6,20}$/i'],
             'meta_pixel_id' => ['nullable', 'regex:/^[0-9]{5,20}$/'],
             'gtm_container_id' => ['nullable', 'regex:/^GTM-[A-Z0-9]{4,12}$/i'],
@@ -125,8 +127,12 @@ class SeoController extends Controller
         ]);
 
         $customRules = $this->validatedRobotsRules((string) ($validated['seo_robots_custom_rules'] ?? ''));
+        $searchConsoleProperty = trim((string) ($validated['google_search_console_property'] ?? ''));
+        if ($searchConsoleProperty !== '' && ! preg_match('#^(https://[A-Za-z0-9.-]+/?|sc-domain:[A-Za-z0-9.-]+)$#i', $searchConsoleProperty)) {
+            throw ValidationException::withMessages(['google_search_console_property' => 'Use an HTTPS URL-prefix property or a valid sc-domain:example.com property.']);
+        }
 
-        foreach (['seo_title', 'seo_description', 'seo_default_image', 'google_site_verification', 'ga_measurement_id', 'meta_pixel_id', 'gtm_container_id'] as $key) {
+        foreach (['seo_title', 'seo_description', 'seo_default_image', 'google_site_verification', 'google_search_console_property', 'google_analytics_property_id', 'ga_measurement_id', 'meta_pixel_id', 'gtm_container_id'] as $key) {
             Setting::set($key, trim((string) ($validated[$key] ?? '')));
         }
 
