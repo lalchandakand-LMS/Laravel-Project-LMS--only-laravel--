@@ -11,9 +11,15 @@ class SeoRobotsEditorTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed();
+    }
+
     public function test_admin_can_save_safe_custom_robots_rules_and_the_public_file_includes_them(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
 
         $this->actingAs($admin)->post(route('admin.seo.update'), [
             'seo_robots_index' => '1',
@@ -31,7 +37,7 @@ class SeoRobotsEditorTest extends TestCase
 
     public function test_custom_robots_rules_cannot_override_private_paths_or_site_wide_indexing(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
 
         $this->actingAs($admin)->from(route('admin.seo.index'))->post(route('admin.seo.update'), [
             'seo_robots_index' => '1',
