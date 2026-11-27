@@ -116,4 +116,50 @@ class SystemMediaRestoreTest extends TestCase
         }
         @rmdir($directory);
     }
+
+    public function test_admin_can_list_and_download_media_restore_safety_backup(): void
+    {
+        $directory = storage_path('app/private/system-backups');
+        if (! is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
+
+        $name = 'aec-media-public-'.now()->format('Ymd-His').'.tar.gz';
+        $path = $directory.'/'.$name;
+        file_put_contents($path, 'media safety archive fixture');
+        chmod($path, 0600);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.system.backups.index'))
+            ->assertOk()
+            ->assertSeeText($name);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.system.backups.download', ['name' => $name]));
+
+        $response->assertOk();
+        $this->assertSame('media safety archive fixture', $response->streamedContent());
+
+        @unlink($path);
+    }
+
+    public function test_media_safety_backup_download_rejects_unexpected_archive_names(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.system.backups.download', ['name' => '../aec-media-public-20261127-120000.tar.gz']))
+            ->assertNotFound();
+    }
+
 }
