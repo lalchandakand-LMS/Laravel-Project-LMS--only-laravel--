@@ -77,6 +77,14 @@ class GoogleAuthController extends Controller
         if (! $user) {
             $user = User::whereRaw('LOWER(email) = ?', [Str::lower($profile['email'])])->first();
 
+            // Never link a Google identity to an administrator account here.
+            // Admins must authenticate through the password + email OTP flow.
+            if ($user && $user->isAdmin()) {
+                return redirect()->route('admin.login')->withErrors([
+                    'email' => 'Administrator accounts must use the secure Admin login with email verification code.',
+                ]);
+            }
+
             if ($user && filled($user->provider) && ($user->provider !== 'google' || $user->provider_id !== $profile['sub'])) {
                 return redirect()->route('login')->withErrors(['email' => 'This email is already connected to another sign-in provider.']);
             }
