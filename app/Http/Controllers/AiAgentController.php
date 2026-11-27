@@ -65,7 +65,7 @@ class AiAgentController extends Controller
         ]);
 
         try {
-            $result = $client->generate($data['agent_type'], $data['prompt']);
+            $result = $client->generate($data['agent_type'], $data['prompt'], $user->role);
             $run->update([
                 'response' => $result['message'],
                 'status' => 'completed',
