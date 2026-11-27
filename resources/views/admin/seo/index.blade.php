@@ -58,9 +58,15 @@
                     <p class="mt-1 text-xs text-slate-500">GA4 loads only after a visitor accepts Analytics cookies.</p>
                 </div>
                 <div>
+                    <label for="gtm_container_id" class="mb-1 block text-sm font-semibold text-slate-700">Google Tag Manager Container ID</label>
+                    <input id="gtm_container_id" name="gtm_container_id" value="{{ old('gtm_container_id', $settings['gtm_container_id'] ?? '') }}" placeholder="GTM-XXXXXXX" pattern="GTM-[A-Za-z0-9]{4,12}" maxlength="16" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">GTM loads only after Analytics or Marketing consent. Configure every tag in GTM to respect Google Consent Mode.</p>
+                </div>
+                <div>
                     <label for="meta_pixel_id" class="mb-1 block text-sm font-semibold text-slate-700">Meta / Facebook Pixel ID</label>
                     <input id="meta_pixel_id" name="meta_pixel_id" value="{{ old('meta_pixel_id', $settings['meta_pixel_id'] ?? '') }}" placeholder="123456789012345" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">
                     <p class="mt-1 text-xs text-slate-500">Meta Pixel loads only after a visitor accepts Marketing cookies.</p>
+                    <p class="mt-2 text-xs text-amber-700">If Meta Pixel is already installed through GTM, leave the direct Meta Pixel ID empty to avoid duplicate events. If GA4 is configured in GTM, the standalone GA4 ID will not load.</p>
                 </div>
             </div>
         </section>
@@ -83,7 +89,6 @@
         <h2 class="font-bold text-slate-900">Marketing workspace</h2>
         <p class="mt-1 text-sm text-slate-500">Manage campaign tracking links and follow up with website inquiries.</p>
         <div class="mt-4 flex flex-wrap gap-3">
-            <a href="{{ route('admin.marketing.dashboard') }}" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white">Marketing Dashboard</a>
             <a href="{{ route('admin.marketing.campaigns.index') }}" class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white">Manage Campaigns</a>
             <a href="{{ route('admin.marketing.leads.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">View Leads</a>
         </div>

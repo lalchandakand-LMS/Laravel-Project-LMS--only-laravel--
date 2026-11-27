@@ -1,12 +1,14 @@
 @php
     $gaMeasurementId = \App\Models\Setting::get('ga_measurement_id');
     $metaPixelId = \App\Models\Setting::get('meta_pixel_id');
+    $gtmContainerId = \App\Models\Setting::get('gtm_container_id');
 @endphp
 <div id="aec-cookie-consent"
      class="fixed inset-x-3 bottom-3 z-[10000] mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
      role="dialog" aria-modal="false" aria-labelledby="aec-cookie-title"
      data-ga-id="{{ $gaMeasurementId }}"
      data-meta-pixel-id="{{ $metaPixelId }}"
+     data-gtm-id="{{ $gtmContainerId }}"
      data-disable-pageview="{{ request()->routeIs('checkout.success') ? '1' : '0' }}"
      hidden>
     <div class="flex flex-wrap items-start justify-between gap-4">
@@ -19,8 +21,8 @@
     </div>
     <div id="aec-cookie-preferences" class="mt-4 hidden rounded-xl bg-slate-50 p-4">
         <label class="flex items-center justify-between gap-3 py-2 text-sm"><span><b>Essential</b><small class="block text-xs text-slate-500">Required for core site functions; always active.</small></span><input type="checkbox" checked disabled class="rounded border-slate-300"></label>
-        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Analytics</b><small class="block text-xs text-slate-500">Google Analytics 4 measurement.</small></span><input id="aec-consent-analytics" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
-        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Marketing</b><small class="block text-xs text-slate-500">Meta Pixel and advertising conversion measurement.</small></span><input id="aec-consent-marketing" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
+        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Analytics</b><small class="block text-xs text-slate-500">Google Analytics 4 or analytics tags configured through Google Tag Manager.</small></span><input id="aec-consent-analytics" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
+        <label class="flex items-center justify-between gap-3 border-t border-slate-200 py-2 text-sm"><span><b>Marketing</b><small class="block text-xs text-slate-500">Meta Pixel or marketing tags configured through Google Tag Manager.</small></span><input id="aec-consent-marketing" type="checkbox" class="rounded border-slate-300 text-orange-600"></label>
         <button id="aec-cookie-save" type="button" class="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white">Save my choices</button>
     </div>
     <div id="aec-cookie-actions" class="mt-4 flex flex-wrap gap-2">
@@ -36,7 +38,8 @@
 
     var gaId = panel.dataset.gaId || '';
     var pixelId = panel.dataset.metaPixelId || '';
-    if (!gaId && !pixelId) return;
+    var gtmId = panel.dataset.gtmId || '';
+    if (!gaId && !pixelId && !gtmId) return;
 
     var storageKey = 'aec_cookie_consent_v1';
     var preferences = document.getElementById('aec-cookie-preferences');
@@ -48,9 +51,13 @@
     function readConsent() {
         try {
             var value = JSON.parse(window.localStorage.getItem(storageKey) || 'null');
-            return value && value.version === 1
-                ? { analytics: value.analytics === true, marketing: value.marketing === true }
-                : null;
+            if (!value || value.version !== 1 || !value.savedAt) return null;
+            var savedAt = new Date(value.savedAt).getTime();
+            if (!Number.isFinite(savedAt) || Date.now() - savedAt > 180 * 24 * 60 * 60 * 1000) {
+                window.localStorage.removeItem(storageKey);
+                return null;
+            }
+            return { analytics: value.analytics === true, marketing: value.marketing === true };
         } catch (error) {
             return null;
         }
@@ -73,7 +80,7 @@
     }
 
     function loadAnalytics() {
-        if (!gaId || window.__aecGaLoaded) return;
+        if (!gaId || gtmId || window.__aecGaLoaded) return;
         window.__aecGaLoaded = true;
         window.dataLayer = window.dataLayer || [];
         window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
@@ -84,6 +91,30 @@
         var script = document.createElement('script');
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaId);
+        document.head.appendChild(script);
+    }
+
+    function loadTagManager() {
+        if (!gtmId || window.__aecGtmLoaded) return;
+        window.__aecGtmLoaded = true;
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+        window.gtag('consent', 'default', {
+            analytics_storage: 'denied',
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied'
+        });
+        window.gtag('consent', 'update', {
+            analytics_storage: consent && consent.analytics ? 'granted' : 'denied',
+            ad_storage: consent && consent.marketing ? 'granted' : 'denied',
+            ad_user_data: consent && consent.marketing ? 'granted' : 'denied',
+            ad_personalization: consent && consent.marketing ? 'granted' : 'denied'
+        });
+        window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(gtmId);
         document.head.appendChild(script);
     }
 
@@ -131,11 +162,20 @@
 
     function applyConsent() {
         if (!consent) return;
+        if (gtmId && (consent.analytics || consent.marketing)) loadTagManager();
         if (consent.analytics) {
             loadAnalytics();
             if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'granted' });
         } else if (window.gtag) {
             window.gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+        }
+        if (gtmId && window.gtag) {
+            window.gtag('consent', 'update', {
+                analytics_storage: consent.analytics ? 'granted' : 'denied',
+                ad_storage: consent.marketing ? 'granted' : 'denied',
+                ad_user_data: consent.marketing ? 'granted' : 'denied',
+                ad_personalization: consent.marketing ? 'granted' : 'denied'
+            });
         }
         if (consent.marketing) {
             loadMarketing();
