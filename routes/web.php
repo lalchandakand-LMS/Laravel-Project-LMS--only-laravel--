@@ -351,6 +351,10 @@ Route::middleware(['auth', 'required.email.verified', 'role:admin,instructor'])-
 
         Route::get('seo', [Admin\SeoController::class, 'index'])->name('seo.index');
         Route::post('seo', [Admin\SeoController::class, 'update'])->name('seo.update');
+        Route::get('seo/google', [Admin\GoogleAnalyticsSearchConsoleController::class, 'index'])->name('seo.google.index');
+        Route::get('seo/google/connect', [Admin\GoogleAnalyticsSearchConsoleController::class, 'connect'])->name('seo.google.connect');
+        Route::get('seo/google/callback', [Admin\GoogleAnalyticsSearchConsoleController::class, 'callback'])->name('seo.google.callback');
+        Route::delete('seo/google/disconnect', [Admin\GoogleAnalyticsSearchConsoleController::class, 'disconnect'])->name('seo.google.disconnect');
         Route::get('seo/redirects', [Admin\SeoRedirectController::class, 'index'])->name('seo.redirects.index');
         Route::get('seo/redirects/create', [Admin\SeoRedirectController::class, 'create'])->name('seo.redirects.create');
         Route::post('seo/redirects', [Admin\SeoRedirectController::class, 'store'])->name('seo.redirects.store');
