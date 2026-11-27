@@ -98,6 +98,7 @@ class AdminAuthenticationTest extends TestCase
             ]);
 
             $this->actingAs($user)->get('/admin')->assertForbidden();
+            $this->actingAs($user)->get('/admin/students')->assertForbidden();
         }
     }
 
