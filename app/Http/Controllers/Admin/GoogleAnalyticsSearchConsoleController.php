@@ -51,7 +51,7 @@ class GoogleAnalyticsSearchConsoleController extends Controller
 
         $state = Str::random(64);
         $request->session()->put('google_oauth_state', $state);
-        $redirectUri = config('services.google.redirect') ?: route('admin.seo.google.callback');
+        $redirectUri = config('services.google_reporting.redirect') ?: route('admin.seo.google.callback');
 
         return redirect()->away($google->authorizationUrl($state, $redirectUri));
     }
@@ -73,7 +73,7 @@ class GoogleAnalyticsSearchConsoleController extends Controller
         }
 
         $validated = $request->validate(['code' => ['required', 'string', 'max:2048']]);
-        $redirectUri = config('services.google.redirect') ?: route('admin.seo.google.callback');
+        $redirectUri = config('services.google_reporting.redirect') ?: route('admin.seo.google.callback');
 
         try {
             $tokens = $google->exchangeCode($validated['code'], $redirectUri);
