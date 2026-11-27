@@ -214,7 +214,8 @@ class RecycleBinController extends Controller
                 ['library_loans', 'student_id'], ['library_loans', 'issued_by'], ['library_loans', 'reviewed_by'],
                 ['ai_agent_runs', 'user_id'], ['ai_action_proposals', 'user_id'], ['ai_action_proposals', 'reviewed_by'],
                 ['staff_payrolls', 'paid_by'], ['payments', 'verified_by'], ['payment_adjustments', 'created_by'],
-                ['messages', 'sender_id'], ['messages', 'recipient_id'],
+                ['messages', 'sender_id'], ['messages', 'recipient_id'], ['announcement_reads', 'user_id'],
+                ['activity_logs', 'user_id'],
                 ['attendance_sessions', 'instructor_id'], ['attendance_sessions', 'reviewed_by'],
                 ['attendances', 'student_id'], ['attendances', 'marked_by'],
                 ['student_fee_invoices', 'student_id'], ['student_fee_invoices', 'created_by'],
@@ -248,6 +249,19 @@ class RecycleBinController extends Controller
             'menu-items' => [['menu_items', 'parent_id']],
             default => [],
         };
+
+        // Preserve polymorphic user notifications and profile documents as well as direct foreign keys.
+        if (Schema::hasTable('notifications') && Schema::hasColumn('notifications', 'notifiable_type') &&
+            Schema::hasColumn('notifications', 'notifiable_id') &&
+            DB::table('notifications')->where('notifiable_type', User::class)->where('notifiable_id', $id)->exists()) {
+            return true;
+        }
+
+        if (Schema::hasTable('profile_documents') && Schema::hasColumn('profile_documents', 'documentable_type') &&
+            Schema::hasColumn('profile_documents', 'documentable_id') &&
+            DB::table('profile_documents')->where('documentable_type', User::class)->where('documentable_id', $id)->exists()) {
+            return true;
+        }
 
         // Payroll rows are linked through staff_profiles rather than directly to users.
         if ($type === 'users' && Schema::hasTable('staff_payrolls') && Schema::hasColumn('staff_payrolls', 'staff_profile_id') &&
