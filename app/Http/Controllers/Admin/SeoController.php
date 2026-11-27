@@ -13,6 +13,19 @@ class SeoController extends Controller
     public function index()
     {
         $missingMeta = collect();
+        $contentScores = collect();
+
+        Course::query()->where('is_published', true)
+            ->get(['id', 'title', 'slug', 'subtitle', 'description', 'thumbnail', 'meta_title', 'meta_description'])
+            ->each(function ($item) use ($contentScores) {
+                $contentScores->push($this->scoreContent('Course', $item));
+            });
+
+        Post::published()
+            ->get(['id', 'title', 'slug', 'excerpt', 'content', 'thumbnail', 'meta_title', 'meta_description'])
+            ->each(function ($item) use ($contentScores) {
+                $contentScores->push($this->scoreContent('Blog post', $item));
+            });
 
         $coursesMissingMeta = Course::query()->where('is_published', true)
             ->where(function ($query) {
@@ -48,7 +61,7 @@ class SeoController extends Controller
             'robotsUrl' => route('robots'),
             'coursesMissingMeta' => $coursesMissingMeta,
             'postsMissingMeta' => $postsMissingMeta,
-            'missingMeta' => $missingMeta,
+            'missingMeta' => $missingMeta,\n            'contentScores' => $contentScores->sortBy('score')->values(),
         ]);
     }
 
@@ -62,14 +75,14 @@ class SeoController extends Controller
             'ga_measurement_id' => ['nullable', 'regex:/^G-[A-Z0-9]{6,20}$/i'],
             'meta_pixel_id' => ['nullable', 'regex:/^[0-9]{5,20}$/'],
             'gtm_container_id' => ['nullable', 'regex:/^GTM-[A-Z0-9]{4,12}$/i'],
-            'seo_robots_index' => ['nullable', 'boolean'],
+            'seo_robots_index' => ['nullable', 'boolean'],\n            'seo_robots_custom_rules' => ['nullable', 'string', 'max:4000'],
         ]);
 
         foreach (['seo_title', 'seo_description', 'seo_default_image', 'google_site_verification', 'ga_measurement_id', 'meta_pixel_id', 'gtm_container_id'] as $key) {
             Setting::set($key, trim((string) ($validated[$key] ?? '')));
         }
 
-        Setting::set('seo_robots_index', $request->boolean('seo_robots_index') ? '1' : '0');
+        Setting::set('seo_robots_index', $request->boolean('seo_robots_index') ? '1' : '0');\n        Setting::set('seo_robots_custom_rules', $this->validatedRobotsRules((string) ($validated['seo_robots_custom_rules'] ?? '')));
 
         return redirect()->route('admin.seo.index')->with('success', 'SEO settings saved.');
     }
