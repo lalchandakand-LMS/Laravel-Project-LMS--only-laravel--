@@ -314,6 +314,8 @@ class AiAgentController extends Controller
         $isOwner = $proposal->user_id === $user->id;
         $isAdminReview = $user->isAdmin() && $proposal->action_type !== 'create_complaint_draft';
         abort_unless($isOwner || $isAdminReview, 403);
-        abort_unless(in_array($proposal->action_type, self::ACTIONS_BY_ROLE[$proposal->user->role] ?? [], true), 403);
+        $proposalOwner = $proposal->user;
+        abort_unless($proposalOwner, 403, 'The proposal owner account is no longer available.');
+        abort_unless(in_array($proposal->action_type, self::ACTIONS_BY_ROLE[$proposalOwner->role] ?? [], true), 403);
     }
 }

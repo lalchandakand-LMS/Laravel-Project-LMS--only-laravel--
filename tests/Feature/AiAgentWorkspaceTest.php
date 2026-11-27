@@ -340,4 +340,43 @@ class AiAgentWorkspaceTest extends TestCase
         $this->assertSame(0, Complaint::count());
     }
 
+
+    public function test_admin_cannot_approve_or_reject_a_proposal_after_its_owner_is_soft_deleted(): void
+    {
+        $owner = User::factory()->create([
+            'role' => 'branch_manager',
+            'is_active' => true,
+        ]);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $run = AiAgentRun::create([
+            'user_id' => $owner->id,
+            'agent_type' => 'support',
+            'prompt' => 'Prepare a branch announcement.',
+            'status' => 'completed',
+        ]);
+        $proposal = AiActionProposal::create([
+            'ai_agent_run_id' => $run->id,
+            'user_id' => $owner->id,
+            'action_type' => 'create_announcement_draft',
+            'payload' => [
+                'title' => 'Branch closure notice',
+                'body' => 'The branch will be closed for a public holiday.',
+            ],
+            'status' => 'pending',
+        ]);
+
+        $owner->delete();
+
+        $this->actingAs($admin)
+            ->post(route('ai-agent.approve', $proposal))
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->post(route('ai-agent.reject', $proposal))
+            ->assertForbidden();
+
+        $this->assertSame('pending', $proposal->fresh()->status);
+        $this->assertSame(0, Announcement::count());
+    }
+
 }
