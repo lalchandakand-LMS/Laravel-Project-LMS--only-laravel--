@@ -363,7 +363,7 @@ class AdminAuthenticationTest extends TestCase
         ]);
 
         Event::fake([
-            \\Illuminate\\Auth\\Events\\Login::class,
+            \Illuminate\Auth\Events\Login::class,
         ]);
 
         $this->post(route('admin.login.store'), [
@@ -377,7 +377,7 @@ class AdminAuthenticationTest extends TestCase
             'id' => $admin->id,
             'remember_token' => 'existing-remember-token',
         ]);
-        Event::assertNotDispatched(\\Illuminate\\Auth\\Events\\Login::class);
+        Event::assertNotDispatched(\Illuminate\Auth\Events\Login::class);
         Notification::assertSentTo($admin, AdminLoginOtpNotification::class);
     }
 
