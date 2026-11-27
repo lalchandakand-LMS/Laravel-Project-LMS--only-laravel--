@@ -47,9 +47,10 @@ class MarketingLeadExportTest extends TestCase
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $response->assertHeader('cache-control', 'no-store, private');
-        $response->assertStreamedContentContains('prospect@example.test');
-        $response->assertStreamedContentContains('winter-2026');
-        $response->assertStreamedContentMissing('other@example.test');
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('prospect@example.test', $csv);
+        $this->assertStringContainsString('winter-2026', $csv);
+        $this->assertStringNotContainsString('other@example.test', $csv);
     }
 
     public function test_non_admin_cannot_export_marketing_leads(): void
