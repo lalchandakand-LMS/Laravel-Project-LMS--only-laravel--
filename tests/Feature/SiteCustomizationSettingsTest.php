@@ -222,12 +222,17 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('linear-gradient(125deg,#062c30 0%,#041c24 100%)', false);
     }
 
-    public function test_dark_homepage_theme_overrides_inline_section_backgrounds_and_keeps_body_text_readable(): void
+    public function test_dark_homepage_theme_preserves_admin_section_colors_and_keeps_inner_cards_readable(): void
     {
+        Setting::set('homepage_theme_mode', 'dark');
+        Setting::set('homepage_online_batches_bg', '#123456');
+        Setting::set('homepage_online_batches_text', '#fefefe');
+
         $this->get('/')
             ->assertOk()
-            ->assertSee('#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){background-color:#0f1b2d!important;color:#e5edf8}', false)
-            ->assertSee(':is(p,.text-slate-600,.text-slate-500,.text-gray-600,.text-gray-500){color:#cbd5e1}', false);
+            ->assertSee('#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){color:var(--home-section-text,#e5edf8)}', false)
+            ->assertSee('background-color:#123456;--home-section-text:#fefefe', false)
+            ->assertSee(':is(.bg-white,.bg-slate-50,.bg-gray-50){background-color:#142238}', false);
     }
 
     public function test_homepage_section_color_controls_and_reviews_carousel_are_rendered(): void
