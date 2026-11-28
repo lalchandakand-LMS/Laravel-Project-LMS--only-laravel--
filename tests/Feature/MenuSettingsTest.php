@@ -78,8 +78,9 @@ class MenuSettingsTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)->get('/')->assertOk();
-        $response->assertSee('<details class="group relative">', false)
-            ->assertSee('<details class="group rounded-xl">', false)
+        $response->assertSee('<details class="group relative" name="desktop-navigation">', false)
+            ->assertSee('<details class="group rounded-xl" name="mobile-navigation">', false)
+            ->assertSee("event.key !== 'Escape'", false)
             ->assertSee('<summary', false)
             ->assertSee('Learning')
             ->assertSee('All courses');
