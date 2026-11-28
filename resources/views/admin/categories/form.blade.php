@@ -40,7 +40,7 @@
     window.addEventListener('message', event => {
         if (event.origin !== window.location.origin || event.source !== pickerWindow) return;
         if (!event.data || event.data.type !== 'lms-media-selected' || typeof event.data.url !== 'string') return;
-        const allowed = ['thumbnail_url', 'image_url', 'cover_url'];
+        const allowed = ['thumbnail_url', 'image_url', 'cover_url', 'avatar_url'];
         if (!allowed.includes(event.data.target)) return;
         const field = document.querySelector('[name="' + event.data.target + '"]');
         if (!field) return;
