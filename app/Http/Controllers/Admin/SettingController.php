@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
-    private const HOMEPAGE_SECTION_KEYS = ['hero', 'categories', 'featured', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
+    private const HOMEPAGE_SECTION_KEYS = ['hero', 'online_batches', 'stats', 'categories', 'featured', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
     public const KEYS = [
         'site_name', 'site_tagline', 'admin_logo', 'admin_theme_preset', 'admin_card_radius', 'admin_brand_title', 'admin_brand_subtitle', 'admin_sidebar_promo_title', 'admin_sidebar_promo_body', 'admin_sidebar_promo_button', 'admin_sidebar_promo_url', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
