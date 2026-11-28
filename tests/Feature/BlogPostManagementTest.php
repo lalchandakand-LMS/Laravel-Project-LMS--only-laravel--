@@ -162,7 +162,7 @@ class BlogPostManagementTest extends TestCase
         $this->assertSame(403, $forbiddenResponse->getStatusCode());
 
         $showResponse = $this->get(route('blog.show', $published));
-        fwrite(STDERR, 'BLOG_TEST_BUFFER_AFTER_SHOW='.ob_get_level()."\\n");
+        fwrite(STDERR, 'BLOG_TEST_BUFFER_AFTER_SHOW='.json_encode(ob_get_status(true))."\\n");
         $showResponse->assertOk();
         $this->assertSame(200, $showResponse->getStatusCode());
     }
