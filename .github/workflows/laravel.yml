@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -73,7 +73,7 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
-        run: php artisan test
+        run: php artisan test --display-risky
   mysql:
     name: MySQL 8.0 · migrations and feature tests
     runs-on: ubuntu-latest
