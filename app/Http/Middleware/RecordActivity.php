@@ -12,7 +12,6 @@ class RecordActivity
 {
     public function handle(Request $request, Closure $next): Response
     {
-        fwrite(STDERR, 'BLOG_BUF activity_before='.ob_get_level()."\\n");
         $actorId = $request->user()?->getAuthIdentifier();
         $response = $next($request);
 
@@ -39,7 +38,6 @@ class RecordActivity
             }
         }
 
-        fwrite(STDERR, 'BLOG_BUF activity_after_next='.ob_get_level()."\\n");
         return $response;
     }
 
