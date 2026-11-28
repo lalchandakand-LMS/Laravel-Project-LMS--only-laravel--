@@ -41,7 +41,8 @@ class CategoryController extends Controller
             if (! $storedImage) {
                 throw ValidationException::withMessages(['image' => 'The category image could not be stored.']);
             }
-            $data['image'] = $storedImage;\n                MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);\n            MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);
+            $data['image'] = $storedImage;
+            MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);
         } elseif ($request->filled('image_url')) {
             $data['image'] = $data['image_url'];
         }
@@ -79,6 +80,7 @@ class CategoryController extends Controller
                     throw ValidationException::withMessages(['image' => 'The new category image could not be stored. The previous image has been kept.']);
                 }
                 $data['image'] = $storedImage;
+                MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);
             } elseif ($request->boolean('remove_image')) {
                 $data['image'] = null;
             } elseif ($request->filled('image_url')) {
