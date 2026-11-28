@@ -48,9 +48,9 @@
             <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $slider->image, 'http') ? $slider->image : '') }}" placeholder="https://example.com/learning-banner.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Choose from Media Library →</a>
             @if ($slider->imageUrl())
-                <img src="{{ $slider->imageUrl() }}" class="mt-2 aspect-[16/5] w-full rounded-lg border border-slate-200 object-cover" alt="Current banner preview">
+                <img src="{{ $slider->imageUrl() }}" class="mt-2 aspect-[16/5] w-full rounded-lg border border-slate-200 bg-slate-900 object-contain" alt="Current banner preview">
             @endif
-            <p class="mt-1 text-xs text-slate-500">Use a ready-made promotional banner (JPG, PNG, WebP or GIF, max 4 MB). The public slider displays the image as the complete banner card without overlay headline or CTA text.</p>
+            <p class="mt-1 text-xs text-slate-500">Upload a promotional banner (JPG, PNG, WebP or GIF, max 25 MB). The public slider displays the image as the complete banner card without overlay headline or CTA text.</p>
         </div>
     </div>
 
