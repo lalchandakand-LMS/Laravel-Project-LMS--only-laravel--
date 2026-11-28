@@ -4,4 +4,6 @@
 @section('meta_image', $post->thumbnail ? media_url($post->thumbnail) : '')
 @section('meta_image_alt', $post->title)
 @section('og_type', 'article')
-@section('content', $articleContent)
+@section('content')
+    @include('blog.partials.show-content')
+@endsection
