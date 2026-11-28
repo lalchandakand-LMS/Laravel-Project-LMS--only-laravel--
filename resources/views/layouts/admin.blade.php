@@ -18,6 +18,11 @@
       #admin-sidebar .nav-link{transition:background .18s ease,color .18s ease,transform .18s ease}
       #admin-sidebar .nav-link:hover{background:rgba(125,211,252,.12);color:white;transform:translateX(2px)}
       #admin-sidebar .nav-link[aria-current="page"]{background:linear-gradient(90deg,rgba(14,165,233,.28),rgba(59,130,246,.12));color:white;box-shadow:inset 3px 0 #38bdf8}
+      #admin-sidebar{transform:translateX(-100%);transition:transform .2s ease,width .2s ease}
+      #admin-sidebar[data-open="true"]{transform:translateX(0)}
+      body.admin-sidebar-open{overflow:hidden}
+      @media(min-width:1024px){#admin-sidebar{transform:none}#sidebar-scrim{display:none!important}}
+      @media(prefers-reduced-motion:reduce){#admin-sidebar{transition:none}}
       @media(min-width:1024px){#admin-sidebar[data-collapsed="true"]{width:5.25rem}#admin-sidebar[data-collapsed="true"] .sidebar-label,#admin-sidebar[data-collapsed="true"] .sidebar-group,#admin-sidebar[data-collapsed="true"] .sidebar-promo,#admin-sidebar[data-collapsed="true"] .sidebar-version{display:none}#admin-sidebar[data-collapsed="true"] .nav-link{justify-content:center;padding-left:.7rem;padding-right:.7rem}#admin-sidebar[data-collapsed="true"] .nav-icon{font-size:1.2rem}}
       :root{--admin-card-radius:{{ (int) \App\Models\Setting::get('admin_card_radius', 18) }}px}
       body main .rounded-2xl{border-radius:var(--admin-card-radius)!important}
@@ -33,7 +38,7 @@
 <body class="bg-slate-100 text-slate-800 antialiased">
 <div class="flex min-h-screen">
     <div id="sidebar-scrim" class="fixed inset-0 z-40 hidden bg-slate-950/60 lg:hidden"></div>
-    <aside id="admin-sidebar" data-collapsed="false" class="fixed inset-y-0 left-0 z-50 flex h-screen w-72 -translate-x-full flex-col border-r border-white/10 p-4 text-slate-200 transition-transform duration-200 lg:sticky lg:top-0 lg:w-64 lg:translate-x-0">
+    <aside id="admin-sidebar" data-collapsed="false" data-open="false" class="fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-col border-r border-white/10 p-4 text-slate-200 lg:sticky lg:top-0 lg:w-64">
         <div class="flex items-center justify-between gap-2 px-1 py-2">
             <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
                 <img src="{{ \App\Models\Setting::get('admin_logo') ? media_url(\App\Models\Setting::get('admin_logo')) : (\App\Models\Setting::get('logo') ? media_url(\App\Models\Setting::get('logo')) : asset('images/aec-logo.svg')) }}" alt="{{ \App\Models\Setting::get('admin_brand_title', 'Admin workspace') }}" class="h-10 w-10 shrink-0 rounded-xl bg-white/95 p-1 object-contain shadow-lg">
@@ -95,7 +100,7 @@
 
     <div class="flex min-w-0 flex-1 flex-col">
         <header class="sticky top-0 z-30 flex min-h-[68px] items-center gap-3 border-b border-slate-200/80 bg-white/90 px-3 py-3 shadow-sm backdrop-blur-xl sm:px-5">
-            <button id="sidebar-toggle" type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-lg text-slate-700 shadow-sm hover:bg-slate-50" aria-label="Toggle sidebar" aria-expanded="false">☰</button>
+            <button id="sidebar-toggle" type="button" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-lg text-slate-700 shadow-sm hover:bg-slate-50" aria-label="Toggle sidebar" aria-controls="admin-sidebar" aria-expanded="false">☰</button>
             <div class="hidden min-w-0 sm:block"><h1 class="text-base font-black text-slate-900">@yield('heading', 'Dashboard')</h1><p class="text-[10px] text-slate-400">Alom's English Center · Administration</p></div>
             <div class="relative ml-1 min-w-0 flex-1 sm:ml-4 sm:max-w-xl">
                 <label for="admin-global-search" class="sr-only">Global search</label>
@@ -118,13 +123,18 @@
 <script>
 (function(){
  const sidebar=document.getElementById('admin-sidebar'),toggle=document.getElementById('sidebar-toggle'),scrim=document.getElementById('sidebar-scrim');
- function closeMobile(){sidebar.classList.add('-translate-x-full');scrim.classList.add('hidden');toggle.setAttribute('aria-expanded','false');}
+ const desktop=()=>window.matchMedia('(min-width: 1024px)').matches;
+ function closeMobile(){sidebar.dataset.open='false';scrim.classList.add('hidden');toggle.setAttribute('aria-expanded','false');document.body.classList.remove('admin-sidebar-open');}
+ function openMobile(){sidebar.dataset.open='true';scrim.classList.remove('hidden');toggle.setAttribute('aria-expanded','true');document.body.classList.add('admin-sidebar-open');}
  toggle.addEventListener('click',function(){
-   if(window.matchMedia('(min-width: 1024px)').matches){sidebar.dataset.collapsed=sidebar.dataset.collapsed==='true'?'false':'true';}
-   else{const closed=sidebar.classList.toggle('-translate-x-full');scrim.classList.toggle('hidden',closed);toggle.setAttribute('aria-expanded',String(!closed));}
+   if(desktop()){sidebar.dataset.collapsed=sidebar.dataset.collapsed==='true'?'false':'true';}
+   else if(sidebar.dataset.open==='true'){closeMobile();}
+   else{openMobile();}
  });
  scrim.addEventListener('click',closeMobile);
- window.addEventListener('resize',()=>{if(window.matchMedia('(min-width: 1024px)').matches){sidebar.classList.remove('-translate-x-full');scrim.classList.add('hidden');}});
+ sidebar.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{if(!desktop())closeMobile();}));
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&sidebar.dataset.open==='true')closeMobile();});
+ window.addEventListener('resize',()=>{if(desktop())closeMobile();});
  const theme=document.getElementById('admin-theme');if(theme){const saved=localStorage.getItem('aec-admin-theme')||'system';theme.value=saved;function apply(value){const dark=value==='dark'||(value==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=dark?'dark':'light';}theme.addEventListener('change',function(){localStorage.setItem('aec-admin-theme',this.value);apply(this.value);});apply(saved);}
  const full=document.getElementById('admin-fullscreen');if(full)full.addEventListener('click',()=>{if(!document.fullscreenElement){document.documentElement.requestFullscreen?.();}else{document.exitFullscreen?.();}});
  const search=document.getElementById('admin-global-search'),results=document.getElementById('admin-search-results');let debounce;

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\TracksDeletionActor;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -48,6 +49,17 @@ class Category extends Model
     public function publishedCourses()
     {
         return $this->courseLinks()->where('is_published', true);
+    }
+
+    public function scopeWithPublishedCourseCount(Builder $query): Builder
+    {
+        return $query->withCount([
+            'courses as direct_published_courses_count' => fn ($courses) => $courses->where('courses.is_published', true),
+            'courseLinks as additional_published_courses_count' => fn ($courses) => $courses
+                ->where('courses.is_published', true)
+                ->where(fn ($linked) => $linked->whereNull('courses.category_id')
+                    ->orWhereColumn('courses.category_id', '<>', 'categories.id')),
+        ]);
     }
 
     public function getImageUrlAttribute(): ?string

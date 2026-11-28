@@ -16,6 +16,26 @@ class MediaAsset extends Model
 
     protected $casts = ['size_bytes' => 'integer'];
 
+    public static function registerUpload(string $title, string $disk, string $path, $file, ?int $uploadedBy = null, ?string $altText = null): self
+    {
+        try {
+            return self::create([
+                'title' => $title,
+                'alt_text' => $altText,
+                'source_type' => 'upload',
+                'disk' => $disk,
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'uploaded_by' => $uploadedBy,
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk($disk)->delete($path);
+            throw $exception;
+        }
+    }
+
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');

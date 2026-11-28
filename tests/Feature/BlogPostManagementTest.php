@@ -140,15 +140,43 @@ class BlogPostManagementTest extends TestCase
             ->assertSee('Sitemap: '.route('sitemap'));
     }
 
-    public function test_public_blog_only_lists_published_posts_and_instructors_cannot_manage_posts(): void
+    public function test_public_blog_only_lists_published_posts(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
-        $instructor = User::where('role', 'instructor')->firstOrFail();
         $published = Post::create(['title' => 'Visible story', 'content' => 'Public', 'author_id' => $admin->id, 'is_published' => true]);
         Post::create(['title' => 'Draft story', 'content' => 'Private', 'author_id' => $admin->id, 'is_published' => false]);
 
-        $this->get(route('blog.index'))->assertOk()->assertSee('Visible story')->assertDontSee('Draft story');
-        $this->actingAs($instructor)->get(route('admin.posts.index'))->assertForbidden();
-        $this->get(route('blog.show', $published))->assertOk();
+        $this->get(route('blog.index'))
+            ->assertOk()
+            ->assertSee('Visible story')
+            ->assertDontSee('Draft story');
+
+        $this->assertDatabaseHas('posts', ['id' => $published->id, 'is_published' => true]);
+        $this->assertDatabaseHas('posts', ['title' => 'Draft story', 'is_published' => false]);
+    }
+
+    public function test_instructors_cannot_manage_blog_posts(): void
+    {
+        $instructor = User::where('role', 'instructor')->firstOrFail();
+
+        $response = $this->actingAs($instructor)->get(route('admin.posts.index'));
+        $response->assertForbidden();
+        $response->getContent();
+        $this->assertSame(403, $response->getStatusCode());
+    }
+
+    public function test_guest_can_read_a_published_blog_post_detail(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $published = Post::create(['title' => 'Public story detail', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
+        $initialBufferLevel = ob_get_level();
+
+        $this->get(route('blog.show', $published))
+            ->assertOk()
+            ->assertSee('Public story detail')
+            ->assertSee('Public detail')
+            ->assertSee('Read the latest learning article from Alom’s English Center.');
+
+        $this->assertSame($initialBufferLevel, ob_get_level(), 'Rendering a blog detail page must close every output buffer it opens.');
     }
 }

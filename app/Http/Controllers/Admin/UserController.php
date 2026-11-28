@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\User;
+use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -250,6 +251,7 @@ class UserController extends Controller
             if (! $account['avatar']) {
                 throw ValidationException::withMessages(['avatar' => 'The uploaded profile photo could not be stored. The existing photo has been kept.']);
             }
+            MediaAsset::registerUpload('Profile photo: '.$data['name'], 'public', $account['avatar'], $request->file('avatar'), $request->user()->id);
         } elseif ($request->filled('avatar_url')) {
             $account['avatar'] = $data['avatar_url'];
         }

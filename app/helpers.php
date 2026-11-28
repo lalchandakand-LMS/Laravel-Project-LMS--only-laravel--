@@ -46,6 +46,11 @@ if (! function_exists('delete_stored_media')) {
             return;
         }
 
+        if ($disk === 'public' && \Illuminate\Support\Facades\Schema::hasTable('media_assets')
+            && \Illuminate\Support\Facades\DB::table('media_assets')->where('disk', $disk)->where('path', $path)->exists()) {
+            return;
+        }
+
         $values = [$path];
         if ($disk === 'public') {
             $values[] = \Illuminate\Support\Facades\Storage::disk('public')->url($path);

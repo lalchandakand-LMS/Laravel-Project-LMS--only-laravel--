@@ -4,11 +4,11 @@
 @section('meta_description', $pageSubtitle)
 
 @section('content')
-<main class="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 px-4 py-12 sm:py-16">
+<main class="aec-public-page aec-instructor-page min-h-screen">
     <div class="mx-auto max-w-6xl">
         <a href="{{ route('instructors.index') }}" class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-4 py-2 text-sm font-bold text-blue-800 shadow-sm transition hover:bg-white">← All instructors</a>
 
-        <section class="mt-8 overflow-hidden rounded-3xl border border-white bg-white shadow-[0_18px_60px_rgba(30,64,175,.12)]">
+        <section class="aec-motion-card mt-8 overflow-hidden rounded-3xl border border-white bg-white shadow-[0_18px_60px_rgba(30,64,175,.12)]">
             <div class="h-32 bg-gradient-to-r from-blue-700 via-blue-600 to-sky-500 sm:h-40"></div>
             <div class="px-6 pb-8 sm:px-10">
                 <div class="-mt-16 flex flex-col items-center gap-5 text-center sm:-mt-20 sm:flex-row sm:items-end sm:text-left">
@@ -68,7 +68,7 @@
             @if ($courses->isNotEmpty())
                 <div class="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($courses as $course)
-                        <article class="overflow-hidden rounded-2xl border border-white bg-white shadow-[0_12px_36px_rgba(30,64,175,.09)] transition hover:-translate-y-1 hover:shadow-lg">
+                        <article class="aec-motion-card overflow-hidden rounded-2xl border border-white bg-white shadow-[0_12px_36px_rgba(30,64,175,.09)] transition hover:-translate-y-1 hover:shadow-lg">
                             <a href="{{ route('courses.show', $course) }}" class="block">
                                 <img src="{{ $course->thumbnail_url }}" alt="{{ $course->title }}" loading="lazy" class="h-48 w-full object-cover">
                             </a>

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
+use App\Models\MediaAsset;
 use App\Models\Slider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,6 +121,30 @@ class SiteCustomizationSettingsTest extends TestCase
     }
 
 
+    public function test_learning_highlights_render_as_independent_sections_immediately_after_the_slider(): void
+    {
+        $response = $this->get('/')->assertOk();
+
+        $response->assertSeeInOrder([
+            'data-home-section="hero"',
+            'data-home-section="online_batches"',
+            'data-home-section="stats"',
+            'data-home-section="categories"',
+        ], false);
+
+        $this->assertStringNotContainsString('data-home-section="online_batches"', $this->extractSectionMarkup($response->getContent(), 'hero'));
+    }
+
+    private function extractSectionMarkup(string $html, string $section): string
+    {
+        $start = strpos($html, 'data-home-section="'.$section.'"');
+        $this->assertNotFalse($start, "Missing homepage section: {$section}");
+
+        $end = strpos($html, 'data-home-section="', $start + 1);
+
+        return substr($html, $start, $end === false ? null : $end - $start);
+    }
+
     public function test_admin_can_control_reference_homepage_sections(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
@@ -140,7 +165,8 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
             ->assertOk()
-            ->assertSee('Hero slider / banner')
+            ->assertSee('Hero banner (managed in slider settings)')
+            ->assertDontSee('name="homepage_show_hero"', false)
             ->assertSee('Online batches')
             ->assertSee('Trust statistics');
     }
@@ -187,14 +213,110 @@ class SiteCustomizationSettingsTest extends TestCase
         ])->assertSessionHasErrors(['site_primary_color', 'site_secondary_color']);
     }
 
-    public function test_new_installation_uses_cyan_teal_public_brand_defaults(): void
+    public function test_new_installation_uses_orange_public_brand_defaults(): void
     {
         Cache::forget('settings.all');
         $this->get('/')
             ->assertOk()
-            ->assertSee('--aec-primary: #06b6d4', false)
-            ->assertSee('--aec-primary-dark: #0d9488', false)
+            ->assertSee('--aec-primary: #ea580c', false)
+            ->assertSee('--aec-primary-dark: #9a3412', false)
             ->assertSee('linear-gradient(125deg,#062c30 0%,#041c24 100%)', false);
+    }
+
+    public function test_dark_homepage_theme_preserves_admin_section_colors_and_keeps_inner_cards_readable(): void
+    {
+        Setting::set('homepage_theme_mode', 'dark');
+        Setting::set('homepage_online_batches_bg', '#123456');
+        Setting::set('homepage_online_batches_text', '#fefefe');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){color:var(--home-section-text,#e5edf8)}', false)
+            ->assertSee(':is(.bg-white,.bg-slate-50,.bg-gray-50){background-color:#142238}', false);
+    }
+
+    public function test_homepage_section_color_controls_and_reviews_carousel_are_rendered(): void
+    {
+        Setting::set('homepage_theme_mode', 'light');
+        Setting::set('homepage_learning_bg', '#fef3c7');
+        Setting::set('homepage_learning_text', '#78350f');
+        Setting::set('homepage_stats_bg', '#064e3b');
+        Setting::set('homepage_stats_text', '#ffffff');
+        Setting::set('homepage_testimonial_bg', '#1e1b4b');
+        Setting::set('homepage_testimonial_text', '#f8fafc');
+        Setting::set('homepage_online_batches_subtitle', 'Choose your next class');
+        Setting::set('homepage_reviews_layout', 'carousel');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee("background:#fef3c7;--home-section-text:#78350f", false)
+            ->assertSee("background:#064e3b;--home-section-text:#ffffff", false)
+            ->assertSee("background:#1e1b4b;--home-section-text:#f8fafc", false)
+            ->assertSee('Choose your next class')
+            ->assertSee('data-home-carousel="reviews"', false)
+            ->assertSee('data-home-carousel-layout="carousel"', false);
+    }
+
+    public function test_admin_can_customize_background_and_text_colors_for_all_homepage_sections(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_online_batches_bg' => '#fff7ed',
+            'homepage_online_batches_text' => '#7c2d12',
+            'homepage_featured_bg' => '#111827',
+            'homepage_featured_text' => '#f8fafc',
+            'homepage_latest_bg' => '#f1f5f9',
+            'homepage_latest_text' => '#0f172a',
+            'homepage_live_classes_bg' => '#ecfeff',
+            'homepage_live_classes_text' => '#164e63',
+            'homepage_exams_bg' => '#f8fafc',
+            'homepage_exams_text' => '#0f172a',
+            'homepage_teachers_bg' => '#f0fdf4',
+            'homepage_teachers_text' => '#14532d',
+            'homepage_board_results_bg' => '#064e3b',
+            'homepage_board_results_text' => '#ffffff',
+            'homepage_ebooks_bg' => '#ffffff',
+            'homepage_ebooks_text' => '#0f172a',
+            'homepage_admission_bg' => '#0f172a',
+            'homepage_admission_text' => '#ffffff',
+        ])->assertRedirect();
+
+        foreach ([
+            'homepage_online_batches_bg' => '#fff7ed',
+            'homepage_online_batches_text' => '#7c2d12',
+            'homepage_featured_bg' => '#111827',
+            'homepage_featured_text' => '#f8fafc',
+            'homepage_latest_bg' => '#f1f5f9',
+            'homepage_latest_text' => '#0f172a',
+            'homepage_live_classes_bg' => '#ecfeff',
+            'homepage_live_classes_text' => '#164e63',
+            'homepage_exams_bg' => '#f8fafc',
+            'homepage_exams_text' => '#0f172a',
+            'homepage_teachers_bg' => '#f0fdf4',
+            'homepage_teachers_text' => '#14532d',
+            'homepage_board_results_bg' => '#064e3b',
+            'homepage_board_results_text' => '#ffffff',
+            'homepage_ebooks_bg' => '#ffffff',
+            'homepage_ebooks_text' => '#0f172a',
+            'homepage_admission_bg' => '#0f172a',
+            'homepage_admission_text' => '#ffffff',
+        ] as $key => $value) {
+            $this->assertSame($value, Setting::get($key));
+        }
+
+        Setting::set('homepage_show_online_batches', '1');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-theme="dark"', false)
+            ->assertSee('data-home-section="online_batches"', false);
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSee('name="homepage_online_batches_bg"', false)
+            ->assertSee('name="homepage_online_batches_text"', false)
+            ->assertSee('name="homepage_admission_bg"', false);
     }
 
     public function test_public_brand_palette_is_rendered_on_the_website(): void
@@ -212,7 +334,7 @@ class SiteCustomizationSettingsTest extends TestCase
     public function test_admin_can_save_and_render_homepage_section_order(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
-        $order = ['hero', 'featured', 'categories', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
+        $order = ['hero', 'featured', 'categories', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission', 'learning_modes', 'branches', 'learning_benefits', 'learning_preview', 'learning_hub'];
 
         $this->actingAs($admin)->post(route('admin.settings.update'), [
             'homepage_show_categories' => '1',
@@ -273,7 +395,8 @@ class SiteCustomizationSettingsTest extends TestCase
         $slider->refresh();
         $newImage = $slider->image;
         $this->assertNotSame($oldImage, $newImage);
-        Storage::disk('public')->assertMissing($oldImage);
+        Storage::disk('public')->assertExists($oldImage);
+        $this->assertDatabaseHas('media_assets', ['disk' => 'public', 'path' => $oldImage]);
         Storage::disk('public')->assertExists($newImage);
         $this->assertSame('https://example.com/admissions', $slider->button_url);
 
@@ -365,5 +488,76 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('New learning courses this month')
             ->assertSee('Fresh courses for every learner.');
     }
+
+    public function test_homepage_theme_and_scroll_animation_settings_render_without_changing_the_slider(): void
+    {
+        Setting::set('homepage_theme_mode', 'dark');
+        Setting::set('homepage_animation_style', 'rise');
+        Setting::set('homepage_animation_speed', '700');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-theme="dark"', false)
+            ->assertSee('data-home-animation="rise"', false)
+            ->assertSee('data-home-animation-speed="700"', false)
+            ->assertSee('id="heroSlides"', false)
+            ->assertSee('data-hero-slide', false)
+            ->assertSee("savedOrder.filter(key => key !== 'hero')", false)
+            ->assertSee('const fixedHero = sections.get(\'hero\')', false);
+    }
+
+
+
+    public function test_settings_logo_upload_is_also_registered_in_the_shared_media_library(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'logo' => UploadedFile::fake()->image('center-logo.png'),
+        ])->assertRedirect();
+
+        $asset = MediaAsset::query()->where('title', 'Site logo')->firstOrFail();
+
+        $this->assertSame('public', $asset->disk);
+        $this->assertStringStartsWith('brand/', $asset->path);
+        $this->assertSame('center-logo.png', $asset->original_name);
+        Storage::disk('public')->assertExists($asset->path);
+        $this->assertSame($asset->path, Setting::get('logo'));
+    }
+
+    public function test_admin_homepage_section_controls_use_the_new_default_sequence(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'data-section-key="hero"',
+                'data-section-key="online_batches"',
+                'data-section-key="stats"',
+                'data-section-key="categories"',
+                'data-section-key="featured"',
+            ], false)
+            ->assertSee('draggable="false" data-section-key="hero" data-fixed-section="true"', false)
+            ->assertSee('Hero banner (managed in slider settings)', false);
+    }
+
+    public function test_existing_hero_slider_is_always_visible_and_not_toggleable_from_homepage_builder(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        Setting::set('homepage_show_hero', '0');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-section="hero"', false)
+            ->assertSee('id="heroSlides"', false);
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSee('Hero banner (managed in slider settings)')
+            ->assertDontSee('name="homepage_show_hero"', false);
+    }
+
 }
 

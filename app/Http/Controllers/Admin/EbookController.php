@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ebook;
+use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -35,6 +36,9 @@ class EbookController extends Controller
                         ]);
                     }
                     $data[$field] = $path;
+                    if ($field === 'cover') {
+                        MediaAsset::registerUpload('E-book cover: '.$data['title'], 'public', $path, $request->file($field), $request->user()->id);
+                    }
                     $stored[] = [$disk, $path];
                 } elseif ($request->filled($field.'_url')) {
                     $data[$field] = $data[$field.'_url'];
@@ -90,6 +94,9 @@ class EbookController extends Controller
                         ]);
                     }
                     $data[$field] = $path;
+                    if ($field === 'cover') {
+                        MediaAsset::registerUpload('E-book cover: '.$data['title'], 'public', $path, $request->file($field), $request->user()->id);
+                    }
                     $stored[] = [$disk, $path];
                 } elseif ($request->filled($field.'_url')) {
                     $data[$field] = $data[$field.'_url'];

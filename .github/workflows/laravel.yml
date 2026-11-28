@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -51,7 +51,7 @@ jobs:
           touch database/database.sqlite
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -62,7 +62,7 @@ jobs:
       - name: Build frontend assets
         run: npm run build
       - name: Upload production frontend bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: vite-production-build
           path: public/build/
@@ -73,7 +73,7 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
-        run: php artisan test
+        run: php artisan test --display-all-issues
   mysql:
     name: MySQL 8.0 · migrations and feature tests
     runs-on: ubuntu-latest
@@ -95,7 +95,7 @@ jobs:
           --health-retries=10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -141,7 +141,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -158,7 +158,7 @@ jobs:
         run: composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -193,7 +193,7 @@ jobs:
           test -f package/public/build/manifest.json
 
       - name: Upload complete cPanel production package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: aloms-lms-cpanel-package
           path: aloms-lms-cpanel-package.zip

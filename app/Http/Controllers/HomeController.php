@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Batch;
+use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Ebook;
@@ -21,7 +22,8 @@ class HomeController extends Controller
         return view('home.index', [
             'sliders' => Slider::active()->get(),
             'onlineBatches' => Batch::with(['course', 'level'])->whereIn('status', ['upcoming', 'ongoing'])->whereNotNull('course_id')->whereHas('course', fn ($query) => $query->where('is_published', true))->orderByRaw('starts_at is null')->orderBy('starts_at')->take(6)->get(),
-            'categories' => Category::where('is_active', true)->whereNull('parent_id')->withCount('publishedCourses')->orderBy('position')->get(),
+            'branches' => Branch::active()->orderBy('name')->take(8)->get(),
+            'categories' => Category::where('is_active', true)->whereNull('parent_id')->withPublishedCourseCount()->orderBy('position')->get(),
             'featured' => Course::published()->featured()->with(['instructor', 'category'])->withCount('lessons', 'enrollments')->latest()->take(6)->get(),
             'latest' => Course::published()->with(['instructor', 'category'])->withCount('lessons', 'enrollments')->latest()->take(8)->get(),
             'ebooks' => Ebook::where('is_published', true)->latest()->take(4)->get(),

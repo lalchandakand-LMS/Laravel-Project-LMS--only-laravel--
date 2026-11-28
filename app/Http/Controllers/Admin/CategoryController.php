@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -42,6 +43,7 @@ class CategoryController extends Controller
                 throw ValidationException::withMessages(['image' => 'The category image could not be stored.']);
             }
             $data['image'] = $storedImage;
+            MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);
         } elseif ($request->filled('image_url')) {
             $data['image'] = $data['image_url'];
         }
@@ -79,6 +81,7 @@ class CategoryController extends Controller
                     throw ValidationException::withMessages(['image' => 'The new category image could not be stored. The previous image has been kept.']);
                 }
                 $data['image'] = $storedImage;
+                MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);
             } elseif ($request->boolean('remove_image')) {
                 $data['image'] = null;
             } elseif ($request->filled('image_url')) {

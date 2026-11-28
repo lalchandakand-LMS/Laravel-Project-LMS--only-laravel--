@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -36,6 +37,9 @@ class PostController extends Controller
         $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
             $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            if ($storedThumbnail) {
+                MediaAsset::registerUpload('Post thumbnail: '.$data['title'], 'public', $storedThumbnail, $request->file('thumbnail'), $request->user()->id);
+            }
             if (! $storedThumbnail) {
                 throw ValidationException::withMessages(['thumbnail' => 'The post thumbnail could not be stored.']);
             }
@@ -69,6 +73,9 @@ class PostController extends Controller
         $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
             $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            if ($storedThumbnail) {
+                MediaAsset::registerUpload('Post thumbnail: '.$data['title'], 'public', $storedThumbnail, $request->file('thumbnail'), $request->user()->id);
+            }
             if (! $storedThumbnail) {
                 throw ValidationException::withMessages(['thumbnail' => 'The new post thumbnail could not be stored. The previous thumbnail has been kept.']);
             }

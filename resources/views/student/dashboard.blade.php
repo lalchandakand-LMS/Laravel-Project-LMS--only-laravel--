@@ -6,9 +6,9 @@
 @include('partials.dashboard-banner')
 
 <div class="mt-6 flex flex-wrap gap-2">
-    <a href="{{ route('student.online-batches') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">💻 Online live batches</a>
-    <a href="{{ route('coaching-fees.student') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">💰 Coaching fee ledger</a>
-    <a href="{{ route('student.attendance') }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">📋 Attendance report</a>
+    <a href="{{ route('student.online-batches') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">@include('partials.icon',['name'=>'monitor','class'=>'h-4 w-4 text-emerald-700']) Online live batches</a>
+    <a href="{{ route('coaching-fees.student') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">@include('partials.icon',['name'=>'wallet','class'=>'h-4 w-4 text-emerald-700']) Coaching fee ledger</a>
+    <a href="{{ route('student.attendance') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">@include('partials.icon',['name'=>'calendar','class'=>'h-4 w-4 text-emerald-700']) Attendance report</a>
 </div>
 
 @if($onlineBatchEnrollments->isNotEmpty())
@@ -45,9 +45,20 @@
 @endif
 
 <div class="rounded-2xl bg-gradient-to-r from-slate-950 to-blue-950 p-6 text-white">
-    <h2 class="text-2xl font-extrabold">Hello, {{ auth()->user()->name }} 👋</h2>
-    <p class="mt-1 text-slate-300">Keep going — you're {{ $stats['in_progress'] }} course(s) in progress.</p>
-    @if ($continueCourse)
+    @if (auth()->user()->isAdmin())
+        <h2 class="text-2xl font-extrabold">Learner account overview</h2>
+        <p class="mt-1 max-w-2xl text-slate-300">This view shows courses enrolled by your admin account. Academy-wide course and student progress is available in the admin dashboard.</p>
+        <a href="{{ route('admin.dashboard') }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-orange-400 px-5 py-2.5 font-bold text-slate-950 hover:bg-orange-300">Open admin dashboard →</a>
+    @else
+        <h2 class="text-2xl font-extrabold">Hello, {{ auth()->user()->name }}</h2>
+        @if ($stats['in_progress'] > 0)
+            <p class="mt-1 text-slate-300">Keep going — you're {{ $stats['in_progress'] }} course(s) in progress.</p>
+        @else
+            <p class="mt-1 text-slate-300">No courses in progress yet. Browse the course catalog to choose your first course.</p>
+            <a href="{{ route('courses.index') }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-orange-400 px-5 py-2.5 font-bold text-slate-950 hover:bg-orange-300">Browse courses →</a>
+        @endif
+    @endif
+    @if ($continueCourse && ! auth()->user()->isAdmin())
         <a href="{{ route('student.learn', $continueCourse->course->slug) }}"
            class="mt-5 inline-flex items-center gap-2 rounded-xl bg-orange-400 px-5 py-2.5 font-bold text-slate-950 hover:bg-orange-300">
             Continue: {{ Str::limit($continueCourse->course->title, 32) }} →
@@ -58,13 +69,13 @@
 @if (\App\Models\Setting::get('dashboard_widget_student_stats', '1') === '1')
 <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     @foreach ([
-        ['Enrolled courses', $stats['enrolled'], '📚'],
-        ['Lessons completed', $stats['lessons_done'], '✅'],
-        ['Exam attempts', $stats['exam_attempts'], '📝'],
-        ['Certificates', $stats['certificates'], '🏅'],
+        ['Enrolled courses', $stats['enrolled'], 'book-open'],
+        ['Lessons completed', $stats['lessons_done'], 'check'],
+        ['Exam attempts', $stats['exam_attempts'], 'clipboard-check'],
+        ['Certificates', $stats['certificates'], 'graduation-cap'],
     ] as [$label, $value, $icon])
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-2xl">{{ $icon }}</p>
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700">@include('partials.icon',['name'=>$icon,'class'=>'h-5 w-5'])</span>
             <p class="mt-2 text-2xl font-extrabold text-slate-900">{{ $value }}</p>
             <p class="text-sm text-slate-600">{{ $label }}</p>
         </div>
@@ -87,7 +98,7 @@
     <div class="mt-4 flex flex-wrap gap-2">
         @foreach ($gamification['badges'] as $badge)
             <span title="{{ $badge['description'] }}" class="rounded-full px-3 py-1.5 text-xs font-bold {{ $badge['unlocked'] ? 'bg-white text-violet-800 ring-1 ring-violet-200' : 'bg-violet-100/70 text-violet-400' }}">
-                {{ $badge['unlocked'] ? '🏅' : '🔒' }} {{ $badge['name'] }}
+                <span class="mr-1 inline-flex align-middle">@include('partials.icon',['name'=>$badge['unlocked'] ? 'award' : 'lock','class'=>'h-3.5 w-3.5'])</span>{{ $badge['name'] }}
             </span>
         @endforeach
     </div>
