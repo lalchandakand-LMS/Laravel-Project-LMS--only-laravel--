@@ -27,11 +27,27 @@ class BlogController extends Controller
         abort_unless($post->is_published && $post->published_at && $post->published_at->lte(now()), 404);
         $post->increment('views_count');
 
+        $post->load(['category', 'author']);
+
+        $articleSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $post->meta_title ?: $post->title,
+            'description' => $post->meta_description ?: $post->excerpt,
+            'datePublished' => $post->published_at?->toIso8601String(),
+            'dateModified' => $post->updated_at?->toIso8601String(),
+            'author' => ['@type' => 'Person', 'name' => $post->author?->name ?: setting('site_name', "Alom's English Center")],
+            'publisher' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
+            'mainEntityOfPage' => route('blog.show', $post),
+            'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
+        ];
+
         return view('blog.show', [
-            'post' => $post->load(['category', 'author']),
+            'post' => $post,
             'related' => Post::published()->where('id', '!=', $post->id)
                 ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
                 ->latest('published_at')->take(3)->get(),
+            'articleSchema' => $articleSchema,
         ]);
     }
 }
