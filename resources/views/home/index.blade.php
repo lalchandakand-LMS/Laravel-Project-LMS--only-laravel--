@@ -381,7 +381,10 @@
     if (!container) return;
     const sections = new Map([...container.querySelectorAll(':scope > [data-home-section]')].map(section => [section.dataset.homeSection, section]));
     const savedOrder = @json(json_decode($homepageSettings['homepage_section_order'] ?? '[]', true) ?: []);
-    [...savedOrder, ...sections.keys()].forEach(key => {
+    // The existing hero slider is intentionally preserved and always stays first.
+    const fixedHero = sections.get('hero');
+    if (fixedHero) { container.appendChild(fixedHero); sections.delete('hero'); }
+    [...savedOrder.filter(key => key !== 'hero'), ...sections.keys()].forEach(key => {
         const section = sections.get(key);
         if (section) { container.appendChild(section); sections.delete(key); }
     });
