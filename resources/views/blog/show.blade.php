@@ -7,4 +7,3 @@
 @section('content')
     @include('blog.partials.show-content')
 @endsection
-@php(fwrite(STDERR, 'BLOG_CHILD_AFTER_SECTION='.ob_get_level()."\\n"))
