@@ -41,3 +41,6 @@ jobs:
 
       - name: Run test suite
         run: php artisan test --display-all-issues
+
+      - name: Diagnose the remaining PHPUnit risky test
+        run: vendor/bin/phpunit --display-all-issues --debug --filter 'test_authenticated_instructor_can_read_a_published_blog_post'
