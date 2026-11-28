@@ -42,12 +42,12 @@ class BlogController extends Controller
             'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
         ];
 
-        return view('blog.show', [
-            'post' => $post,
-            'related' => Post::published()->where('id', '!=', $post->id)
-                ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
-                ->latest('published_at')->take(3)->get(),
-            'articleSchema' => $articleSchema,
-        ]);
+        $related = Post::published()->where('id', '!=', $post->id)
+            ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
+            ->latest('published_at')->take(3)->get();
+
+        $articleContent = view('blog.partials.show-content', compact('post', 'related', 'articleSchema'))->render();
+
+        return view('blog.show', compact('post', 'related', 'articleSchema', 'articleContent'));
     }
 }
