@@ -20,7 +20,7 @@
         <nav aria-label="Main navigation" class="hidden min-w-0 flex-1 items-center justify-center gap-1 xl:flex">
             @foreach ($desktopMenu as $item)
                 @if ($item->children->isNotEmpty())
-                    <details class="group relative">
+                    <details class="group relative" name="desktop-navigation">
                         <summary @if ($menuActive($item)) aria-current="page" @endif class="inline-flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition marker:content-none {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">
                             {{ $item->icon }} {{ $item->label }} <span aria-hidden="true">⌄</span>
                         </summary>
@@ -54,7 +54,7 @@
         <nav aria-label="Mobile main navigation" class="grid gap-1">
             @foreach ($mobileMenu as $item)
                 @if ($item->children->isNotEmpty())
-                    <details class="group rounded-xl">
+                    <details class="group rounded-xl" name="mobile-navigation">
                         <summary @if ($menuActive($item)) aria-current="page" @endif class="flex cursor-pointer list-none items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition marker:content-none {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-700 hover:bg-slate-100' }}">
                             {{ $item->icon }} {{ $item->label }}
                             <span aria-hidden="true" class="text-slate-400 transition group-open:rotate-90">›</span>
@@ -87,5 +87,22 @@
     const close=()=>{panel.classList.add('translate-x-full');overlay.classList.add('opacity-0');panel.setAttribute('aria-hidden','true');panel.inert=true;openButton.setAttribute('aria-expanded','false');document.body.classList.remove('overflow-hidden');window.setTimeout(()=>overlay.classList.add('hidden'),300);if(previousFocus)previousFocus.focus()};
     openButton.addEventListener('click',open);closeButton.addEventListener('click',close);overlay.addEventListener('click',close);
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.inert)close();if(event.key==='Tab'&&!panel.inert){const focusable=[...panel.querySelectorAll('a,button')].filter(el=>!el.disabled),first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});
+})();
+</script>
+<script>
+(() => {
+    const menus = [...document.querySelectorAll('nav details[name="desktop-navigation"], nav details[name="mobile-navigation"]')];
+    if (!menus.length) return;
+    document.addEventListener('click', event => {
+        menus.forEach(menu => {
+            if (menu.open && !menu.contains(event.target)) menu.open = false;
+        });
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        const opened = menus.filter(menu => menu.open);
+        opened.forEach(menu => menu.open = false);
+        opened.at(-1)?.querySelector('summary')?.focus();
+    });
 })();
 </script>
