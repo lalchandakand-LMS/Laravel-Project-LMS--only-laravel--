@@ -170,23 +170,13 @@ class BlogPostManagementTest extends TestCase
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $published = Post::create(['title' => 'Public story detail', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
 
-        $beforeShow = ob_get_level();
-        $beforeShowStatus = ob_get_status(true);
-        $showResponse = $this->get(route('blog.show', $published));
-        $afterShow = ob_get_level();
-        $afterShowStatus = ob_get_status(true);
-        $showResponse->assertOk()->assertSee('Public story detail')->assertSee('Public detail');
+        $this->get(route('blog.show', $published))
+            ->assertOk()
+            ->assertSee('Public story detail')
+            ->assertSee('Public detail');
 
-        $beforeIndex = ob_get_level();
-        $indexResponse = $this->get(route('blog.index'));
-        $afterIndex = ob_get_level();
-        $indexResponse->assertOk()->assertSee('Public story detail');
-
-        fwrite(STDERR, 'BLOG_BUFFER_DIAGNOSTIC='.json_encode([
-            'before_show' => $beforeShowStatus,
-            'after_show' => $afterShowStatus,
-            'levels' => [$beforeShow, $afterShow, $beforeIndex, $afterIndex],
-        ])."\\n");
+        // Exercise the normal next-page navigation after rendering the detail view.
+        $this->get(route('blog.index'))->assertOk()->assertSee('Public story detail');
     }
 
 }
