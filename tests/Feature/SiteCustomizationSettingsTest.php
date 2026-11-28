@@ -213,7 +213,7 @@ class SiteCustomizationSettingsTest extends TestCase
         ])->assertSessionHasErrors(['site_primary_color', 'site_secondary_color']);
     }
 
-    public function test_new_installation_uses_cyan_teal_public_brand_defaults(): void
+    public function test_new_installation_uses_orange_public_brand_defaults(): void
     {
         Cache::forget('settings.all');
         $this->get('/')
