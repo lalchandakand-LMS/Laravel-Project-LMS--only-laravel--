@@ -427,5 +427,20 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->assertSame($asset->path, Setting::get('logo'));
     }
 
+    public function test_admin_homepage_section_controls_use_the_new_default_sequence(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'data-section-key="hero"',
+                'data-section-key="online_batches"',
+                'data-section-key="stats"',
+                'data-section-key="categories"',
+                'data-section-key="featured"',
+            ], false);
+    }
+
 }
 
