@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Ebook;
-use App\Models\EbookPurchase;
+use App\Models\EbookPurchase;\nuse App\Models\Course;
 use App\Models\MediaAsset;
-use App\Models\Setting;
+use App\Models\Setting;\nuse App\Models\Category;\nuse App\Models\Post;\nuse App\Models\Slider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -182,6 +182,83 @@ class MediaLibraryTest extends TestCase
         delete_stored_media('public', 'https://cdn.example.com/external.jpg');
 
         Storage::disk('public')->assertExists('media-library/shared-logo.png');
+    }
+
+
+    public function test_content_uploads_are_registered_in_the_shared_media_library(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $course = Course::firstOrFail();
+
+        $this->actingAs($admin)->put(route('admin.courses.update', $course), [
+            'title' => $course->title,
+            'price' => $course->price,
+            'level' => 'beginner',
+            'language' => 'Bangla',
+            'thumbnail' => UploadedFile::fake()->image('course-cover.png'),
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->post(route('admin.categories.store'), [
+            'name' => 'Media Library Test Category',
+            'is_active' => 1,
+            'image' => UploadedFile::fake()->image('category-cover.png'),
+        ])->assertRedirect(route('admin.categories.index'));
+
+        $this->actingAs($admin)->post(route('admin.sliders.store'), [
+            'title' => 'Media Library Test Slider',
+            'image' => UploadedFile::fake()->image('slider-banner.png'),
+            'theme' => 'emerald',
+            'sort_order' => 2,
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.sliders.index'));
+
+        $this->actingAs($admin)->post(route('admin.posts.store'), [
+            'title' => 'Media Library Test Post',
+            'thumbnail' => UploadedFile::fake()->image('post-cover.png'),
+            'is_published' => 0,
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->post(route('admin.ebooks.store'), [
+            'title' => 'Media Library Test E-book',
+            'price' => 0,
+            'pages' => 10,
+            'cover' => UploadedFile::fake()->image('ebook-cover.png'),
+            'file' => UploadedFile::fake()->create('ebook.pdf', 20, 'application/pdf'),
+            'is_free' => 1,
+            'is_published' => 1,
+        ])->assertRedirect(route('admin.ebooks.index'));
+
+        foreach ([
+            'Course thumbnail',
+            'Category image: Media Library Test Category',
+            'Slider banner: Media Library Test Slider',
+            'Post thumbnail: Media Library Test Post',
+            'E-book cover: Media Library Test E-book',
+        ] as $title) {
+            $asset = MediaAsset::where('title', $title)->firstOrFail();
+            $this->assertSame('public', $asset->disk);
+            Storage::disk('public')->assertExists($asset->path);
+        }
+    }
+
+    public function test_media_library_picker_displays_select_action_for_existing_assets(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $asset = MediaAsset::create([
+            'title' => 'Picker image',
+            'source_type' => 'link',
+            'url' => 'https://cdn.example.com/picker.webp',
+            'mime_type' => 'image/webp',
+            'uploaded_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.media.index', ['picker' => 1, 'target' => 'thumbnail_url', 'type' => 'image']))
+            ->assertOk()
+            ->assertSee('Use this file')
+            ->assertSee('data-select-media', false)
+            ->assertSee('https://cdn.example.com/picker.webp', false);
     }
 
 }
