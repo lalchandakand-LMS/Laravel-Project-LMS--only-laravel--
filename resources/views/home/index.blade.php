@@ -341,8 +341,9 @@
 @push('scripts')
 <style>
 #homepage-sections[data-home-theme="dark"]{background:#08111f;color:#e5edf8}
-#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){background-color:#0f1b2d;color:#e5edf8}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){background-color:#0f1b2d!important;color:#e5edf8}
 #homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(h1,h2,h3,h4,.text-slate-900,.text-slate-800,.text-gray-900,.text-gray-800){color:#f8fafc}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(p,.text-slate-600,.text-slate-500,.text-gray-600,.text-gray-500){color:#cbd5e1}
 #homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(.bg-white,.bg-slate-50,.bg-gray-50){background-color:#142238}
 #homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(.border-slate-200,.border-gray-200){border-color:#2b3b52}
 #homepage-sections[data-home-animation]:not([data-home-animation="none"]) [data-home-reveal]{opacity:0;transition:opacity var(--aec-reveal-duration,650ms) ease,transform var(--aec-reveal-duration,650ms) cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
