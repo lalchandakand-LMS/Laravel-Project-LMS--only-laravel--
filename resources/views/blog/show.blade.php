@@ -7,21 +7,7 @@
 
 @section('content')
 <article class="mx-auto max-w-4xl px-4 py-10">
-    @php
-    $articleSchema = [
-        '@context' => 'https://schema.org',
-        '@type' => 'Article',
-        'headline' => $post->meta_title ?: $post->title,
-        'description' => $post->meta_description ?: $post->excerpt,
-        'datePublished' => $post->published_at?->toIso8601String(),
-        'dateModified' => $post->updated_at?->toIso8601String(),
-        'author' => ['@type' => 'Person', 'name' => $post->author?->name ?: setting('site_name', "Alom's English Center")],
-        'publisher' => ['@type' => 'Organization', 'name' => setting('site_name', "Alom's English Center"), 'url' => config('app.url')],
-        'mainEntityOfPage' => route('blog.show', $post),
-        'image' => $post->thumbnail ? media_url($post->thumbnail) : null,
-    ];
-@endphp
-<script type="application/ld+json">{{ json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) }}</script>
+    <script type="application/ld+json">{{ json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) }}</script>
     <a href="{{ route('blog.index') }}" class="text-sm font-bold text-orange-700">← Blog & News</a>
     <p class="mt-6 text-sm text-slate-500">{{ $post->published_at?->format('d M Y') }} · {{ number_format($post->views_count) }} views</p>
     <h1 class="mt-2 text-3xl font-extrabold">{{ $post->title }}</h1>
