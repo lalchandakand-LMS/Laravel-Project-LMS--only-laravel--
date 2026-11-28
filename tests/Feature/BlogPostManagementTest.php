@@ -140,29 +140,40 @@ class BlogPostManagementTest extends TestCase
             ->assertSee('Sitemap: '.route('sitemap'));
     }
 
-    public function test_public_blog_only_lists_published_posts_and_instructors_cannot_manage_posts(): void
+    public function test_public_blog_only_lists_published_posts(): void
     {
-        $bufferLevelAtStart = ob_get_level();
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
-        $instructor = User::where('role', 'instructor')->firstOrFail();
         $published = Post::create(['title' => 'Visible story', 'content' => 'Public', 'author_id' => $admin->id, 'is_published' => true]);
         Post::create(['title' => 'Draft story', 'content' => 'Private', 'author_id' => $admin->id, 'is_published' => false]);
 
-        $indexResponse = $this->get(route('blog.index'));
-        $indexResponse->assertOk()->assertSee('Visible story')->assertDontSee('Draft story');
-        $this->assertSame(200, $indexResponse->getStatusCode());
+        $this->get(route('blog.index'))
+            ->assertOk()
+            ->assertSee('Visible story')
+            ->assertDontSee('Draft story');
+
         $this->assertDatabaseHas('posts', ['id' => $published->id, 'is_published' => true]);
         $this->assertDatabaseHas('posts', ['title' => 'Draft story', 'is_published' => false]);
-
-        $forbiddenResponse = $this->actingAs($instructor)->get(route('admin.posts.index'));
-        $forbiddenResponse->assertForbidden();
-        $forbiddenResponse->getContent(); // Force lazy error-view rendering before the next request.
-        fwrite(STDERR, 'BLOG_AFTER_FORBIDDEN_CONTENT_BUFFER='.ob_get_level()."\\n");
-        $this->assertSame(403, $forbiddenResponse->getStatusCode());
-
-        $showResponse = $this->get(route('blog.show', $published));
-        fwrite(STDERR, 'BLOG_SHOW_BUFFER_LEVELS='.json_encode(['start' => $bufferLevelAtStart, 'end' => ob_get_status(true)])."\\n");
-        $showResponse->assertOk();
-        $this->assertSame(200, $showResponse->getStatusCode());
     }
+
+    public function test_instructors_cannot_manage_blog_posts(): void
+    {
+        $instructor = User::where('role', 'instructor')->firstOrFail();
+
+        $response = $this->actingAs($instructor)->get(route('admin.posts.index'));
+        $response->assertForbidden();
+        $response->getContent();
+        $this->assertSame(403, $response->getStatusCode());
+    }
+
+    public function test_authenticated_instructor_can_read_a_published_blog_post(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $instructor = User::where('role', 'instructor')->firstOrFail();
+        $published = Post::create(['title' => 'Instructor-visible story', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
+
+        $response = $this->actingAs($instructor)->get(route('blog.show', $published));
+        $response->assertOk()->assertSee('Public detail');
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
 }
