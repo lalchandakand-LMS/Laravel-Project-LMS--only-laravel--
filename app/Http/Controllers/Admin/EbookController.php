@@ -35,6 +35,9 @@ class EbookController extends Controller
                         ]);
                     }
                     $data[$field] = $path;
+                    if ($field === 'cover') {
+                        MediaAsset::registerUpload('E-book cover: '.$data['title'], 'public', $path, $request->file($field), $request->user()->id);
+                    }
                     $stored[] = [$disk, $path];
                 } elseif ($request->filled($field.'_url')) {
                     $data[$field] = $data[$field.'_url'];
@@ -90,6 +93,9 @@ class EbookController extends Controller
                         ]);
                     }
                     $data[$field] = $path;
+                    if ($field === 'cover') {
+                        MediaAsset::registerUpload('E-book cover: '.$data['title'], 'public', $path, $request->file($field), $request->user()->id);
+                    }
                     $stored[] = [$disk, $path];
                 } elseif ($request->filled($field.'_url')) {
                     $data[$field] = $data[$field.'_url'];
