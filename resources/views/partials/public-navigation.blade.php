@@ -19,16 +19,20 @@
         </a>
         <nav aria-label="Main navigation" class="hidden min-w-0 flex-1 items-center justify-center gap-1 xl:flex">
             @foreach ($desktopMenu as $item)
-                <div class="group relative">
-                    <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="inline-flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }} @if($item->children->isNotEmpty()) <span aria-hidden="true">⌄</span> @endif</a>
-                    @if($item->children->isNotEmpty())
-                        <div class="invisible absolute left-0 top-full z-50 min-w-48 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                @if ($item->children->isNotEmpty())
+                    <details class="group relative">
+                        <summary @if ($menuActive($item)) aria-current="page" @endif class="inline-flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition marker:content-none {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">
+                            {{ $item->icon }} {{ $item->label }} <span aria-hidden="true">⌄</span>
+                        </summary>
+                        <div class="absolute left-0 top-full z-50 min-w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
                             @foreach($item->children as $child)
                                 <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-orange-50">{{ $child->icon }} {{ $child->label }}</a>
                             @endforeach
                         </div>
-                    @endif
-                </div>
+                    </details>
+                @else
+                    <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="inline-flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">{{ $item->icon }} {{ $item->label }}</a>
+                @endif
             @endforeach
         </nav>
         <div class="ml-auto flex shrink-0 items-center gap-2">
@@ -49,10 +53,21 @@
     <div class="overflow-y-auto px-4 py-4">
         <nav aria-label="Mobile main navigation" class="grid gap-1">
             @foreach ($mobileMenu as $item)
-                <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item->icon }} {{ $item->label }} <span aria-hidden="true" class="text-slate-400">›</span></a>
-                @foreach($item->children as $child)
-                    <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="ml-5 block rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">{{ $child->icon }} {{ $child->label }}</a>
-                @endforeach
+                @if ($item->children->isNotEmpty())
+                    <details class="group rounded-xl">
+                        <summary @if ($menuActive($item)) aria-current="page" @endif class="flex cursor-pointer list-none items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition marker:content-none {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-700 hover:bg-slate-100' }}">
+                            {{ $item->icon }} {{ $item->label }}
+                            <span aria-hidden="true" class="text-slate-400 transition group-open:rotate-90">›</span>
+                        </summary>
+                        <div class="ml-3 border-l border-slate-200 py-1 pl-3">
+                            @foreach($item->children as $child)
+                                <a href="{{ $menuUrl($child) }}" @if($child->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="block rounded-lg px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">{{ $child->icon }} {{ $child->label }}</a>
+                            @endforeach
+                        </div>
+                    </details>
+                @else
+                    <a href="{{ $menuUrl($item) }}" @if ($menuActive($item)) aria-current="page" @endif @if($item->open_new_tab) target="_blank" rel="noopener noreferrer" @endif class="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition {{ $menuActive($item) ? 'bg-orange-50 text-orange-800' : 'text-slate-700 hover:bg-slate-100' }}">{{ $item->icon }} {{ $item->label }} <span aria-hidden="true" class="text-slate-400">›</span></a>
+                @endif
             @endforeach
         </nav>
         @auth
