@@ -122,7 +122,7 @@ class SliderController extends Controller
             'badge' => 'nullable|string|max:80',
             'title' => 'required|string|max:160',
             'subtitle' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:4096',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:25600',
             'image_url' => 'nullable|url:http,https|max:2048',
             'button_text' => 'nullable|string|max:60',
             'button_url' => ['nullable', 'string', 'max:255', $this->safeNavigationTarget()],
