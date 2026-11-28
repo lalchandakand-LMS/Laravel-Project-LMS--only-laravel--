@@ -18,7 +18,6 @@ class CaptureMarketingAttribution
 
     public function handle(Request $request, Closure $next): Response
     {
-        fwrite(STDERR, 'BLOG_BUF attribution_before='.ob_get_level()."\\n");
         $attribution = [];
         foreach (self::FIELDS as $field => $maxLength) {
             $value = $request->query($field);
@@ -42,8 +41,6 @@ class CaptureMarketingAttribution
             ));
         }
 
-        $response = $next($request);
-        fwrite(STDERR, 'BLOG_BUF attribution_after_next='.ob_get_level()."\\n");
-        return $response;
+        return $next($request);
     }
 }
