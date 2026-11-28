@@ -35,7 +35,10 @@ class PostController extends Controller
         $data['tags'] = $this->tags($request->input('tags'));
         $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
-            $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');\n            if ($storedThumbnail) {\n                MediaAsset::registerUpload('Post thumbnail: '.$data['title'], 'public', $storedThumbnail, $request->file('thumbnail'), $request->user()->id);\n            }
+            $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            if ($storedThumbnail) {
+                MediaAsset::registerUpload('Post thumbnail: '.$data['title'], 'public', $storedThumbnail, $request->file('thumbnail'), $request->user()->id);
+            }
             if (! $storedThumbnail) {
                 throw ValidationException::withMessages(['thumbnail' => 'The post thumbnail could not be stored.']);
             }
@@ -69,6 +72,9 @@ class PostController extends Controller
         $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
             $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            if ($storedThumbnail) {
+                MediaAsset::registerUpload('Post thumbnail: '.$data['title'], 'public', $storedThumbnail, $request->file('thumbnail'), $request->user()->id);
+            }
             if (! $storedThumbnail) {
                 throw ValidationException::withMessages(['thumbnail' => 'The new post thumbnail could not be stored. The previous thumbnail has been kept.']);
             }
