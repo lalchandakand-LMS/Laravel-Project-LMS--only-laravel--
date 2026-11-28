@@ -165,7 +165,8 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
             ->assertOk()
-            ->assertSee('Hero slider / banner')
+            ->assertSee('Your existing slider (fixed)')
+            ->assertDontSee('name="homepage_show_hero"', false)
             ->assertSee('Online batches')
             ->assertSee('Trust statistics');
     }
