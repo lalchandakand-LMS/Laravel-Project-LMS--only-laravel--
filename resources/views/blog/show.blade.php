@@ -7,7 +7,7 @@
 
 @section('content')
 <article class="mx-auto max-w-4xl px-4 py-10">
-    <script type="application/ld+json">{{ json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) }}</script>
+    <script type="application/ld+json">{!! json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <a href="{{ route('blog.index') }}" class="text-sm font-bold text-orange-700">← Blog & News</a>
     <p class="mt-6 text-sm text-slate-500">{{ $post->published_at?->format('d M Y') }} · {{ number_format($post->views_count) }} views</p>
     <h1 class="mt-2 text-3xl font-extrabold">{{ $post->title }}</h1>
