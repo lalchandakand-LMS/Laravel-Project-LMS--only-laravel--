@@ -160,7 +160,9 @@ class CourseController extends Controller
         $data['category_id'] = $data['category_ids'][0] ?? null;
 
         if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');\n            if ($data['thumbnail']) {\n                MediaAsset::registerUpload('Course thumbnail', 'public', $data['thumbnail'], $request->file('thumbnail'), auth()->id());\n            }
+            $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
+            if ($data['thumbnail']) {\n                MediaAsset::registerUpload('Course thumbnail', 'public', $data['thumbnail'], $request->file('thumbnail'), auth()->id());
+            }
             if (! $data['thumbnail']) {
                 throw ValidationException::withMessages(['thumbnail' => 'The course thumbnail could not be stored. The previous thumbnail has been kept.']);
             }
