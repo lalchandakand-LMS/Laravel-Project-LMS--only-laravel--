@@ -12,8 +12,10 @@ class HandleSeoRedirects
 {
     public function handle(Request $request, Closure $next): Response
     {
+        fwrite(STDERR, 'BLOG_BUF seo_before='.ob_get_level()."\\n");
         try {
             $response = $next($request);
+            fwrite(STDERR, 'BLOG_BUF seo_after_next='.ob_get_level()."\\n");
         } catch (HttpExceptionInterface $exception) {
             if ($exception->getStatusCode() !== 404) {
                 throw $exception;
