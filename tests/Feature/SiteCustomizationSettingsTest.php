@@ -274,7 +274,8 @@ class SiteCustomizationSettingsTest extends TestCase
         $slider->refresh();
         $newImage = $slider->image;
         $this->assertNotSame($oldImage, $newImage);
-        Storage::disk('public')->assertMissing($oldImage);
+        Storage::disk('public')->assertExists($oldImage);
+        $this->assertDatabaseHas('media_assets', ['disk' => 'public', 'path' => $oldImage]);
         Storage::disk('public')->assertExists($newImage);
         $this->assertSame('https://example.com/admissions', $slider->button_url);
 
