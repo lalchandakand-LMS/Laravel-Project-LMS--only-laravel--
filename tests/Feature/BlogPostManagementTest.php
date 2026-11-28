@@ -142,27 +142,22 @@ class BlogPostManagementTest extends TestCase
 
     public function test_public_blog_only_lists_published_posts_and_instructors_cannot_manage_posts(): void
     {
-        $initialOutputBufferLevel = ob_get_level();
-        fwrite(STDERR, "BLOG_TEST_BUFFER_START={$initialOutputBufferLevel}\\n");
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $instructor = User::where('role', 'instructor')->firstOrFail();
         $published = Post::create(['title' => 'Visible story', 'content' => 'Public', 'author_id' => $admin->id, 'is_published' => true]);
         Post::create(['title' => 'Draft story', 'content' => 'Private', 'author_id' => $admin->id, 'is_published' => false]);
 
         $indexResponse = $this->get(route('blog.index'));
-        fwrite(STDERR, 'BLOG_TEST_BUFFER_AFTER_INDEX='.ob_get_level()."\\n");
         $indexResponse->assertOk()->assertSee('Visible story')->assertDontSee('Draft story');
         $this->assertSame(200, $indexResponse->getStatusCode());
         $this->assertDatabaseHas('posts', ['id' => $published->id, 'is_published' => true]);
         $this->assertDatabaseHas('posts', ['title' => 'Draft story', 'is_published' => false]);
 
         $forbiddenResponse = $this->actingAs($instructor)->get(route('admin.posts.index'));
-        fwrite(STDERR, 'BLOG_TEST_BUFFER_AFTER_FORBIDDEN='.ob_get_level()."\\n");
         $forbiddenResponse->assertForbidden();
         $this->assertSame(403, $forbiddenResponse->getStatusCode());
 
         $showResponse = $this->get(route('blog.show', $published));
-        fwrite(STDERR, 'BLOG_TEST_BUFFER_AFTER_SHOW='.json_encode(ob_get_status(true))."\\n");
         $showResponse->assertOk();
         $this->assertSame(200, $showResponse->getStatusCode());
     }
