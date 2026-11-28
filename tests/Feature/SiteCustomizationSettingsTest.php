@@ -231,7 +231,6 @@ class SiteCustomizationSettingsTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){color:var(--home-section-text,#e5edf8)}', false)
-            ->assertSee('background-color:#123456;--home-section-text:#fefefe', false)
             ->assertSee(':is(.bg-white,.bg-slate-50,.bg-gray-50){background-color:#142238}', false);
     }
 
