@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-    <?php fwrite(STDERR, 'BLOG_BUF layout_head='.ob_get_level()."\\n"); ?>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -72,7 +71,6 @@
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
     @stack('structured_data')
     @include('partials.assets')
-    <?php fwrite(STDERR, 'BLOG_BUF after_assets='.ob_get_level()."\\n"); ?>
     <style>
         :root {
             --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) && strtolower((string) setting('site_primary_color')) !== '#ea580c' ? setting('site_primary_color') : '#ea580c' }};
@@ -142,15 +140,11 @@
 @endif
 
 
-<?php fwrite(STDERR, 'BLOG_BUF before_navigation='.ob_get_level()."\\n"); ?>
 @include('partials.public-navigation')
-<?php fwrite(STDERR, 'BLOG_BUF after_navigation='.ob_get_level()."\\n"); ?>
 
 <main class="min-h-[70vh]">
     @include('partials.flash')
-    <?php fwrite(STDERR, 'BLOG_BUF before_content='.ob_get_level()."\\n"); ?>
     @yield('content')
-    <?php fwrite(STDERR, 'BLOG_BUF after_content='.ob_get_level()."\\n"); ?>
 </main>
 
 <footer class="mt-0 border-t border-slate-800" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#071b26') }}; color: {{ \App\Models\Setting::get('footer_text', '#cbd5e1') }}">
@@ -229,11 +223,8 @@
         <script>window.aecLeadEvent = @json(session('aec_lead_event'));</script>
     @endif
     @include('partials.cookie-consent')
-    <?php fwrite(STDERR, 'BLOG_BUF after_cookie='.ob_get_level()."\\n"); ?>
 @endif
 @include('partials.marketing-popup')
-<?php fwrite(STDERR, 'BLOG_BUF after_popup='.ob_get_level()."\\n"); ?>
 @stack('scripts')
-<?php fwrite(STDERR, 'BLOG_BUF layout_end='.ob_get_level()."\\n"); ?>
 </body>
 </html>
