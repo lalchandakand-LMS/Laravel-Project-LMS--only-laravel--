@@ -220,10 +220,29 @@ class SettingController extends Controller
                     ]);
                 }
 
-                Setting::set($field, $newPath);
-                if ($oldPath && $oldPath !== $newPath && ! str_starts_with(strtolower($oldPath), 'http://') && ! str_starts_with(strtolower($oldPath), 'https://')) {
-                    delete_stored_media('public', $oldPath);
+                try {
+                    MediaAsset::create([
+                        'title' => match ($field) {
+                            'logo' => 'Site logo',
+                            'admin_logo' => 'Admin logo',
+                            default => 'Dashboard banner',
+                        },
+                        'source_type' => 'upload',
+                        'disk' => 'public',
+                        'path' => $newPath,
+                        'original_name' => $request->file($field)->getClientOriginalName(),
+                        'mime_type' => $request->file($field)->getMimeType(),
+                        'size_bytes' => $request->file($field)->getSize(),
+                        'uploaded_by' => $request->user()->id,
+                    ]);
+                } catch (\\Throwable $exception) {
+                    \\Illuminate\\Support\\Facades\\Storage::disk('public')->delete($newPath);
+                    throw $exception;
                 }
+
+                Setting::set($field, $newPath);
+                // Keep replaced files available in the Media Library for reuse.
+                // The library's reference-aware delete action controls actual removal.
             }
         }
 
