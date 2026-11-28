@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
+use App\Models\MediaAsset;
 use App\Models\Slider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -381,6 +382,24 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('data-hero-slide', false);
     }
 
+
+
+    public function test_settings_logo_upload_is_also_registered_in_the_shared_media_library(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'logo' => UploadedFile::fake()->image('center-logo.png'),
+        ])->assertRedirect();
+
+        $asset = MediaAsset::query()->where('title', 'Site logo')->firstOrFail();
+
+        $this->assertSame('public', $asset->disk);
+        $this->assertSame('brand/center-logo.png', $asset->path);
+        Storage::disk('public')->assertExists($asset->path);
+        $this->assertSame($asset->path, Setting::get('logo'));
+    }
 
 }
 
