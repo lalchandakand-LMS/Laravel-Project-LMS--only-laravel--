@@ -18,17 +18,22 @@ class MediaAsset extends Model
 
     public static function registerUpload(string $title, string $disk, string $path, $file, ?int $uploadedBy = null, ?string $altText = null): self
     {
-        return self::create([
-            'title' => $title,
-            'alt_text' => $altText,
-            'source_type' => 'upload',
-            'disk' => $disk,
-            'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size_bytes' => $file->getSize(),
-            'uploaded_by' => $uploadedBy,
-        ]);
+        try {
+            return self::create([
+                'title' => $title,
+                'alt_text' => $altText,
+                'source_type' => 'upload',
+                'disk' => $disk,
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size_bytes' => $file->getSize(),
+                'uploaded_by' => $uploadedBy,
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk($disk)->delete($path);
+            throw $exception;
+        }
     }
 
     public function uploader()
