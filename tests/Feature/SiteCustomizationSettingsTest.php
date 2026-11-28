@@ -365,5 +365,22 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('New learning courses this month')
             ->assertSee('Fresh courses for every learner.');
     }
+
+    public function test_homepage_theme_and_scroll_animation_settings_render_without_changing_the_slider(): void
+    {
+        Setting::set('homepage_theme_mode', 'dark');
+        Setting::set('homepage_animation_style', 'rise');
+        Setting::set('homepage_animation_speed', '700');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-theme="dark"', false)
+            ->assertSee('data-home-animation="rise"', false)
+            ->assertSee('data-home-animation-speed="700"', false)
+            ->assertSee('id="heroSlides"', false)
+            ->assertSee('data-hero-slide', false);
+    }
+
+
 }
 
