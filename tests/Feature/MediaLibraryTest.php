@@ -3,9 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Ebook;
-use App\Models\EbookPurchase;\nuse App\Models\Course;
+use App\Models\EbookPurchase;
+use App\Models\Course;
 use App\Models\MediaAsset;
-use App\Models\Setting;\nuse App\Models\Category;\nuse App\Models\Post;\nuse App\Models\Slider;
+use App\Models\Setting;
+use App\Models\Category;
+use App\Models\Post;
+use App\Models\Slider;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
