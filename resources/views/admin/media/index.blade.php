@@ -10,7 +10,8 @@
             @csrf
             <div><label class="mb-1 block text-sm font-semibold">Title</label><input name="title" required maxlength="180" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
             <div><label class="mb-1 block text-sm font-semibold">Alt text (for images)</label><input name="alt_text" maxlength="255" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>
-            <div><label class="mb-1 block text-sm font-semibold">Choose file</label><input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" required class="w-full text-sm"></div>
+            <div><label class="mb-1 block text-sm font-semibold">Choose file</label><input type="file" name="files[]" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf" multiple required class="w-full text-sm">
+            <p class="text-xs text-slate-500">Select multiple images/PDFs at once (up to 30 files, 25 MB each).</p></div>
             @error('file')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror
             <button class="rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">Upload media</button>
         </form>
