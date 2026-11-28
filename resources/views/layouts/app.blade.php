@@ -132,7 +132,6 @@
 <main class="min-h-[70vh]">
     @include('partials.flash')
     @yield('content')
-    @php(fwrite(STDERR, 'BLOG_BUFFER layout-after-content='.ob_get_level().PHP_EOL))
 </main>
 
 <footer class="mt-0 border-t border-slate-800" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#071b26') }}; color: {{ \App\Models\Setting::get('footer_text', '#cbd5e1') }}">
@@ -214,6 +213,5 @@
 @endif
 @include('partials.marketing-popup')
 @stack('scripts')
-@php(fwrite(STDERR, 'BLOG_BUFFER layout-end='.ob_get_level().PHP_EOL))
 </body>
 </html>
