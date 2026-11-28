@@ -174,6 +174,9 @@ class BlogPostManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Public story detail')
             ->assertSee('Public detail');
+
+        // Exercise the normal next-page navigation after rendering the detail view.
+        $this->get(route('blog.index'))->assertOk()->assertSee('Public story detail');
     }
 
 }
