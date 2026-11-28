@@ -252,6 +252,43 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('data-home-carousel-layout="carousel"', false);
     }
 
+    public function test_admin_can_customize_background_and_text_colors_for_all_homepage_sections(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.settings.update'), [
+            'homepage_online_batches_bg' => '#fff7ed',
+            'homepage_online_batches_text' => '#7c2d12',
+            'homepage_featured_bg' => '#111827',
+            'homepage_featured_text' => '#f8fafc',
+            'homepage_latest_bg' => '#f1f5f9',
+            'homepage_latest_text' => '#0f172a',
+            'homepage_live_classes_bg' => '#ecfeff',
+            'homepage_live_classes_text' => '#164e63',
+            'homepage_exams_bg' => '#f8fafc',
+            'homepage_exams_text' => '#0f172a',
+            'homepage_teachers_bg' => '#f0fdf4',
+            'homepage_teachers_text' => '#14532d',
+            'homepage_board_results_bg' => '#064e3b',
+            'homepage_board_results_text' => '#ffffff',
+            'homepage_ebooks_bg' => '#ffffff',
+            'homepage_ebooks_text' => '#0f172a',
+            'homepage_admission_bg' => '#0f172a',
+            'homepage_admission_text' => '#ffffff',
+        ])->assertRedirect();
+
+        $this->assertSame('#fff7ed', Setting::get('homepage_online_batches_bg'));
+        $this->assertSame('#f8fafc', Setting::get('homepage_exams_bg'));
+        $this->assertSame('#ffffff', Setting::get('homepage_board_results_text'));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('background-color:#fff7ed;--home-section-text:#7c2d12', false)
+            ->assertSee('background-color:#111827;--home-section-text:#f8fafc', false)
+            ->assertSee('background-color:#064e3b;--home-section-text:#ffffff', false)
+            ->assertSee('var(--home-section-text,#e5edf8)', false);
+    }
+
     public function test_public_brand_palette_is_rendered_on_the_website(): void
     {
         Setting::set('site_primary_color', '#ea580c');
