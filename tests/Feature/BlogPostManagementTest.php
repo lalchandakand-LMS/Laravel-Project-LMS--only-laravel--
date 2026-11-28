@@ -171,7 +171,13 @@ class BlogPostManagementTest extends TestCase
         $instructor = User::where('role', 'instructor')->firstOrFail();
         $published = Post::create(['title' => 'Instructor-visible story', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
 
+        $bufferLevelBeforeRequest = ob_get_level();
         $response = $this->actingAs($instructor)->get(route('blog.show', $published));
+        fwrite(STDERR, 'BLOG_TEST_OUTPUT_BUFFERS='.json_encode([
+            'before' => $bufferLevelBeforeRequest,
+            'after' => ob_get_level(),
+            'status' => ob_get_status(true),
+        ])."\\n");
         $response->assertOk()->assertSee('Public detail');
         $this->assertSame(200, $response->getStatusCode());
     }
