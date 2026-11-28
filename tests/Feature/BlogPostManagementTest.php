@@ -184,6 +184,12 @@ class BlogPostManagementTest extends TestCase
         $published = Post::create(['title' => 'Public story detail', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
         $logBuffers('before-blog-show');
 
+        $this->get(route('courses.index'))->assertOk();
+        $logBuffers('after-courses-index');
+
+        $this->get(route('blog.index'))->assertOk();
+        $logBuffers('after-blog-index-before-show');
+
         $this->get(route('blog.show', $published))
             ->assertOk()
             ->assertSee('Public story detail')
