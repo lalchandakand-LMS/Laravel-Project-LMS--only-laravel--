@@ -147,8 +147,18 @@ class BlogPostManagementTest extends TestCase
         $published = Post::create(['title' => 'Visible story', 'content' => 'Public', 'author_id' => $admin->id, 'is_published' => true]);
         Post::create(['title' => 'Draft story', 'content' => 'Private', 'author_id' => $admin->id, 'is_published' => false]);
 
-        $this->get(route('blog.index'))->assertOk()->assertSee('Visible story')->assertDontSee('Draft story');
-        $this->actingAs($instructor)->get(route('admin.posts.index'))->assertForbidden();
-        $this->get(route('blog.show', $published))->assertOk();
+        $indexResponse = $this->get(route('blog.index'));
+        $indexResponse->assertOk()->assertSee('Visible story')->assertDontSee('Draft story');
+        $this->assertSame(200, $indexResponse->getStatusCode());
+        $this->assertDatabaseHas('posts', ['id' => $published->id, 'is_published' => true]);
+        $this->assertDatabaseHas('posts', ['title' => 'Draft story', 'is_published' => false]);
+
+        $forbiddenResponse = $this->actingAs($instructor)->get(route('admin.posts.index'));
+        $forbiddenResponse->assertForbidden();
+        $this->assertSame(403, $forbiddenResponse->getStatusCode());
+
+        $showResponse = $this->get(route('blog.show', $published));
+        $showResponse->assertOk();
+        $this->assertSame(200, $showResponse->getStatusCode());
     }
 }
