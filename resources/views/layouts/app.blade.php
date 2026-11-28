@@ -144,7 +144,9 @@
 
 <main class="min-h-[70vh]">
     @include('partials.flash')
+    @php(fwrite(STDERR, 'BLOG_LAYOUT_BEFORE_CONTENT='.ob_get_level()."\\n"))
     @yield('content')
+    @php(fwrite(STDERR, 'BLOG_LAYOUT_AFTER_CONTENT='.ob_get_level()."\\n"))
 </main>
 
 <footer class="mt-0 border-t border-slate-800" style="background-color: {{ \App\Models\Setting::get('footer_bg', '#071b26') }}; color: {{ \App\Models\Setting::get('footer_text', '#cbd5e1') }}">
