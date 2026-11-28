@@ -6,7 +6,6 @@
 
 {{-- HERO SLIDER ONLY --}}
 @php($slides = $sliders ?? collect())
-@if (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
 <section data-home-section="hero" class="home-hero-shell overflow-hidden text-white">
     <div class="mx-auto max-w-7xl px-4 pb-5 pt-8 sm:pt-10">
         @if ($slides->count())
@@ -83,8 +82,6 @@
 })();
 </script>
 @endpush
-@endif
-
 {{-- POST-SLIDER LEARNING HIGHLIGHTS: kept outside the hero so the homepage content begins directly under the slider. --}}
 @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
 <section data-home-section="online_batches" class="py-8 sm:py-10" style="background-color:{{ $homepageSettings['homepage_online_batches_bg'] ?? '#fff7ed' }};--home-section-text:{{ $homepageSettings['homepage_online_batches_text'] ?? '#0f172a' }}">
