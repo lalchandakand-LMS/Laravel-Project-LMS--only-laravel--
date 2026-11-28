@@ -52,6 +52,9 @@
                 <p class="mt-1 truncate text-xs text-slate-500">{{ $asset->original_name ?: $asset->url }}</p>
                 <div class="mt-3 flex flex-wrap gap-2">
                     <button type="button" data-copy-url="{{ $asset->publicUrl() }}" class="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800">Copy URL</button>
+                    @if(request()->boolean('picker'))
+                        <button type="button" data-select-media data-url="{{ $asset->publicUrl() }}" class="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-bold text-white">Use this file</button>
+                    @endif
                     @if ($asset->publicUrl())<a href="{{ $asset->publicUrl() }}" target="_blank" rel="noopener" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold">Open</a>@endif
                     <form method="POST" action="{{ route('admin.media.destroy', $asset) }}" onsubmit="return confirm('Remove this media item? Existing pages using its URL may stop displaying.')">@csrf @method('DELETE')<button class="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700">Delete</button></form>
                 </div>
@@ -65,6 +68,11 @@
 @endsection
 @push('scripts')
 <script>
+document.querySelectorAll('[data-select-media]').forEach(button => button.addEventListener('click', () => {
+    if (!window.opener || window.opener.closed) return;
+    window.opener.postMessage({ type: 'lms-media-selected', url: button.dataset.url, target: new URLSearchParams(window.location.search).get('target') }, window.location.origin);
+    window.close();
+}));
 document.querySelectorAll('[data-copy-url]').forEach(button => button.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(button.dataset.copyUrl); button.textContent = 'Copied!'; }
     catch { window.prompt('Copy this media URL:', button.dataset.copyUrl); }
