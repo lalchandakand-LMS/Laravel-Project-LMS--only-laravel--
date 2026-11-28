@@ -46,7 +46,9 @@ class BlogController extends Controller
             ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
             ->latest('published_at')->take(3)->get();
 
+        $bufferBeforeArticleRender = ob_get_level();
         $articleContent = view('blog.partials.show-content', compact('post', 'related', 'articleSchema'))->render();
+        fwrite(STDERR, 'BLOG_PARTIAL_BUFFER_LEVELS='.json_encode(['before' => $bufferBeforeArticleRender, 'after' => ob_get_status(true)])."\\n");
 
         return view('blog.show', compact('post', 'related', 'articleSchema', 'articleContent'));
     }
