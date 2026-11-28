@@ -54,6 +54,37 @@ class MenuSettingsTest extends TestCase
         $this->get('/')->assertOk()->assertSee('About Alom');
     }
 
+    public function test_parent_menu_opens_accessible_dropdowns_on_desktop_and_mobile(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        $parent = MenuItem::create([
+            'label' => 'Learning',
+            'url' => '/courses',
+            'location' => 'header',
+            'sort_order' => 1,
+            'is_enabled' => true,
+            'show_desktop' => true,
+            'show_mobile' => true,
+        ]);
+        MenuItem::create([
+            'label' => 'All courses',
+            'url' => '/courses',
+            'location' => 'header',
+            'parent_id' => $parent->id,
+            'sort_order' => 1,
+            'is_enabled' => true,
+            'show_desktop' => true,
+            'show_mobile' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/')->assertOk();
+        $response->assertSee('<details class="group relative">', false)
+            ->assertSee('<details class="group rounded-xl">', false)
+            ->assertSee('<summary', false)
+            ->assertSee('Learning')
+            ->assertSee('All courses');
+    }
+
     public function test_non_admin_cannot_manage_menu_settings(): void
     {
         $student = User::where('email', 'student@lms.test')->firstOrFail();
