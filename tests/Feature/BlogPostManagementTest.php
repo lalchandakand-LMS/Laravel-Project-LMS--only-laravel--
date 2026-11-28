@@ -156,6 +156,8 @@ class BlogPostManagementTest extends TestCase
 
         $forbiddenResponse = $this->actingAs($instructor)->get(route('admin.posts.index'));
         $forbiddenResponse->assertForbidden();
+        $forbiddenResponse->getContent(); // Force lazy error-view rendering before the next request.
+        fwrite(STDERR, 'BLOG_AFTER_FORBIDDEN_CONTENT_BUFFER='.ob_get_level()."\\n");
         $this->assertSame(403, $forbiddenResponse->getStatusCode());
 
         $showResponse = $this->get(route('blog.show', $published));
