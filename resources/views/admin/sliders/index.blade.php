@@ -13,7 +13,7 @@
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     @forelse ($sliders as $slider)
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <img src="{{ $slider->imageUrl() }}" alt="" class="h-40 w-full object-cover">
+            <img src="{{ $slider->imageUrl() }}" alt="" class="h-40 w-full bg-slate-900 object-contain">
             <div class="p-4">
                 <div class="mb-1 flex items-center gap-2">
                     <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $slider->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
