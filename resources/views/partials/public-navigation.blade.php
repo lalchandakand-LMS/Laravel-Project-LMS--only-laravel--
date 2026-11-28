@@ -63,7 +63,6 @@
     </div>
 </aside>
 
-@push('scripts')
 <script>
 (() => {
     const panel=document.getElementById('mobile-menu'),overlay=document.getElementById('mobile-menu-overlay'),openButton=document.getElementById('mobile-menu-open'),closeButton=document.getElementById('mobile-menu-close');
@@ -75,4 +74,3 @@
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.inert)close();if(event.key==='Tab'&&!panel.inert){const focusable=[...panel.querySelectorAll('a,button')].filter(el=>!el.disabled),first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}});
 })();
 </script>
-@endpush
