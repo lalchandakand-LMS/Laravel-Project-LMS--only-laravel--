@@ -37,7 +37,7 @@
             <label class="mt-2 block text-xs font-semibold text-slate-600">Hosted PDF / EPUB URL (free e-books only)</label>
             <input type="url" name="file_url" value="{{ old('file_url', str_starts_with((string) $ebook->file, 'http') ? $ebook->file : '') }}" placeholder="https://example.com/ebook.pdf" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <p class="mt-1 text-xs text-slate-500">Paid e-books require a private upload (PDF / EPUB, max 50 MB). Public hosted URLs cannot enforce purchase access.</p>
-            <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'cover_url']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose cover from Media Library →</button>
+            <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'cover_url', 'type' => 'image']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose cover from Media Library →</button>
             @if ($ebook->exists && ! $ebook->is_free && is_string($ebook->file) && str_starts_with(strtolower($ebook->file), 'http'))
                 <p class="mt-2 rounded-lg bg-rose-50 p-2 text-xs text-rose-800">Security warning: this paid title currently points to a public URL. The protected download route will not redirect buyers to it. Migrate the original file to private storage through a controlled content migration before restoring paid downloads.</p>
             @endif
