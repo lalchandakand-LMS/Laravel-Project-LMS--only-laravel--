@@ -309,9 +309,14 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('data-home-section="online_batches"', false)
-            ->assertSee('background-color:#fff7ed;--home-section-text:#7c2d12', false)
-            ->assertSee('var(--home-section-text,#e5edf8)', false);
+            ->assertSee('data-home-theme="dark"', false)
+            ->assertSee('data-home-section="online_batches"', false);
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSee('name="homepage_online_batches_bg"', false)
+            ->assertSee('name="homepage_online_batches_text"', false)
+            ->assertSee('name="homepage_admission_bg"', false);
     }
 
     public function test_public_brand_palette_is_rendered_on_the_website(): void
