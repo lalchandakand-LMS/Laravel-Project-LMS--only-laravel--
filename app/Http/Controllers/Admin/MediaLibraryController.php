@@ -64,7 +64,7 @@ class MediaLibraryController extends Controller
                     $data['alt_text'] ?? null
                 );
             }
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             MediaAsset::query()->where('disk', 'public')->whereIn('path', $storedPaths)->delete();
             foreach ($storedPaths as $path) {
                 Storage::disk('public')->delete($path);
