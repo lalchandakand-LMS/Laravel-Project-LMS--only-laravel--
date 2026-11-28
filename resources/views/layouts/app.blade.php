@@ -76,9 +76,12 @@
     @include('partials.assets')
     <style>
         :root {
-            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) ? setting('site_primary_color') : '#1cab55' }};
-            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) ? setting('site_secondary_color') : '#15803d' }};
+            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) ? setting('site_primary_color') : '#ea580c' }};
+            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) ? setting('site_secondary_color') : '#9a3412' }};
         }
+        .bg-orange-700,.bg-orange-600,.bg-orange-500{background-color:var(--aec-primary)!important}
+        .text-orange-700,.text-orange-600,.text-orange-500{color:var(--aec-primary)!important}
+        .border-orange-700,.border-orange-600,.border-orange-500{border-color:var(--aec-primary)!important}
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased" data-public-motion="{{ \App\Models\Setting::get('public_page_motion', 'soft') }}">
