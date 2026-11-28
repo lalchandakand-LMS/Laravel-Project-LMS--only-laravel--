@@ -142,6 +142,7 @@ class BlogPostManagementTest extends TestCase
 
     public function test_public_blog_only_lists_published_posts_and_instructors_cannot_manage_posts(): void
     {
+        $bufferLevelAtStart = ob_get_level();
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $instructor = User::where('role', 'instructor')->firstOrFail();
         $published = Post::create(['title' => 'Visible story', 'content' => 'Public', 'author_id' => $admin->id, 'is_published' => true]);
@@ -158,6 +159,7 @@ class BlogPostManagementTest extends TestCase
         $this->assertSame(403, $forbiddenResponse->getStatusCode());
 
         $showResponse = $this->get(route('blog.show', $published));
+        fwrite(STDERR, 'BLOG_SHOW_BUFFER_LEVELS='.json_encode(['start' => $bufferLevelAtStart, 'end' => ob_get_status(true)])."\\n");
         $showResponse->assertOk();
         $this->assertSame(200, $showResponse->getStatusCode());
     }
