@@ -74,8 +74,8 @@
             <h4 class="font-bold text-slate-900">Public website brand colors</h4>
             <p class="mt-1 text-xs text-slate-600">These colors control public navigation, buttons, links, badges and accent highlights. Homepage section backgrounds can still be customized separately below.</p>
             <div class="mt-3 grid gap-4 sm:grid-cols-2">
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#1cab55') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#15803d') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#ea580c') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#9a3412') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             </div>
         </div>
         <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -179,8 +179,10 @@
         </div>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($homepageSectionLabels as $key => $label)
-                @php($enabledByDefault = in_array($key, ['hero', 'categories', 'online_batches', 'stats', 'learning_modes', 'branches', 'learning_benefits', 'learning_preview', 'reviews', 'featured', 'latest', 'ebooks', 'admission'], true))
-                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? ($enabledByDefault ? '1' : '0')) === '1')> {{ $label }}</label>
+                @if ($key !== 'hero')
+                    @php($enabledByDefault = in_array($key, ['categories', 'online_batches', 'stats', 'learning_modes', 'branches', 'learning_benefits', 'learning_preview', 'reviews', 'featured', 'latest', 'ebooks', 'admission'], true))
+                    <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? ($enabledByDefault ? '1' : '0')) === '1')> {{ $label }}</label>
+                @endif
             @endforeach
         </div>
         <div class="mt-6 grid gap-4 md:grid-cols-2">
