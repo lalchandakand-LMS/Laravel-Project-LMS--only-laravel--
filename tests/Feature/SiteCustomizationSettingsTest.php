@@ -165,7 +165,7 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
             ->assertOk()
-            ->assertSee('Your existing slider (fixed)')
+            ->assertSee('Hero banner (managed in slider settings)')
             ->assertDontSee('name="homepage_show_hero"', false)
             ->assertSee('Online batches')
             ->assertSee('Trust statistics');
@@ -218,8 +218,8 @@ class SiteCustomizationSettingsTest extends TestCase
         Cache::forget('settings.all');
         $this->get('/')
             ->assertOk()
-            ->assertSee('--aec-primary: #06b6d4', false)
-            ->assertSee('--aec-primary-dark: #0d9488', false)
+            ->assertSee('--aec-primary: #ea580c', false)
+            ->assertSee('--aec-primary-dark: #9a3412', false)
             ->assertSee('linear-gradient(125deg,#062c30 0%,#041c24 100%)', false);
     }
 
@@ -334,7 +334,7 @@ class SiteCustomizationSettingsTest extends TestCase
     public function test_admin_can_save_and_render_homepage_section_order(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
-        $order = ['hero', 'featured', 'categories', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
+        $order = ['hero', 'featured', 'categories', 'online_batches', 'stats', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission', 'learning_modes', 'branches', 'learning_benefits', 'learning_preview', 'learning_hub'];
 
         $this->actingAs($admin)->post(route('admin.settings.update'), [
             'homepage_show_categories' => '1',
@@ -540,7 +540,7 @@ class SiteCustomizationSettingsTest extends TestCase
                 'data-section-key="featured"',
             ], false)
             ->assertSee('draggable="false" data-section-key="hero" data-fixed-section="true"', false)
-            ->assertSee('Your existing slider (fixed)', false);
+            ->assertSee('Hero banner (managed in slider settings)', false);
     }
 
     public function test_existing_hero_slider_is_always_visible_and_not_toggleable_from_homepage_builder(): void
@@ -555,7 +555,7 @@ class SiteCustomizationSettingsTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.settings.index'))
             ->assertOk()
-            ->assertSee('Your existing slider (fixed)')
+            ->assertSee('Hero banner (managed in slider settings)')
             ->assertDontSee('name="homepage_show_hero"', false);
     }
 
