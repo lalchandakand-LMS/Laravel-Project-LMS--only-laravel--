@@ -14,7 +14,7 @@
             <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full text-xs">
             <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste a photo URL</label>
             <input type="url" name="avatar_url" value="{{ old('avatar_url', str_starts_with((string) $user->avatar, 'http') ? $user->avatar : '') }}" placeholder="https://example.com/profile.jpg" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library →</a>
+            <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'avatar_url', 'type' => 'image']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
         </div>
     </div>
 
@@ -108,4 +108,27 @@ document.addEventListener('DOMContentLoaded', () => {
     update();
 });
 </script>
+@push('scripts')
+<script>
+(() => {
+    let pickerWindow = null;
+    document.querySelectorAll('[data-open-media-picker]').forEach(button => button.addEventListener('click', () => {
+        pickerWindow = window.open(button.dataset.pickerUrl, 'lmsMediaPicker', 'width=1200,height=850,resizable=yes,scrollbars=yes');
+        if (pickerWindow) pickerWindow.focus();
+    }));
+    window.addEventListener('message', event => {
+        if (event.origin !== window.location.origin || event.source !== pickerWindow) return;
+        if (!event.data || event.data.type !== 'lms-media-selected' || typeof event.data.url !== 'string') return;
+        if (event.data.target !== 'avatar_url') return;
+        const field = document.querySelector('[name="avatar_url"]');
+        if (!field) return;
+        field.value = event.data.url;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+        pickerWindow = null;
+    });
+})();
+</script>
+@endpush
+
 @endsection
