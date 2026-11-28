@@ -34,7 +34,7 @@
                 @if ($slides->isNotEmpty())
                     <img src="{{ $slides->first()->imageUrl() ?: asset('images/aec-logo.svg') }}" alt="{{ $slides->first()->title ?: 'Alom’s English Center learning programme' }}" class="aspect-[4/3] w-full rounded-[1.25rem] object-cover">
                 @else
-                    <div class="grid aspect-[4/3] place-items-center rounded-[1.25rem] bg-gradient-to-br from-emerald-500/30 via-slate-900 to-sky-500/20"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ $brandName }}" class="h-28 w-28 object-contain opacity-90"></div>
+                    <div class="grid aspect-[4/3] place-items-center rounded-[1.25rem] bg-gradient-to-br from-emerald-500/30 via-slate-900 to-sky-500/20"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}" class="h-28 w-28 object-contain opacity-90"></div>
                 @endif
                 <div class="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/15 bg-[#0b1221]/90 p-4 backdrop-blur"><p class="text-xs font-bold uppercase tracking-[.18em] text-emerald-300">Choose a programme</p><p class="mt-1 text-lg font-extrabold">A clear path to better English</p></div>
             </div>
