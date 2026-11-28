@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
-use App\Models\Level;
+use App\Models\Level;\nuse App\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -160,7 +160,7 @@ class CourseController extends Controller
         $data['category_id'] = $data['category_ids'][0] ?? null;
 
         if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
+            $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');\n            if ($data['thumbnail']) {\n                MediaAsset::registerUpload('Course thumbnail', 'public', $data['thumbnail'], $request->file('thumbnail'), auth()->id());\n            }
             if (! $data['thumbnail']) {
                 throw ValidationException::withMessages(['thumbnail' => 'The course thumbnail could not be stored. The previous thumbnail has been kept.']);
             }
