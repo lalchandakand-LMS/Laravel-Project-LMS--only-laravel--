@@ -12,50 +12,83 @@
 </style>
 <div id="homepage-sections" class="aec-reference-home" data-home-theme="{{ $homepageSettings['homepage_theme_mode'] ?? 'dark' }}" data-home-animation="{{ $homepageSettings['homepage_animation_style'] ?? 'rise' }}" data-home-animation-speed="{{ (int) ($homepageSettings['homepage_animation_speed'] ?? 650) }}">
 
-{{-- STATIC HERO USES THE CURRENT ADMIN BANNER AS ITS ARTWORK --}}
+{{-- EXISTING HERO SLIDER — preserved from main without changing its design or controls. --}}
 @php($slides = $sliders ?? collect())
 @if (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
-<section data-home-section="hero" class="overflow-hidden bg-[#0b1221] text-white">
-    <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1.1fr_.9fr] lg:py-20">
-        <div>
-            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-xs font-bold text-emerald-200"><span class="h-2 w-2 rounded-full bg-emerald-400"></span> Learn English with confidence</span>
-            <h1 class="mt-5 max-w-3xl text-4xl font-black leading-[1.12] tracking-tight sm:text-5xl lg:text-6xl">{{ $homepageSettings['homepage_hero_title'] ?? 'Build real English skills for your next big step.' }}</h1>
-            <p class="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{{ $homepageSettings['homepage_hero_subtitle'] ?? 'Choose a guided course, practise with expert teachers and keep learning at your own pace.' }}</p>
-            <div class="mt-7 flex flex-wrap gap-3">
-                @php($heroUrl = $homepageSettings['homepage_hero_button_url'] ?? '/courses')
-                <a href="{{ str_starts_with($heroUrl, 'https://') ? $heroUrl : url($heroUrl) }}" class="inline-flex items-center gap-2 rounded-xl bg-[#1cab55] px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#15803d]">{{ $homepageSettings['homepage_hero_button_text'] ?? 'Explore courses' }} @include('partials.icon', ['name' => 'arrow-right'])</a>
-                <a href="{{ route('coaching-admission.create') }}" class="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10">Offline admission</a>
-            </div>
-            <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-300"><span class="inline-flex items-center gap-2">@include('partials.icon', ['name'=>'users','class'=>'h-4 w-4 text-emerald-300']) {{ number_format($stats['students']) }}+ learners</span><span class="inline-flex items-center gap-2">@include('partials.icon', ['name'=>'book-open','class'=>'h-4 w-4 text-emerald-300']) {{ number_format($stats['courses']) }} courses</span><span class="inline-flex items-center gap-2 text-amber-300">★★★★★ <span class="text-slate-300">Learner focused</span></span></div>
-        </div>
-        <div class="relative mx-auto w-full max-w-xl">
-            <div class="absolute -inset-5 rounded-[2rem] bg-emerald-400/10 blur-2xl"></div>
-            <div class="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 p-3 shadow-2xl">
-                @if ($slides->isNotEmpty())
-                    <img src="{{ $slides->first()->imageUrl() ?: asset('images/aec-logo.svg') }}" alt="{{ $slides->first()->title ?: 'Alom’s English Center learning programme' }}" class="aspect-[4/3] w-full rounded-[1.25rem] object-cover">
-                @else
-                    <div class="grid aspect-[4/3] place-items-center rounded-[1.25rem] bg-gradient-to-br from-emerald-500/30 via-slate-900 to-sky-500/20"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}" class="h-28 w-28 object-contain opacity-90"></div>
-                @endif
-                <div class="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/15 bg-[#0b1221]/90 p-4 backdrop-blur"><p class="text-xs font-bold uppercase tracking-[.18em] text-emerald-300">Choose a programme</p><p class="mt-1 text-lg font-extrabold">A clear path to better English</p></div>
-            </div>
-        </div>
-    </div>
-    <div class="border-t border-white/10 bg-white/[.03]">
-        <div class="mx-auto max-w-7xl px-4 py-6">
-            <div class="mb-4 flex items-center justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-[.16em] text-emerald-300">Find your programme</p><h2 class="mt-1 text-lg font-extrabold">Start with what you want to learn</h2></div><a href="{{ route('courses.index') }}" class="hidden items-center gap-1 text-sm font-bold text-white/80 hover:text-white sm:inline-flex">All courses @include('partials.icon',['name'=>'arrow-right','class'=>'h-4 w-4'])</a></div>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                @forelse ($categories->take(6) as $category)
-                    <a href="{{ route('categories.show', $category->slug) }}" class="group rounded-2xl border border-white/10 bg-white/[.06] p-4 transition hover:-translate-y-1 hover:border-emerald-300/50 hover:bg-white/10"><span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400/15 text-emerald-200">@include('partials.icon',['name'=>'book-open'])</span><strong class="mt-3 block line-clamp-2 text-sm font-extrabold text-white">{{ $category->name }}</strong><span class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300">Courses available @include('partials.icon',['name'=>'arrow-right','class'=>'h-3 w-3'])</span></a>
-                @empty
-                    @foreach (['Spoken English','IELTS Preparation','Grammar','Writing Skills','Vocabulary','Academic English'] as $program)
-                        <a href="{{ route('courses.index') }}?q={{ urlencode($program) }}" class="group rounded-2xl border border-white/10 bg-white/[.06] p-4 transition hover:-translate-y-1 hover:border-emerald-300/50 hover:bg-white/10"><span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400/15 text-emerald-200">@include('partials.icon',['name'=>'book-open'])</span><strong class="mt-3 block line-clamp-2 text-sm font-extrabold text-white">{{ $program }}</strong><span class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300">Explore courses @include('partials.icon',['name'=>'arrow-right','class'=>'h-3 w-3'])</span></a>
+<section data-home-section="hero" class="home-hero-shell overflow-hidden text-white">
+    <div class="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:pt-12">
+        @if ($slides->count())
+            <div id="heroSlides" class="coverflow-carousel relative mx-auto" tabindex="0" aria-roledescription="carousel" aria-label="Featured learning highlights">
+                <div class="coverflow-stage relative mx-auto">
+                    @foreach ($slides as $i => $slide)
+                        <article class="coverflow-slide {{ $i === 0 ? 'is-active' : '' }}" data-hero-slide data-slide="{{ $i }}" aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
+                            <img src="{{ $slide->imageUrl() ?: asset('images/aec-logo.svg') }}" alt="{{ $slide->title ?: 'Alom’s English Center learning banner' }}" class="h-full w-full rounded-[1.6rem] object-cover">
+                        </article>
                     @endforeach
-                @endforelse
+                </div>
+                @if ($slides->count() > 1)
+                    <button type="button" onclick="heroGo(-1)" aria-label="Previous banner" class="coverflow-arrow left-2 sm:left-[7%]">‹</button>
+                    <button type="button" onclick="heroGo(1)" aria-label="Next banner" class="coverflow-arrow right-2 sm:right-[7%]">›</button>
+                    <div class="coverflow-dots" aria-label="Choose banner">
+                        @foreach ($slides as $i => $slide)
+                            <button type="button" onclick="heroShow({{ $i }})" data-hero-dot aria-label="Banner {{ $i + 1 }}" aria-current="{{ $i === 0 ? 'true' : 'false' }}"></button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
-        </div>
+        @else
+            <div class="coverflow-stage relative mx-auto max-w-5xl overflow-hidden rounded-[1.6rem] border border-white/10 bg-white/5 shadow-2xl">
+                <div class="grid h-full min-h-64 place-items-center"><img src="{{ asset('images/aec-logo.svg') }}" alt="{{ \App\Models\Setting::get('site_name', 'Alom English Center') }} banner placeholder" class="h-32 w-32 object-contain opacity-80"></div>
+            </div>
+        @endif
     </div>
 </section>
+@push('scripts')
+<style>
+.home-hero-shell{background:linear-gradient(125deg,#062c30 0%,#041c24 100%)}
+.coverflow-carousel{max-width:1120px;padding:0 0 3.25rem}
+.coverflow-stage{height:clamp(230px,43vw,490px);overflow:visible;perspective:1200px}
+.coverflow-slide{position:absolute;left:9%;top:0;width:82%;height:100%;border:1px solid rgba(255,255,255,.16);border-radius:1.6rem;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translateX(0) scale(.78);filter:blur(5px);transition:transform .55s ease,opacity .55s ease,filter .55s ease}
+.coverflow-slide.is-active{opacity:1;pointer-events:auto;transform:translateX(0) scale(1);filter:none;z-index:3}
+.coverflow-slide.is-prev,.coverflow-slide.is-next{opacity:.62;pointer-events:auto;filter:blur(2px);z-index:2}
+.coverflow-slide.is-prev{transform:translateX(-76%) scale(.82)}
+.coverflow-slide.is-next{transform:translateX(76%) scale(.82)}
+.coverflow-arrow{position:absolute;bottom:3.5rem;z-index:5;display:grid;width:2.65rem;height:2.65rem;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.13);color:white;font-size:1.8rem;line-height:1;backdrop-filter:blur(12px)}
+.coverflow-dots{position:absolute;bottom:3.8rem;left:50%;z-index:6;display:flex;gap:.5rem;transform:translateX(-50%)}
+.coverflow-dots button{width:.48rem;height:.48rem;border-radius:999px;background:rgba(255,255,255,.35);transition:all .2s}
+.coverflow-dots button[aria-current=true]{width:1.5rem;background:#22d3ee}
+@media(max-width:639px){.coverflow-slide{left:2%;width:96%}.coverflow-slide.is-prev{transform:translateX(-84%) scale(.84)}.coverflow-slide.is-next{transform:translateX(84%) scale(.84)}}
+@media(prefers-reduced-motion:reduce){.coverflow-slide{transition:none}}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('heroSlides');if(!root)return;
+ const slides=[...root.querySelectorAll('[data-hero-slide]')],dots=[...root.querySelectorAll('[data-hero-dot]')];if(!slides.length)return;
+ let active=0,timer=null;
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ const stop=()=>{if(timer)clearInterval(timer);timer=null};
+ function render(){
+  slides.forEach((slide,i)=>{
+   const prev=(active-1+slides.length)%slides.length,next=(active+1)%slides.length;
+   slide.classList.toggle('is-active',i===active);slide.classList.toggle('is-prev',slides.length>2&&i===prev);slide.classList.toggle('is-next',slides.length>2&&i===next);
+   if(slides.length===2){slide.classList.toggle('is-prev',i===prev);slide.classList.toggle('is-next',i===next);}
+   slide.setAttribute('aria-hidden',i===active?'false':'true');
+  });
+  dots.forEach((dot,i)=>dot.setAttribute('aria-current',i===active?'true':'false'));
+ }
+ function restart(){stop();if(slides.length>1&&!reduced.matches&&!root.matches(':hover')&&!root.contains(document.activeElement))timer=setInterval(()=>show(active+1),6500)}
+ function show(index){active=(index+slides.length)%slides.length;render();restart()}
+ window.heroShow=show;window.heroGo=direction=>show(active+direction);
+ root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',restart);root.addEventListener('focusin',stop);root.addEventListener('focusout',e=>{if(!root.contains(e.relatedTarget))restart()});
+ root.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();show(active+1)}if(e.key==='ArrowLeft'){e.preventDefault();show(active-1)}});
+ let x=0,y=0;root.addEventListener('touchstart',e=>{x=e.changedTouches[0].clientX;y=e.changedTouches[0].clientY;stop()},{passive:true});
+ root.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-x,dy=e.changedTouches[0].clientY-y;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))show(active+(dx<0?1:-1));else restart()},{passive:true});
+ reduced.addEventListener('change',restart);render();restart();
+})();
+</script>
+@endpush
 @endif
+
 {{-- POST-SLIDER LEARNING HIGHLIGHTS: kept outside the hero so the homepage content begins directly under the slider. --}}
 @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
 <section data-home-section="online_batches" class="py-8 sm:py-10" style="background-color:{{ $homepageSettings['homepage_online_batches_bg'] ?? '#fff7ed' }};--home-section-text:{{ $homepageSettings['homepage_online_batches_text'] ?? '#0f172a' }}">
