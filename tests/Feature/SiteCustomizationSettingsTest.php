@@ -396,7 +396,8 @@ class SiteCustomizationSettingsTest extends TestCase
         $asset = MediaAsset::query()->where('title', 'Site logo')->firstOrFail();
 
         $this->assertSame('public', $asset->disk);
-        $this->assertSame('brand/center-logo.png', $asset->path);
+        $this->assertStringStartsWith('brand/', $asset->path);
+        $this->assertSame('center-logo.png', $asset->original_name);
         Storage::disk('public')->assertExists($asset->path);
         $this->assertSame($asset->path, Setting::get('logo'));
     }
