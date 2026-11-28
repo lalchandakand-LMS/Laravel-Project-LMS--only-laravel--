@@ -29,33 +29,50 @@ class MediaLibraryController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:180',
             'alt_text' => 'nullable|string|max:255',
-            'file' => 'required|file|mimes:jpg,jpeg,png,webp,gif,pdf|max:25600',
+            'file' => 'nullable|required_without:files|file|mimes:jpg,jpeg,png,webp,gif,pdf|max:25600',
+            'files' => 'nullable|array|max:30',
+            'files.*' => 'file|mimes:jpg,jpeg,png,webp,gif,pdf|max:25600',
         ]);
 
-        $file = $data['file'];
-        $path = $file->store('media-library', 'public');
-        if (! $path) {
-            throw ValidationException::withMessages(['file' => 'The media file could not be stored.']);
+        $uploads = array_values(array_filter(array_merge(
+            isset($data['file']) ? [$data['file']] : [],
+            $data['files'] ?? []
+        )));
+        if ($uploads === []) {
+            throw ValidationException::withMessages(['file' => 'Choose at least one image or PDF to upload.']);
         }
 
+        $storedPaths = [];
         try {
-            MediaAsset::create([
-                'title' => $data['title'],
-                'alt_text' => $data['alt_text'] ?? null,
-                'source_type' => 'upload',
-                'disk' => 'public',
-                'path' => $path,
-                'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size_bytes' => $file->getSize(),
-                'uploaded_by' => $request->user()->id,
-            ]);
-        } catch (\Throwable $exception) {
-            Storage::disk('public')->delete($path);
+            foreach ($uploads as $file) {
+                $path = $file->store('media-library', 'public');
+                if (! $path) {
+                    throw ValidationException::withMessages(['file' => 'A media file could not be stored.']);
+                }
+
+                $storedPaths[] = $path;
+                $title = count($uploads) > 1
+                    ? $data['title'].' — '.$file->getClientOriginalName()
+                    : $data['title'];
+
+                MediaAsset::registerUpload(
+                    $title,
+                    'public',
+                    $path,
+                    $file,
+                    $request->user()->id,
+                    $data['alt_text'] ?? null
+                );
+            }
+        } catch (\\Throwable $exception) {
+            MediaAsset::query()->where('disk', 'public')->whereIn('path', $storedPaths)->delete();
+            foreach ($storedPaths as $path) {
+                Storage::disk('public')->delete($path);
+            }
             throw $exception;
         }
 
-        return redirect()->route('admin.media.index')->with('success', 'Media uploaded to the library.');
+        return redirect()->route('admin.media.index')->with('success', count($uploads).' media file(s) uploaded to the library.');
     }
 
     public function storeLink(Request $request)
