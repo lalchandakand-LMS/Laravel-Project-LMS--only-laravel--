@@ -19,7 +19,7 @@
                 <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
                 <label class="mt-2 block text-xs font-semibold text-slate-600">Or use an image URL</label>
                 <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $category->image, 'http') ? $category->image : '') }}" placeholder="https://example.com/category.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'image_url']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
+                <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'image_url', 'type' => 'image']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
                 @if($category->image)<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_image" value="1"> Remove current image</label>@endif
             </div>
             <div><label class="mb-1 block text-sm font-semibold">Display order</label><input type="number" min="0" name="position" value="{{ old('position', $category->position ?? 0) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"></div>
