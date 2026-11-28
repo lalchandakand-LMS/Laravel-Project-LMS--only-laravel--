@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\Category;\nuse App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -41,7 +41,7 @@ class CategoryController extends Controller
             if (! $storedImage) {
                 throw ValidationException::withMessages(['image' => 'The category image could not be stored.']);
             }
-            $data['image'] = $storedImage;
+            $data['image'] = $storedImage;\n                MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);\n            MediaAsset::registerUpload('Category image: '.$data['name'], 'public', $storedImage, $request->file('image'), $request->user()->id);
         } elseif ($request->filled('image_url')) {
             $data['image'] = $data['image_url'];
         }
