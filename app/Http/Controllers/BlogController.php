@@ -46,6 +46,7 @@ class BlogController extends Controller
             ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
             ->latest('published_at')->take(3)->get();
 
+        fwrite(STDERR, 'BLOG_BUFFER controller-before-view='.ob_get_level().PHP_EOL);
         return view('blog.show', compact('post', 'related', 'articleSchema'));
     }
 }
