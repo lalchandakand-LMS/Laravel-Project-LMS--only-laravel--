@@ -233,12 +233,24 @@ class MediaLibraryTest extends TestCase
             'is_published' => 1,
         ])->assertRedirect(route('admin.ebooks.index'));
 
+        $student = User::where('role', 'student')->firstOrFail();
+        $this->actingAs($admin)->put(route('admin.users.update', $student), [
+            'name' => $student->name,
+            'email' => $student->email,
+            'phone' => $student->phone,
+            'role' => 'student',
+            'password' => '',
+            'avatar' => UploadedFile::fake()->image('student-avatar.png'),
+            'is_active' => 1,
+        ])->assertRedirect(route('admin.users.index'));
+
         foreach ([
             'Course thumbnail',
             'Category image: Media Library Test Category',
             'Slider banner: Media Library Test Slider',
             'Post thumbnail: Media Library Test Post',
             'E-book cover: Media Library Test E-book',
+            'Profile photo: '.$student->name,
         ] as $title) {
             $asset = MediaAsset::where('title', $title)->firstOrFail();
             $this->assertSame('public', $asset->disk);
