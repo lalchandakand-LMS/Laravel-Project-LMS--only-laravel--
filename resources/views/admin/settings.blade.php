@@ -147,8 +147,8 @@
             </ol>
         </div>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach (['hero' => 'Hero slider / banner', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
-                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked((in_array($key, ['hero','categories','online_batches','reviews'], true) ? ($settings['homepage_show_'.$key] ?? '1') : ($settings['homepage_show_'.$key] ?? '0')) === '1')> {{ $label }}</label>
+            @foreach (['online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
+                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked((in_array($key, ['categories','online_batches','reviews'], true) ? ($settings['homepage_show_'.$key] ?? '1') : ($settings['homepage_show_'.$key] ?? '0')) === '1')> {{ $label }}</label>
             @endforeach
         </div>
         <div class="mt-6 grid gap-4 md:grid-cols-2">
