@@ -46,7 +46,7 @@
             <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste an image URL</label>
             <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $slider->image, 'http') ? $slider->image : '') }}" placeholder="https://example.com/learning-banner.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'image_url']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
+            <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'image_url', 'type' => 'image']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
             @if ($slider->imageUrl())
                 <img src="{{ $slider->imageUrl() }}" class="mt-2 aspect-[16/5] w-full rounded-lg border border-slate-200 object-cover" alt="Current banner preview">
             @endif
