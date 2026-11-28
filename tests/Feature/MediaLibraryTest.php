@@ -277,4 +277,27 @@ class MediaLibraryTest extends TestCase
             ->assertSee('https://cdn.example.com/picker.webp', false);
     }
 
+
+    public function test_admin_can_upload_multiple_images_to_the_shared_media_library_at_once(): void
+    {
+        Storage::fake('public');
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.media.store'), [
+            'title' => 'Homepage campaign',
+            'files' => [
+                UploadedFile::fake()->image('banner-one.png'),
+                UploadedFile::fake()->image('banner-two.webp'),
+                UploadedFile::fake()->image('banner-three.jpg'),
+            ],
+        ])->assertRedirect(route('admin.media.index'));
+
+        $assets = MediaAsset::where('title', 'like', 'Homepage campaign — %')->get();
+        $this->assertCount(3, $assets);
+        foreach ($assets as $asset) {
+            Storage::disk('public')->assertExists($asset->path);
+            $this->assertSame($admin->id, $asset->uploaded_by);
+        }
+    }
+
 }
