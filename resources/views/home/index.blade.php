@@ -115,6 +115,10 @@
 @if (($homepageSettings['homepage_show_stats'] ?? '1') === '1')
 <section data-home-section="stats" class="bg-white py-8 sm:py-10">
     <div class="mx-auto max-w-7xl px-4">
+        <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <h2 class="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">{{ $homepageSettings['homepage_stats_title'] ?? 'See the stats!' }}</h2>
+            <a href="{{ route('courses.index') }}" class="text-sm font-bold text-orange-600 hover:text-orange-700">See All Courses →</a>
+        </div>
         <div class="grid grid-cols-2 gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-4 sm:gap-5 sm:p-7">
             @foreach ([
                 [$homepageSettings['homepage_stats_students_label'] ?? 'Students', $stats['students'], $homepageSettings['homepage_stats_students_icon'] ?? '♙'],
