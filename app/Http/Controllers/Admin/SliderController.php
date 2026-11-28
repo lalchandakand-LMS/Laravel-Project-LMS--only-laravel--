@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Slider;
+use App\Models\Slider;\nuse App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -131,7 +131,7 @@ class SliderController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('sliders', 'public');
+            $data['image'] = $request->file('image')->store('sliders', 'public');\n            if ($data['image']) {\n                MediaAsset::registerUpload('Slider banner: '.$data['title'], 'public', $data['image'], $request->file('image'), $request->user()->id);\n            }
             if (! $data['image']) {
                 throw ValidationException::withMessages(['image' => 'The slider image could not be stored. The previous image has been kept.']);
             }
