@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Post;
+use App\Models\Post;\nuse App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -35,7 +35,7 @@ class PostController extends Controller
         $data['tags'] = $this->tags($request->input('tags'));
         $storedThumbnail = null;
         if ($request->hasFile('thumbnail')) {
-            $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');
+            $storedThumbnail = $request->file('thumbnail')->store('posts', 'public');\n            if ($storedThumbnail) {\n                MediaAsset::registerUpload('Post thumbnail: '.$data['title'], 'public', $storedThumbnail, $request->file('thumbnail'), $request->user()->id);\n            }
             if (! $storedThumbnail) {
                 throw ValidationException::withMessages(['thumbnail' => 'The post thumbnail could not be stored.']);
             }
