@@ -121,6 +121,30 @@ class SiteCustomizationSettingsTest extends TestCase
     }
 
 
+    public function test_learning_highlights_render_as_independent_sections_immediately_after_the_slider(): void
+    {
+        $response = $this->get('/')->assertOk();
+
+        $response->assertSeeInOrder([
+            'data-home-section="hero"',
+            'data-home-section="online_batches"',
+            'data-home-section="stats"',
+            'data-home-section="categories"',
+        ], false);
+
+        $this->assertStringNotContainsString('data-home-section="online_batches"', $this->extractSectionMarkup($response->getContent(), 'hero'));
+    }
+
+    private function extractSectionMarkup(string $html, string $section): string
+    {
+        $start = strpos($html, 'data-home-section="'.$section.'"');
+        $this->assertNotFalse($start, "Missing homepage section: {$section}");
+
+        $end = strpos($html, 'data-home-section="', $start + 1);
+
+        return substr($html, $start, $end === false ? null : $end - $start);
+    }
+
     public function test_admin_can_control_reference_homepage_sections(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
