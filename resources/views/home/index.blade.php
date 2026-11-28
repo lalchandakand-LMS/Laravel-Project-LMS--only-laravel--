@@ -14,7 +14,6 @@
 
 {{-- EXISTING HERO SLIDER — preserved from main without changing its design or controls. --}}
 @php($slides = $sliders ?? collect())
-@if (($homepageSettings['homepage_show_hero'] ?? '1') === '1')
 <section data-home-section="hero" class="home-hero-shell overflow-hidden text-white">
     <div class="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:pt-12">
         @if ($slides->count())
@@ -87,7 +86,6 @@
 })();
 </script>
 @endpush
-@endif
 
 {{-- POST-SLIDER LEARNING HIGHLIGHTS: kept outside the hero so the homepage content begins directly under the slider. --}}
 @if (($homepageSettings['homepage_show_online_batches'] ?? '1') === '1')
