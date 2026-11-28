@@ -1,3 +1,4 @@
+<?php fwrite(STDERR, 'BLOG_BUF show_content_start='.ob_get_level()."\\n"); ?>
 <article class="mx-auto max-w-4xl px-4 py-10">
     <script type="application/ld+json">{!! json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <a href="{{ route('blog.index') }}" class="text-sm font-bold text-orange-700">← Blog & News</a>
@@ -33,3 +34,4 @@
         </section>
     @endif
 </article>
+<?php fwrite(STDERR, 'BLOG_BUF show_content_end='.ob_get_level()."\\n"); ?>
