@@ -132,12 +132,16 @@
             <input type="hidden" id="homepage-section-order-value" name="homepage_section_order" value="{{ old('homepage_section_order', $settings['homepage_section_order'] ?? '[&quot;hero&quot;,&quot;online_batches&quot;,&quot;stats&quot;,&quot;categories&quot;,&quot;featured&quot;,&quot;latest&quot;,&quot;live_classes&quot;,&quot;exams&quot;,&quot;teachers&quot;,&quot;board_results&quot;,&quot;reviews&quot;,&quot;ebooks&quot;,&quot;admission&quot;]') }}">
             <ol id="homepage-section-order-list" class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach (['hero' => 'Hero slider / banner', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
-                    <li draggable="true" data-section-key="{{ $key }}" class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 text-sm">
-                        <span class="flex min-w-0 items-center gap-2"><span aria-hidden="true" class="cursor-grab text-slate-400">⠿</span><span>{{ $label }}</span></span>
-                        <span class="flex shrink-0 gap-1">
-                            <button type="button" data-move="up" aria-label="Move {{ $label }} up" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↑</button>
-                            <button type="button" data-move="down" aria-label="Move {{ $label }} down" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↓</button>
-                        </span>
+                    <li draggable="{{ $key === 'hero' ? 'false' : 'true' }}" data-section-key="{{ $key }}" data-fixed-section="{{ $key === 'hero' ? 'true' : 'false' }}" class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 text-sm">
+                        <span class="flex min-w-0 items-center gap-2"><span aria-hidden="true" class="{{ $key === 'hero' ? 'text-slate-400' : 'cursor-grab text-slate-400' }}">{{ $key === 'hero' ? '🔒' : '⠿' }}</span><span>{{ $key === 'hero' ? 'Your existing slider (fixed)' : $label }}</span></span>
+                        @if ($key !== 'hero')
+                            <span class="flex shrink-0 gap-1">
+                                <button type="button" data-move="up" aria-label="Move {{ $label }} up" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↑</button>
+                                <button type="button" data-move="down" aria-label="Move {{ $label }} down" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↓</button>
+                            </span>
+                        @else
+                            <span class="shrink-0 text-xs font-semibold text-slate-500">Unchanged</span>
+                        @endif
                     </li>
                 @endforeach
             </ol>
@@ -364,6 +368,8 @@
     const items = new Map([...list.children].map(item => [item.dataset.sectionKey, item]));
     let saved = [];
     try { saved = JSON.parse(field.value || '[]'); } catch (_) { saved = []; }
+    const fixedHero = items.get('hero');
+    if (fixedHero) { list.prepend(fixedHero); items.delete('hero'); }
     [...saved, ...items.keys()].forEach(key => {
         const item = items.get(key);
         if (item) { list.appendChild(item); items.delete(key); }
@@ -372,6 +378,7 @@
         const button = event.target.closest('button[data-move]');
         if (!button) return;
         const item = button.closest('[data-section-key]');
+        if (!item || item.dataset.fixedSection === 'true') return;
         if (button.dataset.move === 'up' && item.previousElementSibling) {
             list.insertBefore(item, item.previousElementSibling);
         } else if (button.dataset.move === 'down' && item.nextElementSibling) {
@@ -382,13 +389,14 @@
     let dragged = null;
     list.addEventListener('dragstart', event => {
         dragged = event.target.closest('[data-section-key]');
+        if (dragged?.dataset.fixedSection === 'true') dragged = null;
         if (dragged) event.dataTransfer.effectAllowed = 'move';
     });
     list.addEventListener('dragover', event => {
         if (!dragged) return;
         event.preventDefault();
         const target = event.target.closest('[data-section-key]');
-        if (!target || target === dragged) return;
+        if (!target || target === dragged || target.dataset.fixedSection === 'true') return;
         const bounds = target.getBoundingClientRect();
         list.insertBefore(dragged, event.clientY < bounds.top + bounds.height / 2 ? target : target.nextSibling);
     });
