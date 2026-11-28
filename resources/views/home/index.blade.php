@@ -2,7 +2,7 @@
 @section('title', 'English Courses, Spoken English & Grammar')
 @section('meta_description', 'Learn spoken English, grammar, vocabulary, writing and communication skills with guided courses at Alom\'s English Center.')
 @section('content')
-<div id="homepage-sections">
+<div id="homepage-sections" data-home-theme="{{ $homepageSettings['homepage_theme_mode'] ?? 'dark' }}" data-home-animation="{{ $homepageSettings['homepage_animation_style'] ?? 'rise' }}" data-home-animation-speed="{{ (int) ($homepageSettings['homepage_animation_speed'] ?? 650) }}">
 
 {{-- HERO + TOP FEATURE CARDS --}}
 @php($slides = $sliders ?? collect())
@@ -319,6 +319,37 @@
 
 
 </div>
+
+@push('scripts')
+<style>
+#homepage-sections[data-home-theme="dark"]{background:#08111f;color:#e5edf8}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){background-color:#0f1b2d;color:#e5edf8}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(h1,h2,h3,h4,.text-slate-900,.text-slate-800,.text-gray-900,.text-gray-800){color:#f8fafc}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(.bg-white,.bg-slate-50,.bg-gray-50){background-color:#142238}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(.border-slate-200,.border-gray-200){border-color:#2b3b52}
+#homepage-sections[data-home-animation]:not([data-home-animation="none"]) [data-home-reveal]{opacity:0;transition:opacity var(--aec-reveal-duration,650ms) ease,transform var(--aec-reveal-duration,650ms) cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+#homepage-sections[data-home-animation="rise"] [data-home-reveal]{transform:translateY(28px)}
+#homepage-sections[data-home-animation="slide"] [data-home-reveal]{transform:translateX(32px)}
+#homepage-sections[data-home-animation="zoom"] [data-home-reveal]{transform:scale(.96)}
+#homepage-sections[data-home-animation="fade"] [data-home-reveal]{transform:none}
+#homepage-sections [data-home-reveal].is-visible{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){#homepage-sections [data-home-reveal]{opacity:1!important;transform:none!important;transition:none!important}}
+</style>
+<script>
+(() => {
+ const root=document.getElementById('homepage-sections');if(!root)return;
+ const style=root.dataset.homeAnimation||'rise';
+ const duration=Math.min(1200,Math.max(200,Number(root.dataset.homeAnimationSpeed)||650));
+ root.style.setProperty('--aec-reveal-duration',duration+'ms');
+ const sections=[...root.querySelectorAll(':scope > [data-home-section]:not([data-home-section="hero"])')];
+ if(style==='none'||!('IntersectionObserver' in window)||window.matchMedia('(prefers-reduced-motion: reduce)').matches){sections.forEach(s=>s.classList.add('is-visible'));return;}
+ sections.forEach(s=>s.setAttribute('data-home-reveal',''));
+ const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -35px 0px'});
+ sections.forEach(s=>observer.observe(s));
+})();
+</script>
+@endpush
+
 @push('scripts')
 <script>
 (() => {
