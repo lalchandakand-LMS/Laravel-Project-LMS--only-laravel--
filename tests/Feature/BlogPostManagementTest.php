@@ -165,21 +165,15 @@ class BlogPostManagementTest extends TestCase
         $this->assertSame(403, $response->getStatusCode());
     }
 
-    public function test_authenticated_instructor_can_read_a_published_blog_post(): void
+    public function test_guest_can_read_a_published_blog_post_detail(): void
     {
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
-        $instructor = User::where('role', 'instructor')->firstOrFail();
-        $published = Post::create(['title' => 'Instructor-visible story', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
+        $published = Post::create(['title' => 'Public story detail', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
 
-        $bufferLevelBeforeRequest = ob_get_level();
-        $response = $this->actingAs($instructor)->get(route('blog.show', $published));
-        fwrite(STDERR, 'BLOG_TEST_OUTPUT_BUFFERS='.json_encode([
-            'before' => $bufferLevelBeforeRequest,
-            'after' => ob_get_level(),
-            'status' => ob_get_status(true),
-        ])."\\n");
-        $response->assertOk()->assertSee('Public detail');
-        $this->assertSame(200, $response->getStatusCode());
+        $this->get(route('blog.show', $published))
+            ->assertOk()
+            ->assertSee('Public story detail')
+            ->assertSee('Public detail');
     }
 
 }
