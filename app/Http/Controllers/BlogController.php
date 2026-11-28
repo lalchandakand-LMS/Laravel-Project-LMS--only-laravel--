@@ -25,7 +25,9 @@ class BlogController extends Controller
     public function show(Post $post)
     {
         abort_unless($post->is_published && $post->published_at && $post->published_at->lte(now()), 404);
+        fwrite(STDERR, 'BLOG_BUF blog_before_increment='.ob_get_level()."\\n");
         $post->increment('views_count');
+        fwrite(STDERR, 'BLOG_BUF blog_after_increment='.ob_get_level()."\\n");
 
         $post->load(['category', 'author']);
 
@@ -46,6 +48,7 @@ class BlogController extends Controller
             ->when($post->category_id, fn ($q) => $q->where('category_id', $post->category_id))
             ->latest('published_at')->take(3)->get();
 
+fwrite(STDERR, 'BLOG_BUF blog_before_return_view='.ob_get_level()."\\n");
         return view('blog.show', compact('post', 'related', 'articleSchema'));
     }
 }
