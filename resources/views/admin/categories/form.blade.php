@@ -19,7 +19,7 @@
                 <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">
                 <label class="mt-2 block text-xs font-semibold text-slate-600">Or use an image URL</label>
                 <input type="url" name="image_url" value="{{ old('image_url', str_starts_with((string) $category->image, 'http') ? $category->image : '') }}" placeholder="https://example.com/category.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library →</a>
+                <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'image_url']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
                 @if($category->image)<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_image" value="1"> Remove current image</label>@endif
             </div>
             <div><label class="mb-1 block text-sm font-semibold">Display order</label><input type="number" min="0" name="position" value="{{ old('position', $category->position ?? 0) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"></div>
@@ -29,4 +29,28 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 class="font-bold text-slate-900">SEO settings</h2><div class="mt-4 grid gap-4 md:grid-cols-2"><div><label class="mb-1 block text-sm font-semibold">SEO title</label><input name="meta_title" maxlength="180" value="{{ old('meta_title', $category->meta_title) }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"></div><div><label class="mb-1 block text-sm font-semibold">Meta description</label><textarea name="meta_description" maxlength="300" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2.5">{{ old('meta_description', $category->meta_description) }}</textarea></div></div></section>
     <div class="flex gap-3"><button class="rounded-lg bg-orange-600 px-6 py-2.5 font-bold text-white">Save category</button><a href="{{ route('admin.categories.index') }}" class="rounded-lg border border-slate-300 px-6 py-2.5 font-semibold">Cancel</a></div>
 </form>
+@push('scripts')
+<script>
+(() => {
+    let pickerWindow = null;
+    document.querySelectorAll('[data-open-media-picker]').forEach(button => button.addEventListener('click', () => {
+        pickerWindow = window.open(button.dataset.pickerUrl, 'lmsMediaPicker', 'width=1200,height=850,resizable=yes,scrollbars=yes');
+        if (pickerWindow) pickerWindow.focus();
+    }));
+    window.addEventListener('message', event => {
+        if (event.origin !== window.location.origin || event.source !== pickerWindow) return;
+        if (!event.data || event.data.type !== 'lms-media-selected' || typeof event.data.url !== 'string') return;
+        const allowed = ['thumbnail_url', 'image_url', 'cover_url'];
+        if (!allowed.includes(event.data.target)) return;
+        const field = document.querySelector('[name="' + event.data.target + '"]');
+        if (!field) return;
+        field.value = event.data.url;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+        pickerWindow = null;
+    });
+})();
+</script>
+@endpush
+
 @endsection
