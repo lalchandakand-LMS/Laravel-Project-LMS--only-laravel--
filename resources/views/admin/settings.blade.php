@@ -194,6 +194,15 @@
         <h3 class="font-bold text-slate-900">Homepage, footer & developer design</h3>
         <p class="mt-1 text-sm text-slate-500">Customize section titles, backgrounds and text colors. Leave content fields blank to use the built-in defaults.</p>
         <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+            <h4 class="font-bold text-slate-900">Homepage visual experience</h4>
+            <p class="mt-1 text-xs text-slate-600">Choose the public homepage appearance and scroll animation. The existing hero slider is excluded from these effects and remains independently managed.</p>
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Homepage background theme</label><select name="homepage_theme_mode" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="dark" @selected(($settings['homepage_theme_mode'] ?? 'dark') === 'dark')>Premium dark</option><option value="light" @selected(($settings['homepage_theme_mode'] ?? 'dark') === 'light')>Light</option></select></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Scroll animation</label><select name="homepage_animation_style" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm">@foreach (['rise'=>'Reveal upward','fade'=>'Fade in','slide'=>'Slide in','zoom'=>'Soft zoom','none'=>'No animation'] as $value=>$label)<option value="{{ $value }}" @selected(($settings['homepage_animation_style'] ?? 'rise') === $value)>{{ $label }}</option>@endforeach</select></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Animation speed (ms)</label><input type="number" min="200" max="1200" step="50" name="homepage_animation_speed" value="{{ old('homepage_animation_speed', $settings['homepage_animation_speed'] ?? '650') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            </div>
+        </div>
+        <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
             <h4 class="font-bold text-slate-900">Homepage section layout</h4>
             <p class="mt-1 text-sm text-slate-600">Choose a responsive carousel or a traditional grid for each content section. The hero slider remains managed separately in Slider Settings.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
