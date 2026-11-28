@@ -167,16 +167,31 @@ class BlogPostManagementTest extends TestCase
 
     public function test_guest_can_read_a_published_blog_post_detail(): void
     {
+        $logBuffers = static function (string $phase): void {
+            fwrite(STDERR, 'BLOG_BUFFER_DIAGNOSTIC '.json_encode([
+                'phase' => $phase,
+                'level' => ob_get_level(),
+                'buffers' => array_map(static fn (array $buffer): array => [
+                    'name' => $buffer['name'] ?? null,
+                    'type' => $buffer['type'] ?? null,
+                    'flags' => $buffer['flags'] ?? null,
+                ], ob_get_status(true)),
+            ]).PHP_EOL);
+        };
+
+        $logBuffers('test-start');
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $published = Post::create(['title' => 'Public story detail', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
+        $logBuffers('before-blog-show');
 
         $this->get(route('blog.show', $published))
             ->assertOk()
             ->assertSee('Public story detail')
             ->assertSee('Public detail');
+        $logBuffers('after-blog-show');
 
-        // Exercise the normal next-page navigation after rendering the detail view.
         $this->get(route('blog.index'))->assertOk()->assertSee('Public story detail');
+        $logBuffers('after-blog-index');
     }
 
 }
