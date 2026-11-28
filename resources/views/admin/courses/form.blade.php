@@ -218,7 +218,7 @@
                     <label class="mt-2 block text-xs font-semibold text-slate-600">Or paste a thumbnail URL</label>
                     <input type="url" name="thumbnail_url" value="{{ old('thumbnail_url', str_starts_with((string) $course->thumbnail, 'http') ? $course->thumbnail : '') }}" placeholder="https://example.com/course-thumbnail.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                     @if(auth()->user()->isAdmin())
-                        <a href="{{ route('admin.media.index') }}" class="mt-1 inline-block text-xs font-semibold text-emerald-700">Open Media Library to copy an image URL →</a>
+                        <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'thumbnail_url']) }}" class="mt-1 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
                     @endif
                 </div>
                 <div>
@@ -272,4 +272,28 @@
 })();
 </script>
 @endif
+@push('scripts')
+<script>
+(() => {
+    let pickerWindow = null;
+    document.querySelectorAll('[data-open-media-picker]').forEach(button => button.addEventListener('click', () => {
+        pickerWindow = window.open(button.dataset.pickerUrl, 'lmsMediaPicker', 'width=1200,height=850,resizable=yes,scrollbars=yes');
+        if (pickerWindow) pickerWindow.focus();
+    }));
+    window.addEventListener('message', event => {
+        if (event.origin !== window.location.origin || event.source !== pickerWindow) return;
+        if (!event.data || event.data.type !== 'lms-media-selected' || typeof event.data.url !== 'string') return;
+        const allowed = ['thumbnail_url', 'image_url', 'cover_url'];
+        if (!allowed.includes(event.data.target)) return;
+        const field = document.querySelector('[name="' + event.data.target + '"]');
+        if (!field) return;
+        field.value = event.data.url;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+        pickerWindow = null;
+    });
+})();
+</script>
+@endpush
+
 @endsection
