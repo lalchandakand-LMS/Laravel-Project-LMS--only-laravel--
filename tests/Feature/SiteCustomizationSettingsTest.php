@@ -222,6 +222,14 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('linear-gradient(125deg,#062c30 0%,#041c24 100%)', false);
     }
 
+    public function test_dark_homepage_theme_overrides_inline_section_backgrounds_and_keeps_body_text_readable(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){background-color:#0f1b2d!important;color:#e5edf8}', false)
+            ->assertSee(':is(p,.text-slate-600,.text-slate-500,.text-gray-600,.text-gray-500){color:#cbd5e1}', false);
+    }
+
     public function test_public_brand_palette_is_rendered_on_the_website(): void
     {
         Setting::set('site_primary_color', '#ea580c');
