@@ -230,6 +230,28 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee(':is(p,.text-slate-600,.text-slate-500,.text-gray-600,.text-gray-500){color:#cbd5e1}', false);
     }
 
+    public function test_homepage_section_color_controls_and_reviews_carousel_are_rendered(): void
+    {
+        Setting::set('homepage_theme_mode', 'light');
+        Setting::set('homepage_learning_bg', '#fef3c7');
+        Setting::set('homepage_learning_text', '#78350f');
+        Setting::set('homepage_stats_bg', '#064e3b');
+        Setting::set('homepage_stats_text', '#ffffff');
+        Setting::set('homepage_testimonial_bg', '#1e1b4b');
+        Setting::set('homepage_testimonial_text', '#f8fafc');
+        Setting::set('homepage_online_batches_subtitle', 'Choose your next class');
+        Setting::set('homepage_reviews_layout', 'carousel');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee("background:#fef3c7;--home-section-text:#78350f", false)
+            ->assertSee("background:#064e3b;--home-section-text:#ffffff", false)
+            ->assertSee("background:#1e1b4b;--home-section-text:#f8fafc", false)
+            ->assertSee('Choose your next class')
+            ->assertSee('data-home-carousel="reviews"', false)
+            ->assertSee('data-home-carousel-layout="carousel"', false);
+    }
+
     public function test_public_brand_palette_is_rendered_on_the_website(): void
     {
         Setting::set('site_primary_color', '#ea580c');
