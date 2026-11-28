@@ -180,11 +180,10 @@ class BlogPostManagementTest extends TestCase
         $afterIndex = ob_get_level();
         $indexResponse->assertOk()->assertSee('Public story detail');
 
-        fwrite(STDERR, 'BLOG_BUFFER_LEVELS='.json_encode([
-            'before_show' => $beforeShow,
-            'after_show' => $afterShow,
-            'before_index' => $beforeIndex,
-            'after_index' => $afterIndex,
+        fwrite(STDERR, 'BLOG_BUFFER_DIAGNOSTIC='.json_encode([
+            'before_show' => ob_get_status(true),
+            'after_show' => ob_get_status(true),
+            'levels' => [$beforeShow, $afterShow, $beforeIndex, $afterIndex],
         ])."\\n");
     }
 
