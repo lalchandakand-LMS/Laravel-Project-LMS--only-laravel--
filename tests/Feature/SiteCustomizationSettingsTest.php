@@ -469,7 +469,9 @@ class SiteCustomizationSettingsTest extends TestCase
                 'data-section-key="stats"',
                 'data-section-key="categories"',
                 'data-section-key="featured"',
-            ], false);
+            ], false)
+            ->assertSee('draggable="false" data-section-key="hero" data-fixed-section="true"', false)
+            ->assertSee('Your existing slider (fixed)', false);
     }
 
 }
