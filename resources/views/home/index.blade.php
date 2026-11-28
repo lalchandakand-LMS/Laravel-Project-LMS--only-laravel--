@@ -554,6 +554,7 @@
 #homepage-sections [data-home-section]:not([data-home-section="hero"]){color:var(--home-section-text)}
 #homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]){color:var(--home-section-text,#e5edf8)}
 #homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(.border-slate-200,.border-gray-200){border-color:#2b3b52}
+#homepage-sections[data-home-theme="dark"] [data-home-section]:not([data-home-section="hero"]) :is(.bg-white,.bg-slate-50,.bg-gray-50){background-color:#142238}
 .aec-reference-home .home-category-card{isolation:isolate;box-shadow:0 14px 34px rgba(15,23,42,.08)}
 .aec-reference-home .home-category-card:before{position:absolute;z-index:-1;right:-1.8rem;bottom:-3.5rem;width:9rem;height:9rem;border-radius:9999px;background:rgba(255,255,255,.42);content:"";transition:transform .25s ease}
 .aec-reference-home .home-category-card:hover:before{transform:scale(1.16)}
