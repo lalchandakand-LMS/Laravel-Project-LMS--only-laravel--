@@ -39,6 +39,13 @@ use Illuminate\Support\Facades\Route;
  |  PUBLIC
  |------------------------------------------------------------------*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/language/{locale}', function (\Illuminate\Http\Request $request, string $locale) {
+    abort_unless(in_array($locale, ['en', 'bn'], true), 404);
+    $request->session()->put('locale', $locale);
+    $previous = (string) $request->headers->get('referer', '');
+    $previousHost = parse_url($previous, PHP_URL_HOST);
+    return redirect()->to($previousHost === $request->getHost() ? $previous : route('home'));
+})->whereIn('locale', ['en', 'bn'])->name('language.switch');
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [Admin\SeoController::class, 'robots'])->name('robots');
 Route::get('/about', [PageController::class, 'about'])->name('about');

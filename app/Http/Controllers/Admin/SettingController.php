@@ -10,9 +10,10 @@ use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
-    private const HOMEPAGE_SECTION_KEYS = ['hero', 'online_batches', 'stats', 'categories', 'featured', 'latest', 'live_classes', 'exams', 'teachers', 'board_results', 'reviews', 'ebooks', 'admission'];
+    private const HOMEPAGE_SECTION_KEYS = ['hero', 'online_batches', 'stats', 'categories', 'learning_modes', 'branches', 'featured', 'latest', 'live_classes', 'exams', 'learning_benefits', 'learning_preview', 'teachers', 'board_results', 'reviews', 'ebooks', 'learning_hub', 'admission'];
     public const KEYS = [
         'site_name', 'site_tagline', 'admin_logo', 'admin_theme_preset', 'admin_card_radius', 'admin_brand_title', 'admin_brand_subtitle', 'admin_sidebar_promo_title', 'admin_sidebar_promo_body', 'admin_sidebar_promo_button', 'admin_sidebar_promo_url', 'site_email', 'site_phone', 'site_address', 'company_license', 'site_primary_color', 'site_secondary_color',
+        'public_promo_enabled', 'public_promo_text', 'public_promo_button', 'public_promo_url',
         'facebook', 'youtube', 'instagram', 'bkash_number', 'nagad_number',
         'currency', 'certificate_signature', 'about_text',
         'dashboard_banner_title', 'dashboard_banner_subtitle',
@@ -24,10 +25,10 @@ class SettingController extends Controller
         'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
         'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
         'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-        'homepage_theme_mode', 'homepage_animation_style', 'homepage_animation_speed', 'homepage_section_order', 'admin_sidebar_promo_enabled', 'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_learning_layout', 'homepage_featured_layout', 'homepage_latest_layout', 'homepage_live_classes_layout', 'homepage_exams_layout', 'homepage_teachers_layout', 'homepage_reviews_layout', 'homepage_ebooks_layout', 'homepage_carousel_autoplay', 'homepage_carousel_speed',
+        'homepage_theme_mode', 'homepage_animation_style', 'homepage_animation_speed', 'homepage_section_order', 'public_page_visual_label', 'public_page_visual_title', 'public_page_motion', 'homepage_hero_title', 'homepage_hero_subtitle', 'homepage_hero_button_text', 'homepage_hero_button_url', 'admin_sidebar_promo_enabled', 'homepage_show_hero', 'homepage_show_categories', 'homepage_show_learning_modes', 'homepage_show_learning_benefits', 'homepage_show_learning_hub', 'homepage_show_learning_preview', 'homepage_show_branches', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_learning_layout', 'homepage_featured_layout', 'homepage_latest_layout', 'homepage_live_classes_layout', 'homepage_exams_layout', 'homepage_teachers_layout', 'homepage_reviews_layout', 'homepage_ebooks_layout', 'homepage_carousel_autoplay', 'homepage_carousel_speed',
         'homepage_board_results_title', 'homepage_board_results_subtitle', 'homepage_board_results_body', 'homepage_board_results_year',
         'homepage_admission_title', 'homepage_admission_subtitle', 'homepage_admission_button_text', 'homepage_admission_button_url',
-        'homepage_learning_title', 'homepage_learning_subtitle', 'homepage_testimonial_title', 'homepage_featured_title', 'homepage_featured_subtitle', 'homepage_online_batches_title', 'homepage_online_batches_subtitle', 'homepage_online_batches_badge', 'homepage_stats_title', 'homepage_stats_students_label', 'homepage_stats_students_icon', 'homepage_stats_courses_label', 'homepage_stats_courses_icon', 'homepage_stats_teachers_label', 'homepage_stats_teachers_icon', 'homepage_stats_lessons_label', 'homepage_stats_lessons_icon', 'homepage_latest_title', 'homepage_latest_subtitle', 'homepage_live_classes_title', 'homepage_live_classes_subtitle', 'homepage_exams_title', 'homepage_exams_subtitle', 'homepage_teachers_title', 'homepage_teachers_subtitle', 'instructors_title', 'instructors_subtitle', 'homepage_reviews_subtitle', 'homepage_ebooks_title', 'homepage_ebooks_subtitle',
+        'homepage_learning_title', 'homepage_learning_subtitle', 'homepage_learning_modes_title', 'homepage_learning_modes_subtitle', 'homepage_learning_benefits_title', 'homepage_learning_benefits_subtitle', 'homepage_branches_title', 'homepage_branches_subtitle', 'homepage_learning_preview_title', 'homepage_learning_preview_subtitle', 'homepage_testimonial_title', 'homepage_featured_title', 'homepage_featured_subtitle', 'homepage_online_batches_title', 'homepage_online_batches_subtitle', 'homepage_online_batches_badge', 'homepage_stats_title', 'homepage_stats_students_label', 'homepage_stats_students_icon', 'homepage_stats_courses_label', 'homepage_stats_courses_icon', 'homepage_stats_teachers_label', 'homepage_stats_teachers_icon', 'homepage_stats_lessons_label', 'homepage_stats_lessons_icon', 'homepage_latest_title', 'homepage_latest_subtitle', 'homepage_live_classes_title', 'homepage_live_classes_subtitle', 'homepage_exams_title', 'homepage_exams_subtitle', 'homepage_teachers_title', 'homepage_teachers_subtitle', 'instructors_title', 'instructors_subtitle', 'homepage_reviews_subtitle', 'homepage_ebooks_title', 'homepage_ebooks_subtitle',
         'homepage_learning_bg', 'homepage_learning_text', 'homepage_testimonial_bg', 'homepage_testimonial_text',
         'homepage_stats_bg', 'homepage_stats_text', 'homepage_online_batches_bg', 'homepage_online_batches_text',
         'homepage_featured_bg', 'homepage_featured_text', 'homepage_latest_bg', 'homepage_latest_text',
@@ -72,6 +73,27 @@ class SettingController extends Controller
         };
     }
 
+    private function postMaxBytes(): ?int
+    {
+        $limit = trim((string) ini_get('post_max_size'));
+        if ($limit === '' || $limit === '0') {
+            return null;
+        }
+
+        if (! preg_match('/^(\d+(?:\.\d+)?)\s*([KMG]?)$/i', $limit, $matches)) {
+            return null;
+        }
+
+        $multiplier = match (strtoupper($matches[2] ?? '')) {
+            'G' => 1024 ** 3,
+            'M' => 1024 ** 2,
+            'K' => 1024,
+            default => 1,
+        };
+
+        return (int) ((float) $matches[1] * $multiplier);
+    }
+
     public function index()
     {
         return view('admin.settings', ['settings' => Setting::all_()]);
@@ -79,6 +101,14 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        $postMaxBytes = $this->postMaxBytes();
+        $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+        if ($postMaxBytes !== null && $contentLength > $postMaxBytes) {
+            throw ValidationException::withMessages([
+                'dashboard_banner' => 'The banner upload exceeded the server request limit. Please use an image up to 10 MB.',
+            ]);
+        }
+
         $request->validate([
             'site_name' => ['sometimes', 'required', 'string', 'max:120'],
             'admin_theme_preset' => ['sometimes', 'required', 'in:navy,orange,teal,purple'],
@@ -94,13 +124,17 @@ class SettingController extends Controller
             'company_license' => ['sometimes', 'nullable', 'string', 'max:120'],
             'site_primary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'site_secondary_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'public_promo_enabled' => ['sometimes', 'boolean'],
+            'public_promo_text' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'public_promo_button' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'public_promo_url' => ['sometimes', 'nullable', 'string', 'max:2048', $this->safeNavigationTarget()],
             'facebook' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'youtube' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'instagram' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'admin_logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'logo_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
-            'dashboard_banner' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'dashboard_banner' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'dashboard_banner_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
             'dashboard_banner_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'dashboard_banner_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
@@ -112,6 +146,13 @@ class SettingController extends Controller
             'homepage_theme_mode' => ['sometimes', 'required', 'in:light,dark'],
             'homepage_animation_style' => ['sometimes', 'required', 'in:none,fade,rise,slide,zoom'],
             'homepage_animation_speed' => ['sometimes', 'required', 'integer', 'min:200', 'max:1200'],
+            'public_page_visual_label' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'public_page_visual_title' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'public_page_motion' => ['sometimes', 'required', 'in:soft,none'],
+            'homepage_hero_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_hero_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'homepage_hero_button_text' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'homepage_hero_button_url' => ['sometimes', 'nullable', 'string', 'max:2048', $this->safeNavigationTarget()],
             'homepage_learning_layout' => ['sometimes', 'required', 'in:grid,carousel'],
             'homepage_featured_layout' => ['sometimes', 'required', 'in:grid,carousel'],
             'homepage_latest_layout' => ['sometimes', 'required', 'in:grid,carousel'],
@@ -146,6 +187,14 @@ class SettingController extends Controller
             'homepage_admission_button_url' => ['sometimes', 'nullable', 'string', 'max:2048', $this->safeNavigationTarget()],
             'homepage_learning_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'homepage_learning_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'homepage_learning_modes_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_learning_modes_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'homepage_learning_benefits_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_learning_benefits_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'homepage_branches_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_branches_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'homepage_learning_preview_title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'homepage_learning_preview_subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
             'homepage_testimonial_title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'homepage_featured_title' => ['sometimes', 'nullable', 'string', 'max:120'],
             'homepage_featured_subtitle' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -153,13 +202,13 @@ class SettingController extends Controller
             'homepage_online_batches_badge' => ['sometimes', 'nullable', 'string', 'max:40'],
             'homepage_stats_title' => ['sometimes', 'nullable', 'string', 'max:120'],
             'homepage_stats_students_label' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'homepage_stats_students_icon' => ['sometimes', 'nullable', 'string', 'max:8'],
+            'homepage_stats_students_icon' => ['sometimes', 'nullable', 'string', 'max:20'],
             'homepage_stats_courses_label' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'homepage_stats_courses_icon' => ['sometimes', 'nullable', 'string', 'max:8'],
+            'homepage_stats_courses_icon' => ['sometimes', 'nullable', 'string', 'max:20'],
             'homepage_stats_teachers_label' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'homepage_stats_teachers_icon' => ['sometimes', 'nullable', 'string', 'max:8'],
+            'homepage_stats_teachers_icon' => ['sometimes', 'nullable', 'string', 'max:20'],
             'homepage_stats_lessons_label' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'homepage_stats_lessons_icon' => ['sometimes', 'nullable', 'string', 'max:8'],
+            'homepage_stats_lessons_icon' => ['sometimes', 'nullable', 'string', 'max:20'],
             'homepage_online_batches_subtitle' => ['sometimes', 'nullable', 'string', 'max:255'],
             'homepage_latest_title' => ['sometimes', 'nullable', 'string', 'max:120'],
             'homepage_latest_subtitle' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -215,6 +264,11 @@ class SettingController extends Controller
             'brand_loader_bg' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'brand_loader_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'brand_loader_text_color' => ['sometimes', 'required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ], [
+            'dashboard_banner.uploaded' => 'The dashboard banner upload failed. Choose a PNG, JPG or WebP image up to 10 MB and try again.',
+            'dashboard_banner.image' => 'Choose a valid image file for the dashboard banner.',
+            'dashboard_banner.mimes' => 'The dashboard banner must be a PNG, JPG or WebP image.',
+            'dashboard_banner.max' => 'The dashboard banner must be 10 MB or smaller.',
         ]);
 
         foreach (self::KEYS as $key) {
@@ -228,7 +282,7 @@ class SettingController extends Controller
             'dashboard_widget_teacher_stats', 'dashboard_widget_teacher_trend', 'dashboard_widget_teacher_upcoming', 'dashboard_widget_teacher_courses', 'dashboard_widget_teacher_students',
             'dashboard_widget_branch_stats', 'dashboard_widget_branch_collection', 'dashboard_widget_branch_courses', 'dashboard_widget_branch_students', 'dashboard_widget_branch_orders',
             'dashboard_widget_guardian_children', 'dashboard_widget_guardian_orders',
-            'homepage_show_hero', 'homepage_show_categories', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'homepage_carousel_autoplay', 'developer_show', 'brand_loader_enabled'] as $key) {
+            'homepage_show_hero', 'homepage_show_categories', 'homepage_show_learning_modes', 'homepage_show_learning_benefits', 'homepage_show_learning_hub', 'homepage_show_learning_preview', 'homepage_show_branches', 'homepage_show_featured', 'homepage_show_online_batches', 'homepage_show_stats', 'homepage_show_latest', 'homepage_show_reviews', 'homepage_show_ebooks', 'homepage_show_live_classes', 'homepage_show_exams', 'homepage_show_teachers', 'homepage_show_board_results', 'homepage_show_admission', 'public_promo_enabled', 'homepage_carousel_autoplay', 'developer_show', 'brand_loader_enabled'] as $key) {
             Setting::set($key, $request->boolean($key) ? '1' : '0');
         }
 

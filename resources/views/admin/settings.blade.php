@@ -14,6 +14,27 @@
             'Payments' => [['bkash_number', 'bKash number'], ['nagad_number', 'Nagad number']],
             'Social' => [['facebook', 'Facebook URL'], ['youtube', 'YouTube URL'], ['instagram', 'Instagram URL']],
         ];
+        $homepageSectionLabels = [
+            'hero' => 'Hero programme banner',
+            'online_batches' => 'Online batches',
+            'stats' => 'Trust statistics',
+            'categories' => 'Learning paths / categories',
+            'learning_modes' => 'Online & classroom learning',
+            'branches' => 'Offline branches / centres',
+            'featured' => 'Featured courses',
+            'latest' => 'Latest courses',
+            'live_classes' => 'Upcoming live classes',
+            'exams' => 'Upcoming exams',
+            'learning_benefits' => 'Learning benefits',
+            'learning_preview' => 'App / learning preview',
+            'teachers' => 'Teacher profiles',
+            'board_results' => 'Board results / achievements',
+            'reviews' => 'Student reviews',
+            'ebooks' => 'E-books & notes',
+            'learning_hub' => 'Student learning hub',
+            'admission' => 'Online & classroom admission CTA',
+        ];
+        $homepageSectionOrder = \App\Support\HomepageSectionOrder::normalize(old('homepage_section_order', $settings['homepage_section_order'] ?? null));
     @endphp
     @foreach ($fields as $group => $items)
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -53,8 +74,16 @@
             <h4 class="font-bold text-slate-900">Public website brand colors</h4>
             <p class="mt-1 text-xs text-slate-600">These colors control public navigation, buttons, links, badges and accent highlights. Homepage section backgrounds can still be customized separately below.</p>
             <div class="mt-3 grid gap-4 sm:grid-cols-2">
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#06b6d4') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
-                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#0d9488') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Primary brand color</label><input type="color" name="site_primary_color" value="{{ old('site_primary_color', $settings['site_primary_color'] ?? '#1cab55') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Secondary / hover color</label><input type="color" name="site_secondary_color" value="{{ old('site_secondary_color', $settings['site_secondary_color'] ?? '#15803d') }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
+            </div>
+        </div>
+        <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-wrap items-start justify-between gap-3"><div><h4 class="font-bold text-slate-900">Public top announcement bar</h4><p class="mt-1 text-xs text-slate-600">Show a short, dismissible notice above the public header. Use an internal path or an HTTPS link.</p></div><label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" name="public_promo_enabled" value="1" @checked(($settings['public_promo_enabled'] ?? '0') === '1')> Show announcement</label></div>
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                <div class="sm:col-span-2"><label class="mb-1 block text-sm font-semibold text-slate-700">Announcement text</label><input name="public_promo_text" value="{{ old('public_promo_text', $settings['public_promo_text'] ?? '') }}" maxlength="180" placeholder="New online batches are open for admission" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Button text (optional)</label><input name="public_promo_button" value="{{ old('public_promo_button', $settings['public_promo_button'] ?? '') }}" maxlength="60" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+                <div class="sm:col-span-3"><label class="mb-1 block text-sm font-semibold text-slate-700">Button link (optional)</label><input name="public_promo_url" value="{{ old('public_promo_url', $settings['public_promo_url'] ?? '') }}" maxlength="2048" placeholder="/coaching-admission" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
             </div>
         </div>
     </section>
@@ -69,12 +98,13 @@
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Button URL (optional)</label><input name="dashboard_banner_button_url" value="{{ old('dashboard_banner_button_url', $settings['dashboard_banner_button_url'] ?? '') }}" placeholder="https://... or /admin/courses" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
             <div class="sm:col-span-2"><label class="mb-2 block text-sm font-semibold text-slate-700">Banner image</label>
                 @if (!empty($settings['dashboard_banner']))<img src="{{ media_url($settings['dashboard_banner']) }}" alt="Current dashboard banner" class="mb-3 h-36 w-full rounded-xl object-cover">@endif
-                <input type="file" name="dashboard_banner" accept="image/png,image/jpeg,image/webp" class="w-full text-xs">
+                <input type="file" id="dashboard-banner-upload" name="dashboard_banner" accept="image/png,image/jpeg,image/webp" aria-describedby="dashboard-banner-upload-help" class="w-full min-w-0 text-xs">
                 <label class="mt-2 block text-xs font-semibold text-slate-600">Or use an image URL</label>
                 <input type="url" name="dashboard_banner_url" value="{{ old('dashboard_banner_url', str_starts_with((string) ($settings['dashboard_banner'] ?? ''), 'http') ? $settings['dashboard_banner'] : '') }}" placeholder="https://example.com/banner.webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                 <button type="button" data-open-media-picker data-picker-url="{{ route('admin.media.index', ['picker' => 1, 'target' => 'dashboard_banner_url', 'type' => 'image']) }}" class="mt-2 text-xs font-semibold text-emerald-700">Choose from Media Library →</button>
                 @if (!empty($settings['dashboard_banner']))<label class="mt-2 flex items-center gap-2 text-xs text-rose-600"><input type="checkbox" name="remove_dashboard_banner" value="1"> Remove banner image</label>@endif
-                <p class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 5 MB. Without an image, the banner uses a gradient background.</p>
+                <p id="dashboard-banner-upload-help" class="mt-1 text-xs text-slate-500">PNG, JPG or WebP; maximum 10 MB. Without an image, the banner uses a gradient background.</p>
+                @error('dashboard_banner')<p class="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700" role="alert">{{ $message }}</p>@enderror
             </div>
         </div>
     </section>
@@ -129,11 +159,12 @@
         <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
             <h4 class="font-bold text-slate-900">Homepage section display order</h4>
             <p class="mt-1 text-xs text-slate-600">Drag sections or use the up/down controls. Hidden sections keep their place and appear in this order when enabled again.</p>
-            <input type="hidden" id="homepage-section-order-value" name="homepage_section_order" value="{{ old('homepage_section_order', $settings['homepage_section_order'] ?? '[&quot;hero&quot;,&quot;online_batches&quot;,&quot;stats&quot;,&quot;categories&quot;,&quot;featured&quot;,&quot;latest&quot;,&quot;live_classes&quot;,&quot;exams&quot;,&quot;teachers&quot;,&quot;board_results&quot;,&quot;reviews&quot;,&quot;ebooks&quot;,&quot;admission&quot;]') }}">
+            <input type="hidden" id="homepage-section-order-value" name="homepage_section_order" value="{{ json_encode($homepageSectionOrder) }}">
             <ol id="homepage-section-order-list" class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                @foreach (['hero' => 'Hero slider / banner', 'online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
+                @foreach ($homepageSectionOrder as $key)
+                    @php($label = $homepageSectionLabels[$key])
                     <li draggable="{{ $key === 'hero' ? 'false' : 'true' }}" data-section-key="{{ $key }}" data-fixed-section="{{ $key === 'hero' ? 'true' : 'false' }}" class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-2.5 text-sm">
-                        <span class="flex min-w-0 items-center gap-2"><span aria-hidden="true" class="{{ $key === 'hero' ? 'text-slate-400' : 'cursor-grab text-slate-400' }}">{{ $key === 'hero' ? '🔒' : '⠿' }}</span><span>{{ $key === 'hero' ? 'Your existing slider (fixed)' : $label }}</span></span>
+                        <span class="flex min-w-0 items-center gap-2"><span aria-hidden="true" class="{{ $key === 'hero' ? 'text-slate-400' : 'cursor-grab text-slate-400' }}">{{ $key === 'hero' ? '🔒' : '⠿' }}</span><span>{{ $key === 'hero' ? 'Hero banner (managed in slider settings)' : $label }}</span></span>
                         @if ($key !== 'hero')
                             <span class="flex shrink-0 gap-1">
                                 <button type="button" data-move="up" aria-label="Move {{ $label }} up" class="rounded border border-slate-200 px-2 py-1 text-xs font-bold hover:bg-slate-100">↑</button>
@@ -147,8 +178,9 @@
             </ol>
         </div>
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach (['online_batches' => 'Online batches', 'stats' => 'Trust statistics', 'categories' => 'Learning paths / categories', 'featured' => 'Featured courses', 'latest' => 'Latest courses', 'live_classes' => 'Upcoming live classes', 'exams' => 'Upcoming exams', 'teachers' => 'Teacher profiles', 'board_results' => 'Board results / achievements', 'reviews' => 'Student reviews', 'ebooks' => 'E-books & notes', 'admission' => 'Online & classroom admission CTA'] as $key => $label)
-                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked((in_array($key, ['categories','online_batches','reviews'], true) ? ($settings['homepage_show_'.$key] ?? '1') : ($settings['homepage_show_'.$key] ?? '0')) === '1')> {{ $label }}</label>
+            @foreach ($homepageSectionLabels as $key => $label)
+                @php($enabledByDefault = in_array($key, ['hero', 'categories', 'online_batches', 'stats', 'learning_modes', 'branches', 'learning_benefits', 'learning_preview', 'reviews', 'featured', 'latest', 'ebooks', 'admission'], true))
+                <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" name="homepage_show_{{ $key }}" value="1" @checked(($settings['homepage_show_'.$key] ?? ($enabledByDefault ? '1' : '0')) === '1')> {{ $label }}</label>
             @endforeach
         </div>
         <div class="mt-6 grid gap-4 md:grid-cols-2">
@@ -199,11 +231,20 @@
         <p class="mt-1 text-sm text-slate-500">Customize section titles, backgrounds and text colors. Leave content fields blank to use the built-in defaults.</p>
         <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
             <h4 class="font-bold text-slate-900">Homepage visual experience</h4>
-            <p class="mt-1 text-xs text-slate-600">Choose the public homepage appearance and scroll animation. The existing hero slider is excluded from these effects and remains independently managed.</p>
+            <p class="mt-1 text-xs text-slate-600">Choose the public homepage appearance and scroll animation. The first active slider image is used in the hero banner; manage banner images in Slider settings.</p>
             <div class="mt-4 grid gap-4 sm:grid-cols-3">
                 <div><label class="mb-1 block text-sm font-semibold text-slate-700">Homepage background theme</label><select name="homepage_theme_mode" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="dark" @selected(($settings['homepage_theme_mode'] ?? 'dark') === 'dark')>Premium dark</option><option value="light" @selected(($settings['homepage_theme_mode'] ?? 'dark') === 'light')>Light</option></select></div>
                 <div><label class="mb-1 block text-sm font-semibold text-slate-700">Scroll animation</label><select name="homepage_animation_style" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm">@foreach (['rise'=>'Reveal upward','fade'=>'Fade in','slide'=>'Slide in','zoom'=>'Soft zoom','none'=>'No animation'] as $value=>$label)<option value="{{ $value }}" @selected(($settings['homepage_animation_style'] ?? 'rise') === $value)>{{ $label }}</option>@endforeach</select></div>
                 <div><label class="mb-1 block text-sm font-semibold text-slate-700">Animation speed (ms)</label><input type="number" min="200" max="1200" step="50" name="homepage_animation_speed" value="{{ old('homepage_animation_speed', $settings['homepage_animation_speed'] ?? '650') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+            </div>
+        </div>
+        <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 class="font-bold text-slate-900">Public page visual controls</h4>
+            <p class="mt-1 text-xs text-slate-600">Adjust the shared decorative message and hover motion used across course, shop, e-book, instructor, blog and information pages. Brand colors and logo remain controlled above.</p>
+            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Illustration eyebrow</label><input name="public_page_visual_label" value="{{ old('public_page_visual_label', $settings['public_page_visual_label'] ?? 'A better way to learn') }}" maxlength="100" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Illustration headline</label><input name="public_page_visual_title" value="{{ old('public_page_visual_title', $settings['public_page_visual_title'] ?? 'Learn · Practice · Grow') }}" maxlength="100" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
+                <div><label class="mb-1 block text-sm font-semibold text-slate-700">Hover motion</label><select name="public_page_motion" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"><option value="soft" @selected(($settings['public_page_motion'] ?? 'soft') === 'soft')>Soft lift</option><option value="none" @selected(($settings['public_page_motion'] ?? 'soft') === 'none')>No motion</option></select></div>
             </div>
         </div>
         <div class="mt-5 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
@@ -230,8 +271,20 @@
         </div>
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ([
+                'homepage_hero_title' => ['Main hero heading', 'text', 'Learn English with confidence'],
+                'homepage_hero_subtitle' => ['Main hero description', 'text', 'Choose a learning path and build skills with expert guidance.'],
+                'homepage_hero_button_text' => ['Main hero button', 'text', 'Explore courses'],
+                'homepage_hero_button_url' => ['Main hero button URL', 'text', '/courses'],
                 'homepage_learning_title' => ['Learning path heading', 'text', 'Choose your learning path'],
                 'homepage_learning_subtitle' => ['Learning path description', 'text', 'Choose a course to improve your skills'],
+                'homepage_learning_modes_title' => ['Online and classroom heading', 'text', 'Learn your way'],
+                'homepage_learning_modes_subtitle' => ['Online and classroom description', 'text', 'Choose online lessons or a classroom programme.'],
+                'homepage_learning_benefits_title' => ['Learning benefits heading', 'text', 'Everything you need to keep improving'],
+                'homepage_learning_benefits_subtitle' => ['Learning benefits description', 'text', 'Learn, practise and check your progress with the tools available in our LMS.'],
+                'homepage_branches_title' => ['Branch centres heading', 'text', 'Visit an English learning centre'],
+                'homepage_branches_subtitle' => ['Branch centres description', 'text', 'Find a nearby branch and ask about classroom programmes.'],
+                'homepage_learning_preview_title' => ['Learning preview heading', 'text', 'A flexible learning experience, built around your day.'],
+                'homepage_learning_preview_subtitle' => ['Learning preview description', 'text', 'Explore online courses and learn from any device.'],
                 'homepage_testimonial_title' => ['Testimonial heading', 'text', 'What our students say'],
                 'homepage_featured_title' => ['Featured courses heading', 'text', 'Featured courses'],
                 'homepage_featured_subtitle' => ['Featured courses description', 'text', 'Hand-picked by our academic team.'],
@@ -239,13 +292,13 @@
                 'homepage_online_batches_badge' => ['Online batches badge', 'text', 'Online Course'],
                 'homepage_stats_title' => ['Statistics heading', 'text', 'See the stats!'],
                 'homepage_stats_students_label' => ['Students statistic label', 'text', 'Students'],
-                'homepage_stats_students_icon' => ['Students statistic icon (emoji)', 'text', '♙'],
+                'homepage_stats_students_icon' => ['Students statistic SVG icon name', 'text', 'users'],
                 'homepage_stats_courses_label' => ['Courses statistic label', 'text', 'Courses'],
-                'homepage_stats_courses_icon' => ['Courses statistic icon (emoji)', 'text', '▤'],
+                'homepage_stats_courses_icon' => ['Courses statistic SVG icon name', 'text', 'book-open'],
                 'homepage_stats_teachers_label' => ['Teachers statistic label', 'text', 'Teachers'],
-                'homepage_stats_teachers_icon' => ['Teachers statistic icon (emoji)', 'text', '♧'],
+                'homepage_stats_teachers_icon' => ['Teachers statistic SVG icon name', 'text', 'graduation-cap'],
                 'homepage_stats_lessons_label' => ['Lessons statistic label', 'text', 'Videos / Lessons'],
-                'homepage_stats_lessons_icon' => ['Lessons statistic icon (emoji)', 'text', '▷'],
+                'homepage_stats_lessons_icon' => ['Lessons statistic SVG icon name', 'text', 'video'],
                 'homepage_online_batches_subtitle' => ['Online batches description', 'text', 'Book your seat in an upcoming live learning batch.'],
                 'homepage_latest_title' => ['Latest courses heading', 'text', 'Latest courses'],
                 'homepage_latest_subtitle' => ['Latest courses description', 'text', 'Explore our newest learning opportunities.'],
@@ -319,14 +372,14 @@
             <div><label class="mb-1 block text-sm font-semibold text-slate-700">Minimum display time (ms)</label><input type="number" min="0" max="2000" step="100" name="brand_loader_min_time" value="{{ old('brand_loader_min_time', $settings['brand_loader_min_time'] ?? '250') }}" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"></div>
         </div>
         <div class="mt-4 grid gap-4 sm:grid-cols-3">
-            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#06b6d4'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
+            @foreach (['brand_loader_bg' => ['Screen background', '#ffffff'], 'brand_loader_color' => ['Spinner / accent color', '#1cab55'], 'brand_loader_text_color' => ['Message text color', '#0f172a']] as $key => [$label, $default])
                 <div><label class="mb-1 block text-sm font-semibold text-slate-700">{{ $label }}</label><input type="color" name="{{ $key }}" value="{{ old($key, $settings[$key] ?? $default) }}" class="h-11 w-full rounded-lg border border-slate-300 p-1"></div>
             @endforeach
         </div>
         <p class="mt-3 text-xs text-slate-500">The current website logo and site name are used automatically. Respects reduced-motion accessibility preferences and includes a failsafe timeout.</p>
     </section>
 
-    <div class="lg:col-span-2"><button class="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800">Save all settings</button></div>
+    <div class="lg:col-span-2 flex justify-end"><button class="w-full rounded-lg bg-emerald-700 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-800 sm:w-auto">Save all settings</button></div>
 </form>
 
 @push('scripts')
@@ -375,7 +428,6 @@
 })();
 </script>
 @endpush
-\n
 @push('scripts')
 <script>
 (() => {
@@ -407,8 +459,15 @@
     let dragged = null;
     list.addEventListener('dragstart', event => {
         dragged = event.target.closest('[data-section-key]');
-        if (dragged?.dataset.fixedSection === 'true') dragged = null;
-        if (dragged) event.dataTransfer.effectAllowed = 'move';
+        if (dragged?.dataset.fixedSection === 'true') {
+            dragged = null;
+            event.preventDefault();
+            return;
+        }
+        if (dragged && event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', dragged.dataset.sectionKey);
+        }
     });
     list.addEventListener('dragover', event => {
         if (!dragged) return;
@@ -416,10 +475,15 @@
         const target = event.target.closest('[data-section-key]');
         if (!target || target === dragged || target.dataset.fixedSection === 'true') return;
         const bounds = target.getBoundingClientRect();
-        list.insertBefore(dragged, event.clientY < bounds.top + bounds.height / 2 ? target : target.nextSibling);
+        const sameRow = event.clientY >= bounds.top && event.clientY <= bounds.bottom;
+        const before = sameRow
+            ? event.clientX < bounds.left + bounds.width / 2
+            : event.clientY < bounds.top;
+        list.insertBefore(dragged, before ? target : target.nextSibling);
     });
     list.addEventListener('drop', event => { event.preventDefault(); sync(); });
     list.addEventListener('dragend', () => { dragged = null; sync(); });
+    list.closest('form')?.addEventListener('submit', sync);
     sync();
 })();
 </script>

@@ -4,15 +4,11 @@
 @section('meta_description', $pageSubtitle)
 
 @section('content')
-<main class="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 px-4 py-14 sm:py-16">
+<main class="aec-public-page aec-instructor-page min-h-screen">
     <div class="mx-auto max-w-7xl">
-        <header class="mx-auto mb-14 max-w-3xl text-center">
-            <span class="inline-flex items-center rounded-full border border-blue-200 bg-white/75 px-4 py-1.5 text-xs font-extrabold uppercase tracking-[.18em] text-blue-700 shadow-sm">Meet the faculty</span>
-            <h1 class="mt-5 text-3xl font-black tracking-tight text-blue-900 sm:text-5xl">{{ $pageTitle }}</h1>
-            <div class="mx-auto mt-5 h-1.5 w-24 rounded-full bg-gradient-to-r from-blue-600 to-sky-400"></div>
-            <p class="mx-auto mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">{{ $pageSubtitle }}</p>
-        </header>
+        @include('partials.public-page-hero', ['eyebrow' => 'Meet the faculty', 'title' => $pageTitle, 'description' => $pageSubtitle])
 
+        <div class="mt-9">
         @forelse ($panels as $panelName => $instructors)
             <section class="mb-16 last:mb-0" aria-labelledby="panel-{{ $loop->index }}">
                 <div class="mb-9 text-center">
@@ -28,7 +24,7 @@
                                 ?: trim(collect([$profile?->highest_qualification, $profile?->institution])->filter()->implode(' · '));
                             $educationLine = $educationLine ?: ($profile?->experience_years ? $profile->experience_years.' Years Experience' : null);
                         @endphp
-                        <article class="group relative flex min-h-[330px] flex-col items-center rounded-3xl border border-white/90 bg-white px-6 pb-7 pt-0 text-center shadow-[0_16px_50px_rgba(30,64,175,.10)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(30,64,175,.18)]">
+                        <article class="aec-motion-card group relative flex min-h-[330px] flex-col items-center rounded-3xl border border-white/90 bg-white px-6 pb-7 pt-0 text-center shadow-[0_16px_50px_rgba(30,64,175,.10)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(30,64,175,.18)]">
                             <div class="h-24 w-full rounded-t-3xl bg-gradient-to-r from-blue-600 to-sky-600"></div>
                             <a href="{{ route('instructors.show', $instructor) }}" class="-mt-12 rounded-full focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-500" aria-label="View {{ $instructor->name }} profile">
                                 <img src="{{ $instructor->avatarUrl() }}" alt="{{ $instructor->name }}" loading="lazy" class="h-24 w-24 rounded-full border-4 border-white bg-blue-50 object-cover shadow-lg">
@@ -68,6 +64,7 @@
                 <p class="mt-2 text-slate-600">Please check back soon to meet our teaching team.</p>
             </div>
         @endforelse
+        </div>
     </div>
 </main>
 @endsection

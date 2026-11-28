@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="{{ session('locale', 'en') }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php($brandName = \App\Models\Setting::get('site_name', "Alom's English Center"))
-    @php($pageTitle = trim($__env->yieldContent('meta_title', $__env->yieldContent('title', ''))))
+    @php($pageTitle = html_entity_decode(trim($__env->yieldContent('meta_title', $__env->yieldContent('title', ''))), ENT_QUOTES | ENT_HTML5, 'UTF-8'))
     @php($seoTitle = $pageTitle !== '' ? $pageTitle.' — '.$brandName : \App\Models\Setting::get('seo_title', $brandName))
     @php($brandDescription = trim(strip_tags($__env->yieldContent('meta_description', \App\Models\Setting::get('seo_description', \App\Models\Setting::get('site_tagline', 'Practical English learning, speaking practice, grammar and vocabulary.'))))))
     @php($privateSeoRoute = auth()->check() || request()->is('admin', 'admin/*', 'my', 'my/*', 'teacher', 'teacher/*', 'guardian', 'guardian/*', 'branch', 'branch/*', 'cart', 'checkout', 'checkout/*', 'messages', 'messages/*', 'notifications', 'notifications/*'))
@@ -17,6 +17,9 @@
     <meta name="robots" content="{{ $robotsDirective }}">
     <link rel="canonical" href="{{ $canonicalUrl }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <meta property="og:type" content="{{ $socialType }}">
     <meta property="og:site_name" content="{{ $brandName }}">
     <meta property="og:title" content="{{ $seoTitle !== '' ? $seoTitle : trim($__env->yieldContent('title', $brandName).' — '.$brandName) }}">
@@ -73,31 +76,12 @@
     @include('partials.assets')
     <style>
         :root {
-            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) && strtolower((string) setting('site_primary_color')) !== '#ea580c' ? setting('site_primary_color') : '#ea580c' }};
-            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) && strtolower((string) setting('site_secondary_color')) !== '#9a3412' ? setting('site_secondary_color') : '#9a3412' }};
+            --aec-primary: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_primary_color')) ? setting('site_primary_color') : '#1cab55' }};
+            --aec-primary-dark: {{ preg_match('/^#[0-9A-Fa-f]{6}$/', (string) setting('site_secondary_color')) ? setting('site_secondary_color') : '#15803d' }};
         }
-        .bg-emerald-700,.bg-emerald-600,.bg-emerald-500 { background-color: var(--aec-primary) !important; }
-        .bg-emerald-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
-        .bg-emerald-50,[class~="bg-emerald-400/10"] { background-color: color-mix(in srgb, var(--aec-primary) 9%, white) !important; }
-        .bg-orange-700,.bg-orange-600,.bg-orange-500 { background-color: var(--aec-primary) !important; }
-        .bg-orange-400 { background-color: color-mix(in srgb, var(--aec-primary) 82%, white) !important; }
-        .bg-orange-50,.bg-orange-100 { background-color: color-mix(in srgb, var(--aec-primary) 10%, white) !important; }
-        .text-orange-800,.text-orange-700,.text-orange-600,.text-orange-500 { color: var(--aec-primary-dark) !important; }
-        .text-orange-400,.text-orange-300,.text-orange-200 { color: color-mix(in srgb, var(--aec-primary) 65%, white) !important; }
-        .border-orange-100,.border-orange-200,.border-orange-400 { border-color: color-mix(in srgb, var(--aec-primary) 22%, transparent) !important; }
-        [class~="hover:bg-orange-800"]:hover,[class~="hover:bg-orange-700"]:hover,[class~="hover:bg-orange-400"]:hover { background-color: var(--aec-primary-dark) !important; }
-        [class~="hover:text-orange-700"]:hover,[class~="hover:text-orange-800"]:hover { color: var(--aec-primary-dark) !important; }
-        .to-orange-950 { --tw-gradient-to: var(--aec-primary-dark) var(--tw-gradient-to-position) !important; }
-        .text-emerald-800,.text-emerald-700,.text-emerald-600,.text-emerald-500 { color: var(--aec-primary-dark) !important; }
-        .text-emerald-400,.text-emerald-300,.text-emerald-200 { color: color-mix(in srgb, var(--aec-primary) 65%, white) !important; }
-        .border-emerald-400,[class~="border-emerald-400/30"],.border-emerald-500 { border-color: color-mix(in srgb, var(--aec-primary) 42%, transparent) !important; }
-        [class~="hover:bg-emerald-800"]:hover,[class~="hover:bg-emerald-700"]:hover,[class~="hover:bg-emerald-400"]:hover { background-color: var(--aec-primary-dark) !important; }
-        [class~="hover:text-emerald-700"]:hover,[class~="hover:text-emerald-800"]:hover { color: var(--aec-primary-dark) !important; }
-        .to-emerald-950 { --tw-gradient-to: var(--aec-primary-dark) var(--tw-gradient-to-position) !important; }
-        [class~="shadow-emerald-500/20"] { --tw-shadow-color: color-mix(in srgb, var(--aec-primary) 20%, transparent) !important; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
+<body class="bg-slate-50 text-slate-800 antialiased" data-public-motion="{{ \App\Models\Setting::get('public_page_motion', 'soft') }}">
 
 @php($brandLoaderEnabled = \App\Models\Setting::get('brand_loader_enabled', '0') === '1')
 @if ($brandLoaderEnabled)
@@ -108,9 +92,9 @@
     #brand-page-loader .brand-loader-logo{width:76px;height:76px;object-fit:contain;border-radius:16px}
     #brand-page-loader .brand-loader-name{font-weight:800;font-size:1.15rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
     #brand-page-loader .brand-loader-message{font-size:.9rem;color:{{ \App\Models\Setting::get('brand_loader_text_color','#0f172a') }}}
-    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }} 18%, transparent);border-top-color:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
-    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};box-shadow:-16px 0 0 {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }},16px 0 0 {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
-    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#ea580c')) === '#ea580c' ? '#ea580c' : \App\Models\Setting::get('brand_loader_color', '#ea580c')) }};animation:brand-loader-pulse 1s ease-in-out infinite}
+    #brand-page-loader .brand-spinner{width:42px;height:42px;border:4px solid color-mix(in srgb, {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#1cab55')) === '#1cab55' ? '#1cab55' : \App\Models\Setting::get('brand_loader_color', '#1cab55')) }} 18%, transparent);border-top-color:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#1cab55')) === '#1cab55' ? '#1cab55' : \App\Models\Setting::get('brand_loader_color', '#1cab55')) }};border-radius:50%;animation:brand-loader-spin .8s linear infinite}
+    #brand-page-loader[data-style="dots"] .brand-spinner{width:10px;height:10px;border:0;border-radius:50%;background:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#1cab55')) === '#1cab55' ? '#1cab55' : \App\Models\Setting::get('brand_loader_color', '#1cab55')) }};box-shadow:-16px 0 0 {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#1cab55')) === '#1cab55' ? '#1cab55' : \App\Models\Setting::get('brand_loader_color', '#1cab55')) }},16px 0 0 {{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#1cab55')) === '#1cab55' ? '#1cab55' : \App\Models\Setting::get('brand_loader_color', '#1cab55')) }};animation:brand-loader-dots .8s ease-in-out infinite alternate}
+    #brand-page-loader[data-style="pulse"] .brand-spinner{border:0;background:{{ (strtolower((string) \App\Models\Setting::get('brand_loader_color', '#1cab55')) === '#1cab55' ? '#1cab55' : \App\Models\Setting::get('brand_loader_color', '#1cab55')) }};animation:brand-loader-pulse 1s ease-in-out infinite}
     @keyframes brand-loader-spin{to{transform:rotate(360deg)}}
     @keyframes brand-loader-dots{to{transform:scale(1.25);opacity:.55}}
     @keyframes brand-loader-pulse{50%{transform:scale(.72);opacity:.55}}
@@ -155,7 +139,7 @@
             <div class="mt-5 flex flex-wrap gap-2">
                 @foreach (['facebook' => ['Facebook','f'], 'youtube' => ['YouTube','▶'], 'instagram' => ['Instagram','◎']] as $key => [$label,$symbol])
                     @if ($url = \App\Models\Setting::get($key))
-                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-extrabold text-orange-200 transition hover:bg-orange-500 hover:text-slate-950">{{ $symbol }}</a>
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" class="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-extrabold text-emerald-200 transition hover:bg-emerald-500 hover:text-slate-950">{{ $symbol }}</a>
                     @endif
                 @endforeach
             </div>
@@ -163,13 +147,13 @@
         <div>
             <h4 class="text-sm font-extrabold uppercase tracking-wider text-white">Links</h4>
             <ul class="mt-4 space-y-3 text-sm text-slate-400">
-                <li><a class="hover:text-orange-300" href="{{ route('courses.index') }}">All Courses</a></li>
-                <li><a class="hover:text-orange-300" href="{{ route('blog.index') }}">Blog & News</a></li>
-                <li><a class="hover:text-orange-300" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
-                <li><a class="hover:text-orange-300" href="{{ route('ebooks.index') }}">E-Books</a></li>
-                <li><a class="hover:text-orange-300" href="{{ route('about') }}">About us</a></li>
+                <li><a class="hover:text-emerald-300" href="{{ route('courses.index') }}">All Courses</a></li>
+                <li><a class="hover:text-emerald-300" href="{{ route('blog.index') }}">Blog & News</a></li>
+                <li><a class="hover:text-emerald-300" href="{{ route('coaching-admission.create') }}">Coaching Admission</a></li>
+                <li><a class="hover:text-emerald-300" href="{{ route('ebooks.index') }}">E-Books</a></li>
+                <li><a class="hover:text-emerald-300" href="{{ route('about') }}">About us</a></li>
                 @foreach (\App\Models\MenuItem::publicNavigation('footer', 'desktop') as $footerItem)
-                    <li><a class="hover:text-orange-300" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
+                    <li><a class="hover:text-emerald-300" href="{{ str_starts_with($footerItem->url, 'http') ? $footerItem->url : url($footerItem->url) }}" @if($footerItem->open_new_tab) target="_blank" rel="noopener noreferrer" @endif>{{ $footerItem->label }}</a></li>
                 @endforeach
             </ul>
         </div>
@@ -179,7 +163,7 @@
                 <li>{{ \App\Models\Setting::get('site_name', "Alom's English Center") }}</li>
                 @if (\App\Models\Setting::get('company_license'))<li>License: {{ \App\Models\Setting::get('company_license') }}</li>@endif
                 @if (\App\Models\Setting::get('site_address'))<li>{{ \App\Models\Setting::get('site_address') }}</li>@endif
-                <li><a class="hover:text-orange-300" href="{{ route('contact') }}">Contact company</a></li>
+                <li><a class="hover:text-emerald-300" href="{{ route('contact') }}">Contact company</a></li>
             </ul>
         </div>
         <div>
@@ -211,7 +195,7 @@
     <div class="border-t border-white/10">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-xs text-slate-400">
             <span>© {{ date('Y') }} {{ \App\Models\Setting::get('site_name', "Alom's English Center") }}. {{ \App\Models\Setting::get('footer_copyright', 'All rights reserved.') }}</span>
-            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-orange-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-orange-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-orange-300">Refund Policy</a>@if((!$privateSeoRoute || request()->routeIs('checkout.success')) && (filled(\App\Models\Setting::get('ga_measurement_id')) || filled(\App\Models\Setting::get('meta_pixel_id')) || filled(\App\Models\Setting::get('gtm_container_id'))))<button type="button" onclick="window.aecOpenCookieSettings && window.aecOpenCookieSettings()" class="hover:text-orange-300 underline">Cookie settings</button>@endif</nav>
+            <nav aria-label="Legal policies" class="flex flex-wrap gap-x-4 gap-y-2"><a href="{{ url('/terms-and-conditions') }}" class="hover:text-emerald-300">Terms & Conditions</a><a href="{{ url('/privacy-policy') }}" class="hover:text-emerald-300">Privacy Policy</a><a href="{{ url('/refund-policy') }}" class="hover:text-emerald-300">Refund Policy</a>@if((!$privateSeoRoute || request()->routeIs('checkout.success')) && (filled(\App\Models\Setting::get('ga_measurement_id')) || filled(\App\Models\Setting::get('meta_pixel_id')) || filled(\App\Models\Setting::get('gtm_container_id'))))<button type="button" onclick="window.aecOpenCookieSettings && window.aecOpenCookieSettings()" class="hover:text-emerald-300 underline">Cookie settings</button>@endif</nav>
         </div>
     </div>
     @if (\App\Models\Setting::get('developer_show', '0') === '1' && \App\Models\Setting::get('developer_name'))

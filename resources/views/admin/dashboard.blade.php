@@ -5,8 +5,9 @@
 @php
     $brandPrimary = \App\Models\Setting::get('dashboard_primary_color', '#2563eb');
     $bannerImage = \App\Models\Setting::get('dashboard_banner');
-    $campusImage = $bannerImage ? media_url($bannerImage) : asset('images/aec-logo.svg');
-    $studentAvatar = $latestStudents->first()?->avatarUrl() ?? asset('images/aec-logo.svg');
+    $bannerEnabled = \App\Models\Setting::get('dashboard_banner_enabled', '1') === '1';
+    $bannerButtonText = \App\Models\Setting::get('dashboard_banner_button_text', 'Manage courses');
+    $bannerButtonUrl = \App\Models\Setting::get('dashboard_banner_button_url') ?: route('admin.courses.index');
     $series = [
         ['label' => 'Students', 'values' => $analytics['students'], 'color' => '#2563eb'],
         ['label' => 'Enrollments', 'values' => $analytics['enrollments'], 'color' => '#10b981'],
@@ -25,30 +26,24 @@
     ];
 @endphp
 
-<section class="relative mb-6 grid min-h-[220px] overflow-hidden rounded-[28px] bg-gradient-to-r from-blue-950 via-blue-700 to-cyan-500 text-white shadow-xl lg:grid-cols-[1fr_1.7fr_1fr]">
-    <div class="relative hidden items-end justify-center overflow-hidden lg:flex">
-        <div class="absolute -bottom-16 -left-12 h-56 w-56 rounded-full bg-cyan-300/20 blur-2xl"></div>
-        <img src="{{ $studentAvatar }}" alt="Student" class="relative z-10 h-44 w-44 rounded-t-full border-4 border-white/30 object-cover shadow-2xl">
-    </div>
-    <div class="relative z-10 flex flex-col justify-center px-7 py-8 lg:px-3">
+@if ($bannerEnabled)
+<section id="admin-dashboard-banner" class="relative isolate mb-6 flex min-h-[250px] overflow-hidden rounded-[28px] bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-700 text-white shadow-xl sm:min-h-[280px]" aria-labelledby="admin-dashboard-banner-title">
+    @if ($bannerImage)
+        <img src="{{ media_url($bannerImage) }}" alt="" aria-hidden="true" class="absolute inset-0 -z-20 h-full w-full object-cover">
+    @endif
+    <div aria-hidden="true" class="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/90 via-blue-950/75 to-blue-900/25"></div>
+    <div class="relative z-10 flex w-full flex-col justify-center px-5 py-8 sm:px-8 lg:px-10">
         <p class="text-xs font-bold uppercase tracking-[.24em] text-cyan-100">{{ \App\Models\Setting::get('site_name', "Alom's English Center") }} · LMS v3.0</p>
-        <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{{ \App\Models\Setting::get('dashboard_banner_title', 'Welcome back, '.auth()->user()->name.'!') }}</h2>
-        <p class="mt-2 max-w-xl text-sm leading-6 text-blue-50">{{ \App\Models\Setting::get('dashboard_banner_subtitle', 'Your learning community is growing. Here is your academy at a glance.') }}</p>
-        <div class="mt-5 flex flex-wrap gap-3">
-            <a href="{{ route('admin.courses.create') }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-extrabold text-blue-800 shadow-lg hover:bg-cyan-50">Create a Course <span aria-hidden="true">→</span></a>
-            <a href="{{ route('admin.users.create') }}" class="rounded-xl border border-white/50 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/20">Add a Student</a>
+        <h2 id="admin-dashboard-banner-title" class="mt-3 max-w-4xl text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{{ \App\Models\Setting::get('dashboard_banner_title', 'Welcome back, '.auth()->user()->name.'!') }}</h2>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">{{ \App\Models\Setting::get('dashboard_banner_subtitle', 'Your learning community is growing. Here is your academy at a glance.') }}</p>
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+            <a href="{{ $bannerButtonUrl }}" class="rounded-xl bg-white px-5 py-2.5 text-sm font-extrabold text-blue-800 shadow-lg transition hover:bg-cyan-50">{{ $bannerButtonText ?: 'Manage courses' }} <span aria-hidden="true">→</span></a>
+            <a href="{{ route('admin.users.create') }}" class="rounded-xl border border-white/50 bg-white/10 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/20">Add a Student</a>
+        </div>
         <p class="mt-4 text-xs font-semibold text-cyan-100">Total Revenue: <span class="font-black text-white">৳{{ number_format($stats['revenue'], 0) }}</span> · Pending orders: {{ number_format($stats['pending_orders']) }}</p>
-        </div>
-    </div>
-    <div class="relative hidden min-h-[220px] items-center justify-center p-5 lg:flex">
-        <div class="absolute right-5 top-7 h-40 w-40 rounded-full border border-white/25"></div>
-        <div class="absolute right-12 top-14 h-28 w-28 rounded-full border border-white/20"></div>
-        <div class="relative h-36 w-full max-w-[230px] overflow-hidden rounded-2xl border border-white/30 bg-white/10 shadow-2xl">
-            <img src="{{ $campusImage }}" alt="Institute campus" class="h-full w-full object-cover opacity-90">
-            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-blue-950/90 to-transparent p-3 text-xs font-bold tracking-wide">LEARN · GROW · SUCCEED</div>
-        </div>
     </div>
 </section>
+@endif
 
 <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach($kpis as $kpi)

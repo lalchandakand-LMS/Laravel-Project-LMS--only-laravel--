@@ -47,7 +47,7 @@ class CourseController extends Controller
 
         return view('courses.index', [
             'courses' => $query->paginate(9)->withQueryString(),
-            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->orderBy('position')->orderBy('name')->get(),
+            'categories' => Category::where('is_active', true)->withPublishedCourseCount()->orderBy('position')->orderBy('name')->get(),
             'filters' => $request->only('q', 'category', 'level', 'sort'),
         ]);
     }
@@ -61,7 +61,7 @@ class CourseController extends Controller
         return view('courses.index', [
             'courses' => Course::published()->where(fn ($query) => $query->whereIn('category_id', $categoryIds)->orWhereIn('id', DB::table('course_category')->select('course_id')->whereIn('category_id', $categoryIds)))
                 ->with(['instructor', 'category', 'categories'])->latest()->paginate(9),
-            'categories' => Category::where('is_active', true)->withCount('publishedCourses')->orderBy('position')->orderBy('name')->get(),
+            'categories' => Category::where('is_active', true)->withPublishedCourseCount()->orderBy('position')->orderBy('name')->get(),
             'filters' => ['category' => $category->slug],
             'activeCategory' => $category,
         ]);
