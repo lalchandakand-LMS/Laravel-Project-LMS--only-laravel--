@@ -167,37 +167,16 @@ class BlogPostManagementTest extends TestCase
 
     public function test_guest_can_read_a_published_blog_post_detail(): void
     {
-        $logBuffers = static function (string $phase): void {
-            fwrite(STDERR, 'BLOG_BUFFER_DIAGNOSTIC '.json_encode([
-                'phase' => $phase,
-                'level' => ob_get_level(),
-                'buffers' => array_map(static fn (array $buffer): array => [
-                    'name' => $buffer['name'] ?? null,
-                    'type' => $buffer['type'] ?? null,
-                    'flags' => $buffer['flags'] ?? null,
-                ], ob_get_status(true)),
-            ]).PHP_EOL);
-        };
-
-        $logBuffers('test-start');
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $published = Post::create(['title' => 'Public story detail', 'content' => 'Public detail', 'author_id' => $admin->id, 'is_published' => true]);
-        $logBuffers('before-blog-show');
-
-        $this->get(route('courses.index'))->assertOk();
-        $logBuffers('after-courses-index');
-
-        $this->get(route('blog.index'))->assertOk();
-        $logBuffers('after-blog-index-before-show');
+        $initialBufferLevel = ob_get_level();
 
         $this->get(route('blog.show', $published))
             ->assertOk()
             ->assertSee('Public story detail')
-            ->assertSee('Public detail');
-        $logBuffers('after-blog-show');
+            ->assertSee('Public detail')
+            ->assertSee('Read the latest learning article from Alom’s English Center.');
 
-        $this->get(route('blog.index'))->assertOk()->assertSee('Public story detail');
-        $logBuffers('after-blog-index');
+        $this->assertSame($initialBufferLevel, ob_get_level(), 'Rendering a blog detail page must close every output buffer it opens.');
     }
-
 }
