@@ -542,5 +542,21 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('Your existing slider (fixed)', false);
     }
 
+    public function test_existing_hero_slider_is_always_visible_and_not_toggleable_from_homepage_builder(): void
+    {
+        $admin = User::where('email', 'admin@lms.test')->firstOrFail();
+        Setting::set('homepage_show_hero', '0');
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-home-section="hero"', false)
+            ->assertSee('id="heroSlides"', false);
+
+        $this->actingAs($admin)->get(route('admin.settings.index'))
+            ->assertOk()
+            ->assertSee('Your existing slider (fixed)')
+            ->assertDontSee('name="homepage_show_hero"', false);
+    }
+
 }
 
