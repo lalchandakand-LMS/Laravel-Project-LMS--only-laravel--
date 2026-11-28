@@ -161,7 +161,8 @@ class CourseController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
-            if ($data['thumbnail']) {\n                MediaAsset::registerUpload('Course thumbnail', 'public', $data['thumbnail'], $request->file('thumbnail'), auth()->id());
+            if ($data['thumbnail']) {
+                MediaAsset::registerUpload('Course thumbnail', 'public', $data['thumbnail'], $request->file('thumbnail'), auth()->id());
             }
             if (! $data['thumbnail']) {
                 throw ValidationException::withMessages(['thumbnail' => 'The course thumbnail could not be stored. The previous thumbnail has been kept.']);
