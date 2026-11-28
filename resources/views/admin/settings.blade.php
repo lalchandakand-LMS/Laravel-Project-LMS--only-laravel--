@@ -379,7 +379,7 @@
         if (!button) return;
         const item = button.closest('[data-section-key]');
         if (!item || item.dataset.fixedSection === 'true') return;
-        if (button.dataset.move === 'up' && item.previousElementSibling) {
+        if (button.dataset.move === 'up' && item.previousElementSibling && item.previousElementSibling.dataset.fixedSection !== 'true') {
             list.insertBefore(item, item.previousElementSibling);
         } else if (button.dataset.move === 'down' && item.nextElementSibling) {
             list.insertBefore(item.nextElementSibling, item);
