@@ -192,6 +192,7 @@ class MediaLibraryTest extends TestCase
     public function test_content_uploads_are_registered_in_the_shared_media_library(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         $admin = User::where('email', 'admin@lms.test')->firstOrFail();
         $course = Course::firstOrFail();
 
