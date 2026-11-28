@@ -434,7 +434,9 @@ class SiteCustomizationSettingsTest extends TestCase
             ->assertSee('data-home-animation="rise"', false)
             ->assertSee('data-home-animation-speed="700"', false)
             ->assertSee('id="heroSlides"', false)
-            ->assertSee('data-hero-slide', false);
+            ->assertSee('data-hero-slide', false)
+            ->assertSee("savedOrder.filter(key => key !== 'hero')", false)
+            ->assertSee('const fixedHero = sections.get(\'hero\')', false);
     }
 
 
