@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -235,8 +236,8 @@ class SettingController extends Controller
                         'size_bytes' => $request->file($field)->getSize(),
                         'uploaded_by' => $request->user()->id,
                     ]);
-                } catch (\\Throwable $exception) {
-                    \\Illuminate\\Support\\Facades\\Storage::disk('public')->delete($newPath);
+                } catch (\Throwable $exception) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($newPath);
                     throw $exception;
                 }
 
