@@ -305,8 +305,11 @@ class SiteCustomizationSettingsTest extends TestCase
             $this->assertSame($value, Setting::get($key));
         }
 
+        Setting::set('homepage_show_online_batches', '1');
+
         $this->get('/')
             ->assertOk()
+            ->assertSee('data-home-section="online_batches"', false)
             ->assertSee('background-color:#fff7ed;--home-section-text:#7c2d12', false)
             ->assertSee('var(--home-section-text,#e5edf8)', false);
     }
