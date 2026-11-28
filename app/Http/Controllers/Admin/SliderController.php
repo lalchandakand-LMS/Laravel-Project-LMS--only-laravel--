@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Slider;\nuse App\Models\MediaAsset;
+use App\Models\Slider;
+use App\Models\MediaAsset;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
